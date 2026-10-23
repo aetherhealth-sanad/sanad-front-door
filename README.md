@@ -1,231 +1,271 @@
 # Sanad (سند) — A Private Front Door for Men's Reproductive Health
 
 > **From signals to the right care — earlier, privately.**
-> A bilingual (Arabic/English), privacy-first multi-agent platform that helps men understand reproductive health risks *before* infertility is diagnosed, and guides them to the right level of care with a clinician always in the loop.
+> An agentic AI platform on Microsoft Azure that helps men understand reproductive health risks *before* infertility is diagnosed, and guides them to the right level of care, with a clinician always in the loop.
 
-Built by **AetherHealth** for the [Future Health Digital Innovation Challenge 2026](https://hack2skill.com/event/futurehealthchallenge/) — *Fertility · Challenge 01: Male Reproductive Health.*
+Built by **AetherHealth** for the [Future Health Digital Innovation Challenge 2026](https://hack2skill.com/event/futurehealthchallenge/) · *Fertility · Challenge 01: Male Reproductive Health*
 
 > [!IMPORTANT]
-> **Research prototype. Not a medical device.** Sanad is a risk-screening and navigation tool. It does **not** diagnose infertility and does not replace a clinician. All data in this repository is **synthetic** or from public research datasets. Reported metrics are **simulated performance**, not clinical validation.
+> **Research prototype. Not a medical device.** Sanad screens for risk and helps people find care. It does **not** diagnose infertility and does not replace a clinician. All data in this repository is **synthetic** or comes from public research datasets. Reported metrics are **simulated performance**, not clinical validation.
 
 ---
 
 ## Table of contents
 
 - [Why Sanad](#why-sanad)
-- [What it does](#what-it-does)
-- [User journeys](#user-journeys)
+- [What it delivers](#what-it-delivers)
+- [How Sanad works: the agentic loop](#how-sanad-works-the-agentic-loop)
 - [Architecture](#architecture)
-- [The five agents](#the-five-agents)
+- [Azure services](#azure-services)
+- [Agents](#agents)
 - [Triage levels](#triage-levels)
-- [Safety and responsible AI](#safety-and-responsible-ai)
+- [User journeys](#user-journeys)
+- [Safety in layers](#safety-in-layers)
 - [Privacy by design](#privacy-by-design)
 - [Cultural design principles](#cultural-design-principles)
-- [Tech stack](#tech-stack)
+- [Data residency](#data-residency)
 - [Repository structure](#repository-structure)
 - [Getting started](#getting-started)
 - [Evaluation](#evaluation)
-- [Data and knowledge sources](#data-and-knowledge-sources)
 - [Roadmap](#roadmap)
-- [Assumptions and limitations](#assumptions-and-limitations)
+- [Project management](#project-management)
 - [Team](#team)
+- [Assumptions and limitations](#assumptions-and-limitations)
 - [License](#license)
 
 ---
 
 ## Why Sanad
 
-*Sanad* means "support" in Arabic. The name is deliberately neutral — no "infertility", no "sperm" — so the app can sit on a phone's home screen without embarrassment.
+*Sanad* means "support" in Arabic. The name is deliberately neutral, with no mention of infertility, so the app can sit on a phone's home screen without embarrassment.
 
-- Male factors contribute to about half of infertility cases, yet men often enter care late — usually after their partner has been assessed.
-- Male reproductive health is also a window into general health (metabolic disease, cardiovascular risk, mortality).
-- Existing digital products mostly start at a semen test, when a couple is already struggling. Few address **upstream risk**, **Gulf cultural and religious sensitivities**, or **integration with the health system**.
+- Male factors contribute to about half of infertility cases, yet men often come to care late, usually after their partner has been assessed.
+- Male reproductive health is also a window into general health: metabolic disease, cardiovascular risk and mortality.
+- Most digital products start at a semen test, when a couple is already struggling. Few look at **upstream risk**, design for **Gulf cultural and religious sensitivities**, or **connect to the health system**.
 
-Sanad focuses on exactly that gap: a trusted, low-friction front door for men that turns risk signals into safe, explainable clinical action.
+Sanad fills that gap with a trusted, low-friction front door for men. It turns risk signals into safe, explainable clinical action.
 
-## What it does
+## What it delivers
 
-| Challenge requirement | How Sanad addresses it |
+| Desired outcome (challenge) | How Sanad delivers it |
 |---|---|
-| Earlier, explainable risk identification | Guideline-grounded risk flags across six domains (metabolic, infectious, anatomical, genetic, lifestyle, semen results), each with a citation. Always labelled **"Screening — not diagnosis."** |
-| Culturally trusted experience | Arabic/English with RTL, neutral language, optional family-plan questions, partner-privacy controls, religiously acceptable sample-collection options. |
-| Lower-friction assessment | Anonymous 6-minute self-assessment, lab-report upload with OCR, teleconsult booking, discreet at-home steps where clinically appropriate. |
-| Safe triage and referral | Deterministic red-flag rules run **before** any AI. Five triage levels from self-care to emergency. Clinician approval for every clinical recommendation. |
-| Privacy by design | Purpose-level consent, data minimisation, user-controlled sharing, in-country (UAE) deployment design. |
-| Demonstrable value | Synthetic cohort of 1,000 cases with clinician-labelled ground truth, safety, fairness and usability metrics. |
+| **Earlier, explainable risk identification** | A male-specific risk model across six domains: metabolic, infectious, anatomical, genetic, lifestyle and test results. Every flag cites a guideline. Every result is labelled **"Screening — not diagnosis."** |
+| **A culturally trusted experience** | Arabic and English with right-to-left layout, neutral language, optional family-plan questions, spouse-privacy controls, and sample-collection options that respect religious views. |
+| **Lower-friction assessment** | Anonymous self-assessment, lab-report upload, teleconsult booking, at-home steps where clinically appropriate, and fewer unnecessary visits. |
+| **Safe triage and referral** | Deterministic red-flag rules run before any AI. Five triage levels, from self-care to emergency. A clinician approves every clinical recommendation. |
+| Privacy and responsible AI *(judging criterion)* | Purpose-level consent, data minimisation, user-controlled sharing, audit trail, Microsoft healthcare safeguards. |
+| Demonstrable value *(judging criterion)* | A synthetic cohort of 1,000 cases with clinician-labelled ground truth, plus safety, fairness and usability metrics. |
 
-## User journeys
+It also covers three points from the challenge brief:
+- **Genomic-enabled care:** with the user's consent, reads premarital genetic screening results and suggests genetic counselling.
+- **Keeping choices open:** fast-track referral for fertility preservation, for example before chemotherapy or for men using testosterone.
+- **Across life stages:** education content for young adults, before marriage, before trying to conceive, and after 40.
 
-| # | Persona | Flow | Outcome |
-|---|---|---|---|
-| J1 | Single man, 24, pre-marriage, high BMI, anabolic steroid use | Anonymous self-assessment | Flags for exogenous testosterone/steroids and obesity → education + primary-care referral. No assumptions about family plans. |
-| J2 | Married man, 31, type 2 diabetes, past mumps orchitis, consanguineous marriage | Self-assessment + HbA1c report upload | Metabolic, infectious-history and genetic flags → genetic counselling + baseline semen analysis. He decides whether to share with his spouse. |
-| J3 | Man, 36, couple trying for 6–12 months | Lab or at-home sample → semen report upload → OCR vs WHO 2021 reference limits | Clinician-reviewed report → andrology/urology referral via FHIR `ServiceRequest`. |
-| J4 | Young man with sudden severe scrotal pain | First screening question | **Pipeline stops.** Immediate emergency guidance from the rules engine — no LLM involved. |
+## How Sanad works: the agentic loop
+
+Sanad is an agent system, not a chatbot. It works through a process: **Perceive → Reason → Plan → Act → Learn**, under human oversight at every step that affects care.
+
+| Stage | What happens | Agents | Azure services | Output |
+|---|---|---|---|---|
+| **1. Perceive** | Collect consent, history, lifestyle and symptoms through conversation. Read uploaded lab reports and, with consent, existing health records. | Gatekeeper (Intake), Evidence | Healthcare Agent Service, Document Intelligence, Azure Health Data Services | FHIR `Consent`, `QuestionnaireResponse`, `Observation` |
+| **2. Reason** | Check red flags first with fixed rules. Then retrieve guidelines and reason over the evidence to produce risk flags with citations. | Safety screening, Clinical Risk | Rules engine (Azure Functions), Healthcare Agent Service Safeguards, AI Content Safety, Foundry Agent Service, Azure OpenAI, AI Search / Foundry IQ | Red-flag decision, risk flags with citations |
+| **3. Plan** | Choose a triage level that is never lower than the rules engine's level. Draft a clinician report and a plain-language summary. Queue for clinician approval. | Clinical Risk, Report | Foundry Agent Service, Azure OpenAI | Suggested triage level, draft reports |
+| **4. Act** | After approval: book a teleconsult, create the referral, send reminders, share data only with consented recipients. | Navigation | Azure Functions, API Management, Azure Health Data Services | FHIR `ServiceRequest`, appointment, reminder |
+| **5. Learn** | Track outcomes, clinician edits and user feedback. Run evaluations. People review results and update rules, prompts and the knowledge base. | All | Azure Monitor, Application Insights, Foundry evaluations | Evaluation reports, reviewed updates |
+
+> **Learn never means training on patient data.** Sanad does not fine-tune models on user data. Improvements come from offline evaluation on synthetic data and from human-reviewed changes to rules, prompts and content.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    U["User app (AR/EN, RTL)"] --> C["Consent"]
-    C --> G["1. Gatekeeper Agent"]
-    RF["Red-flag rules engine (deterministic)"] --> G
-    G -->|"red flag"| ER["Emergency guidance"]
-    G -->|"case ready"| EV["2. Evidence Agent (OCR + Vision PoC)"]
-    EV --> CR["3. Clinical Risk Agent"]
-    KB[("Guideline RAG with citations")] --> CR
-    RF --> CR
-    CR --> RP["4. Report Agent"]
-    RP --> DR{"Clinician review"}
-    DR -->|"approved"| NV["5. Navigation Agent"]
-    NV --> FH[("FHIR: Consent, Observation, ServiceRequest")]
-    NV --> U
+    U["User app<br/>Static Web Apps / App Service"] --> I["Intake<br/>Healthcare Agent Service"]
+    I --> S{"Safety screening<br/>Rules engine + Safeguards + Content Safety"}
+    S -->|"red flag"| E["Emergency guidance<br/>no LLM"]
+    S -->|"safe to continue"| O["Foundry Agent Service<br/>orchestration and tool calling"]
+    O --> L["Azure OpenAI<br/>in Foundry Models"]
+    O --> K[("Clinical RAG<br/>AI Search / Foundry IQ")]
+    O --> T["Tools<br/>Azure Functions + API Management"]
+    T --> F[("FHIR<br/>Azure Health Data Services")]
+    T --> X["Appointment, lab and referral APIs"]
+    O --> R{"Clinician review console"}
+    R -->|"approved"| T
+    M["Azure Monitor + Application Insights"] -.-> O
+    V["Key Vault + Microsoft Entra ID"] -.-> T
 ```
 
-Pipeline: **Consent → Intake/Validation → Evidence → Guidelines (RAG) → Risk Reasoning → Report → Clinician Review → Navigation/Referral**
+Main rules of the design:
+1. **Rules before AI.** The deterministic red-flag check runs first and can stop the pipeline on its own.
+2. **Tools behind a gateway.** Agents reach data and external systems only through API Management, with Entra ID identities and least privilege.
+3. **Clinician approval before action.** For yellow-level cases and above, nothing reaches the user or another provider until a clinician approves it.
+4. **Trace everything.** Every agent step, tool call and approval is traced and audit-logged.
 
-*"A chatbot talks. An agent system works through a process."*
+## Azure services
 
-## The five agents
-
-| Agent | Role | Key guardrails |
+| Layer | Azure service | Purpose |
 |---|---|---|
-| **1. Gatekeeper** (Consent & Intake) | Purpose-level consent, adaptive questionnaire, red-flag check first, "Case Ready" checklist. Outputs FHIR `QuestionnaireResponse`. | Red flags decided by **rules, not the LLM**. Minimal data collection. No questions about religion or marital status unless needed. |
-| **2. Evidence** (Lab OCR + Vision PoC) | Extracts values from semen, hormone, HbA1c and STI reports; normalises units into FHIR `Observation`. Vision PoC detects and tracks sperm on research video. | Low-confidence fields go back to the user for confirmation. Vision output is labelled *research prototype* and is **never used for triage** in the MVP. |
-| **3. Clinical Risk** (Guideline RAG + Reasoning) | Combines rules and retrieval to produce explainable risk flags and a suggested triage level. | Every clinical claim needs a citation (source, section, evidence grade) or it is not shown. Triage can never be lower than the rules engine's level. Abstains when data is insufficient. |
-| **4. Report** | Two outputs: a structured clinician report (key findings, quantitative values, guideline references, safety checks) and a plain-language bilingual summary for the user. | Marked *"AI-generated for clinician review."* User summary for yellow-or-higher cases is released only after clinician approval. |
-| **5. Navigation & Referral** | Turns the approved triage level into action: matching services, teleconsult booking, FHIR `ServiceRequest`, follow-up reminders. | Shares data only with recipients the user has explicitly consented to. |
+| User | Azure Static Web Apps / App Service | Web and mobile front end (PWA, Arabic/English, right-to-left) |
+| Intake | Healthcare Agent Service | Conversation and health-information intake, built-in triage scenarios |
+| Safety screening | Healthcare Agent Service Safeguards + Azure AI Content Safety | Red flags, output safety, response control, Prompt Shields |
+| Reasoning / agents | Foundry Agent Service | Agent reasoning, orchestration, tool calling |
+| LLM | Azure OpenAI in Foundry Models | Reasoning and generation |
+| Clinical RAG | Azure AI Search / Foundry IQ | Retrieval over guidelines and medical documents, with citations |
+| Patient data | Azure Health Data Services (FHIR) | Consent, observations, referrals in FHIR R4 |
+| API / tools | Azure Functions + API Management | Appointment, lab and hospital APIs; deterministic rules engine |
+| Identity / secrets | Key Vault + Microsoft Entra ID | Identity, secrets, access control |
+| Monitoring | Azure Monitor + Application Insights | Tracing, audit, monitoring |
+| Document reading *(added)* | Azure AI Document Intelligence | OCR for semen, hormone, HbA1c and STI reports |
+| Storage *(added)* | Azure Blob Storage | Temporary uploads, deleted automatically after extraction |
 
-**Clinician-in-the-loop:** GPs and andrologists review, edit, approve or reject in a console. Every action is audit-logged.
+> Healthcare Agent Service is **not a medical device** according to Microsoft. Its safeguards (evidence detection, provenance, clinical code validation, disclaimers) complement Sanad's own rules engine and clinician review. They do not replace them.
+
+## Agents
+
+| Agent | Loop stage | Runs on | Role | Guardrails |
+|---|---|---|---|---|
+| **Gatekeeper (Intake)** | Perceive | Healthcare Agent Service | Purpose-level consent, adaptive questionnaire, red-flag questions asked first, "Case Ready" checklist | Red flags decided by **rules, not the LLM**. Minimal data. Family-plan questions are optional. |
+| **Evidence** | Perceive | Function + Document Intelligence | Extracts lab values, normalises units, compares results with WHO 2021 reference limits | Low-confidence fields go back to the user. Files are deleted after extraction. |
+| **Clinical Risk** | Reason, Plan | Foundry Agent Service | Combines rules output with retrieved guidelines to produce risk flags and a suggested triage level | A citation is required for every claim, or the claim is dropped. Triage never goes below the rules floor. Abstains when data is insufficient. |
+| **Report** | Plan | Foundry Agent Service | Writes a structured clinician report and a bilingual plain-language summary | Marked "AI-generated for clinician review". Released after approval for yellow-level cases and above. |
+| **Navigation** | Act | Foundry Agent Service + Functions/APIM | Books care, creates the FHIR `ServiceRequest`, sends reminders | Shares data only with recipients the user consented to. |
+| **Clinician (human)** | Plan → Act | Clinician console | Reviews, edits, approves or rejects | Every action is audit-logged, with service-level targets. |
 
 ## Triage levels
 
-| Level | Example triggers | Action | Reviewer |
+| Level | Example triggers | Next step | Reviewer |
 |---|---|---|---|
-| 🔴 Emergency | Sudden severe scrotal pain, fever with painful swelling, scrotal trauma | Go to emergency now (call 998) | Rules engine; clinician reviews afterwards |
-| 🟠 Priority (≤ 2 weeks) | Palpable testicular mass, no sperm on a report | Urology/andrology referral | Clinician within 24 h |
-| 🟡 Specialist | ≥ 1 parameter below WHO reference limit, cryptorchidism or mumps orchitis history, testosterone/steroid use, ≥ 12 months trying (≥ 6 months if partner ≥ 35) | Andrology/fertility, repeat semen analysis, hormones | Clinician within 48 h |
-| 🔵 Primary care | Obesity, metabolic syndrome, uncontrolled diabetes, STI history, medications affecting spermatogenesis | GP / primary care screening | Clinician |
-| 🟢 Self-care | Lifestyle factors only (smoking, vaping, alcohol, heat exposure) | Cited education, re-check in 3–6 months | Pre-approved content |
+| 🔴 **Emergency** | Sudden severe scrotal pain; fever with painful scrotal swelling; scrotal trauma | Emergency care now (call 998) | Rules engine; clinician reviews afterwards |
+| 🟠 **Priority (≤ 2 weeks)** | Palpable testicular mass; no sperm on a report; **upcoming chemotherapy or radiotherapy (fertility preservation)** | Urology / andrology; fertility preservation counselling | Clinician within 24 h |
+| 🟡 **Specialist** | ≥ 1 parameter below WHO reference limit; cryptorchidism or mumps orchitis history; testosterone/steroid use; ≥ 12 months trying (≥ 6 if partner ≥ 35); **genetic finding from premarital screening** | Andrology / fertility services; genetic counselling | Clinician within 48 h |
+| 🔵 **Primary care** | Obesity, metabolic syndrome, uncontrolled diabetes, STI history, medicines that affect sperm production | GP / primary care screening | Clinician |
+| 🟢 **Self-care** | Lifestyle factors only: smoking, vaping, alcohol, heat exposure | Cited education by life stage; re-check in 3–6 months | Pre-approved content |
 
-> Sanad always tells users: *a result below a reference limit does not mean you cannot have children.*
+> Sanad always says: *a result below a reference limit does not mean you cannot have children.*
 
-## Safety and responsible AI
+## User journeys
 
-- **Deterministic red-flag engine** runs before and independently of every LLM call.
-- **Citation-required RAG** with groundedness checks; ungrounded claims are dropped.
-- **Abstention and calibration** — agents can say "not enough information".
-- **Prompt-injection protection** for uploaded files (Azure AI Content Safety / Prompt Shields).
-- **Red-teaming** with a library of unsafe prompts (e.g. dosing requests, "am I infertile?").
-- **Fairness monitoring** across age, nationality group and language (AR/EN).
-- **Documentation:** model card, data sheet and risk register, mapped to the Abu Dhabi DoH Responsible AI Standard.
+| # | Persona | Flow | Outcome |
+|---|---|---|---|
+| J1 | Single man, 24, before marriage, high BMI, anabolic steroid use | Anonymous self-assessment | Steroid and obesity flags → education + primary care. No assumptions about family plans. |
+| J2 | Married man, 31, type 2 diabetes, past mumps orchitis, consanguineous marriage | Self-assessment + HbA1c upload + consented premarital genetic result | Metabolic, infection-history and genetic flags → genetic counselling + semen analysis. He decides what to share with his spouse. |
+| J3 | Man, 36, couple trying for 6–12 months | Semen report upload → OCR vs WHO 2021 | Clinician-approved report → andrology referral via FHIR `ServiceRequest` |
+| J4 | Man, 19, sudden severe scrotal pain | First screening question | **Pipeline stops.** Emergency guidance from the rules engine, no LLM involved. |
+
+## Safety in layers
+
+| Layer | Control | Where |
+|---|---|---|
+| 1 | Deterministic red-flag rules and triage floors | Rules engine (Azure Functions) |
+| 2 | Healthcare safeguards: evidence detection, provenance, clinical code validation, disclaimers | Healthcare Agent Service |
+| 3 | Content filtering and prompt-injection detection on chat and uploaded files | Azure AI Content Safety, Prompt Shields |
+| 4 | Grounding: citations required, groundedness checks, abstention | Foundry Agent Service + AI Search |
+| 5 | Human approval before clinical action | Clinician console |
+| 6 | Tracing, audit, red-team suite, fairness monitoring | Azure Monitor, Application Insights, `eval/` |
+
+Documentation: model card, data sheet and risk register, mapped to the Abu Dhabi DoH Responsible AI Standard.
 
 ## Privacy by design
 
-- **Purpose-level consent** recorded as FHIR `Consent`: (a) risk assessment, (b) clinician review, (c) sharing with referred provider, (d) sharing with spouse, (e) de-identified data for model improvement — **off by default**. Revocable at any time.
-- **Data minimisation:** anonymous mode until a referral is chosen; images and videos deleted after extraction.
-- **In-country design:** target deployment in Azure **UAE North**, aligned with UAE Federal Law No. 2 of 2019 on health data and ADHICS.
-- **Access control:** RBAC, Entra ID, MFA for clinicians, Key Vault, private endpoints, immutable audit logs.
-- **Plain-language data page:** what your data will and will never be used for.
+- **Purpose-level consent**, stored as FHIR `Consent`: (a) risk assessment, (b) clinician review, (c) sharing with the referred provider, (d) sharing with spouse, (e) de-identified data for improvement, **off by default**. The user can withdraw consent at any time.
+- **Data minimisation:** anonymous mode until the user chooses a referral; uploaded files are deleted after extraction.
+- **Access control:** Entra ID, managed identities, role-based access, MFA for clinicians, secrets in Key Vault, private endpoints.
+- **Plain-language data page:** what the data will be used for, and what it will never be used for.
 
 ## Cultural design principles
 
-1. Neutral language ("men's health", not "infertility"); no assumption that the user is married or wants children.
-2. Sample-collection options that respect religious views, including a non-spermicidal collection device used during marital intercourse. Sanad **does not issue religious rulings** — it presents options and suggests consulting a trusted imam or doctor.
-3. Spousal privacy: nothing is shared with a partner without explicit consent, in either direction.
-4. Discretion: neutral icon, content-free notifications, biometric lock, quick-exit.
-5. Native Arabic and English with full RTL support; option to request a male clinician.
-6. Navigation respects UAE assisted-reproduction law; Sanad never infers a user's religion.
+1. Neutral language ("men's health", not "infertility"). No assumption that the user is married or wants children.
+2. Sample-collection options that respect religious views, including a non-spermicidal collection device used during marital intercourse. Sanad **does not give religious rulings**. It offers options and suggests asking a trusted imam or doctor.
+3. Spouse privacy: nothing is shared with a partner without explicit consent, in either direction.
+4. Discretion: neutral icon, notifications without content, biometric lock, quick exit.
+5. Arabic and English with right-to-left layout; option to request a male clinician.
+6. Navigation follows UAE assisted-reproduction law. Sanad never infers a user's religion.
 
-## Tech stack
+## Data residency
 
-| Layer | Choice |
-|---|---|
-| Frontend | PWA (Next.js), Arabic/English, RTL |
-| Orchestration | Azure AI Foundry Agent Service or Semantic Kernel on Azure Container Apps |
-| LLM | Azure OpenAI (Regional/Provisioned deployment in UAE North for real data) |
-| Arabic medical review (stretch) | MBZUAI **BiMediX2** (open weights) as a terminology and readability reviewer |
-| Retrieval | Azure AI Search (hybrid + semantic) |
-| Document OCR | Azure AI Document Intelligence (custom model) |
-| Vision PoC | YOLO-based detection/tracking trained on VISEM-Tracking |
-| Safety | Azure AI Content Safety, Prompt Shields, custom rules engine |
-| Interoperability | Self-hosted open-source FHIR R4 server in UAE North |
-| Security & ops | Entra ID, Key Vault, Private Endpoints, Log Analytics, Defender for Cloud |
-| Infrastructure as code | Bicep or Terraform |
+UAE Federal Law No. 2 of 2019 restricts storing and processing health data outside the UAE. Before any real data is used, check every service:
 
-> **Data residency note:** Azure Health Data Services (managed FHIR) is not available in UAE North, so Sanad self-hosts FHIR. Azure OpenAI *Global* deployments may process data outside the UAE; the prototype uses synthetic data only, and a pilot would move to a Regional/Provisioned deployment in UAE North.
+| Service | Status | Prototype (synthetic data) | Pilot (real data) |
+|---|---|---|---|
+| Azure Health Data Services (FHIR) | **Not listed for UAE North** (Middle East: Qatar Central only, at last check) | Deploy in a supported region; synthetic data only | Confirm an in-country option, or self-host an open-source FHIR server in UAE North |
+| Healthcare Agent Service | UAE North availability and **Arabic support not confirmed** | Use if available; otherwise build intake in Foundry | Confirm region and language with Microsoft |
+| Azure OpenAI | Global deployments may process data outside the UAE | Global Standard is acceptable | Regional / Provisioned deployment in UAE North |
+| AI Search, Foundry Agent Service | Available in UAE North | UAE North | UAE North |
+| Document Intelligence, Content Safety | Likely available in UAE North, not confirmed on the official page | Check when creating the resource | Confirm |
 
 ## Repository structure
 
 ```text
-sanad/
+sanad-front-door/
 ├── apps/
-│   ├── web/                    # User PWA (AR/EN, RTL)
+│   ├── web/                    # User PWA (Static Web Apps), AR/EN, RTL
 │   └── clinician-console/      # Review, edit, approve queue
-├── services/
-│   ├── orchestrator/           # Agent pipeline and state
-│   ├── agents/
-│   │   ├── gatekeeper/
-│   │   ├── evidence/
-│   │   ├── clinical_risk/
-│   │   ├── report/
-│   │   └── navigation/
-│   ├── rules-engine/           # Deterministic red flags and triage floors
-│   └── fhir/                   # FHIR server config and profiles
+├── intake/                     # Healthcare Agent Service scenarios and safeguard settings (exported)
+├── agents/                     # Foundry Agent Service definitions and prompts
+│   ├── clinical_risk/
+│   ├── report/
+│   └── navigation/
+├── functions/                  # Azure Functions
+│   ├── rules_engine/           # Deterministic red flags and triage floors
+│   ├── evidence/               # Document Intelligence OCR → FHIR Observation
+│   └── tools/                  # Appointment, lab, referral, FHIR tools
+├── apim/                       # API Management policies and API definitions
 ├── knowledge/
 │   ├── manifests/              # Guideline sources, sections, versions, evidence grades
-│   └── ingestion/              # Chunking + indexing scripts (no copyrighted PDFs committed)
+│   └── ingestion/              # Chunking + indexing into AI Search / Foundry IQ
+├── fhir/                       # FHIR profiles and synthetic sample bundles
 ├── data/
-│   ├── synthetic/              # Cohort generator and generated cases
+│   ├── synthetic/              # Cohort generator and cases
 │   └── ocr-samples/            # Synthetic lab reports (AR/EN)
-├── vision-poc/                 # VISEM-Tracking experiments
-├── eval/                       # Metrics, fairness, red-team suites, reports
-├── infra/                      # Bicep/Terraform for UAE North
+├── vision-poc/                 # VISEM-Tracking experiments (stretch)
+├── eval/                       # Metrics, fairness, red-team, reports
+├── infra/                      # Bicep templates
 ├── docs/                       # Architecture, model card, data sheet, risk register
-├── docker-compose.yml
 └── README.md
 ```
 
 ## Getting started
 
-> Commands below describe the intended setup; update them as the code lands.
+> These commands describe the intended setup. Update them as the code lands.
 
 ### Prerequisites
 
-- Docker and Docker Compose
+- Azure subscription with access to Foundry, Azure OpenAI, AI Search, Healthcare Agent Service and Azure Health Data Services
+- Azure CLI, Azure Functions Core Tools
 - Python 3.11+ and Node.js 20+
-- An Azure subscription with access to Azure OpenAI, Azure AI Search and Document Intelligence
 
 ### Configuration
 
-Copy `.env.example` to `.env` and fill in:
+Copy `.env.example` to `.env`:
 
 ```bash
-AZURE_OPENAI_ENDPOINT=
+FOUNDRY_PROJECT_ENDPOINT=
 AZURE_OPENAI_DEPLOYMENT=
 AZURE_SEARCH_ENDPOINT=
 AZURE_SEARCH_INDEX=sanad-guidelines
-AZURE_DOCINTEL_ENDPOINT=
-AZURE_CONTENT_SAFETY_ENDPOINT=
-FHIR_BASE_URL=http://localhost:8080/fhir
+HEALTHCARE_AGENT_ENDPOINT=
+CONTENT_SAFETY_ENDPOINT=
+DOCINTEL_ENDPOINT=
+FHIR_BASE_URL=
+APIM_GATEWAY_URL=
+KEY_VAULT_URI=
+APPLICATIONINSIGHTS_CONNECTION_STRING=
 ```
 
-Never commit real keys or real patient data.
+Use managed identities where possible. Never commit keys or real patient data.
 
-### Run locally
+### Run
 
 ```bash
-git clone https://github.com/<org>/sanad.git
-cd sanad
+git clone https://github.com/aetherhealth-sanad/sanad-front-door.git
+cd sanad-front-door
 cp .env.example .env
-docker compose up -d                       # FHIR server, orchestrator, apps
-python knowledge/ingestion/build_index.py  # Index the guideline corpus
-python data/synthetic/generate.py --n 1000 # Generate the synthetic cohort
+az deployment group create -g <resource-group> -f infra/main.bicep   # Azure resources
+python knowledge/ingestion/build_index.py                            # Index guidelines
+python data/synthetic/generate.py --n 1000                           # Synthetic cohort
+func start --script-root functions/                                  # Rules engine and tools locally
 ```
 
-Then open the user app and the clinician console at the ports listed in `docker-compose.yml`.
-
-### Run the evaluation
+### Evaluate
 
 ```bash
 python eval/run_eval.py --cohort data/synthetic/cohort.jsonl --out eval/reports/
@@ -233,7 +273,7 @@ python eval/run_eval.py --cohort data/synthetic/cohort.jsonl --out eval/reports/
 
 ## Evaluation
 
-All figures are **targets** for simulated performance on synthetic data; results will be published in `eval/reports/`.
+All figures are **targets** for simulated performance on synthetic data. Results go to `eval/reports/`.
 
 | Area | Metric | Target |
 |---|---|---|
@@ -245,61 +285,52 @@ All figures are **targets** for simulated performance on synthetic data; results
 | Calibration | Expected calibration error | ≤ 0.05 |
 | OCR | Field-level accuracy | ≥ 95% |
 | Fairness | Max gap between subgroups (age, nationality group, AR/EN) | ≤ 5 percentage points |
+| Access | Cases resolved without an in-person visit (self-care or teleconsult) | Reported |
 | Process | Assessment completion rate | ≥ 80% |
 | Experience | System Usability Scale | ≥ 75 |
 | Clinical | Clinician rating of report quality (1–5) | ≥ 4.2 |
 
-**Ground truth:** two clinicians independently label a stratified subset of 200 cases (Cohen's κ reported); remaining cases use guideline-derived rule labels.
-
-## Data and knowledge sources
-
-**Clinical knowledge (RAG corpus)** — each chunk carries `source`, `edition`, `section`, `page`, `evidence_grade`, `jurisdiction`, `last_reviewed`:
-
-- WHO Laboratory Manual for the Examination and Processing of Human Semen, 6th edition (2021)
-- AUA/ASRM Guideline on Diagnosis and Treatment of Infertility in Men (2020, amended 2024)
-- EAU Guidelines on Sexual and Reproductive Health
-- NICE CG156 — Fertility problems: assessment and treatment
-
-Guideline documents are copyrighted by their publishers. This repo stores **manifests and ingestion scripts only**; obtain the source documents from the publishers.
-
-**Datasets**
-
-- [VISEM-Tracking](https://www.nature.com/articles/s41597-023-02173-4) — sperm video dataset (CC BY 4.0), used for the Vision PoC
-- Synthetic patient cohort — generated in `data/synthetic/`
-- Synthetic Arabic/English lab reports — generated in `data/ocr-samples/`
+Ground truth: two clinicians independently label 200 stratified cases (Cohen's κ reported). The other cases use labels derived from guideline rules.
 
 ## Roadmap
 
 | Week | Dates (2026) | Milestone |
 |---|---|---|
-| 1 | 22–28 Oct | Scope locked, guideline corpus indexed, red-flag rules v1 signed off by a clinician, Azure baseline in UAE North |
-| 2 | 29 Oct – 4 Nov | Gatekeeper + Clinical Risk Agent with citations, FHIR server, synthetic cohort v1, OCR model v1 — journeys J1 and J4 end-to-end |
-| 3 | 5–11 Nov | Report Agent, clinician console, Navigation Agent + `ServiceRequest`, Vision PoC, first evaluation run — J2 and J3 working |
-| 4 | 12–20 Nov | Fixes from evaluation, fairness and red-team, usability testing, demo video, documentation — **submit by 19 Nov** |
+| 1 | 22–28 Oct | Scope locked, guideline corpus, red-flag rules v1 signed off by a clinician, Azure baseline |
+| 2 | 29 Oct – 4 Nov | Intake on Healthcare Agent Service, rules engine, Clinical Risk Agent with citations, FHIR, synthetic cohort, OCR v1. **J1 and J4 end-to-end** |
+| 3 | 5–11 Nov | Report Agent, clinician console, Navigation with Functions/APIM, evaluation v1. **J2 and J3 end-to-end** |
+| 4 | 12–19 Nov | Fixes, fairness, red-team, usability test, demo video, documentation. **Submit 19 Nov** (deadline 20 Nov) |
 
-**Stretch:** live Vision PoC, BiMediX2 Arabic reviewer, Arabic voice input, mock Malaffi integration, end-to-end encrypted partner sharing.
+**Stretch:** Vision PoC on VISEM-Tracking, Arabic medical reviewer with MBZUAI BiMediX2, Arabic voice input, mock Malaffi integration.
 
-## Assumptions and limitations
+## Project management
 
-- Performance is measured on **synthetic data** and may not reflect real users.
-- Consanguinity rates in the UAE vary widely across sources; the cohort generator samples a range and reports sensitivity analysis.
-- The Vision PoC is trained on a non-Gulf research cohort and is **not** used for clinical decisions.
-- Many lifestyle risk factors have limited evidence (low guideline grades); Sanad shows the evidence grade and does not recommend treatment based on weak evidence alone.
-- Clinician review times (24–48 h) are design assumptions, not validated service levels.
-- Regulatory classification (e.g. software as a medical device) would need confirmation with the relevant UAE authorities before any pilot.
+- Organization: [`aetherhealth-sanad`](https://github.com/aetherhealth-sanad)
+- Project board: **Sanad Front Door** (organization project #2), views: Backlog, Priority board, Team items, Roadmap, My items
+- Backlog: 41 issues, 4 weekly milestones, labels `role:*`, `area:*`, `P0-mvp`, `P1-stretch`
+- Flow: assign yourself → branch `feat/<issue>-<name>` → PR with `Closes #<issue>` → one review → merge
 
 ## Team
 
 **AetherHealth**
 
-| Role | Name |
-|---|---|
-| Product & clinical lead | _TBD_ |
-| AI / agent engineer | _TBD_ |
-| Backend & cloud | _TBD_ |
-| Frontend & UX | _TBD_ |
-| Data & evaluation | _TBD_ |
-| Clinical advisor (urology/andrology) | _TBD_ |
+| Member | Role | Owns |
+|---|---|---|
+| Trung | Tech lead | Architecture, Azure and CI, FHIR, rules engine, security, review, submission |
+| Phúc | Senior AI engineer | RAG, Foundry agents, safety layers, red-team; mentors Hoàng |
+| Hoàng | AI engineer (OCR, deep learning) | Synthetic lab reports, Document Intelligence OCR, Vision PoC, cohort and evaluation |
+| Vinh | Full-stack engineer | User app, clinician console, approval workflow, Navigation tools |
+| Đạt | Business analyst | Scope, journeys, red flags with clinicians, ground truth, usability, docs, demo script |
+| _TBD_ | Clinical advisor (urology/andrology) | Red-flag sign-off, case labelling |
+
+## Assumptions and limitations
+
+- Performance is measured on **synthetic data** and may not reflect real users.
+- Consanguinity rates in the UAE vary widely between sources (about 39–65%). The cohort samples a range and reports sensitivity analysis.
+- Many lifestyle risk factors have limited evidence (low guideline grades). Sanad shows the evidence grade and does not recommend treatment based on weak evidence alone.
+- Healthcare Agent Service region and Arabic support, and an in-country FHIR option, must be confirmed before any pilot.
+- Clinician review times (24–48 h) are design assumptions.
+- Regulatory classification (for example software as a medical device) must be confirmed with UAE authorities before any pilot.
 
 ## License
 
