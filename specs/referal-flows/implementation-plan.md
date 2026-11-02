@@ -1,0 +1,291 @@
+# Referral Flows — Implementation Plan
+
+| Item | Value |
+|---|---|
+| **Status** | Draft for team review. No code written. |
+| **Version / date** | 0.1, 2026-11-02 |
+| **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17` |
+| **Verified by** | [Test plan](test-plan.md) |
+
+Everything here is `PROPOSED` until the Tech Lead accepts it. Requirements live in the product spec, and this document only says how to build them.
+
+## 1. Schedule
+
+Today is Monday 2 Nov 2026. The milestones line up with the [BRD delivery plan](../Sanad_AetherHealth_BRD_v0.3.md#17-delivery-plan--change-control):
+
+| Milestone | Dates | BRD phase | Exit |
+|---|---|---|---|
+| **M1** App foundation | 2–4 Nov | Core workflow | §7 M1 exit criteria |
+| **M2** J1 and J4 | 4–6 Nov | Core workflow ends 6 Nov | §7 M2 exit criteria |
+| **M3** J2, J3, referral path | 7–12 Nov | Review and lab path ends 12 Nov | §7 M3 exit criteria |
+| Evaluation and hardening, including the [uncovered P0 items](product-spec.md#33-prd-p0-items-this-spec-does-not-deliver) | 13–17 Nov | Evaluation | Separate spec |
+| Freeze / submission | 19 / 20 Nov | Submission | |
+
+**M1 and M2 together have five working days, and that is tight.** If they slip, keep the safety, consent and order-guard work and cut in this order:
+
+1. RF-16 (J2, exploratory).
+2. Polish on the reviewer pages. The four decisions and the gates stay.
+3. The CD step (AC-01.4). Run the demo from a local build over HTTPS instead.
+
+Never cut the gate, the emergency path, consent checks or Mock labels. Those are the BRD's stop-the-demo conditions.
+
+## 2. Stack
+
+The specs leave the stack open. This choice follows what they mention and favours speed for a two-week build.
+
+| Layer | Choice | Why |
+|---|---|---|
+| Web | React, TypeScript, Vite | Fast to build. One app serves patient, reviewer and mock facility routes. |
+| Offline | Hand-written service worker, about 50 lines | A short allow-list is easier to audit than a generated cache policy, and AC-05.4 depends on exactly what is cached. |
+| API | Python, FastAPI, Pydantic | The PRD names Pydantic for the Gatekeeper, and it generates the OpenAPI schema. |
+| Store | SQLite through SQLAlchemy | Enough for a synthetic single-instance demo. No cloud dependency. Swappable later. |
+| Types across the boundary | TypeScript generated from OpenAPI | Stops client and server contracts drifting. CI fails on drift. |
+| Rules | Versioned JSON read by both Python and TypeScript | The emergency check must run in the browser if the API is down (AC-10.3). |
+| Tests | pytest, Vitest, Playwright | Playwright can switch the network off and test mobile viewports. |
+| CI/CD | GitHub Actions | The repository is on GitHub. |
+| Local run | Docker Compose | Meets the BRD's one-command requirement (AC-01.5). |
+
+Azure stays a deployment candidate only (`TECH_TBD`). Nothing in application code depends on it.
+
+## 3. Repository layout
+
+This follows the README's proposal where it can. The differences are one web app instead of two (R14), and `apps/api` instead of `functions/`, because Azure Functions is unconfirmed.
+
+```text
+sanad-front-door/
+├── apps/
+│   ├── web/
+│   │   ├── public/
+│   │   │   ├── urgent.html            # RF-05: self-contained, no framework
+│   │   │   └── sw.js                  # RF-05: allow-listed precache
+│   │   └── src/
+│   │       ├── routes/{patient,clinician,mock-facility}/
+│   │       ├── components/            # MockBadge, QuickExit, UrgentLink
+│   │       ├── session/               # Token handling, quick-exit wipe
+│   │       └── api/                   # Generated types and client
+│   └── api/
+│       └── sanad_api/
+│           ├── cases/                 # Case model, state machine, routes
+│           ├── consent/               # Ledger, scope checks
+│           ├── rules_engine/          # Safety check, signals, floors
+│           ├── gatekeeper/            # Completeness, conflicts, units
+│           ├── facts/                 # Thin SemanticFact
+│           ├── reports/               # Template drafts
+│           ├── review/                # Queue, decisions
+│           ├── referral/              # Gate, referral, lifecycle
+│           ├── mock_facility/         # Mock events
+│           ├── tracking/              # Timeline, delayed flag
+│           └── audit/                 # Minimal audit log
+├── rules/
+│   ├── emergency.draft-0.1.json       # CLINICAL_TBD
+│   └── triage.draft-0.1.json          # CLINICAL_TBD
+├── catalogue/
+│   └── questions.draft-0.1.json
+├── schemas/
+│   └── upload-profile.schema.json     # RF-02: closed schema
+├── data/synthetic/assessments/        # One folder per case, PRD §4.2
+├── eval/golden/                       # PRD §7 layout
+├── scripts/                           # fixture-guard, spec-trace
+├── .github/workflows/
+└── docker-compose.yml
+```
+
+## 4. Key design decisions
+
+### 4.1 Case state
+
+- One table-driven module, `cases/state_machine.py`, holds every allowed transition. All state changes go through `transition(case, event, actor)`. No other code writes `state`.
+- `GET /cases/{id}/state` returns state, version, route and allowed actions. The client stores none of these. It redirects on the `route` value, so a reload resumes correctly and storage edits do nothing (AC-04.1, AC-04.6).
+- `case_version` goes up with each change to facts. Review decisions and referrals bind to a version (AC-08.5, AC-12.4).
+
+### 4.2 Session
+
+- `POST /cases` returns an opaque token. The client keeps it in `sessionStorage` and sends it as a Bearer header.
+- A per-tab token over a cookie means the presenter can hold patient, reviewer and mock facility sessions in one browser, and it matches the OD-03 default.
+- Reviewer and mock facility users sign in with seeded demo accounts. Their passwords come from environment variables and never from the repo.
+
+### 4.3 Referral gate
+
+`referral/gate.py` has two parts:
+
+- `evaluate_gate(inputs) -> GateDecision` is a **pure function** with no I/O and no early return, so it collects every failing code. Tests can drive it through the full truth table, including combinations the state machine would never reach.
+- `POST /cases/{id}/mock-referral` loads fresh consent, review and case data inside one database transaction, calls `evaluate_gate`, and writes the decision and the referral together. Only this function constructs a `Referral`, and an architecture test enforces that (AC-12.7, AC-12.8).
+
+`GET /cases/{id}/referral-gate` runs the same function for the preview on `/referral`. A preview grants nothing.
+
+### 4.4 Emergency path
+
+```mermaid
+flowchart LR
+    SW[Service worker] -->|install| PC[Precache allow-list]
+    PC --> U[urgent.html]
+    PC --> R[emergency rules JSON]
+    N[Any navigation] --> OL{Online?}
+    OL -->|Yes| APP[Normal app]
+    OL -->|No| U
+    S[Safety screen] --> API{API reachable?}
+    API -->|Yes| SRV[Server check decides state]
+    API -->|No| BR[Browser check]
+    BR -->|Positive| U
+    BR -->|Negative| RT[Retry and emergency link]
+```
+
+- `urgent.html` uses inline CSS and a small inline script for Quick exit. Links to it are plain anchors, so opening it does not depend on the React bundle.
+- The service worker handles only `GET` requests that match the allow-list. It never touches `/api/*`, and it is network-only for anything else. API responses set `Cache-Control: no-store`.
+- The cache name includes the build SHA, so a new deploy replaces the old copy (AC-05.6).
+- Service workers require HTTPS or localhost, so staging must be HTTPS (OD-05).
+- The start screen's offline message reads the worker's real state (AC-05.7).
+
+### 4.5 Quick exit
+
+The handler in `session/quickExit.ts` runs in this order and is deliberately synchronous up to the last step:
+
+1. Read the session token into a local variable.
+2. Clear the root element's content and reset in-memory stores, including any selected `File`.
+3. Clear `sessionStorage` and `localStorage`, leaving Cache Storage alone because it holds only static emergency files.
+4. Send the token in the body with `navigator.sendBeacon('/api/session/end', body)`, which is fire-and-forget and may fail silently. Beacons cannot set an `Authorization` header.
+5. Call `location.replace(neutralUrl)`.
+
+HTML responses set `Cache-Control: no-store`. A `pageshow` handler treats `event.persisted` as a reason to wipe and redirect, which covers the back-forward cache (AC-09.3).
+
+### 4.6 Rules and drafts
+
+- `rules/*.json` are versioned data files, each rule carrying `rule_id`, `version` and `approval_status: CLINICAL_TBD`. Rule logic reads them. No thresholds are written into code.
+- Triggers and thresholds are taken from the README's draft table. **Numeric reference limits and the BMI cut-off need BA and Clinical input and are not invented by engineers.** Until supplied, fixtures use `reference_source` values with explicit test data.
+- Proposed rule IDs: `DRAFT-EMERG-01` to `03`, `DRAFT-BMI-CONTEXT-01`, `DRAFT-STEROID-01`, `DRAFT-LAB-BELOW-REF-01`, `DRAFT-LAB-NO-SPERM-01`, `DRAFT-METABOLIC-01`, `DRAFT-GENETIC-01`.
+- Drafts come from templates, so the same input always gives the same text (AC-11.5). Evidence sections show "insufficient evidence" until RAG exists.
+
+### 4.7 Mock boundary
+
+- Referral and mock facility code has no outbound client, which an import-lint test enforces (AC-12.8).
+- A single `MockBadge` component is the way to show mock status. `eval/mock-screens.json` lists each screen with simulated data, and the E2E audit visits all of them (AC-17.3).
+- `PROVIDER_VERIFIED` and `CARE_COMPLETED` are absent from the event enums, so writing them fails validation (AC-13.3).
+
+### 4.8 Delayed flag
+
+Computed on read in `tracking/delay.py` from the last event time, the current time and the configured threshold. There is no background job and no notification path. The clock is injected, so tests can check both sides of the boundary (AC-14.2).
+
+## 5. API
+
+The full contract, including endpoints, access checks, action rules and error codes, is in the [API design](api-design.md). Each endpoint there names the task that builds it.
+
+## 6. Tasks
+
+Owners follow the [README team table](../../README.md#team) as a suggestion and need confirming. "Status" is updated in the PR that finishes the task.
+
+### M1 App foundation
+
+| Task | Work | Delivers | Depends on | Suggested owner | Status |
+|---|---|---|---|---|---|
+| T1.1 | Monorepo scaffold, Docker Compose, quickstart in README, real commands in AGENTS.md | AC-01.5 | None | Trung | Not started |
+| T1.2 | CI workflow, required checks, `fixture-guard`, `spec-trace`, secret scan | AC-01.1, AC-01.3 | T1.1 | Trung | Not started |
+| T1.3 | Branch protection on `main` (needs repo admin) | AC-01.2 | T1.2 | Trung | Not started |
+| T1.4 | CD to HTTPS staging with `/version` | AC-01.4 | T1.2, OD-05 | Trung | Not started |
+| T1.5 | Case model, state machine table, audit log, session token, state API, OpenAPI type generation | AC-04.3, AC-04.4, AC-04.6, AC-04.7, INV-03, INV-04, INV-09 | T1.1 | Trung, Vinh | Not started |
+| T1.6 | Patient shell, route guard, UrgentLink, QuickExit placeholder | AC-04.1, AC-04.2, AC-05.8, INV-10, INV-11 | T1.5 | Vinh | Not started |
+| T1.7 | Start screen with samples, file selection and blank start | AC-02.1, AC-02.2, AC-02.3, AC-02.6 | T1.6 | Vinh | Not started |
+| T1.8 | Consent screen, consent ledger, `/privacy`, `/education` | AC-03.1 to AC-03.6 | T1.5, T1.6 | Vinh, Trung | Not started |
+| T1.9 | `urgent.html`, service worker, offline indicator | AC-04.5, AC-05.1 to AC-05.7 | T1.6 | Vinh | Not started |
+| T1.10 | First fixtures, upload schema and validator, profile API | AC-02.4, AC-02.5, INV-02 | T1.5, T1.8 | Đạt, Vinh | Not started |
+| T1.11 | Consent, emergency and education copy draft, tagged `CLINICAL_TBD` where clinical | Copy for AC-03.1, AC-05.5, INV-08 | None | Đạt | Not started |
+
+### M2 J1 and J4
+
+| Task | Work | Delivers | Depends on | Suggested owner | Status |
+|---|---|---|---|---|---|
+| T2.1 | Emergency catalogue, server and browser checks, safety screen, late-trigger edge | AC-10.1 to AC-10.7, INV-01, INV-07 | T1.9 | Trung, Vinh | Not started |
+| T2.2 | Question catalogue, follow-up form, field states | AC-06.1 to AC-06.6, INV-05 | T1.8 | Vinh, Đạt | Not started |
+| T2.3 | Thin `SemanticFact` and Gatekeeper | AC-06.3, AC-11.2 | T2.2 | Trung | Not started |
+| T2.4 | Triage rules, risk signals, floor enforcement | AC-11.1, AC-11.5, AC-11.6, INV-06 | T2.3 | Trung | Not started |
+| T2.5 | Template drafts for patient and reviewer, `/result` | AC-11.3, AC-11.4 | T2.4 | Vinh | Not started |
+| T2.6 | MockBadge and send button with just-in-time consent | AC-07.1 to AC-07.6, AC-17.1, AC-17.2, AC-17.4 | T2.5 | Vinh | Not started |
+| T2.7 | Reviewer sign-in, role checks, queue, detail, decisions, version conflict, banner | AC-08.1 to AC-08.9 | T2.6 | Vinh, Trung | Not started |
+| T2.8 | Quick exit, full wipe, session end, back-forward cache protection, neutral titles | AC-09.1 to AC-09.8 | T1.9, T1.6 | Vinh | Not started |
+| T2.9 | Remaining J1, J4 and J5 fixtures, golden cases, J1 and J4 E2E | Journey tests in the test plan | T2.1 to T2.8 | Đạt, Hoàng | Not started |
+
+### M3 J2, J3 and the referral path
+
+| Task | Work | Delivers | Depends on | Suggested owner | Status |
+|---|---|---|---|---|---|
+| T3.1 | `evaluate_gate`, send endpoint, preview endpoint, architecture tests | AC-12.1 to AC-12.5, AC-12.7 to AC-12.9 | T2.7 | Trung | Not started |
+| T3.2 | `NAVIGATION_STARTED`, `/referral` screen, three-condition display | AC-12.6 | T3.1 | Vinh | Not started |
+| T3.3 | Referral and event models, lifecycle table | AC-13.2, AC-13.3, AC-13.6 | T3.1 | Trung | Not started |
+| T3.4 | Mock facility console and mock directory | AC-13.1, AC-13.2, AC-13.4, AC-13.5 | T3.3 | Vinh | Not started |
+| T3.5 | Tracking screen, timeline, delayed flag | AC-14.1 to AC-14.7 | T3.3 | Vinh, Trung | Not started |
+| T3.6 | Consent revocation in flight | AC-13.4, OD-10 | T3.4 | Trung | Not started |
+| T3.7 | J3 lab entry, confirmation, conflict handling, draft rules | AC-15.1 to AC-15.6 | T2.5 | Vinh, Hoàng | Not started |
+| T3.8 | J2 selective evidence (drop first if late) | AC-16.1 to AC-16.4 | T3.1 | Vinh, Đạt | Not started |
+| T3.9 | Mock label audit, full E2E, demo script for this flow | AC-17.3 | T3.1 to T3.7 | Hoàng, Đạt | Not started |
+
+### Critical path
+
+```mermaid
+flowchart LR
+    T11[T1.1 Scaffold] --> T12[T1.2 CI]
+    T11 --> T15[T1.5 Case and state]
+    T15 --> T16[T1.6 Shell]
+    T16 --> T18[T1.8 Consent]
+    T16 --> T19[T1.9 Offline]
+    T18 --> T22[T2.2 Form]
+    T22 --> T24[T2.3 and T2.4 Rules]
+    T24 --> T25[T2.5 Draft]
+    T25 --> T26[T2.6 Send]
+    T26 --> T27[T2.7 Review]
+    T27 --> T31[T3.1 Gate]
+    T31 --> T33[T3.3 Referral]
+    T33 --> T34[T3.4 Mock facility]
+    T33 --> T35[T3.5 Tracking]
+```
+
+T1.5 and T3.1 carry the most design risk and should get the closest review.
+
+## 7. Milestone exit criteria
+
+Every item is required to exit its milestone. "Blocking tests" means the tests marked `B` in the [test plan](test-plan.md) for that milestone's requirements.
+
+**M1**
+- [ ] All M1 blocking tests pass in CI.
+- [ ] A broken branch is shown to be blocked from merging.
+- [ ] Offline emergency guidance is confirmed on a real phone, not only in Playwright.
+- [ ] A wrong-order URL and a forbidden API call are both refused in a demo run.
+
+**M2**
+- [ ] All M2 blocking tests pass in CI.
+- [ ] J1 runs from sample to reviewer decision, with the Mock banner visible.
+- [ ] J4 reaches guidance with no model configured and with the API stopped.
+- [ ] Quick exit passes the manual checklist on a real phone.
+
+**M3**
+- [ ] All M3 blocking tests pass in CI.
+- [ ] A live run shows the referral blocked for each missing condition, then allowed once all three pass.
+- [ ] A mock referral runs through accept, appointment and close, and through reject, and the delayed flag appears and clears.
+- [ ] The Mock label audit passes.
+- [ ] J3 completes from lab entry to mock referral.
+
+## 8. Risks
+
+| Risk | Effect | Response |
+|---|---|---|
+| No clinical advisor before the demo (BRD R-07) | Emergency and floor content stays unapproved | Stays labelled simulated. Escalate OD-02 now. |
+| Clinical values missing for rules | J1 BMI context and J3 rules cannot be finalised | Fixtures carry explicit test values, labelled draft. BA obtains values, and engineers do not choose them. |
+| Service worker behaves differently on iOS Safari | Offline guarantee fails on a common phone | Manual check on a real iPhone at M1 exit. Fix before M2. |
+| Staging is not HTTPS or Azure is unconfirmed (OD-05) | Offline does not work in a deployed demo | Decide by 3 Nov. The fallback is any HTTPS container host. |
+| M1 and M2 run past 6 Nov | M3 compresses, and evaluation time shrinks | Apply the cut order in §1. |
+| J9, J10, evidence and funnel unplanned | MVP not met even if M3 passes | Raise with Product now. Needs a follow-up spec. |
+| Session lasts only as long as the tab (OD-03) | A real facility's slow response could not be tracked | Acceptable for a demo. Stated as a limitation. Must change before any pilot. |
+| Shared device or real data typed in | Privacy exposure | "Do not enter real data" notices, a closed upload schema, no-store responses, Quick exit. |
+
+## 9. Before starting
+
+Needed to begin M1:
+
+- [ ] Tech Lead accepts §2 and §3.
+- [ ] Owners are confirmed against §6.
+- [ ] Repo admin access is available for T1.3.
+
+Needed soon, but not blocking the start:
+
+- [ ] OD-05 (deploy target) by 3 Nov.
+- [ ] OD-01 (send button meaning) by the start of T2.6.
+- [ ] Rule values from BA and Clinical by the start of T2.4.
+- [ ] OD-12 (who approves the change-control items) before the M3 demo.
