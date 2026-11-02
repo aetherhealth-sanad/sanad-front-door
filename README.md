@@ -200,6 +200,166 @@ New in v0.3. After guidance, users may tell Sanad what happened next. Everything
 - **No default reminders.** Notifications are P2 and require separate consent.
 - **`CARE_COMPLETED` is never set in the MVP**, and `NO_UPDATE` does not mean missed treatment.
 
+### Referral workflow (v0.3, updated)
+
+How a referral is proposed, sent and tracked, with safety controls, clinical approval and user consent.
+
+> [!NOTE]
+> **Team proposal, not yet reconciled with the specs.** Where this workflow differs from the BRD or PRD (see the table at the end of this section), the specs take precedence until [change control](#project-management) says otherwise. In the MVP the provider side is **mock**: nothing reaches a real clinic, and no visit or report is verified.
+
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 30, "rankSpacing": 35, "wrappingWidth": 260, "subGraphTitleMargin": {"top": 4, "bottom": 8}}}}%%
+flowchart TD
+    %% Subgraph order sets the lane order: the last one defined renders leftmost.
+    subgraph SANAD["Sanad system (Agent & Rules)"]
+        S1["1 · Create draft referral<br/>POST /referrals → DRAFT<br/>(internal only, not shared yet)"]
+        S2["2 · Gatekeeper<br/>Checks data completeness,<br/>sources, conflicts, quality"]
+        S3{"3 · Emergency screening<br/>(Emergency Gate)"}
+        S4["4 · Rules & Evidence<br/>Proposed triage<br/>TRIAGE_PROPOSED<br/>(floor · CLINICAL_TBD,<br/>with reasons)"]
+        S5{"5 · Clinical Review Gate<br/>Clinical approval needed?"}
+        S6["6 · User decision & consent<br/>Shows the proposal, benefits/risks<br/>and data-sharing policy"]
+        S7["7 · Send referral<br/>POST /referrals/{id}/send<br/>SENT<br/>(with consent and data scope)"]
+        TRACK["Closed-loop tracking<br/>(Care Progress Tracking)<br/>• Update statuses and timestamps<br/>• Record barriers, if any: cost,<br/>privacy, service availability,<br/>language, etc.<br/>• Appropriate reminders<br/>(configurable, per consent)<br/>• Manage waiting and<br/>overdue states<br/>(PENDING_RESPONSE, OVERDUE)"]
+        COMPLETED(["Care loop completed<br/>CARE_JOURNEY_COMPLETED<br/>(or ended early at the user's choice)<br/>Pilot only"])
+    end
+
+    subgraph CLINICIAN["Clinician (Clinical Reviewer)"]
+        REVIEW["Review & approve<br/>APPROVED /<br/>REVISION_REQUESTED"]
+    end
+
+    subgraph PROVIDER["Healthcare Provider (mock in the MVP)"]
+        H8["8 · Receive referral<br/>Reviews the record and responds"]
+        H8Q{"Response?"}
+        ACCEPTED["ACCEPTED<br/>Confirms acceptance"]
+        DECLINED["DECLINED<br/>(with reason)"]
+        H9["9 · Book visit<br/>SCHEDULED<br/>(date, time, format)"]
+        H10["10 · Visit<br/>SEEN (took place)<br/>Pilot only"]
+        H11["11 · Return report<br/>REPORT_RETURNED<br/>(results, recommendations, plan)<br/>Pilot only"]
+    end
+
+    subgraph USER["User (Patient)"]
+        START(["Start"])
+        PROFILE["Provide profile /<br/>complete assessment<br/>(symptoms, context, etc.)"]
+        EMERGENCY["Emergency handling<br/>EMERGENCY_ESCALATED<br/>(safety guidance,<br/>emergency contact,<br/>no LLM call)"]
+        CHOICE{"Review the proposal<br/>and choose"}
+        GUIDANCE["End at guidance<br/>GUIDANCE_ONLY<br/>(reason saved, if given)"]
+        FINISH(["End"])
+    end
+
+    START --> PROFILE --> S1 --> S2 --> S3
+    S3 -->|"Emergency signal"| EMERGENCY
+    S3 -->|"No"| S4
+    S4 --> S5
+    S5 -->|"Yes"| REVIEW
+    S5 -->|"No"| S6
+    REVIEW -->|"Approved"| S6
+    REVIEW -->|"Request additions / changes"| S4
+    S6 --> CHOICE
+    CHOICE -->|"Agree to send referral"| S7
+    CHOICE -->|"Guidance only,<br/>or decline / not ready"| GUIDANCE
+    GUIDANCE --> FINISH
+    S7 --> H8 --> H8Q
+    H8Q -->|"Accept"| ACCEPTED
+    H8Q -->|"Decline"| DECLINED
+    ACCEPTED --> H9 --> H10 --> H11
+    ACCEPTED --> TRACK
+    H9 --> TRACK
+    H10 --> TRACK
+    TRACK --> COMPLETED
+    H11 --> COMPLETED
+    DECLINED <-.-> H11
+
+    classDef user fill:#e8f5e9,stroke:#43a047,color:#1b5e20
+    classDef system fill:#e3f2fd,stroke:#1e88e5,color:#0d47a1
+    classDef clinician fill:#f3e5f5,stroke:#8e24aa,color:#4a148c
+    classDef provider fill:#fff8e1,stroke:#f9a825,color:#4e342e
+    classDef alert fill:#ffebee,stroke:#e53935,color:#b71c1c
+    classDef pilot stroke-dasharray:6 4
+    class START,PROFILE,CHOICE,GUIDANCE,FINISH,COMPLETED user
+    class S1,S2,S4,S6,S7 system
+    class S5,REVIEW,TRACK clinician
+    class H8,H8Q,ACCEPTED,H9,H10,H11 provider
+    class S3,EMERGENCY,DECLINED alert
+    class H10,H11,COMPLETED pilot
+    style USER fill:none,stroke:#43a047
+    style SANAD fill:none,stroke:#1e88e5
+    style CLINICIAN fill:none,stroke:#8e24aa
+    style PROVIDER fill:none,stroke:#f9a825
+```
+
+Dashed outlines mark what is pilot only. The dotted link between `DECLINED` and step 11 has no label in the team's source diagram, so its meaning is still to be confirmed.
+
+**State model, separated by domain:**
+
+```mermaid
+flowchart LR
+    %% Subgraph order sets the row order: the last one defined renders at the top.
+    subgraph OUTCOME["Outcome & Provenance (results and confirming source)"]
+        direction LR
+        O1["REPORT_PENDING"] --> O2["REPORT_RECEIVED"] --> O3["FOLLOW_UP_NEEDED"]
+        O3 ~~~ SOURCES["Sources:<br/>SELF_REPORTED<br/>PROVIDER_VERIFIED<br/>(pilot only)<br/>SIMULATED (MVP)"]
+    end
+    subgraph CARE["Care Progress"]
+        direction LR
+        C1["GUIDANCE_VIEWED"] --> C2["NAVIGATION_STARTED"] --> C3["SCHEDULED"] --> C4["SEEN"]
+    end
+    subgraph LIFE["Referral Lifecycle (proposal and sending)"]
+        direction LR
+        L1["DRAFT"] --> L2["TRIAGE_PROPOSED"] --> L3["PENDING_APPROVAL"] --> L4["SENT"] --> L5["ACCEPTED / DECLINED"]
+    end
+
+    classDef system fill:#e3f2fd,stroke:#1e88e5,color:#0d47a1
+    classDef clinician fill:#f3e5f5,stroke:#8e24aa,color:#4a148c
+    classDef user fill:#e8f5e9,stroke:#43a047,color:#1b5e20
+    classDef pilot stroke-dasharray:6 4
+    class L1,L2,L3,L4,L5 system
+    class C1,C2,C3,C4 clinician
+    class O1,O2,O3,SOURCES user
+    class C4,O1,O2,O3 pilot
+    style LIFE fill:none,stroke:#1e88e5
+    style CARE fill:none,stroke:#8e24aa
+    style OUTCOME fill:none,stroke:#43a047
+```
+
+**Main exception paths:**
+
+| Situation | Handling |
+|---|---|
+| User does not agree to sharing | `GUIDANCE_ONLY` (referral not sent) |
+| Clinician asks for more information | `REVISION_REQUESTED` (back to step 4) |
+| Provider declines the referral | `DECLINED` (reason recorded, other options suggested) |
+| No response from the provider | `PENDING_RESPONSE` → `OVERDUE` (per the configured SLA) |
+| User has not booked yet | `NAVIGATION_IN_PROGRESS` (barriers recorded, support continues) |
+| User wants to stop | `WITHDRAWN` / `CANCELLED` (per the consent policy) |
+
+**Rollout scope:**
+
+| MVP (P0, build now) | Pilot / future (P1–P2) |
+|---|---|
+| Draft referral creation, Gatekeeper, rules | Formal clinical approval |
+| Triage proposal with reasons shown | Provider integration (real accept and decline) |
+| Consent and privacy | Scheduling sync and visit confirmation |
+| Mock (or internal) referral sending | Receiving reports from health systems |
+| Progress tracking and self-reported status | Measuring care outcomes |
+| Barrier recording and basic reporting | |
+
+**Suggested events to log (audit and traceability):** `referral.created`, `triage.proposed`, `clinical.reviewed`, `consent.given`, `referral.sent`, `provider.responded`, `appointment.scheduled`, `visit.completed`, `report.returned`, `barrier.logged`, `referral.closed`.
+
+**Where this differs from the specs:**
+
+| Topic | This workflow | BRD, PRD and referral flows spec |
+|---|---|---|
+| Emergency check | Step 3, after the assessment and Gatekeeper | Right after consent and before other questions, so guidance never waits for the questionnaire (BR-06, `PRD-FR-03`) |
+| First consent | Step 6, for sharing only | Assessment consent comes before any health data is collected (BR-01) |
+| Draft referral | Created at step 1 with `POST /referrals` | A mock referral is created only when the gate passes, through `POST /cases/{id}/mock-referral` (`PRD-FR-10`, [RF-12](specs/referal-flows/product-spec.md#rf-12-referral-gate-m3)) |
+| Skipping review | "No" at step 5 can still lead to sending | Every referral needs user consent, clinician approval and backend permission (RF-12). Which other actions can skip review is still open (TBD-07). |
+| Review outcomes | `APPROVED` or `REVISION_REQUESTED` | Also edit and reject (`PRD-FR-09`) |
+| Visits, reports and completion | Steps 10–11, `CARE_JOURNEY_COMPLETED` and `visit.completed` | Not in the MVP. `CARE_COMPLETED` is never set, and a visit can only be self-reported as `VISIT_SELF_REPORTED` (BRD §8.2, BR-29). |
+| Overdue and reminders | `OVERDUE` from a configured SLA, reminders per consent | No response times until a clinician approves them, so the MVP uses a mock delay timer that is not a clinical deadline ([RF-14](specs/referal-flows/product-spec.md#rf-14-tracking-with-delayed-flag-m3)). Reminders are P2 with separate consent (BR-24, BR-32). |
+| Status names | `EMERGENCY_ESCALATED`, `PENDING_APPROVAL`, `REVISION_REQUESTED`, `GUIDANCE_VIEWED`, `SELF_REPORTED`, and `DECLINED` for a provider | `EMERGENCY_GUIDANCE_ISSUED`, `PENDING_CLINICIAN_REVIEW`, `REVISION_REQUIRED`, `GUIDANCE_AVAILABLE`, `USER_REPORTED`, and `DECLINED` for a user. Renaming labels needs change control. |
+
+The MVP build of this flow is specified in the [referral flows product spec](specs/referal-flows/product-spec.md), which follows the BRD and PRD.
+
 ## Safety in layers
 
 | Layer | Control | Checked by |
