@@ -18,7 +18,8 @@ Sanad's harness is the deterministic rules, consent and state gates, audit loggi
 
 ## The six harness layers
 
-&#91;embedded content: Sanad harness architecture · 5 layers and an observability band\]
+
+<img width="675" height="720" alt="image" src="https://github.com/user-attachments/assets/45225e21-e506-45b4-9b63-77c79c52e875" />
 
 A call moves from top to bottom, and the policy layer blocks it before any tool or data is touched. The band at the bottom records every decision made in the five layers above it.
 
