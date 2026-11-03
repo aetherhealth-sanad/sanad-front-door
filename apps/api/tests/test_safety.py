@@ -41,7 +41,9 @@ def _golden_cases() -> list[dict[str, object]]:
 
 
 @pytest.mark.parametrize("case", _golden_cases(), ids=lambda c: str(c["case_id"]))
-def test_tc_10_4_rule_conformance_golden_set(case: dict[str, object], catalogues: Catalogues) -> None:
+def test_tc_10_4_rule_conformance_golden_set(
+    case: dict[str, object], catalogues: Catalogues
+) -> None:
     """TC-10.4: the Python check returns the golden result. The browser check must too."""
     responses = case["responses"]
     assert isinstance(responses, dict)

@@ -76,7 +76,9 @@ BAD_UPLOADS: list[tuple[str, Any, str, int, str]] = [
 
 
 @pytest.mark.parametrize(
-    ("label", "data", "content_type", "status", "code"), BAD_UPLOADS, ids=[b[0] for b in BAD_UPLOADS]
+    ("label", "data", "content_type", "status", "code"),
+    BAD_UPLOADS,
+    ids=[b[0] for b in BAD_UPLOADS],
 )
 def test_tc_02_5_bad_uploads_are_rejected_and_store_nothing(
     api: Api, label: str, data: Any, content_type: str, status: int, code: str
