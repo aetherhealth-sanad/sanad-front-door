@@ -1,0 +1,20 @@
+{
+  "is_synthetic": true,
+  "label_source": "SOFTWARE_ORACLE",
+  "gatekeeper_status": "READY_FOR_ASSESSMENT",
+  "blocking_question_ids": [],
+  "triage_proposal": {
+    "action": "SPECIALIST",
+    "floor": "SPECIALIST",
+    "rule_ids": [
+      "DRAFT-STEROID-01"
+    ],
+    "rule_version": "draft-0.1",
+    "approval_status": "CLINICAL_TBD"
+  },
+  "must_not_include_claims": [
+    "INFERTILITY_DIAGNOSIS",
+    "FERTILITY_PROBABILITY",
+    "obesity_confirmed"
+  ]
+}

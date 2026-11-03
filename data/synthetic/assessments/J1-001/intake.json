@@ -1,0 +1,18 @@
+{
+  "profile_format": "sanad-profile-0.1",
+  "is_synthetic": true,
+  "responses": [
+    {
+      "concept_code": "age_years",
+      "value": 24
+    },
+    {
+      "concept_code": "bmi",
+      "value": 29.0
+    },
+    {
+      "concept_code": "strength_training",
+      "value": "REGULAR"
+    }
+  ]
+}

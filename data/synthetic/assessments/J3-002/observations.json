@@ -1,0 +1,19 @@
+{
+  "is_synthetic": true,
+  "observations": [
+    {
+      "test_code": "MOTILITY_PLACEHOLDER",
+      "value": 40,
+      "unit": null,
+      "collected_on": "2026-10-20",
+      "reference_source": "Synthetic report"
+    },
+    {
+      "test_code": "CONCENTRATION_PLACEHOLDER",
+      "value": 15,
+      "unit": "million/mL",
+      "collected_on": "2026-13-45",
+      "reference_source": "Synthetic report"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "fixture_id": "J3-002",
+  "scenario": "J3",
+  "is_synthetic": true,
+  "title": "Sample F",
+  "description": "A profile with lab values that need fixing",
+  "listed_as_sample": true,
+  "notes": "A missing unit and an invalid date. Both values are held at NEEDS_USER_CONFIRMATION and not used.",
+  "journey": {
+    "entry_path": "LAB_ONLY",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "fixture_id": "J1-001",
+  "scenario": "J1",
+  "is_synthetic": true,
+  "title": "Sample B",
+  "description": "A profile with training context",
+  "listed_as_sample": true,
+  "notes": "High BMI with strength training and no steroid claim. Context questions, no obesity conclusion.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

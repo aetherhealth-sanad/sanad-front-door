@@ -1,0 +1,18 @@
+{
+  "is_synthetic": true,
+  "label_source": "DRAFT_RULE_CONSISTENCY",
+  "gatekeeper_status": "READY_FOR_ASSESSMENT",
+  "blocking_question_ids": [],
+  "triage_proposal": {
+    "action": "NEEDS_MORE_INFORMATION",
+    "floor": null,
+    "rule_ids": [],
+    "rule_version": "draft-0.1",
+    "approval_status": "CLINICAL_TBD"
+  },
+  "must_not_include_claims": [
+    "INFERTILITY_DIAGNOSIS",
+    "FERTILITY_PROBABILITY",
+    "obesity_confirmed"
+  ]
+}

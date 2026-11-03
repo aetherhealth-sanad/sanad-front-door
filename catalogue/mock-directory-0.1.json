@@ -1,0 +1,10 @@
+{
+  "directory_version": "mock-directory-0.1",
+  "is_mock": true,
+  "status_note": "Invented facilities only (OD-09). None of them exist, and no real provider, clinic or hospital name may be added here.",
+  "facilities": [
+    {"mock_facility_id": "MOCK-CLINIC-A", "name": "Mock Clinic A", "care_type": "SPECIALIST"},
+    {"mock_facility_id": "MOCK-CLINIC-B", "name": "Mock Clinic B", "care_type": "PRIMARY_CARE"},
+    {"mock_facility_id": "MOCK-CLINIC-C", "name": "Mock Clinic C", "care_type": "PRIORITY_REVIEW"}
+  ]
+}

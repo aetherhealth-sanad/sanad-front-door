@@ -1,0 +1,104 @@
+"""App factory. Run with `uvicorn sanad_api.main:create_app --factory`.
+
+The API makes no model call and needs no model key, cloud service or network to run (INV-01).
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+from fastapi import APIRouter, FastAPI
+
+# Every model module is imported so that create_all knows every table.
+from sanad_api.audit import models as _audit_models  # noqa: F401
+from sanad_api.auth import models as _auth_models  # noqa: F401
+from sanad_api.auth.rate_limit import RateLimiter
+from sanad_api.auth.routes import router as auth_router
+from sanad_api.cases import models as _case_models  # noqa: F401
+from sanad_api.cases.routes import router as cases_router
+from sanad_api.catalogues import load_catalogues
+from sanad_api.clock import Clock, SystemClock
+from sanad_api.config import Settings
+from sanad_api.consent import models as _consent_models  # noqa: F401
+from sanad_api.consent.routes import router as consent_router
+from sanad_api.db import Base, make_engine, make_session_factory
+from sanad_api.errors import register_error_handlers
+from sanad_api.facts import models as _fact_models  # noqa: F401
+from sanad_api.intake.routes import router as intake_router
+from sanad_api.middleware import RequestContextMiddleware
+from sanad_api.mock_facility.routes import router as mock_facility_router
+from sanad_api.observations import models as _observation_models  # noqa: F401
+from sanad_api.observations.routes import router as observations_router
+from sanad_api.referral import models as _referral_models  # noqa: F401
+from sanad_api.referral.routes import router as referral_router
+from sanad_api.reports import models as _report_models  # noqa: F401
+from sanad_api.reports.routes import router as reports_router
+from sanad_api.review import models as _review_models  # noqa: F401
+from sanad_api.review.routes import router as review_router
+from sanad_api.tracking.routes import router as tracking_router
+
+DESCRIPTION = (
+    "Sanad referral-flow API. Research prototype, not a medical device. Screening, not "
+    "diagnosis. Synthetic data only. Rules are drafts (CLINICAL_TBD), review is simulated and "
+    "every referral is Mock. Nothing is sent outside the app."
+)
+
+
+def _configure_logging() -> None:
+    logger = logging.getLogger("sanad")
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+
+
+def create_app(settings: Settings | None = None, clock: Clock | None = None) -> FastAPI:
+    settings = settings or Settings.from_env()
+    _configure_logging()
+    catalogues = load_catalogues(settings.repo_root)
+    engine = make_engine(settings.database_url)
+    Base.metadata.create_all(engine)
+
+    app = FastAPI(
+        title="Sanad API",
+        version="0.1.0",
+        description=DESCRIPTION,
+        docs_url="/api/docs",
+        openapi_url="/api/openapi.json",
+        redoc_url=None,
+    )
+    app.state.settings = settings
+    app.state.clock = clock or SystemClock()
+    app.state.catalogues = catalogues
+    app.state.engine = engine
+    app.state.session_factory = make_session_factory(engine)
+    app.state.rate_limiters = {
+        "cases": RateLimiter(settings.cases_per_minute_per_ip),
+        "login": RateLimiter(settings.logins_per_minute_per_ip),
+    }
+    register_error_handlers(app)
+    app.add_middleware(RequestContextMiddleware)
+
+    @app.get("/version", tags=["meta"])
+    def version() -> dict[str, Any]:
+        """Deployed commit SHA. Also the deploy health check (AC-01.4)."""
+        return {"commit_sha": settings.commit_sha}
+
+    api = APIRouter(prefix="/api")
+    for router in (
+        cases_router,
+        auth_router,
+        consent_router,
+        intake_router,
+        observations_router,
+        reports_router,
+        review_router,
+        referral_router,
+        mock_facility_router,
+        tracking_router,
+    ):
+        api.include_router(router)
+    app.include_router(api)
+    return app

@@ -1,0 +1,15 @@
+{
+  "is_synthetic": true,
+  "label_source": "SOFTWARE_ORACLE",
+  "gatekeeper_status": "NEEDS_INFORMATION",
+  "blocking_question_ids": [
+    "Q-BMI",
+    "Q-STEROID-USE"
+  ],
+  "triage_proposal": null,
+  "must_not_include_claims": [
+    "INFERTILITY_DIAGNOSIS",
+    "FERTILITY_PROBABILITY",
+    "obesity_confirmed"
+  ]
+}

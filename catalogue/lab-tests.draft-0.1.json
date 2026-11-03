@@ -1,0 +1,15 @@
+{
+  "catalogue_id": "lab-tests",
+  "catalogue_version": "lab-tests-draft-0.1",
+  "approval_status": "CLINICAL_TBD",
+  "status_note": "Placeholder test codes and accepted units for manual lab entry (RF-15). No reference limits live here. Units are never converted (AC-15.2).",
+  "tests": {
+    "VOLUME_PLACEHOLDER": {"label": "Semen volume", "accepted_units": ["mL"]},
+    "CONCENTRATION_PLACEHOLDER": {"label": "Sperm concentration", "accepted_units": ["million/mL"]},
+    "MOTILITY_PLACEHOLDER": {"label": "Total motility", "accepted_units": ["%"], "maximum": 100},
+    "PROGRESSIVE_MOTILITY_PLACEHOLDER": {"label": "Progressive motility", "accepted_units": ["%"], "maximum": 100},
+    "MORPHOLOGY_PLACEHOLDER": {"label": "Normal forms", "accepted_units": ["%"], "maximum": 100}
+  },
+  "reference_sources": ["Synthetic report"],
+  "derived_fact": {"concept_code": "semen_analysis_done", "value": true}
+}

@@ -1,0 +1,18 @@
+{
+  "fixture_id": "J2-001",
+  "scenario": "J2",
+  "is_synthetic": true,
+  "title": "Sample J",
+  "description": "A profile with several items you can include or leave out",
+  "listed_as_sample": true,
+  "notes": "Exploratory. Type 2 diabetes, other history, regular medicines and a genetics result. Per-item control, and no inference from family history.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

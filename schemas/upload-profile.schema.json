@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sanad.invalid/schemas/upload-profile.schema.json",
+  "title": "Sanad synthetic upload profile",
+  "description": "Closed schema for synthetic test data only (RF-02). It has no fields for names, contact details or free-text notes. Do not upload real health data. Sample fixtures (intake.json plus observations.json) use the same shape.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile_format", "is_synthetic", "responses"],
+  "properties": {
+    "profile_format": {"const": "sanad-profile-0.1"},
+    "is_synthetic": {"const": true},
+    "responses": {"type": "array", "maxItems": 50, "items": {"$ref": "#/$defs/response"}},
+    "observations": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/observation"}}
+  },
+  "$defs": {
+    "concept_code": {
+      "enum": [
+        "age_years",
+        "bmi",
+        "anabolic_steroid_use",
+        "strength_training",
+        "body_fat_percent",
+        "smoking",
+        "semen_analysis_done",
+        "type2_diabetes",
+        "family_history_reported",
+        "regular_medicines",
+        "genetics_result_available",
+        "sudden_severe_scrotal_pain",
+        "fever_with_painful_scrotal_swelling",
+        "scrotal_trauma"
+      ]
+    },
+    "boolean_concept": {
+      "enum": [
+        "anabolic_steroid_use",
+        "smoking",
+        "semen_analysis_done",
+        "type2_diabetes",
+        "family_history_reported",
+        "regular_medicines",
+        "genetics_result_available",
+        "sudden_severe_scrotal_pain",
+        "fever_with_painful_scrotal_swelling",
+        "scrotal_trauma"
+      ]
+    },
+    "temporal_concept": {"enum": ["anabolic_steroid_use", "smoking"]},
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["concept_code"],
+      "properties": {
+        "concept_code": {"$ref": "#/$defs/concept_code"},
+        "value": {"type": ["boolean", "number", "string"]},
+        "state": {"enum": ["UNKNOWN", "DECLINED", "NOT_ASKED"]},
+        "temporal_status": {"enum": ["CURRENT", "PAST"]}
+      },
+      "oneOf": [
+        {"required": ["value"], "not": {"required": ["state"]}},
+        {"required": ["state"], "not": {"anyOf": [{"required": ["value"]}, {"required": ["temporal_status"]}]}}
+      ],
+      "allOf": [
+        {
+          "if": {"properties": {"concept_code": {"$ref": "#/$defs/boolean_concept"}}, "required": ["concept_code", "value"]},
+          "then": {"properties": {"value": {"type": "boolean"}}}
+        },
+        {
+          "if": {"properties": {"concept_code": {"const": "age_years"}}, "required": ["concept_code", "value"]},
+          "then": {"properties": {"value": {"type": "integer", "minimum": 1, "maximum": 120}}}
+        },
+        {
+          "if": {"properties": {"concept_code": {"const": "bmi"}}, "required": ["concept_code", "value"]},
+          "then": {"properties": {"value": {"type": "number", "minimum": 5, "maximum": 100}}}
+        },
+        {
+          "if": {"properties": {"concept_code": {"const": "body_fat_percent"}}, "required": ["concept_code", "value"]},
+          "then": {"properties": {"value": {"type": "number", "minimum": 1, "maximum": 80}}}
+        },
+        {
+          "if": {"properties": {"concept_code": {"const": "strength_training"}}, "required": ["concept_code", "value"]},
+          "then": {"properties": {"value": {"enum": ["REGULAR", "OCCASIONAL", "NONE"]}}}
+        },
+        {
+          "if": {
+            "properties": {"concept_code": {"$ref": "#/$defs/temporal_concept"}, "value": {"const": true}},
+            "required": ["concept_code", "value"]
+          },
+          "then": {"required": ["temporal_status"]},
+          "else": {"not": {"required": ["temporal_status"]}}
+        }
+      ]
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["test_code"],
+      "properties": {
+        "test_code": {
+          "enum": [
+            "VOLUME_PLACEHOLDER",
+            "CONCENTRATION_PLACEHOLDER",
+            "MOTILITY_PLACEHOLDER",
+            "PROGRESSIVE_MOTILITY_PLACEHOLDER",
+            "MORPHOLOGY_PLACEHOLDER"
+          ]
+        },
+        "value": {"type": ["number", "null"]},
+        "unit": {"type": ["string", "null"], "maxLength": 16},
+        "collected_on": {"type": ["string", "null"], "maxLength": 32},
+        "reference_source": {"type": ["string", "null"], "maxLength": 64}
+      }
+    }
+  }
+}

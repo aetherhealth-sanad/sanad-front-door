@@ -1,0 +1,99 @@
+{
+  "catalogue_id": "questions",
+  "catalogue_version": "questions-draft-0.1",
+  "approval_status": "CLINICAL_TBD",
+  "copy_status": "DRAFT",
+  "status_note": "Draft question catalogue and wording, pending T1.11 copy review. Required questions are the inputs the draft rules read. Value ranges are type checks only and carry no clinical meaning.",
+  "concepts": {
+    "age_years": {"value_type": "INTEGER", "unit": "years", "minimum": 1, "maximum": 120},
+    "bmi": {"value_type": "NUMBER", "unit": "kg/m2", "minimum": 5, "maximum": 100},
+    "anabolic_steroid_use": {"value_type": "BOOLEAN", "temporal": true},
+    "strength_training": {
+      "value_type": "CHOICE",
+      "options": {"REGULAR": "AFFIRMED", "OCCASIONAL": "AFFIRMED", "NONE": "NEGATED"}
+    },
+    "body_fat_percent": {"value_type": "NUMBER", "unit": "%", "minimum": 1, "maximum": 80},
+    "smoking": {"value_type": "BOOLEAN", "temporal": true},
+    "semen_analysis_done": {"value_type": "BOOLEAN"},
+    "type2_diabetes": {"value_type": "BOOLEAN", "evidence_item": "ITEM-HISTORY"},
+    "family_history_reported": {"value_type": "BOOLEAN", "evidence_item": "ITEM-HISTORY"},
+    "regular_medicines": {"value_type": "BOOLEAN", "evidence_item": "ITEM-MEDICINES"},
+    "genetics_result_available": {"value_type": "BOOLEAN", "evidence_item": "ITEM-GENETICS-RESULT"}
+  },
+  "evidence_items": {
+    "ITEM-HISTORY": {"kind": "HISTORY", "default_use": true},
+    "ITEM-MEDICINES": {"kind": "MEDICINES", "default_use": true},
+    "ITEM-GENETICS-RESULT": {
+      "kind": "GENETICS_RESULT",
+      "default_use": false,
+      "requires_scopes": ["assessment", "clinician_review"]
+    }
+  },
+  "questions": [
+    {
+      "question_id": "Q-AGE",
+      "concept_code": "age_years",
+      "text": "How old are you?"
+    },
+    {
+      "question_id": "Q-BMI",
+      "concept_code": "bmi",
+      "text": "What is your body mass index (BMI)?",
+      "required": true
+    },
+    {
+      "question_id": "Q-STEROID-USE",
+      "concept_code": "anabolic_steroid_use",
+      "text": "Have you ever used anabolic steroids?",
+      "required": true,
+      "options": [{"value": true, "label": "Yes"}, {"value": false, "label": "No"}],
+      "temporal_options": [{"value": "CURRENT", "label": "Yes, I use them now"}, {"value": "PAST", "label": "Yes, in the past"}]
+    },
+    {
+      "question_id": "Q-TRAINING-CONTEXT",
+      "concept_code": "strength_training",
+      "text": "Do you do strength training, such as lifting weights?",
+      "options": [
+        {"value": "REGULAR", "label": "Yes, regularly"},
+        {"value": "OCCASIONAL", "label": "Sometimes"},
+        {"value": "NONE", "label": "No"}
+      ]
+    },
+    {
+      "question_id": "Q-BODY-FAT",
+      "concept_code": "body_fat_percent",
+      "text": "Do you know your body fat percentage?"
+    },
+    {
+      "question_id": "Q-SMOKING",
+      "concept_code": "smoking",
+      "text": "Do you smoke tobacco, or have you smoked in the past?",
+      "options": [{"value": true, "label": "Yes"}, {"value": false, "label": "No"}],
+      "temporal_options": [{"value": "CURRENT", "label": "Yes, I smoke now"}, {"value": "PAST", "label": "Yes, in the past"}]
+    },
+    {
+      "question_id": "Q-SEMEN-TEST-DONE",
+      "concept_code": "semen_analysis_done",
+      "text": "Have you had a semen test before?",
+      "options": [{"value": true, "label": "Yes"}, {"value": false, "label": "No"}]
+    },
+    {
+      "question_id": "Q-DIABETES",
+      "concept_code": "type2_diabetes",
+      "text": "Have you been told you have type 2 diabetes?",
+      "options": [{"value": true, "label": "Yes"}, {"value": false, "label": "No"}]
+    },
+    {
+      "question_id": "Q-MEDICINES",
+      "concept_code": "regular_medicines",
+      "text": "Do you take any medicines regularly?",
+      "options": [{"value": true, "label": "Yes"}, {"value": false, "label": "No"}]
+    },
+    {
+      "question_id": "Q-FAMILY-HISTORY",
+      "concept_code": "family_history_reported",
+      "text": "Do you know of any men's health conditions in your close family?",
+      "options": [{"value": true, "label": "Yes"}, {"value": false, "label": "No"}]
+    }
+  ]
+}

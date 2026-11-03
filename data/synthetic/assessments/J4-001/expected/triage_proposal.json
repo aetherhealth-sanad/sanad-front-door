@@ -1,0 +1,15 @@
+{
+  "is_synthetic": true,
+  "label_source": "DRAFT_RULE_CONSISTENCY",
+  "emergency": {
+    "result": "EMERGENCY_GUIDANCE_ISSUED",
+    "rule_ids": [
+      "DRAFT-EMERG-01"
+    ]
+  },
+  "must_not_include_claims": [
+    "INFERTILITY_DIAGNOSIS",
+    "FERTILITY_PROBABILITY",
+    "obesity_confirmed"
+  ]
+}

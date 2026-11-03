@@ -1,0 +1,18 @@
+{
+  "fixture_id": "CN-002",
+  "scenario": "CONSENT_NEGATIVE",
+  "is_synthetic": true,
+  "title": "Consent-negative 2",
+  "description": "Approved case with provider sharing revoked",
+  "listed_as_sample": false,
+  "notes": "Approved case with provider_share granted, then revoked before the send. The gate denies.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

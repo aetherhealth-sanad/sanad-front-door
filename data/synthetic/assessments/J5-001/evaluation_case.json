@@ -1,0 +1,11 @@
+{
+  "is_synthetic": true,
+  "qid": "WF-J5-001",
+  "scenario": "J5",
+  "dataset_kind": "SYNTHETIC_WORKFLOW",
+  "input_ref": "data/synthetic/assessments/J5-001/intake.json",
+  "label_source": "SOFTWARE_ORACLE",
+  "independent_clinician_label": null,
+  "review_status": "NOT_CLINICALLY_APPROVED",
+  "clinical_agreement": "NOT_EVALUATED"
+}

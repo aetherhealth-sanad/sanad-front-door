@@ -1,0 +1,18 @@
+{
+  "fixture_id": "J1-003",
+  "scenario": "J1",
+  "is_synthetic": true,
+  "title": "Sample C",
+  "description": "A profile with some answers declined",
+  "listed_as_sample": true,
+  "notes": "High BMI with the context declined. DECLINED is kept and the limits are shown.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}
