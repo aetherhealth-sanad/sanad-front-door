@@ -1,0 +1,77 @@
+{
+  "mapping_id": "sanad-fhir-r4-conceptual",
+  "mapping_version": "0.1",
+  "target_release": "FHIR R4",
+  "status": "DESIGN_ONLY",
+  "compliance_status": "NOT_EVALUATED",
+  "is_export_enabled": false,
+  "terminology_status": "TERMINOLOGY_TBD",
+  "mappings": [
+    {
+      "source_entity": "AssessmentCase",
+      "source_fields": ["case_id", "is_synthetic", "preferred_language"],
+      "target_resource": "Patient",
+      "target_elements": ["Patient.identifier"],
+      "transform": "Use a synthetic pseudonymous identifier only; omit direct identity fields.",
+      "null_handling": "Omit unavailable identity attributes.",
+      "provenance": "Internal synthetic assessment case.",
+      "validation_status": "NOT_RUN",
+      "gap_status": "No selected FHIR profile or terminology binding."
+    },
+    {
+      "source_entity": "AssessmentResponse",
+      "source_fields": ["question_id", "response_state", "response_code", "source_type", "collected_at"],
+      "target_resource": "QuestionnaireResponse",
+      "target_elements": ["QuestionnaireResponse.item.linkId", "QuestionnaireResponse.item.answer"],
+      "transform": "Keep question identity and response semantics; preserve declined and not-asked states where the profile permits.",
+      "null_handling": "Do not convert missing, declined, unknown, or not-asked values to a negative answer.",
+      "provenance": "Patient-reported or synthetic fixture source and collection time.",
+      "validation_status": "NOT_RUN",
+      "gap_status": "Questionnaire canonical URL and profile are not selected."
+    },
+    {
+      "source_entity": "PsychosocialSelfReport",
+      "source_fields": ["question_id", "response_code", "response_state", "reference_period", "source_type", "verification_status", "collected_at"],
+      "target_resource": "QuestionnaireResponse",
+      "target_elements": ["QuestionnaireResponse.item.linkId", "QuestionnaireResponse.item.answer", "QuestionnaireResponse.authored"],
+      "transform": "Represent optional contextual self-report as questionnaire data, not as a clinical Observation or diagnosis.",
+      "null_handling": "Preserve UNKNOWN, DECLINED and NOT_ASKED distinctly.",
+      "provenance": "PATIENT_REPORTED, UNVERIFIED; assessment consent.",
+      "validation_status": "NOT_RUN",
+      "gap_status": "No validated instrument or profile is claimed."
+    },
+    {
+      "source_entity": "ClinicalObservation",
+      "source_fields": ["code", "value", "unit", "effective_at", "source_type", "verification_status"],
+      "target_resource": "Observation",
+      "target_elements": ["Observation.code", "Observation.valueQuantity", "Observation.effectiveDateTime", "Observation.status"],
+      "transform": "Preserve code, value, unit, time, source and verification status.",
+      "null_handling": "Omit absent optional elements; reject invalid unit/value pairs before any export.",
+      "provenance": "User-entered or synthetic source, with its recorded verification status.",
+      "validation_status": "NOT_RUN",
+      "gap_status": "Terminology codes and value-set bindings require review."
+    },
+    {
+      "source_entity": "SyntheticSemenReport",
+      "source_fields": ["report_id", "status", "effective_at", "observation_ids"],
+      "target_resource": "DiagnosticReport",
+      "target_elements": ["DiagnosticReport.status", "DiagnosticReport.effectiveDateTime", "DiagnosticReport.result"],
+      "transform": "Reference only Observation resources present in the same bundle.",
+      "null_handling": "Reject any unresolved result reference.",
+      "provenance": "Synthetic fixture; clinical plausibility remains CLINICAL_TBD unless reviewed.",
+      "validation_status": "NOT_RUN",
+      "gap_status": "No production diagnostic interpretation or FHIR export."
+    },
+    {
+      "source_entity": "ConsentLedger",
+      "source_fields": ["scope", "granted", "consent_version", "captured_at", "revoked_at"],
+      "target_resource": "Consent",
+      "target_elements": ["Consent.status", "Consent.dateTime", "Consent.provision"],
+      "transform": "Conceptual mapping only; backend consent ledger remains the authorization source.",
+      "null_handling": "Omit absent capture/revocation timestamps.",
+      "provenance": "Internal purpose-level consent ledger.",
+      "validation_status": "NOT_RUN",
+      "gap_status": "FHIR mapping does not replace backend consent checks."
+    }
+  ]
+}

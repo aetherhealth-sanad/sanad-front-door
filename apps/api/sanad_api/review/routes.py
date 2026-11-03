@@ -34,6 +34,7 @@ from sanad_api.facts.service import fact_out
 from sanad_api.ids import new_id
 from sanad_api.intake.service import assessment_context
 from sanad_api.observations.service import observation_out
+from sanad_api.psychosocial.models import PsychosocialSelfReport
 from sanad_api.reports.drafts import apply_reviewer_edit
 from sanad_api.reports.service import REVIEWER_EDIT, content_of, current_draft, store_draft
 from sanad_api.review.models import ClarificationRequest, ReviewDecision, ReviewRequest
@@ -225,6 +226,8 @@ class ReviewDetailOut(BaseModel):
     clinician_summary_draft: str | None
     decision_history: list[DecisionHistoryOut]
     tracking_flag: FlagOut | None
+    psychosocial_context: list[dict[str, Any]]
+    psychosocial_context_use: str
 
 
 def _decision_out(decision: ReviewDecision) -> dict[str, Any]:
@@ -255,6 +258,12 @@ def review_detail(
     ctx = assessment_context(db, case, catalogues)
     draft = current_draft(db, case)
     content = content_of(draft) if draft else None
+    psychosocial = (
+        db.query(PsychosocialSelfReport)
+        .filter_by(case_id=case.case_id)
+        .order_by(PsychosocialSelfReport.question_id)
+        .all()
+    )
     return {
         "case_id": case.case_id,
         "case_version": case.case_version,
@@ -278,6 +287,18 @@ def review_detail(
         "clinician_summary_draft": content["clinician_summary"] if content else None,
         "decision_history": [_decision_out(d) for d in decisions_for(db, case.case_id)],
         "tracking_flag": _flag(db, case, clock, settings),
+        "psychosocial_context": [
+            {
+                "question_id": row.question_id,
+                "response_code": row.response_code,
+                "response_state": row.response_state,
+                "reference_period": row.reference_period,
+                "source_type": row.source_type,
+                "verification_status": row.verification_status,
+            }
+            for row in psychosocial
+        ],
+        "psychosocial_context_use": "CONTEXT_ONLY_NOT_TRIAGE",
     }
 
 

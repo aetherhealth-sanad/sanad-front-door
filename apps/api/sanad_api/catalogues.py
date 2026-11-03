@@ -25,6 +25,7 @@ CONSENT_FILE = "catalogue/consent-0.1.json"
 MOCK_DIRECTORY_FILE = "catalogue/mock-directory-0.1.json"
 UPLOAD_SCHEMA_FILE = "schemas/upload-profile.schema.json"
 FIXTURES_DIR = "data/synthetic/assessments"
+FIXTURE_MANIFEST_FILE = "data/synthetic/fixture-manifest.v0.4.json"
 
 SAFETY_RESPONSES = frozenset({"YES", "NO", "NOT_SURE", "PREFER_NOT_TO_ANSWER"})
 
@@ -207,6 +208,36 @@ class FixtureMetadata(_Frozen):
     journey: dict[str, Any] = {}
 
 
+class FixtureMeasurement(_Frozen):
+    test_code: str | None
+    unit: str | None
+    value_source: Literal["SYNTHETIC_FIXTURE"]
+    reference_range_status: Literal["NOT_PROVIDED"]
+    reference_source_status: Literal["NOT_VERIFIED"]
+
+
+class FixtureManifestEntry(_Frozen):
+    fixture_id: str
+    scenario: str
+    is_synthetic: Literal[True]
+    source_files: tuple[str, ...]
+    generator_version: str
+    generator_seed: int | None
+    reproducibility: str
+    clinical_review_status: Literal["NOT_CLINICALLY_REVIEWED"]
+    clinical_truth_status: Literal["NOT_EVALUATED"]
+    clinical_range_source: str | None
+    measurements: tuple[FixtureMeasurement, ...]
+
+
+class FixtureManifest(_Frozen):
+    manifest_version: str
+    manifest_status: Literal["SYNTHETIC_PROVENANCE_ONLY"]
+    fixture_count: int
+    clinical_truth_status: Literal["NOT_EVALUATED"]
+    fixtures: tuple[FixtureManifestEntry, ...]
+
+
 def read_json(path: Path) -> Any:
     with path.open(encoding="utf-8") as handle:
         return json.load(handle)
@@ -236,6 +267,7 @@ class Catalogues:
     mock_directory: MockDirectory
     upload_schema: dict[str, Any]
     samples: dict[str, Sample]
+    fixture_manifest: FixtureManifest
     # Intake concepts and emergency concepts together, and every question an answer may cite.
     concepts: dict[str, ConceptDef]
     answerable: dict[str, QuestionDef]
@@ -259,6 +291,7 @@ def load_catalogues(repo_root: Path) -> Catalogues:
     consent = ConsentCatalogue.model_validate(read_json(repo_root / CONSENT_FILE))
     mock_directory = MockDirectory.model_validate(read_json(repo_root / MOCK_DIRECTORY_FILE))
     upload_schema: dict[str, Any] = read_json(repo_root / UPLOAD_SCHEMA_FILE)
+    fixture_manifest = FixtureManifest.model_validate(read_json(repo_root / FIXTURE_MANIFEST_FILE))
 
     yes_no = (AnswerOption(value=True, label="Yes"), AnswerOption(value=False, label="No"))
     concepts = dict(questions.concepts)
@@ -269,6 +302,20 @@ def load_catalogues(repo_root: Path) -> Catalogues:
             question_id=eq.question_id, concept_code=eq.concept_code, text=eq.text, options=yes_no
         )
 
+    samples = _load_samples(repo_root / FIXTURES_DIR)
+    manifest_ids = {entry.fixture_id for entry in fixture_manifest.fixtures}
+    if manifest_ids != set(samples) or fixture_manifest.fixture_count != len(samples):
+        raise CatalogueError("synthetic fixture manifest does not match fixture directories")
+    for entry in fixture_manifest.fixtures:
+        fixture_dir = repo_root / FIXTURES_DIR / entry.fixture_id
+        expected_files = {
+            path.relative_to(repo_root).as_posix() for path in fixture_dir.rglob("*.json")
+        }
+        if set(entry.source_files) != expected_files:
+            raise CatalogueError(
+                f"synthetic fixture manifest file list is stale: {entry.fixture_id}"
+            )
+
     catalogues = Catalogues(
         emergency=emergency,
         triage=triage,
@@ -277,7 +324,8 @@ def load_catalogues(repo_root: Path) -> Catalogues:
         consent=consent,
         mock_directory=mock_directory,
         upload_schema=upload_schema,
-        samples=_load_samples(repo_root / FIXTURES_DIR),
+        samples=samples,
+        fixture_manifest=fixture_manifest,
         concepts=concepts,
         answerable=answerable,
     )

@@ -1,0 +1,35 @@
+{
+  "catalogue_id": "psychosocial-context",
+  "catalogue_version": "psychosocial-context-0.1",
+  "approval_status": "CLINICAL_TBD",
+  "copy_status": "DRAFT_REQUIRES_UX_AND_LOCALIZATION_REVIEW",
+  "status_note": "Optional single context prompts only. Not validated instruments, diagnosis, semen-quality predictors, or triage inputs. All questions may be skipped or declined.",
+  "reference_period": "LAST_4_WEEKS",
+  "allowed_responses": ["YES", "NO", "NOT_SURE", "DECLINED", "NOT_ASKED"],
+  "questions": [
+    {
+      "question_id": "PSY-STRESS-01",
+      "concept_code": "perceived_stress_context",
+      "draft_text": "In the past four weeks, have you often felt stressed?",
+      "source_type": "PATIENT_REPORTED",
+      "verification_status": "UNVERIFIED",
+      "use": "CONTEXT_ONLY_NOT_TRIAGE"
+    },
+    {
+      "question_id": "PSY-SLEEP-01",
+      "concept_code": "perceived_sleep_context",
+      "draft_text": "In the past four weeks, have you often had difficulty sleeping?",
+      "source_type": "PATIENT_REPORTED",
+      "verification_status": "UNVERIFIED",
+      "use": "CONTEXT_ONLY_NOT_TRIAGE"
+    },
+    {
+      "question_id": "PSY-ANXIETY-01",
+      "concept_code": "reproductive_health_worry_context",
+      "draft_text": "In the past four weeks, have you often felt worried about your reproductive health?",
+      "source_type": "PATIENT_REPORTED",
+      "verification_status": "UNVERIFIED",
+      "use": "CONTEXT_ONLY_NOT_TRIAGE"
+    }
+  ]
+}

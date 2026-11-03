@@ -62,7 +62,7 @@ class CreateCaseIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     start_mode: Literal["SAMPLE", "UPLOAD", "BLANK"]
     fixture_id: str | None = Field(default=None, max_length=32)
-    preferred_language: Literal["en"] = "en"
+    preferred_language: Literal["en", "ar"] = "en"
 
     @model_validator(mode="after")
     def _fixture_only_for_samples(self) -> CreateCaseIn:

@@ -24,6 +24,12 @@ from sanad_api.catalogues import Catalogues
 from sanad_api.clock import Clock
 from sanad_api.deps import get_catalogues, get_clock, get_db
 from sanad_api.errors import ApiError, ErrorCode
+from sanad_api.navigation.models import CareNavigationEpisode, CareNavigationEvent
+from sanad_api.navigation.service import (
+    append_progress,
+    current_guidance,
+    get_or_create_episode,
+)
 from sanad_api.referral.gate import GateDecision, evaluate_gate
 from sanad_api.referral.service import gate_inputs, record_gate, referral_out, send_mock_referral
 from sanad_api.schemas import CaseStateOut, GateDecisionOut, ReferralOut
@@ -39,7 +45,44 @@ def start_navigation(
     clock: Clock = Depends(get_clock),
     catalogues: Catalogues = Depends(get_catalogues),
 ) -> dict[str, Any]:
+    guidance = current_guidance(db, pc.case)
+    if guidance is None:
+        raise ApiError(409, ErrorCode.DRAFT_NOT_CURRENT)
+    _draft, guidance_id, guidance_version = guidance
+    now = clock.now()
+    episode = get_or_create_episode(
+        db,
+        case_id=pc.case.case_id,
+        session_token_hash=pc.auth.token_hash,
+        guidance_id=guidance_id,
+        guidance_version=guidance_version,
+        now=now,
+    )
     transition(db, pc.case, CaseEvent.START_NAVIGATION, pc.auth.actor, clock.now())
+    started = (
+        db.query(CareNavigationEvent)
+        .filter_by(episode_id=episode.episode_id, status="NAVIGATION_STARTED")
+        .first()
+    )
+    if started is None:
+        append_progress(
+            db,
+            episode,
+            status="NAVIGATION_STARTED",
+            source="SYSTEM_EVENT",
+            actor=pc.auth.actor,
+            now=now,
+        )
+        record(
+            db,
+            AuditType.NAVIGATION_PROGRESS_RECORDED,
+            actor=pc.auth.actor,
+            now=now,
+            case_id=pc.case.case_id,
+            case_version=pc.case.case_version,
+            status="NAVIGATION_STARTED",
+            verification_source="SYSTEM_EVENT",
+        )
     db.commit()
     return state_view(db, pc.case, catalogues)
 
@@ -130,6 +173,21 @@ def send_referral(
         raise _denied(decision) from None
     if referral is None:
         raise _denied(decision)
+    episode = (
+        db.query(CareNavigationEpisode)
+        .filter_by(case_id=case.case_id, session_token_hash=pc.auth.token_hash)
+        .one_or_none()
+    )
+    if episode is not None:
+        append_progress(
+            db,
+            episode,
+            status="REFERRAL_REQUESTED",
+            source="SIMULATED",
+            actor=actor,
+            now=now,
+        )
+        db.commit()
     return {"referral": referral_out(referral), "gate_decision": decision.to_json()}
 
 

@@ -5,7 +5,10 @@ The API makes no model call and needs no model key, cloud service or network to 
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
 from typing import Any
 
 from fastapi import APIRouter, FastAPI
@@ -28,8 +31,13 @@ from sanad_api.facts import models as _fact_models  # noqa: F401
 from sanad_api.intake.routes import router as intake_router
 from sanad_api.middleware import RequestContextMiddleware
 from sanad_api.mock_facility.routes import router as mock_facility_router
+from sanad_api.navigation import models as _navigation_models  # noqa: F401
+from sanad_api.navigation.routes import router as navigation_router
+from sanad_api.navigation.service import purge_expired_navigation
 from sanad_api.observations import models as _observation_models  # noqa: F401
 from sanad_api.observations.routes import router as observations_router
+from sanad_api.psychosocial import models as _psychosocial_models  # noqa: F401
+from sanad_api.psychosocial.routes import router as psychosocial_router
 from sanad_api.referral import models as _referral_models  # noqa: F401
 from sanad_api.referral.routes import router as referral_router
 from sanad_api.reports import models as _report_models  # noqa: F401
@@ -43,6 +51,34 @@ DESCRIPTION = (
     "diagnosis. Synthetic data only. Rules are drafts (CLINICAL_TBD), review is simulated and "
     "every referral is Mock. Nothing is sent outside the app."
 )
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Purge session-scoped navigation progress after anonymous session expiry."""
+    def purge_expired() -> None:
+        db = app.state.session_factory()
+        try:
+            purge_expired_navigation(db, app.state.clock.now())
+            db.commit()
+        except Exception:
+            db.rollback()
+            logging.getLogger("sanad.retention").exception("Navigation retention cleanup failed")
+        finally:
+            db.close()
+
+    async def purge_loop() -> None:
+        while True:
+            await asyncio.to_thread(purge_expired)
+            await asyncio.sleep(30)
+
+    task = asyncio.create_task(purge_loop())
+    try:
+        yield
+    finally:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
 
 
 def _configure_logging() -> None:
@@ -68,6 +104,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
         redoc_url=None,
+        lifespan=_lifespan,
     )
     app.state.settings = settings
     app.state.clock = clock or SystemClock()
@@ -92,7 +129,9 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
         auth_router,
         consent_router,
         intake_router,
+        navigation_router,
         observations_router,
+        psychosocial_router,
         reports_router,
         review_router,
         referral_router,

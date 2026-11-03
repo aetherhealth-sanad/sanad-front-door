@@ -2,13 +2,13 @@
 
 | Item | Value |
 |---|---|
-| **Status** | Draft for team review. No code written. `PROPOSED` and `TECH_TBD` until the Tech Lead accepts it. |
-| **Version / date** | 0.1, 2026-11-02 |
-| **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17` |
+| **Status** | Draft for team review. Backend routes are implemented in `apps/api`; v0.4 additions below remain subject to review. |
+| **Version / date** | 0.2, 2026-11-03 |
+| **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17`; PRD v0.4 `PRD-FR-24` to `PRD-FR-30` |
 | **Built by** | [Implementation plan](implementation-plan.md) `T*` tasks |
 | **Verified by** | [Test plan](test-plan.md) `TC-*` |
 
-This document defines the HTTP contract between the web app and the API. The product spec decides behaviour, so if the two disagree, the product spec wins. Once T1.5 lands, the generated OpenAPI file is the source of truth for field shapes, and this document stays the source of truth for access, state and error rules.
+This document defines the HTTP contract between the web app and the API. BRD/PRD v0.4 decide scope and behavior; the product spec supplies M1–M3 detail where it is not superseded. The generated OpenAPI file is the source of truth for field shapes, and this document stays the source of truth for access, state and error rules.
 
 Every response here is synthetic. Nothing in this API sends data outside the app.
 
@@ -76,12 +76,20 @@ The gate (§6.7) runs after checks 1 to 3, so a caller without access never sees
 | `POST /cases/{id}/assess` | Gatekeeper, signals, floor, draft | Patient | T2.3 to T2.5 | AC-06.5, AC-11.1, AC-11.5, AC-11.6 |
 | `GET /cases/{id}/report` | Patient view of the draft or released result | Patient | T2.5 | AC-11.2 to AC-11.4, AC-08.9 |
 | `POST /cases/{id}/review-requests` | The send button | Patient | T2.6 | AC-07.2 to AC-07.6 |
+| `GET /psychosocial/questions` | Draft optional question catalogue; clearly marked pending review | Public | T4.1 | PRD-FR-29 |
+| `GET /cases/{id}/psychosocial` | Read the three contextual response states | Patient, assessment consent | T4.1 | PRD-FR-29, PRD-AC-42 |
+| `PUT /cases/{id}/psychosocial` | Replace up to three optional self-reports; omitted items become `NOT_ASKED` | Patient, assessment consent | T4.1 | PRD-FR-29/30, PRD-AC-42/43 |
 | `POST /auth/login` | Staff sign-in | Public | T2.7 | AC-08.1 |
 | `POST /auth/logout` | Staff sign-out | Staff | T2.7 | AC-08.1 |
 | `GET /reviews/queue` | Review queue | Reviewer | T2.7 | AC-08.2, AC-08.6 |
 | `GET /reviews/{case_id}` | Reviewer case detail | Reviewer | T2.7 | AC-08.2, AC-14.6 |
 | `POST /reviews/{case_id}/decision` | Record a decision | Reviewer | T2.7 | AC-08.4 to AC-08.8 |
 | `POST /cases/{id}/navigation/start` | Set `NAVIGATION_STARTED` | Patient | T3.2 | AC-12.6 |
+| `GET /cases/{id}/navigation` | Current session's episode and events | Patient, assessment consent | T4.2 | PRD-FR-24/25 |
+| `POST /cases/{id}/navigation/acknowledgements` | Acknowledge the current released guidance explicitly | Patient, assessment consent | T4.2 | PRD-FR-24 |
+| `POST /cases/{id}/navigation/progress` | Append a user-selected progress status | Patient, assessment consent | T4.2 | PRD-FR-25/28 |
+| `POST /cases/{id}/navigation/barriers` | Append optional barrier codes; no free text | Patient, assessment consent | T4.2 | PRD-FR-26/28 |
+| `GET /evaluation/navigation-funnel` | Aggregate active synthetic episodes with denominators and source | Reviewer | T4.2 | PRD-FR-27 |
 | `GET /mock-directory` | Mock facilities by care type | Patient | T3.2 | AC-13.5 |
 | `GET /cases/{id}/referral-gate` | Gate preview, grants nothing | Patient | T3.1 | AC-12.3, AC-12.6 |
 | `POST /cases/{id}/mock-referral` | Evaluate the gate and create the referral | Patient | T3.1 | AC-12.1 to AC-12.5 |
@@ -743,6 +751,29 @@ If a double tap returns `REFERRAL_ALREADY_EXISTS`, the client routes to `/tracki
 
 200 returns every item with `used_in_assessment`. This is separate from field state, so an excluded answer keeps its original state and the PRD's state list does not change (AC-16.1). Genetics items appear only when a result exists and its consent is valid (AC-16.3, OD-08).
 
+### 6.12 v0.4 psychosocial context and closed-loop navigation
+
+These endpoints implement bounded synthetic-prototype contracts from [PRD v0.4](../Sanad_AetherHealth_PRD_v0.4.md#531-closed-loop-functional-contracts-p0) and [E2E workflow v0.4](../Sanad_E2E_Workflow_v0.4.md). They do not add a consent scope, clinical rule, FHIR export or provider integration.
+
+**Psychosocial context**
+
+- `GET /psychosocial/questions` returns at most three draft prompts with `CLINICAL_TBD` and copy-review status. The response is not an approved instrument.
+- `GET /cases/{id}/psychosocial` and `PUT /cases/{id}/psychosocial` require the patient token, active `assessment` consent, and an intake state.
+- Responses use `YES`, `NO`, `NOT_SURE`, `DECLINED` or `NOT_ASKED`, with the response state preserved separately. Omitted questions in `PUT` become `NOT_ASKED`.
+- Stored values carry `PATIENT_REPORTED`, `UNVERIFIED`, `assessment`, `LAST_4_WEEKS` and a timestamp. The table is separate from `Fact`; these values never enter triage rules.
+- Patient report and consented reviewer detail expose values as `CONTEXT_ONLY_NOT_TRIAGE`. No psychosocial sharing action exists.
+
+**Navigation**
+
+- Navigation is available only for released guidance in `GUIDANCE_AVAILABLE` or `NAVIGATION_STARTED`. Its ID and version come from the current approved draft; stale guidance cannot be acknowledged.
+- `GUIDANCE_ACKNOWLEDGED` is an explicit, deduplicated `SYSTEM_EVENT`. Reading a report is not an acknowledgement.
+- Progress is append-only. Booking and visit statuses are `USER_REPORTED` and `UNVERIFIED`; no write path creates `PROVIDER_VERIFIED` or `CARE_COMPLETED`.
+- Barrier requests accept only the fixed code list and `PREFER_NOT_TO_SAY`. Free text is rejected. Audit entries contain counts, not barrier selections.
+- Episode rows are bound to the anonymous session token hash. Quick exit deletes that session's navigation rows; expiry cleanup removes rows for expired patient sessions. Funnel metrics include active sessions only.
+- The reviewer-only funnel reports each numerator and denominator. Provider-verified visits and care completion are `NOT_AVAILABLE`.
+
+**Conceptual FHIR boundary.** `catalogue/fhir-r4-mapping-0.1.json` is a design manifest only. No FHIR export, validator, profile selection or conformance claim exists. Internal consent checks remain authoritative.
+
 ## 7. Audit events
 
 The API has no endpoint for reading the audit log in this flow. Tests read the table directly, and reviewers see `decision_history`. Each entry holds actor, time, event type, case ID and the relevant versions (INV-09), and never answers, lab values or notes (INV-03).
@@ -761,6 +792,10 @@ The API has no endpoint for reading the audit log in this flow. Tests read the t
 | `REFERRAL_EVENT` | Mock event or withdrawal | `mock_status` |
 | `CASE_CLOSED` | Case closed | `closed_reason` |
 | `SESSION_ENDED` | Quick exit | None |
+| `PSYCHOSOCIAL_CAPTURED` | Optional context replaced | `count`, `catalogue_version` (never answer values) |
+| `NAVIGATION_ACKNOWLEDGED` | Explicit acknowledgement | `guidance_version` |
+| `NAVIGATION_PROGRESS_RECORDED` | User progress or navigation opened | `status`, `verification_source` |
+| `NAVIGATION_BARRIER_RECORDED` | Barrier selection | `count`, `prefer_not_to_say` (never reason codes) |
 
 ## 8. Gaps this design found
 

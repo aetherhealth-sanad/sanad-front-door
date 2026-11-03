@@ -1,0 +1,306 @@
+{
+  "manifest_version": "0.4",
+  "manifest_status": "SYNTHETIC_PROVENANCE_ONLY",
+  "fixture_count": 13,
+  "clinical_truth_status": "NOT_EVALUATED",
+  "fixtures": [
+    {
+      "fixture_id": "CN-001",
+      "scenario": "CONSENT_NEGATIVE",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/CN-001/consent.json",
+        "data/synthetic/assessments/CN-001/evaluation_case.json",
+        "data/synthetic/assessments/CN-001/expected/action_gate.json",
+        "data/synthetic/assessments/CN-001/expected/review_event.json",
+        "data/synthetic/assessments/CN-001/expected/risk_signals.json",
+        "data/synthetic/assessments/CN-001/expected/triage_proposal.json",
+        "data/synthetic/assessments/CN-001/intake.json",
+        "data/synthetic/assessments/CN-001/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "CN-002",
+      "scenario": "CONSENT_NEGATIVE",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/CN-002/consent.json",
+        "data/synthetic/assessments/CN-002/evaluation_case.json",
+        "data/synthetic/assessments/CN-002/expected/action_gate.json",
+        "data/synthetic/assessments/CN-002/expected/review_event.json",
+        "data/synthetic/assessments/CN-002/expected/risk_signals.json",
+        "data/synthetic/assessments/CN-002/expected/triage_proposal.json",
+        "data/synthetic/assessments/CN-002/intake.json",
+        "data/synthetic/assessments/CN-002/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J1-001",
+      "scenario": "J1",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J1-001/consent.json",
+        "data/synthetic/assessments/J1-001/evaluation_case.json",
+        "data/synthetic/assessments/J1-001/expected/review_event.json",
+        "data/synthetic/assessments/J1-001/expected/risk_signals.json",
+        "data/synthetic/assessments/J1-001/expected/triage_proposal.json",
+        "data/synthetic/assessments/J1-001/intake.json",
+        "data/synthetic/assessments/J1-001/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J1-002",
+      "scenario": "J1",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J1-002/consent.json",
+        "data/synthetic/assessments/J1-002/evaluation_case.json",
+        "data/synthetic/assessments/J1-002/expected/action_gate.json",
+        "data/synthetic/assessments/J1-002/expected/review_event.json",
+        "data/synthetic/assessments/J1-002/expected/risk_signals.json",
+        "data/synthetic/assessments/J1-002/expected/triage_proposal.json",
+        "data/synthetic/assessments/J1-002/intake.json",
+        "data/synthetic/assessments/J1-002/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J1-003",
+      "scenario": "J1",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J1-003/consent.json",
+        "data/synthetic/assessments/J1-003/evaluation_case.json",
+        "data/synthetic/assessments/J1-003/expected/review_event.json",
+        "data/synthetic/assessments/J1-003/expected/risk_signals.json",
+        "data/synthetic/assessments/J1-003/expected/triage_proposal.json",
+        "data/synthetic/assessments/J1-003/intake.json",
+        "data/synthetic/assessments/J1-003/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J1-004",
+      "scenario": "J1",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J1-004/consent.json",
+        "data/synthetic/assessments/J1-004/evaluation_case.json",
+        "data/synthetic/assessments/J1-004/expected/review_event.json",
+        "data/synthetic/assessments/J1-004/expected/risk_signals.json",
+        "data/synthetic/assessments/J1-004/expected/triage_proposal.json",
+        "data/synthetic/assessments/J1-004/intake.json",
+        "data/synthetic/assessments/J1-004/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J2-001",
+      "scenario": "J2",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J2-001/consent.json",
+        "data/synthetic/assessments/J2-001/evaluation_case.json",
+        "data/synthetic/assessments/J2-001/expected/review_event.json",
+        "data/synthetic/assessments/J2-001/expected/risk_signals.json",
+        "data/synthetic/assessments/J2-001/expected/triage_proposal.json",
+        "data/synthetic/assessments/J2-001/intake.json",
+        "data/synthetic/assessments/J2-001/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J3-001",
+      "scenario": "J3",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J3-001/consent.json",
+        "data/synthetic/assessments/J3-001/evaluation_case.json",
+        "data/synthetic/assessments/J3-001/expected/review_event.json",
+        "data/synthetic/assessments/J3-001/expected/risk_signals.json",
+        "data/synthetic/assessments/J3-001/expected/triage_proposal.json",
+        "data/synthetic/assessments/J3-001/intake.json",
+        "data/synthetic/assessments/J3-001/metadata.json",
+        "data/synthetic/assessments/J3-001/observations.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": [
+        {
+          "test_code": "MOTILITY_PLACEHOLDER",
+          "unit": "%",
+          "value_source": "SYNTHETIC_FIXTURE",
+          "reference_range_status": "NOT_PROVIDED",
+          "reference_source_status": "NOT_VERIFIED"
+        }
+      ]
+    },
+    {
+      "fixture_id": "J3-002",
+      "scenario": "J3",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J3-002/consent.json",
+        "data/synthetic/assessments/J3-002/evaluation_case.json",
+        "data/synthetic/assessments/J3-002/expected/review_event.json",
+        "data/synthetic/assessments/J3-002/expected/triage_proposal.json",
+        "data/synthetic/assessments/J3-002/intake.json",
+        "data/synthetic/assessments/J3-002/metadata.json",
+        "data/synthetic/assessments/J3-002/observations.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": [
+        {
+          "test_code": "MOTILITY_PLACEHOLDER",
+          "unit": null,
+          "value_source": "SYNTHETIC_FIXTURE",
+          "reference_range_status": "NOT_PROVIDED",
+          "reference_source_status": "NOT_VERIFIED"
+        },
+        {
+          "test_code": "CONCENTRATION_PLACEHOLDER",
+          "unit": "million/mL",
+          "value_source": "SYNTHETIC_FIXTURE",
+          "reference_range_status": "NOT_PROVIDED",
+          "reference_source_status": "NOT_VERIFIED"
+        }
+      ]
+    },
+    {
+      "fixture_id": "J4-001",
+      "scenario": "J4",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J4-001/consent.json",
+        "data/synthetic/assessments/J4-001/evaluation_case.json",
+        "data/synthetic/assessments/J4-001/expected/review_event.json",
+        "data/synthetic/assessments/J4-001/expected/triage_proposal.json",
+        "data/synthetic/assessments/J4-001/intake.json",
+        "data/synthetic/assessments/J4-001/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J4-002",
+      "scenario": "J4",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J4-002/consent.json",
+        "data/synthetic/assessments/J4-002/evaluation_case.json",
+        "data/synthetic/assessments/J4-002/expected/review_event.json",
+        "data/synthetic/assessments/J4-002/expected/triage_proposal.json",
+        "data/synthetic/assessments/J4-002/intake.json",
+        "data/synthetic/assessments/J4-002/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J5-001",
+      "scenario": "J5",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J5-001/consent.json",
+        "data/synthetic/assessments/J5-001/evaluation_case.json",
+        "data/synthetic/assessments/J5-001/expected/review_event.json",
+        "data/synthetic/assessments/J5-001/expected/risk_signals.json",
+        "data/synthetic/assessments/J5-001/expected/triage_proposal.json",
+        "data/synthetic/assessments/J5-001/intake.json",
+        "data/synthetic/assessments/J5-001/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    },
+    {
+      "fixture_id": "J5-002",
+      "scenario": "J5",
+      "is_synthetic": true,
+      "source_files": [
+        "data/synthetic/assessments/J5-002/consent.json",
+        "data/synthetic/assessments/J5-002/evaluation_case.json",
+        "data/synthetic/assessments/J5-002/expected/review_event.json",
+        "data/synthetic/assessments/J5-002/expected/risk_signals.json",
+        "data/synthetic/assessments/J5-002/expected/triage_proposal.json",
+        "data/synthetic/assessments/J5-002/intake.json",
+        "data/synthetic/assessments/J5-002/metadata.json"
+      ],
+      "generator_version": "checked-in-static-v0.4",
+      "generator_seed": null,
+      "reproducibility": "Version-controlled JSON; no runtime random generation.",
+      "clinical_review_status": "NOT_CLINICALLY_REVIEWED",
+      "clinical_truth_status": "NOT_EVALUATED",
+      "clinical_range_source": null,
+      "measurements": []
+    }
+  ]
+}

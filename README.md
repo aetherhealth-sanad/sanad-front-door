@@ -42,12 +42,12 @@ Built by **AetherHealth** for the [Future Health Digital Innovation Challenge 20
 
 | Area | Status |
 |---|---|
-| **Requirements** | [BRD v0.3](specs/Sanad_AetherHealth_BRD_v0.3.md) and [PRD v0.3](specs/Sanad_AetherHealth_PRD_v0.3.md), both dated 2026-10-29. Drafts under team review. |
-| **Implementation** | **Not started in this repository.** It holds documentation only, so every module, endpoint and path described below is planned. |
+| **Requirements** | [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md), [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md), and [E2E workflow v0.4](specs/Sanad_E2E_Workflow_v0.4.md), dated 2026-11-03. Drafts; clinical rules remain pending approval. |
+| **Implementation** | A Python/FastAPI backend exists under `apps/api`. Patient web and clinician UI source are not present yet. Check each section below for implemented versus planned behavior. |
 | **Clinical policy** | **Not approved.** Clinical advisor is still marked TBD in the specs. Any rule without sign-off must be presented as simulated policy. |
 | **Key dates** | Internal MVP freeze 19 Nov 2026. Challenge submission 20 Nov 2026 (reconfirm with the organiser). |
 
-**Which document wins:** for MVP scope, the BRD and PRD take precedence over this README. Changes to clinical rules, triage levels, label taxonomy, consent scopes or data policy go through [change control](#project-management).
+**Which document wins:** for MVP scope and behavior, BRD v0.4 and PRD v0.4 take precedence over this README. The E2E workflow v0.4 describes the intended flow. Changes to clinical rules, triage levels, label taxonomy, consent scopes or data policy go through [change control](#project-management).
 
 The specs mark how settled each item is: `TEAM_DECISION`, `PROPOSED`, `CLINICAL_TBD` (not approved by a clinician), `TECH_TBD` (needs technical verification) and `RESEARCH_ONLY` (never used for care decisions).
 
@@ -88,7 +88,7 @@ Three themes from the challenge brief are **not MVP commitments**:
 | **3. Assess** | Identify evidence-backed risk signals. The safety rules stay separate from the LLM that explains them. |
 | **4. Review** | Draft reports for the patient and clinician. A clinician checks the actions that need approval. |
 | **5. Navigate** | Offer reviewed information, a next step, or a mock referral or booking with consent. |
-| **6. Close the loop** | The user may acknowledge guidance, start looking for a service, report progress or name a barrier. All of it is optional. |
+| **6. Close the loop** | The user may acknowledge guidance, start looking for a service, report progress or name a barrier. All of it is optional and tied to the anonymous session. |
 | **7. Evaluate** | Measure workflow correctness and step-by-step conversion with clear denominators. A click or self-report is never treated as verified care. |
 
 ```mermaid
@@ -116,7 +116,7 @@ flowchart TD
     E --> P
 ```
 
-The full state machine is in [PRD §4.7](specs/Sanad_AetherHealth_PRD_v0.3.md#47-assessment-state-machine).
+The assessment state machine is in [PRD v0.4 §4.7](specs/Sanad_AetherHealth_PRD_v0.4.md#47-assessment-state-machine). Navigation progress is a separate append-only event stream; it does not mark a case as care-completed.
 
 ## Care journey and release scope
 
@@ -133,9 +133,9 @@ The long-term vision has eight stages that users can enter at several points. **
 | **S7** Explain and plan | Draft reports, review gate | P1: care plan draft |
 | **S8** Follow-up | Opt-in status and barrier capture, not treatment tracking | P2: mock reminders with consent |
 
-**P0 also includes:** an English responsive web app that is mobile-first for patients and desktop-optimised for clinicians; a clinician console with approve, edit, reject and request-clarification actions; source-labelled event logging; synthetic fixtures and security tests; and minimal audit.
+**P0 also includes:** an English patient experience and clinician console (UI source is not yet in this repository); source-labelled event logging; synthetic fixtures and security tests; optional psychosocial context (up to three voluntary self-report items, not diagnostic and not used for automatic triage); and lightweight closed-loop acknowledgement, self-reported progress and barrier capture.
 
-**P1 also includes:** Arabic and right-to-left layout with reviewed translations; a SEED-ML audit and baselines; an SLM benchmark; a versioned knowledge registry; and an evaluation dashboard.
+**P0 design also includes:** a versioned conceptual FHIR R4 mapping manifest. **P1 includes:** reviewed Arabic/right-to-left screens; a SEED-ML audit and baselines; an SLM benchmark; a versioned knowledge registry; FHIR R4 export and validation; and an evaluation dashboard. The API stores an `en` or `ar` preference, but translated screens are not present. FHIR alignment is conceptual and `NOT_EVALUATED`; there is no export or conformance claim.
 
 **Out of scope for the MVP:**
 
@@ -185,7 +185,7 @@ Three things stay separate and must never be merged into one label: a `risk_sign
 
 ## Closed-loop navigation
 
-New in v0.3. After guidance, users may tell Sanad what happened next. Everything is voluntary, and leaving is never recorded as failure.
+New in v0.4. After guidance, users may tell Sanad what happened next. Everything is voluntary, session-scoped, and leaving is never recorded as failure.
 
 | Evidence source | Used for | MVP |
 |---|---|---|
@@ -377,19 +377,19 @@ If a model, key or search service is missing, Sanad falls back safely and does n
 
 **Stop the demo and fix first** if there is a dangerous clinical claim without approval or source, no safe warning path, a consent bypass, real personal data in traces, or a mock referral shown as real.
 
-Planned documentation includes a risk register ([BRD §18](specs/Sanad_AetherHealth_BRD_v0.3.md#18-risk-register-business-level)) and model and data cards. Aligning with the Abu Dhabi DoH Responsible AI Standard is a goal, not a claim of compliance.
+Planned documentation includes a risk register ([BRD v0.4 §18](specs/Sanad_AetherHealth_BRD_v0.4.md#18-risk-register-business-level)) and model and data cards. Aligning with the Abu Dhabi DoH Responsible AI Standard is a goal, not a claim of compliance.
 
 ## Privacy by design
 
 - **Purpose-level consent**, versioned and revocable, enforced by the backend at the moment of each action. The scopes are `assessment`, `clinician_review`, `provider_share`, `spouse_share` and `research_use`. All are off unless explicitly chosen, and `assessment` consent never implies sharing, notifications or long-term tracking.
 - **Decline and still get help:** without assessment consent, the user sees general education only.
 - **Pseudonymous by default:** no account or login for assessment.
-- **Data minimisation:** no real patient data, session cleanup, and no sensitive text or personal data in logs, telemetry or screenshots.
+- **Data minimisation:** no real patient data, navigation progress is deleted when the anonymous session ends or expires, and logs contain neither answers nor barrier selections.
 - **Lab documents:** optional OCR (P2) is limited to synthetic samples. Real file uploads are blocked in the synthetic-only demo or suitably protected.
 - **No biometric inference:** no mandatory camera and no facial or emotion analysis.
 - **Training:** no training or fine-tuning on user records.
 
-Retention, deletion and how long progress persists across anonymous sessions are [still open](#open-decisions).
+General case-data deletion and retention remain open. Navigation acknowledgement, progress and barrier data are session-scoped: the backend deletes them on explicit session end and runs expiry cleanup for expired anonymous sessions. Progress is not shared with providers or carried across sessions.
 
 ## Cultural design principles
 
@@ -399,9 +399,9 @@ Required by the specs:
 2. Spouse privacy: nothing is shared with a partner without explicit, purpose-specific consent.
 3. Sanad never infers a user's religion or fertility plans.
 4. A discreet brand and a private, text-based start.
-5. Arabic health content needs localisation review before it counts as ready.
+5. Arabic health content needs localisation review before it counts as ready. Arabic/RTL screens are not implemented in this repository.
 
-Design intent carried over from earlier work, **not scoped in BRD or PRD v0.3**:
+Design intent carried over from earlier work, **not scoped in BRD or PRD v0.4**:
 
 - Sample-collection options that respect religious views, including a non-spermicidal collection device used during marital intercourse. Sanad **does not give religious rulings**. It offers options and suggests asking a trusted imam or doctor.
 - Notifications without content, biometric lock and quick exit.
@@ -506,17 +506,36 @@ Rows from different sources are never joined into one "patient". The SEED-ML bas
 
 ## Repository structure
 
-**Today:**
+**Current repository:**
 
 ```text
 sanad-front-door/
-├── README.md
-└── specs/
-    ├── Sanad_AetherHealth_BRD_v0.3.md
-    └── Sanad_AetherHealth_PRD_v0.3.md
+├── apps/api/                   # Python/FastAPI backend and pytest suite
+├── catalogue/                  # Consent, question, lab and Mock facility catalogues
+├── data/synthetic/             # Synthetic assessment fixtures only
+├── eval/golden/                # Deterministic rule-conformance cases
+├── rules/                      # Versioned draft rules (CLINICAL_TBD)
+├── schemas/                    # Closed synthetic upload schema
+├── specs/                      # BRD/PRD v0.4, workflow, and API/spec documents
+└── README.md
 ```
 
-**Proposed.** The `data/synthetic/assessments/`, `eval/golden/` and `ml/seed_ml/` paths come from the PRD. The rest carry over from the earlier architecture proposal and may change.
+There is no `apps/web`, production FHIR exporter, model integration, outbound referral transport or live provider integration in the current source tree.
+
+The API includes consent-guarded assessment, review and Mock referral flows; an optional psychosocial capture endpoint with explicit `PATIENT_REPORTED`/`UNVERIFIED` provenance; and session-scoped navigation acknowledgement, self-reported progress and barrier endpoints. Psychosocial responses are stored separately from the clinical facts used by rules and cannot change triage. Navigation funnel reporting is reviewer-only and reports verified care as `NOT_AVAILABLE`.
+
+The conceptual mapping registry is [fhir-r4-mapping-0.1.json](catalogue/fhir-r4-mapping-0.1.json). It is a design artifact, not a FHIR validator or export implementation.
+
+The checked-in fixtures are inventoried in [fixture-manifest.v0.4.json](data/synthetic/fixture-manifest.v0.4.json). Their clinical truth remains `NOT_EVALUATED`, and lab reference ranges are absent or unverified unless a future reviewed manifest says otherwise.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/cases/{id}/psychosocial` / `PUT .../psychosocial` | Read or replace up to three optional, consented self-reports; omitted questions remain `NOT_ASKED`. |
+| `GET /api/cases/{id}/navigation` | Read the current session's navigation episode and event history. |
+| `POST /api/cases/{id}/navigation/acknowledgements` | Record explicit acknowledgement of the current released guidance. |
+| `POST /api/cases/{id}/navigation/progress` | Append a user-selected status with `USER_REPORTED` provenance. |
+| `POST /api/cases/{id}/navigation/barriers` | Record optional barrier codes without free text. |
+| `GET /api/evaluation/navigation-funnel` | Reviewer-only synthetic funnel with explicit denominators and source labels. |
 
 ```text
 sanad-front-door/
@@ -546,17 +565,23 @@ sanad-front-door/
 
 ## Getting started
 
-**There is nothing to run yet.** To get oriented:
+The backend requires Python 3.12 or newer. From the repository root:
 
 ```bash
-git clone https://github.com/aetherhealth-sanad/sanad-front-door.git
-cd sanad-front-door
+python3 -m venv apps/api/.venv
+apps/api/.venv/bin/python -m pip install -e 'apps/api[dev]'
+apps/api/.venv/bin/uvicorn sanad_api.main:create_app --factory --app-dir apps/api --reload
 ```
 
-1. Read the [BRD](specs/Sanad_AetherHealth_BRD_v0.3.md) for scope, business rules and journeys.
-2. Read the [PRD](specs/Sanad_AetherHealth_PRD_v0.3.md) for user stories, data contracts, functional requirements and acceptance criteria.
+The API is available at `http://127.0.0.1:8000`; OpenAPI docs are at `/api/docs` and the deploy health check is `/version`. The default local database is SQLite and the app uses synthetic fixtures. Configure a separate local database URL through the API settings when needed; never point a demo at real patient data.
 
-The BRD requires a quickstart at submission, and the core scenarios must re-run from fixtures in one command or a few steps. Add those instructions here when the first runnable code lands.
+Run the backend test suite from `apps/api`:
+
+```bash
+.venv/bin/python -m pytest
+```
+
+Start with [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) for business scope, [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md) for product/data contracts, and the [E2E workflow v0.4](specs/Sanad_E2E_Workflow_v0.4.md) for the end-to-end flow. The backend has no model credentials or external service dependency.
 
 When contributing, never commit keys or real patient data.
 
@@ -610,7 +635,7 @@ Figures earlier versions of this README listed, such as red-flag recall ≥ 99%,
 | **Submission freeze** | 18–19 Nov | Demo video, known limitations, stable deployment, reviewed change log |
 | **Official submission** | 20 Nov | Submit as confirmed by the organiser |
 
-The delivery plan does not yet place J9 and J10, although both are P0. The demo is designed for 5–7 minutes and covers J1, J4, J5, J3, then J9 and J10, with a consent-denied referral and a separate evaluation report.
+The demo is designed for 5–7 minutes and covers J1, J4, J5, J3, then J9 and J10, with a consent-denied referral and a separate evaluation report. J9/J10 backend support and user-facing screens should be reported separately until implemented and reviewed.
 
 **After the MVP (only with the right partners, consent and legal review):** clinical workflow support for S3–S8, verified booking and visit confirmation, opt-in notifications, real clinic integrations, real FHIR in the UAE, and UAE user research.
 
@@ -624,19 +649,19 @@ The most critical items from the specs:
 | What approval policy applies to each triage action, and is any priority SLA valid? | Clinical + Product | OQ-02, TBD-02, TBD-07 |
 | How do consent revocation, anonymous session expiry, deletion and retention work? | Backend + Security | OQ-04, TBD-04 |
 | Will evaluation have an independent medical reviewer? If not, how is that limit stated in the pitch? | QA + Clinical | OQ-08 |
-| How long does self-reported progress persist across anonymous sessions, and does it need its own consent scope? | Product + Security | OQ-19, TBD-19 |
+| Does any future cross-session retention need a separate consent scope and deletion workflow? | Product + Security | OQ-19, TBD-19 |
 | Which guideline sources may be indexed and cited under their licenses? | Clinical + AI | OQ-03, TBD-08 |
 | Are Azure quota, UAE North and provider fallback enough for a synthetic demo? | Tech Lead | OQ-09, TBD-06 |
 | What must be submitted: video, live URL, technical report, source code? | Submission Lead | OQ-11, TBD-10 |
 
-Full lists: [BRD §14](specs/Sanad_AetherHealth_BRD_v0.3.md#14-assumptions--open-questions--tbd) and [PRD §14](specs/Sanad_AetherHealth_PRD_v0.3.md#14-open-questions--decisions-needed).
+Full lists: [BRD v0.4 §14](specs/Sanad_AetherHealth_BRD_v0.4.md#14-assumptions--open-questions--tbd) and [PRD v0.4 §14](specs/Sanad_AetherHealth_PRD_v0.4.md#14-open-questions--decisions-needed).
 
 ## Project management
 
 - Organization: [`aetherhealth-sanad`](https://github.com/aetherhealth-sanad)
 - Project board: **Sanad Front Door** (organization project #2), views: Backlog, Priority board, Team items, Roadmap, My items
 - Labels: `role:*`, `area:*`, `P0-mvp`, `P1-stretch`
-- **Backlog needs re-aligning:** the current issues and four weekly milestones follow the earlier scope and do not yet reflect BRD and PRD v0.3.
+- **Backlog needs re-aligning:** ensure issues reflect BRD and PRD v0.4, including bounded psychosocial context, synthetic fixtures and closed-loop navigation.
 - Flow: assign yourself → branch `feat/<issue>-<name>` → PR with `Closes #<issue>` → one review → merge
 - **Change control:** changes to clinical rules, triage levels, label taxonomy, consent scopes or data policy need an issue or PR recording `reason → evidence → affected journeys → tests → approver → version`. Unapproved rules must not be described as expert-confirmed.
 
@@ -653,7 +678,7 @@ Full lists: [BRD §14](specs/Sanad_AetherHealth_BRD_v0.3.md#14-assumptions--open
 | Đạt | Business analyst | Scope, journeys, rules with clinicians, synthetic fixtures, usability, docs, demo script |
 | _TBD_ | Clinical advisor (urology/andrology) | Rule sign-off, independent case review |
 
-Owners for the v0.3 additions (closed-loop navigation, semantic facts, SLM benchmark and SEED-ML research) are still to be assigned.
+Owners for v0.4 additions (psychosocial UX review, FHIR mapping, synthetic fixture provenance and closed-loop navigation) still need confirmation.
 
 ## Assumptions and limitations
 

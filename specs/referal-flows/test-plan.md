@@ -2,8 +2,8 @@
 
 | Item | Value |
 |---|---|
-| **Status** | Draft for team review. No tests written yet. |
-| **Version / date** | 0.1, 2026-11-02 |
+| **Status** | Draft for team review. Python tests exist for the v0.3 API; v0.4 cases below still need automated coverage. |
+| **Version / date** | 0.2, 2026-11-03 |
 | **Verifies** | [Product spec](product-spec.md) `AC-*` and `INV-*` |
 | **Built during** | [Implementation plan](implementation-plan.md) `T*` tasks |
 
@@ -265,6 +265,22 @@ See the truth table in §5.
 | TC-17.2 | A | B | Each listed response includes `is_mock: true`, and events include `SIMULATED`. | S |
 | TC-17.3 | E | B | The audit reads `eval/mock-screens.json`, visits each screen and fails on a missing label. A check confirms that each route with simulated data is on the list. | S |
 | TC-17.4 | E | B | Text scan on mock screens finds no raw enum code standing alone. | S |
+
+### PRD v0.4 psychosocial, navigation and FHIR design
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-18.1 | A | B | Save zero to three optional psychosocial answers; omitted answers remain `NOT_ASKED`, declined and unknown remain distinct, and intake continues. | S |
+| TC-18.2 | A | B | Each saved response has `PATIENT_REPORTED`, `UNVERIFIED`, assessment scope and reference period; missing assessment consent is denied. | S |
+| TC-18.3 | A | B | Psychosocial data appears only as context and cannot change rule signals, floor or action. | S |
+| TC-18.4 | A | B | Reviewer can see psychosocial context only with active clinician-review consent; audit stores no answers. | S |
+| TC-19.1 | A | B | Report display alone is not acknowledgement; explicit acknowledgement is tied to current guidance and deduplicated. | S |
+| TC-19.2 | A | B | Progress events are append-only and source-labelled; booking/visit remain user-reported and unverified; a Mock referral is `SIMULATED`. | S |
+| TC-19.3 | A | B | Barrier codes are bounded, free text is rejected, and `PREFER_NOT_TO_SAY` is exclusive. | S |
+| TC-19.4 | A | B | Quick exit and expired-session cleanup delete navigation data; a new session cannot read old progress. | S |
+| TC-19.5 | A | B | Funnel has explicit numerator/denominator and source; provider verification and care completion remain `NOT_AVAILABLE`. | S |
+| TC-20.1 | C | — | Mapping manifest lists source, target, transform, null handling, provenance and gaps; status is design-only, not FHIR conformance. | S |
+| TC-20.2 | C | B | Fixture manifest covers every synthetic case file, has no stale path, and keeps clinical truth `NOT_EVALUATED` and unsupported reference ranges unverified. | S |
 
 ### Invariants
 
