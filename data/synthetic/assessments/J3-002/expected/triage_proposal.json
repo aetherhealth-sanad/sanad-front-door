@@ -1,0 +1,21 @@
+{
+  "is_synthetic": true,
+  "label_source": "SOFTWARE_ORACLE",
+  "observation_issues": [
+    [
+      "UNIT_MISSING"
+    ],
+    [
+      "DATE_INVALID"
+    ]
+  ],
+  "assess_lab_only": {
+    "status": 409,
+    "code": "BLOCKING_ITEMS_REMAIN"
+  },
+  "must_not_include_claims": [
+    "INFERTILITY_DIAGNOSIS",
+    "FERTILITY_PROBABILITY",
+    "obesity_confirmed"
+  ]
+}

@@ -1,0 +1,71 @@
+{"_meta": {"catalogue_version": "emergency-draft-0.1", "is_synthetic": true, "label_source": "DRAFT_RULE_CONSISTENCY", "note": "Browser and server checks must both return these results (TC-10.4). Draft rule conformance only, not clinical correctness. Unknown question IDs come from an older catalogue and are ignored."}}
+{"case_id": "RC-EMERG-001", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01", "DRAFT-EMERG-02", "DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "YES", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-002", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01", "DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "YES", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-003", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01", "DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "YES", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-004", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01", "DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "YES", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-005", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01", "DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "NO", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-006", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "NO", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-007", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "NO", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-008", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "NO", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-009", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01", "DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "NOT_SURE", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-010", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "NOT_SURE", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-011", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "NOT_SURE", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-012", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "NOT_SURE", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-013", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01", "DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-014", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-015", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-016", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-017", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02", "DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "YES", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-018", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "YES", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-019", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "YES", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-020", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "YES", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-021", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NO", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-022", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NO", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-023", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NO", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-024", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NO", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-025", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NOT_SURE", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-026", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NOT_SURE", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-027", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NOT_SURE", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-028", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NOT_SURE", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-029", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-030", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-031", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-032", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-033", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02", "DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "YES", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-034", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "YES", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-035", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "YES", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-036", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "YES", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-037", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "NO", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-038", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "NO", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-039", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "NO", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-040", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "NO", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-041", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "NOT_SURE", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-042", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "NOT_SURE", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-043", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "NOT_SURE", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-044", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "NOT_SURE", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-045", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-046", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-047", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-048", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NOT_SURE", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-049", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02", "DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "YES", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-050", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "YES", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-051", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "YES", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-052", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-02"]}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "YES", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-053", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "NO", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-054", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "NO", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-055", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "NO", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-056", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "NO", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-057", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "NOT_SURE", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-058", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "NOT_SURE", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-059", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "NOT_SURE", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-060", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "NOT_SURE", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-061", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "YES"}}
+{"case_id": "RC-EMERG-062", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-063", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "NOT_SURE"}}
+{"case_id": "RC-EMERG-064", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "PREFER_NOT_TO_ANSWER", "SAFETY-02": "PREFER_NOT_TO_ANSWER", "SAFETY-03": "PREFER_NOT_TO_ANSWER"}}
+{"case_id": "RC-EMERG-065", "expected": {"result": "NEEDS_RECHECK", "rule_ids": []}, "responses": {"SAFETY-01": "NO"}}
+{"case_id": "RC-EMERG-066", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-01"]}, "responses": {"SAFETY-01": "YES"}}
+{"case_id": "RC-EMERG-067", "expected": {"result": "NEEDS_RECHECK", "rule_ids": []}, "responses": {"SAFETY-02": "NOT_SURE", "SAFETY-03": "NO"}}
+{"case_id": "RC-EMERG-068", "expected": {"result": "NEEDS_RECHECK", "rule_ids": []}, "responses": {}}
+{"case_id": "RC-EMERG-069", "expected": {"result": "SAFE_TO_CONTINUE", "rule_ids": []}, "responses": {"SAFETY-01": "NO", "SAFETY-02": "NO", "SAFETY-03": "NO", "SAFETY-OLD-09": "YES"}}
+{"case_id": "RC-EMERG-070", "expected": {"result": "EMERGENCY_GUIDANCE_ISSUED", "rule_ids": ["DRAFT-EMERG-03"]}, "responses": {"SAFETY-03": "YES", "SAFETY-OLD-09": "YES"}}

@@ -1,0 +1,18 @@
+{
+  "fixture_id": "J4-001",
+  "scenario": "J4",
+  "is_synthetic": true,
+  "title": "Sample G",
+  "description": "A profile that opens urgent guidance",
+  "listed_as_sample": true,
+  "notes": "Simulated emergency trigger. Loading it reaches guidance at once (G6). TC-J4-01 uses a blank start and these safety answers.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "YES",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

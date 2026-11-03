@@ -1,0 +1,11 @@
+{
+  "is_synthetic": true,
+  "label_source": "SOFTWARE_ORACLE",
+  "rule_version": "draft-0.1",
+  "signals": [
+    {
+      "code": "BMI_CONTEXT_NEEDED",
+      "source_field": "bmi"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "is_synthetic": true,
+  "consent_version": "CONSENT-0.1",
+  "scopes": {
+    "assessment": true,
+    "clinician_review": false,
+    "provider_share": false,
+    "spouse_share": false,
+    "research_use": false
+  }
+}

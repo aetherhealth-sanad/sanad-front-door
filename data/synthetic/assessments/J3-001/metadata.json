@@ -1,0 +1,19 @@
+{
+  "fixture_id": "J3-001",
+  "scenario": "J3",
+  "is_synthetic": true,
+  "title": "Sample E",
+  "description": "A profile with lab values to confirm",
+  "listed_as_sample": true,
+  "notes": "Valid synthetic lab value with unit, date and source. Confirmed, then a draft with no conclusion. No reference limits are supplied, so the value is not compared.",
+  "journey": {
+    "entry_path": "LAB_ONLY",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": [],
+    "confirm_observations": true
+  }
+}

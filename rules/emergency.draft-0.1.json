@@ -1,0 +1,57 @@
+{
+  "catalogue_id": "emergency",
+  "catalogue_version": "emergency-draft-0.1",
+  "approval_status": "CLINICAL_TBD",
+  "is_simulated": true,
+  "status_note": "Draft triggers copied from the README triage table, EMERGENCY_GUIDANCE row. No clinician has approved the triggers, the question wording or the response mapping (OD-02). The browser check and the server check both read this file.",
+  "disclosure": "This safety check is a simulated draft for a research prototype. It is not clinically approved.",
+  "response_values": {
+    "YES": {"state": "KNOWN_POSITIVE", "value": true},
+    "NO": {"state": "KNOWN_NEGATIVE", "value": false},
+    "NOT_SURE": {"state": "UNKNOWN", "value": null},
+    "PREFER_NOT_TO_ANSWER": {"state": "DECLINED", "value": null}
+  },
+  "questions": [
+    {
+      "question_id": "SAFETY-01",
+      "concept_code": "sudden_severe_scrotal_pain",
+      "text": "Do you have sudden, severe pain in your scrotum or testicles?"
+    },
+    {
+      "question_id": "SAFETY-02",
+      "concept_code": "fever_with_painful_scrotal_swelling",
+      "text": "Do you have a fever together with a painful, swollen scrotum?"
+    },
+    {
+      "question_id": "SAFETY-03",
+      "concept_code": "scrotal_trauma",
+      "text": "Have you just had an injury to your scrotum or testicles?"
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "DRAFT-EMERG-01",
+      "version": "draft-0.1",
+      "approval_status": "CLINICAL_TBD",
+      "concept_code": "sudden_severe_scrotal_pain",
+      "trigger_values": [true],
+      "source": "README triage table, draft example trigger: sudden severe scrotal pain"
+    },
+    {
+      "rule_id": "DRAFT-EMERG-02",
+      "version": "draft-0.1",
+      "approval_status": "CLINICAL_TBD",
+      "concept_code": "fever_with_painful_scrotal_swelling",
+      "trigger_values": [true],
+      "source": "README triage table, draft example trigger: fever with painful scrotal swelling"
+    },
+    {
+      "rule_id": "DRAFT-EMERG-03",
+      "version": "draft-0.1",
+      "approval_status": "CLINICAL_TBD",
+      "concept_code": "scrotal_trauma",
+      "trigger_values": [true],
+      "source": "README triage table, draft example trigger: scrotal trauma"
+    }
+  ]
+}

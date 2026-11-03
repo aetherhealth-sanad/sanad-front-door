@@ -1,0 +1,109 @@
+{
+  "catalogue_id": "triage",
+  "rule_version": "draft-0.1",
+  "approval_status": "CLINICAL_TBD",
+  "status_note": "Draft rules for software testing only. No clinician has approved any rule, floor, order or wording. Numeric limits stay empty until BA and Clinical supply them (implementation plan section 4.6). Engineers must not fill them in.",
+  "action_rank": {
+    "EMERGENCY_GUIDANCE": 5,
+    "PRIORITY_REVIEW": 4,
+    "SPECIALIST": 3,
+    "PRIMARY_CARE": 2,
+    "EDUCATION": 1,
+    "NEEDS_MORE_INFORMATION": 0
+  },
+  "action_rank_note": "Order from harness HR-03 (Red > Orange > Yellow > Blue > Green). NEEDS_MORE_INFORMATION never satisfies a floor and is never treated as low risk. BR-07 says the order itself needs clinical approval.",
+  "default_action": "NEEDS_MORE_INFORMATION",
+  "action_labels": {
+    "EMERGENCY_GUIDANCE": "Seek emergency help now.",
+    "PRIORITY_REVIEW": "Arrange a prompt assessment with a health professional.",
+    "SPECIALIST": "Consider a specialist men's health service (andrology).",
+    "PRIMARY_CARE": "Consider advice from a primary care service.",
+    "EDUCATION": "General health information.",
+    "NEEDS_MORE_INFORMATION": "There is not enough information to suggest a next step. More information or a professional review is needed."
+  },
+  "rules": [
+    {
+      "rule_id": "DRAFT-BMI-CONTEXT-01",
+      "kind": "BMI_CONTEXT",
+      "concept_code": "bmi",
+      "parameters": {
+        "bmi_context_cutoff": null
+      },
+      "parameters_status": "PENDING_BA_CLINICAL_INPUT",
+      "parameters_note": "No cut-off has been supplied, so any reported BMI asks for context. BMI is never interpreted on its own (BR-04).",
+      "signal": "BMI_CONTEXT_NEEDED",
+      "floor": null,
+      "context_question_ids": [
+        "Q-TRAINING-CONTEXT",
+        "Q-BODY-FAT"
+      ],
+      "patient_explanation": "BMI alone does not show body composition, so it is not interpreted on its own.",
+      "evidence_refs": [
+        {
+          "source_id": "GUIDELINE-TO-BE-REVIEWED",
+          "version": "TBD",
+          "verification": "PENDING"
+        }
+      ],
+      "source": "BR-04, AC-06.4, README J1"
+    },
+    {
+      "rule_id": "DRAFT-STEROID-01",
+      "kind": "FACT_STATE",
+      "concept_code": "anabolic_steroid_use",
+      "match_states": [
+        "KNOWN_POSITIVE"
+      ],
+      "signal": "REPORTS_ANABOLIC_STEROID_USE",
+      "floor": "SPECIALIST",
+      "patient_explanation": "You reported using anabolic steroids, now or in the past. A draft rule suggests a specialist service for this.",
+      "evidence_refs": [
+        {
+          "source_id": "GUIDELINE-TO-BE-REVIEWED",
+          "version": "TBD",
+          "verification": "PENDING"
+        }
+      ],
+      "source": "README triage table (SPECIALIST: testosterone or steroid use), BR-16, OD-06 (past and current use both trigger)"
+    },
+    {
+      "rule_id": "DRAFT-LAB-BELOW-REF-01",
+      "kind": "LAB_BELOW_REFERENCE",
+      "parameters": {
+        "reference_lower_limits": {}
+      },
+      "parameters_status": "PENDING_BA_CLINICAL_INPUT",
+      "parameters_note": "No reference limits have been supplied, so lab values are not compared. Each entry, once supplied, maps a test code to {\"unit\": ..., \"lower_limit\": ...}.",
+      "signal": "LAB_VALUE_BELOW_REFERENCE_LIMIT",
+      "floor": "SPECIALIST",
+      "patient_explanation": "A lab value you entered is below its reference limit. This does not mean you cannot have children. A draft rule suggests a specialist service.",
+      "evidence_refs": [
+        {
+          "source_id": "GUIDELINE-TO-BE-REVIEWED",
+          "version": "TBD",
+          "verification": "PENDING"
+        }
+      ],
+      "source": "README triage table (SPECIALIST: one or more parameters below the reference limit)"
+    },
+    {
+      "rule_id": "DRAFT-LAB-NO-SPERM-01",
+      "kind": "LAB_EQUALS",
+      "test_codes": [
+        "CONCENTRATION_PLACEHOLDER"
+      ],
+      "equals": 0,
+      "signal": "LAB_REPORTS_NO_SPERM",
+      "floor": "PRIORITY_REVIEW",
+      "patient_explanation": "A lab value you entered reports no sperm. One result is not a conclusion. A draft rule suggests a prompt assessment.",
+      "evidence_refs": [
+        {
+          "source_id": "GUIDELINE-TO-BE-REVIEWED",
+          "version": "TBD",
+          "verification": "PENDING"
+        }
+      ],
+      "source": "README triage table (PRIORITY_REVIEW: no sperm on a report)"
+    }
+  ]
+}

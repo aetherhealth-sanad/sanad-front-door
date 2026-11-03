@@ -1,0 +1,47 @@
+{
+  "consent_version": "CONSENT-0.1",
+  "copy_status": "DRAFT",
+  "status_note": "Draft consent copy pending T1.11. Not reviewed by Legal or Security. The five scopes follow BR-02.",
+  "scopes": [
+    {
+      "scope": "assessment",
+      "data_covered": "Your answers, the sample or file you choose, and any lab values you enter.",
+      "used_for": "Running the safety check and the draft assessment in this session.",
+      "who_sees_it": "Only this session. A reviewer sees it only if you also turn on clinician review.",
+      "if_off": "You see general education and emergency guidance only. Nothing about your health is stored.",
+      "used_in_this_flow": true
+    },
+    {
+      "scope": "clinician_review",
+      "data_covered": "Your draft result and the information it is based on.",
+      "used_for": "Letting a reviewer at a mock facility check the draft. The review is simulated.",
+      "who_sees_it": "A simulated reviewer account in this demo.",
+      "if_off": "Nobody reviews the draft, and no next step that needs approval is shown.",
+      "used_in_this_flow": true
+    },
+    {
+      "scope": "provider_share",
+      "data_covered": "A short approved summary: a case code, the type of care, the reviewer's summary and its limits.",
+      "used_for": "Sending a mock referral to an invented facility. Nothing reaches a real clinic.",
+      "who_sees_it": "A mock facility account in this demo.",
+      "if_off": "No referral is sent. A mock referral already sent is withdrawn.",
+      "used_in_this_flow": true
+    },
+    {
+      "scope": "spouse_share",
+      "data_covered": "Nothing in this version.",
+      "used_for": "Not used in this flow. Nothing is shared with a spouse or partner.",
+      "who_sees_it": "Nobody.",
+      "if_off": "Nothing changes.",
+      "used_in_this_flow": false
+    },
+    {
+      "scope": "research_use",
+      "data_covered": "Nothing in this version.",
+      "used_for": "Not used in this flow.",
+      "who_sees_it": "Nobody.",
+      "if_off": "Nothing changes.",
+      "used_in_this_flow": false
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "fixture_id": "J4-002",
+  "scenario": "J4",
+  "is_synthetic": true,
+  "title": "J4 with the API stopped",
+  "description": "Browser-only emergency check",
+  "listed_as_sample": false,
+  "notes": "Same trigger with the API stopped and no model configured. Exercised by the browser check (TC-J4-02).",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "YES",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

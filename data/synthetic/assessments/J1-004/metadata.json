@@ -1,0 +1,18 @@
+{
+  "fixture_id": "J1-004",
+  "scenario": "J1",
+  "is_synthetic": true,
+  "title": "Sample D",
+  "description": "A profile with past history",
+  "listed_as_sample": true,
+  "notes": "Same as J1-002 with steroid use in the past. PAST stays PAST. Not smoking stays NEGATED.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

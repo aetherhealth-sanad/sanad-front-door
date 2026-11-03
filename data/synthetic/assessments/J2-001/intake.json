@@ -1,0 +1,42 @@
+{
+  "profile_format": "sanad-profile-0.1",
+  "is_synthetic": true,
+  "responses": [
+    {
+      "concept_code": "age_years",
+      "value": 31
+    },
+    {
+      "concept_code": "bmi",
+      "value": 27.0
+    },
+    {
+      "concept_code": "strength_training",
+      "value": "NONE"
+    },
+    {
+      "concept_code": "body_fat_percent",
+      "state": "UNKNOWN"
+    },
+    {
+      "concept_code": "anabolic_steroid_use",
+      "value": false
+    },
+    {
+      "concept_code": "type2_diabetes",
+      "value": true
+    },
+    {
+      "concept_code": "regular_medicines",
+      "value": true
+    },
+    {
+      "concept_code": "family_history_reported",
+      "value": true
+    },
+    {
+      "concept_code": "genetics_result_available",
+      "value": true
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "fixture_id": "CN-001",
+  "scenario": "CONSENT_NEGATIVE",
+  "is_synthetic": true,
+  "title": "Consent-negative 1",
+  "description": "Approved case without provider sharing",
+  "listed_as_sample": false,
+  "notes": "Approved case with provider_share off. The gate denies.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

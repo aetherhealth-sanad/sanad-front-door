@@ -1,0 +1,18 @@
+{
+  "fixture_id": "J5-002",
+  "scenario": "J5",
+  "is_synthetic": true,
+  "title": "Sample I",
+  "description": "A profile with answers that disagree",
+  "listed_as_sample": true,
+  "notes": "Two smoking answers disagree. Both are kept as CONFLICTING and neither is chosen.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": []
+  }
+}

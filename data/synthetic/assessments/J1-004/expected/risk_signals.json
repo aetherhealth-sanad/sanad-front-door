@@ -1,0 +1,15 @@
+{
+  "is_synthetic": true,
+  "label_source": "SOFTWARE_ORACLE",
+  "rule_version": "draft-0.1",
+  "signals": [
+    {
+      "code": "BMI_CONTEXT_NEEDED",
+      "source_field": "bmi"
+    },
+    {
+      "code": "REPORTS_ANABOLIC_STEROID_USE",
+      "source_field": "anabolic_steroid_use"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "is_synthetic": true,
+  "label_source": "SOFTWARE_ORACLE",
+  "policy_version": "gate-0.1",
+  "attempts": [
+    {
+      "when": "Approved and navigation started, provider_share off",
+      "decision": "DENY",
+      "reason_codes": [
+        "CONSENT_PROVIDER_SHARE_MISSING"
+      ]
+    }
+  ]
+}

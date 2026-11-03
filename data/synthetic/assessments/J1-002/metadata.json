@@ -1,0 +1,23 @@
+{
+  "fixture_id": "J1-002",
+  "scenario": "J1",
+  "is_synthetic": true,
+  "title": "Sample A",
+  "description": "A profile that needs a few follow-up questions",
+  "listed_as_sample": true,
+  "notes": "Main demo case. High BMI with current steroid use. Body-fat context is not given.",
+  "journey": {
+    "entry_path": "FULL_INTAKE",
+    "safety_responses": {
+      "SAFETY-01": "NO",
+      "SAFETY-02": "NO",
+      "SAFETY-03": "NO"
+    },
+    "answers": [
+      {
+        "question_id": "Q-BODY-FAT",
+        "choice": "NOT_SURE"
+      }
+    ]
+  }
+}
