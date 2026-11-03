@@ -12,7 +12,8 @@ from dataclasses import dataclass
 from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 
-from sanad_api.auth.tokens import active_session
+from sanad_api.auth.models import SessionToken
+from sanad_api.auth.tokens import active_session, hash_token
 from sanad_api.clock import Clock
 from sanad_api.deps import get_clock, get_db
 from sanad_api.errors import ApiError, ErrorCode
@@ -42,8 +43,17 @@ def get_auth(
     request: Request, db: Session = Depends(get_db), clock: Clock = Depends(get_clock)
 ) -> AuthContext:
     token = bearer_token(request)
-    row = active_session(db, token, clock.now()) if token else None
+    now = clock.now()
+    row = active_session(db, token, now) if token else None
     if row is None:
+        if token:
+            token_hash = hash_token(token)
+            expired = db.get(SessionToken, token_hash)
+            if expired is not None and expired.role == Role.PATIENT.value:
+                from sanad_api.navigation.service import purge_session_navigation
+
+                purge_session_navigation(db, token_hash)
+                db.commit()
         raise ApiError(401, ErrorCode.AUTH_REQUIRED)
     return AuthContext(
         role=Role(row.role),

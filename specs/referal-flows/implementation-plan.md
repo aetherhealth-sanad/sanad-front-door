@@ -2,8 +2,8 @@
 
 | Item | Value |
 |---|---|
-| **Status** | Draft for team review. No code written. |
-| **Version / date** | 0.1, 2026-11-02 |
+| **Status** | Draft for team review. Python API code exists; frontend and CI tasks remain unimplemented. |
+| **Version / date** | 0.2, 2026-11-03 |
 | **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17` |
 | **Verified by** | [Test plan](test-plan.md) |
 
@@ -11,7 +11,7 @@ Everything here is `PROPOSED` until the Tech Lead accepts it. Requirements live 
 
 ## 1. Schedule
 
-Today is Monday 2 Nov 2026. The milestones line up with the [BRD delivery plan](../Sanad_AetherHealth_BRD_v0.3.md#17-delivery-plan--change-control):
+The M1–M3 milestones were drafted against the [BRD delivery plan](../Sanad_AetherHealth_BRD_v0.4.md#17-delivery-plan--change-control); v0.4 P0 additions are tracked separately below.
 
 | Milestone | Dates | BRD phase | Exit |
 |---|---|---|---|
@@ -216,6 +216,17 @@ Owners follow the [README team table](../../README.md#team) as a suggestion and 
 | T3.7 | J3 lab entry, confirmation, conflict handling, draft rules | AC-15.1 to AC-15.6 | T2.5 | Vinh, Hoàng | Not started |
 | T3.8 | J2 selective evidence (drop first if late) | AC-16.1 to AC-16.4 | T3.1 | Vinh, Đạt | Not started |
 | T3.9 | Mock label audit, full E2E, demo script for this flow | AC-17.3 | T3.1 to T3.7 | Hoàng, Đạt | Not started |
+
+### v0.4 bounded additions
+
+These are additive P0 backend/design tasks from PRD v0.4; they do not activate clinical rules or external integrations.
+
+| Task | Work | Delivers | Depends on | Suggested owner | Status |
+|---|---|---|---|---|---|
+| T4.1 | Optional psychosocial micro-intake, separate provenance store, consent guard, report context only | PRD-FR-29/30, PRD-AC-42/43 | T2.2, T2.5 | Backend, Product | In progress; API code present, tests/review pending |
+| T4.2 | Session-bound guidance acknowledgement, progress/barriers, retention deletion and funnel | PRD-FR-24 to 28, PRD-AC-35 to 41 | T3.2 | Backend, Security, QA | In progress; API code present, tests/review pending |
+| T4.3 | Versioned conceptual FHIR R4 mapping manifest; no export or conformance claim | PRD-FR-31, PRD-AC-46/48 | T1.10, T3.7 | Backend, Architect | In progress; manifest present, review pending |
+| T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader present, review pending |
 
 ### Critical path
 

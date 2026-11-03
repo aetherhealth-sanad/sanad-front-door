@@ -6,7 +6,7 @@ Instructions for anyone changing this repository, human or AI coding agent. Read
 
 **Sanad** is a private front door for men's reproductive health, built by AetherHealth for the Future Health Digital Innovation Challenge 2026. It is a **research prototype and not a medical device**. It does not diagnose, prescribe, or estimate a personal probability of infertility.
 
-**Current state:** documentation only. No application code exists yet, so every module, endpoint and command in the specs is planned, not built.
+**Current state:** the repository has a Python/FastAPI backend, synthetic fixtures, draft rule catalogues, a golden rule set and pytest API tests under `apps/api`. Patient and clinician web UI, production FHIR export/validation and model integration are not present.
 
 ## Where the truth lives
 
@@ -14,13 +14,14 @@ Read in this order. When two documents disagree, the higher one wins. Stop and r
 
 | # | Document | Decides |
 |---|---|---|
-| 1 | [BRD v0.3](specs/Sanad_AetherHealth_BRD_v0.3.md) | Business rules (`BR-*`), journeys, MVP scope |
-| 2 | [PRD v0.3](specs/Sanad_AetherHealth_PRD_v0.3.md) | Product contracts (`PRD-FR-*`, `PRD-AC-*`), case state machine |
-| 3 | [Product spec](specs/referal-flows/product-spec.md) | Referral flow behaviour (`RF-*`, `AC-*`, `INV-*`) |
-| 4 | [Implementation plan](specs/referal-flows/implementation-plan.md) | Stack, structure, tasks (`T*`) |
-| 5 | [API design](specs/referal-flows/api-design.md) | Endpoints, access checks, action rules, error codes |
-| 6 | [Test plan](specs/referal-flows/test-plan.md) | How each criterion is verified (`TC-*`) |
-| 7 | [README](README.md) | Vision and proposed architecture. It never overrides the BRD or PRD on scope. |
+| 1 | [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) | Business rules (`BR-*`), journeys, MVP scope |
+| 2 | [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md) | Product contracts (`PRD-FR-*`, `PRD-AC-*`), case state machine |
+| 3 | [E2E workflow v0.4](specs/Sanad_E2E_Workflow_v0.4.md) | Cross-actor flow and exchange boundaries |
+| 4 | [Product spec](specs/referal-flows/product-spec.md) | Referral flow behaviour (`RF-*`, `AC-*`, `INV-*`) where not superseded by v0.4 |
+| 5 | [Implementation plan](specs/referal-flows/implementation-plan.md) | Stack, structure, tasks (`T*`) |
+| 6 | [API design](specs/referal-flows/api-design.md) | Endpoints, access checks, action rules, error codes |
+| 7 | [Test plan](specs/referal-flows/test-plan.md) | How each criterion is verified (`TC-*`) |
+| 8 | [README](README.md) | Repository status, quickstart and implementation notes. It never overrides the BRD or PRD on scope. |
 
 The product spec extends the PRD in a few places. Those extensions are listed in [product-spec §10](specs/referal-flows/product-spec.md#10-reconciliation-with-the-brd-and-prd) and recorded in the [change log](specs/referal-flows/change-log.md). Until an approver signs them, treat them as `PROPOSED`.
 
@@ -42,7 +43,7 @@ Do not start a later milestone until the current milestone's exit criteria in th
 
 ## Rules that must never break
 
-These hold on every branch and in every demo. Full list with test IDs: [product-spec §8](specs/referal-flows/product-spec.md#8-invariants).
+These hold on every branch and in every demo. Full list with test IDs: [product-spec §8](specs/referal-flows/product-spec.md#8-invariants), as constrained by BRD/PRD v0.4.
 
 1. **The backend decides.** Consent, role and case state are checked on the server at the moment of each action. Disabling a button is not a control.
 2. **Referrals pass the gate.** A referral exists only if user consent, clinician approval and backend policy all pass. `evaluate_gate` is the only code path that creates one.
@@ -58,6 +59,9 @@ These hold on every branch and in every demo. Full list with test IDs: [product-
 12. **No outbound referral transport.** The referral modules contain no HTTP, email or SMS client. Nothing leaves for a real clinic.
 13. **No camera.** No camera prompts, video, or facial or emotion analysis.
 14. **Neutral language.** Say "men's health", not "infertility". Assume nothing about marriage, religion or plans for children.
+15. **Psychosocial context stays contextual.** The optional maximum of three self-reports is `PATIENT_REPORTED` and `UNVERIFIED`; it never enters triage rules or supports diagnosis/semen prediction. See PRD-FR-29/30.
+16. **Closed-loop events stay session scoped.** Acknowledgement is a system event; booking/visit are user-reported and unverified. Progress and barrier data are deleted at session end/expiry. No provider verification or `CARE_COMPLETED` write exists.
+17. **FHIR status stays honest.** The mapping manifest is conceptual, `NOT_EVALUATED`, and never implies interoperability or conformance.
 
 **Stop and fix first** if you find a dangerous clinical claim without approval or source, a broken emergency path, a consent bypass, real personal data in a trace, or a mock referral shown as real. Do not merge or demo around it.
 
@@ -75,7 +79,7 @@ Changes to clinical rules, triage levels, label taxonomy, consent scopes or data
 
 ## Scope of the current work
 
-Milestones M1, M2 and M3 from the [product spec](specs/referal-flows/product-spec.md): app foundation, journeys J1 and J4, then J2, J3 and the referral path. See the [out-of-scope list](specs/referal-flows/product-spec.md#32-out-of-scope). In particular, this flow contains **no LLM calls**, and J9, J10, RAG and evaluation dashboards are not part of it.
+Use the bounded P0 scope in [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) and [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md). Backend J9/J10 and optional psychosocial contracts are in T4.2/T4.1. The current source makes **no LLM calls**. FHIR is a conceptual mapping only; export, validation, RAG, research evaluation and provider integrations remain outside the implemented backend.
 
 ## Repository layout
 
@@ -84,9 +88,16 @@ Today:
 ```text
 AGENTS.md
 README.md
+apps/api/sanad_api/   # Python/FastAPI backend
+apps/api/tests/       # pytest API/unit coverage
+catalogue/            # Versioned consent, question and service data
+data/synthetic/       # Synthetic fixtures only
+eval/golden/          # Rule conformance cases
+rules/                # Draft rule catalogues, CLINICAL_TBD
 specs/
-├── Sanad_AetherHealth_BRD_v0.3.md
-├── Sanad_AetherHealth_PRD_v0.3.md
+├── Sanad_AetherHealth_BRD_v0.4.md
+├── Sanad_AetherHealth_PRD_v0.4.md
+├── Sanad_E2E_Workflow_v0.4.md
 └── referal-flows/
     ├── product-spec.md
     ├── implementation-plan.md
@@ -99,7 +110,15 @@ Planned layout: [implementation-plan §3](specs/referal-flows/implementation-pla
 
 ## Commands
 
-There is nothing to run yet. Task T1.1 must replace this section with the real install, run, test and lint commands. Do not invent commands before then.
+From the repository root, install and start the local API:
+
+```bash
+python3 -m venv apps/api/.venv
+apps/api/.venv/bin/python -m pip install -e 'apps/api[dev]'
+apps/api/.venv/bin/uvicorn sanad_api.main:create_app --factory --app-dir apps/api --reload
+```
+
+Run the backend suite from `apps/api` with `.venv/bin/python -m pytest`. Ruff is configured in `apps/api/pyproject.toml`; run `.venv/bin/ruff check sanad_api tests` from `apps/api`. Do not run with real patient data or connect an outbound referral transport.
 
 ## Git and pull requests
 

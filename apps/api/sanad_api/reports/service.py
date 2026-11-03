@@ -84,6 +84,10 @@ def patient_report(case: Case, draft: Draft, decision: ReviewDecision | None) ->
     released = is_released(case, decision)
     status = review_status(case, decision)
     proposal = content["triage_proposal"]
+    navigation_ready = released and case.state in {
+        CaseState.GUIDANCE_AVAILABLE,
+        CaseState.NAVIGATION_STARTED,
+    }
     return {
         "report_type": "PATIENT",
         "draft_label": content["draft_label"],
@@ -110,4 +114,6 @@ def patient_report(case: Case, draft: Draft, decision: ReviewDecision | None) ->
         "evidence": content["evidence"],
         "required_statements": content["required_statements"],
         "genetics_support_available": content["genetics_support_available"],
+        "guidance_id": f"GUIDE-{case.case_id}-{draft.id}" if navigation_ready else None,
+        "guidance_version": draft.report_hash if navigation_ready else None,
     }

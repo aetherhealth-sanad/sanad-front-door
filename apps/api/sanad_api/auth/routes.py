@@ -16,7 +16,7 @@ from sanad_api.audit.log import AuditType, record
 from sanad_api.auth.deps import AuthContext, require_staff
 from sanad_api.auth.models import SessionToken
 from sanad_api.auth.rate_limit import rate_limited
-from sanad_api.auth.tokens import active_session, issue_session
+from sanad_api.auth.tokens import active_session, hash_token, issue_session
 from sanad_api.cases.models import Case
 from sanad_api.clock import Clock
 from sanad_api.config import MOCK_FACILITY_USERNAME, REVIEWER_USERNAME, Settings
@@ -111,6 +111,10 @@ def end_session(
     the case state and triage do not change (AC-09.5, AC-09.6)."""
     token = _token_from(body)
     now = clock.now()
+    if token:
+        from sanad_api.navigation.service import purge_session_navigation
+
+        purge_session_navigation(db, hash_token(token))
     row = active_session(db, token, now) if token else None
     if row is not None:
         row.ended_at = now
@@ -123,5 +127,5 @@ def end_session(
             case_id=case.case_id if case else None,
             case_version=case.case_version if case else None,
         )
-        db.commit()
+    db.commit()
     return Response(status_code=204)

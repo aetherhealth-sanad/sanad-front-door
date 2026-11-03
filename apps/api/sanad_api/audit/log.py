@@ -32,6 +32,10 @@ class AuditType(StrEnum):
     REFERRAL_EVENT = "REFERRAL_EVENT"
     CASE_CLOSED = "CASE_CLOSED"
     SESSION_ENDED = "SESSION_ENDED"
+    PSYCHOSOCIAL_CAPTURED = "PSYCHOSOCIAL_CAPTURED"
+    NAVIGATION_ACKNOWLEDGED = "NAVIGATION_ACKNOWLEDGED"
+    NAVIGATION_PROGRESS_RECORDED = "NAVIGATION_PROGRESS_RECORDED"
+    NAVIGATION_BARRIER_RECORDED = "NAVIGATION_BARRIER_RECORDED"
 
 
 ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
@@ -50,6 +54,10 @@ ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
     AuditType.REFERRAL_EVENT: frozenset({"referral_id", "event_id", "mock_status"}),
     AuditType.CASE_CLOSED: frozenset({"closed_reason"}),
     AuditType.SESSION_ENDED: frozenset(),
+    AuditType.PSYCHOSOCIAL_CAPTURED: frozenset({"count", "catalogue_version"}),
+    AuditType.NAVIGATION_ACKNOWLEDGED: frozenset({"guidance_version"}),
+    AuditType.NAVIGATION_PROGRESS_RECORDED: frozenset({"status", "verification_source"}),
+    AuditType.NAVIGATION_BARRIER_RECORDED: frozenset({"count", "prefer_not_to_say"}),
 }
 
 _CODE = re.compile(r"^[A-Za-z0-9_.:\-]{1,80}$")

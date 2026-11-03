@@ -47,7 +47,10 @@ def active_session(db: Session, token: str, now: datetime) -> SessionToken | Non
 
 
 def end_case_sessions(db: Session, case_id: str, now: datetime) -> None:
+    from sanad_api.navigation.service import purge_session_navigation
+
     for row in db.query(SessionToken).filter(
         SessionToken.case_id == case_id, SessionToken.ended_at.is_(None)
     ):
+        purge_session_navigation(db, row.token_hash)
         row.ended_at = now

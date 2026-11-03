@@ -6,19 +6,33 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 - Add an entry in the same PR as any change to these specs.
 - Do not edit past entries. Add a new one that corrects or replaces them.
-- Add a change-control record when a change touches clinical rules, triage levels, label taxonomy, consent scopes, data policy or a PRD contract ([BRD §17](../Sanad_AetherHealth_BRD_v0.3.md#17-delivery-plan--change-control)).
+- Add a change-control record when a change touches clinical rules, triage levels, label taxonomy, consent scopes, data policy or a PRD contract ([BRD v0.4 §17](../Sanad_AetherHealth_BRD_v0.4.md#17-delivery-plan--change-control)).
 - Write "Pending" until a named person approves. **Never record an approval that did not happen.** An unapproved item stays `PROPOSED`.
 
 ## Versions
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
+| 0.3 | 2026-11-03 | Added backend contracts for PRD v0.4 psychosocial context and session-scoped closed-loop navigation; added conceptual FHIR mapping manifest; recorded session-only progress retention choice for review. | Codex | Pending |
 | 0.2 | 2026-11-02 | Added `api-design.md`. Corrected Quick exit order in plan §4.5 so the token survives and travels in the beacon body. Replaced the API table in plan §5 with a link. Changed TC-J4-01 to a blank start. Opened CC-009. | Drafted by Claude Code for trung1234 | Pending |
 | 0.1 | 2026-11-02 | First draft of the product spec, implementation plan and test plan, covering milestones M1 to M3. Added `AGENTS.md`. Reconciled the team brief with BRD and PRD v0.3. No code written. | Drafted by Claude Code for trung1234 | Pending |
 
 ## Change-control records
 
 Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, and CC-009 with version 0.2.
+
+### CC-010 Session-only closed-loop retention
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, Product + Security review pending |
+| **Reason** | PRD v0.4 OQ-19 leaves persistence of self-reported progress across anonymous sessions unresolved. |
+| **Evidence** | The user selected session-only retention for this implementation; PRD v0.4 §4.13 requires progress retention policy and BRD v0.4 §10.7 limits the anonymous progress record. |
+| **Change** | Bind navigation episodes to the patient session. Delete navigation acknowledgement, progress and barrier rows on explicit session end and expire them in the backend cleanup task. They are not visible to later sessions. |
+| **Affected journeys** | J9, J10 |
+| **Tests** | TC-19.4 |
+| **Approver** | Pending (Product + Security) |
+| **Version** | Spec 0.3 |
 
 ### CC-001 Offline emergency guidance
 

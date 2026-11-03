@@ -5,7 +5,7 @@
 | **Document ID** | `AETHERHEALTH/SANAD/SPEC/REFERRAL-FLOWS/0.1` |
 | **Status** | Draft for team review. Not approved. Clinical content not approved. |
 | **Version / date** | 0.1, 2026-11-02 |
-| **Parent documents** | [BRD v0.3](../Sanad_AetherHealth_BRD_v0.3.md), [PRD v0.3](../Sanad_AetherHealth_PRD_v0.3.md) |
+| **Parent documents** | [BRD v0.4](../Sanad_AetherHealth_BRD_v0.4.md), [PRD v0.4](../Sanad_AetherHealth_PRD_v0.4.md); this document retains the v0.3 M1–M3 referral-flow detail where not superseded |
 | **Companion documents** | [Implementation plan](implementation-plan.md), [API design](api-design.md), [Test plan](test-plan.md), [Change log](change-log.md) |
 | **Milestones** | M1 App foundation, M2 Journeys J1 and J4, M3 Journeys J2 and J3 plus the referral path |
 
@@ -92,8 +92,8 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 
 | Item | PRD reference | State after M3 |
 |---|---|---|
-| J9 acknowledgement and self-reported progress | PRD-FR-24, PRD-FR-25 | Not built. M3 only adds the `NAVIGATION_STARTED` event the gate depends on. |
-| J10 care barriers and support | PRD-FR-26 | Not built |
+| J9 acknowledgement and self-reported progress | PRD-FR-24, PRD-FR-25 | Not part of the original M1–M3 frontend scope. Backend support is being added under PRD v0.4 T4.2; no J9 screen exists yet. |
+| J10 care barriers and support | PRD-FR-26 | Not part of the original M1–M3 frontend scope. Session-bound backend support is being added under PRD v0.4 T4.2; no J10 screen exists yet. |
 | Defer and no-update handling beyond Quick exit | PRD-FR-28 | Partly covered: leaving is never recorded as failure |
 | Evidence retrieval and citations | PRD-FR-07 | Abstention only: claims show "insufficient evidence" (AC-11.4) |
 | Funnel metrics and evaluation report | PRD-FR-14, PRD-FR-27 | Not built. Golden cases from the test plan feed it later. |
