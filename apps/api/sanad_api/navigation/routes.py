@@ -9,6 +9,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from sanad_api.audit.log import AuditType, record
@@ -22,12 +23,14 @@ from sanad_api.navigation.models import (
     CareBarrierReport,
     CareNavigationEpisode,
     CareNavigationEvent,
+    CareNavigationIdempotency,
 )
 from sanad_api.navigation.service import (
     append_progress,
     current_guidance,
     episode_payload,
     get_or_create_episode,
+    payload_hash,
 )
 
 router = APIRouter(tags=["navigation"])
@@ -52,6 +55,36 @@ BarrierReason = Literal[
 ]
 
 
+def _recover_concurrent_replay(
+    db: Session,
+    *,
+    episode_id: str,
+    idempotency_key: str,
+    request_hash: str,
+    operation: str,
+) -> dict[str, Any] | None:
+    """Return the winner's result when a concurrent retry wins the unique-key race."""
+    db.rollback()
+    existing = (
+        db.query(CareNavigationIdempotency)
+        .filter_by(
+            episode_id=episode_id,
+            operation=operation,
+            idempotency_key=idempotency_key,
+        )
+        .one_or_none()
+    )
+    if existing is None:
+        return None
+    if existing.request_hash != request_hash:
+        raise ApiError(409, ErrorCode.IDEMPOTENCY_KEY_REUSED)
+    episode = db.get(CareNavigationEpisode, episode_id)
+    if episode is None:
+        return None
+    db.commit()
+    return episode_payload(db, episode)
+
+
 class NavigationEpisodeOut(BaseModel):
     episode_id: str
     case_id: str
@@ -73,6 +106,7 @@ class AcknowledgeIn(BaseModel):
 class ProgressIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     status: GuidanceStatus
+    idempotency_key: str = Field(min_length=1, max_length=128)
 
 
 class BarrierIn(BaseModel):
@@ -80,6 +114,7 @@ class BarrierIn(BaseModel):
     barrier_reasons: list[BarrierReason] = Field(default_factory=list, max_length=8)
     prefer_not_to_say: bool = False
     free_text_opt_in: Literal[False] = False
+    idempotency_key: str = Field(min_length=1, max_length=128)
 
     @model_validator(mode="after")
     def _exclusive_prefer_not_to_say(self) -> BarrierIn:
@@ -190,26 +225,62 @@ def record_progress(
     clock: Clock = Depends(get_clock),
 ) -> dict[str, Any]:
     episode, _draft = _current_episode(pc, db, clock)
+    digest = payload_hash({"status": body.status})
+    existing = (
+        db.query(CareNavigationIdempotency)
+        .filter_by(
+            episode_id=episode.episode_id,
+            operation="PROGRESS",
+            idempotency_key=body.idempotency_key,
+        )
+        .one_or_none()
+    )
+    if existing is not None:
+        if existing.request_hash != digest:
+            raise ApiError(409, ErrorCode.IDEMPOTENCY_KEY_REUSED)
+        db.commit()
+        return episode_payload(db, episode)
     now = clock.now()
-    append_progress(
-        db,
-        episode,
-        status=body.status,
-        source="USER_REPORTED",
-        actor=pc.auth.actor,
-        now=now,
-    )
-    record(
-        db,
-        AuditType.NAVIGATION_PROGRESS_RECORDED,
-        actor=pc.auth.actor,
-        now=now,
-        case_id=pc.case.case_id,
-        case_version=pc.case.case_version,
-        status=body.status,
-        verification_source="USER_REPORTED",
-    )
-    db.commit()
+    try:
+        db.add(
+            CareNavigationIdempotency(
+                episode_id=episode.episode_id,
+                operation="PROGRESS",
+                idempotency_key=body.idempotency_key,
+                request_hash=digest,
+                created_at=now,
+            )
+        )
+        append_progress(
+            db,
+            episode,
+            status=body.status,
+            source="USER_REPORTED",
+            actor=pc.auth.actor,
+            now=now,
+        )
+        record(
+            db,
+            AuditType.NAVIGATION_PROGRESS_RECORDED,
+            actor=pc.auth.actor,
+            now=now,
+            case_id=pc.case.case_id,
+            case_version=pc.case.case_version,
+            status=body.status,
+            verification_source="USER_REPORTED",
+        )
+        db.commit()
+    except IntegrityError:
+        recovered = _recover_concurrent_replay(
+            db,
+            episode_id=episode.episode_id,
+            idempotency_key=body.idempotency_key,
+            request_hash=digest,
+            operation="PROGRESS",
+        )
+        if recovered is None:
+            raise
+        return recovered
     return episode_payload(db, episode)
 
 
@@ -224,27 +295,66 @@ def record_barriers(
     reasons = list(body.barrier_reasons)
     if body.prefer_not_to_say:
         reasons = ["PREFER_NOT_TO_SAY"]
-    db.add(
-        CareBarrierReport(
+    prefer_not_to_say = body.prefer_not_to_say or "PREFER_NOT_TO_SAY" in reasons
+    digest = payload_hash(
+        {"barrier_reasons": sorted(reasons), "prefer_not_to_say": prefer_not_to_say}
+    )
+    existing = (
+        db.query(CareNavigationIdempotency)
+        .filter_by(
             episode_id=episode.episode_id,
-            barrier_reasons_json=json.dumps(reasons),
-            free_text_opt_in=False,
-            prefer_not_to_say=body.prefer_not_to_say or "PREFER_NOT_TO_SAY" in reasons,
-            actor=pc.auth.actor,
-            recorded_at=clock.now(),
+            operation="BARRIER",
+            idempotency_key=body.idempotency_key,
         )
+        .one_or_none()
     )
-    record(
-        db,
-        AuditType.NAVIGATION_BARRIER_RECORDED,
-        actor=pc.auth.actor,
-        now=clock.now(),
-        case_id=pc.case.case_id,
-        case_version=pc.case.case_version,
-        count=len(reasons),
-        prefer_not_to_say=body.prefer_not_to_say,
-    )
-    db.commit()
+    if existing is not None:
+        if existing.request_hash != digest:
+            raise ApiError(409, ErrorCode.IDEMPOTENCY_KEY_REUSED)
+        db.commit()
+        return episode_payload(db, episode)
+    try:
+        db.add(
+            CareNavigationIdempotency(
+                episode_id=episode.episode_id,
+                operation="BARRIER",
+                idempotency_key=body.idempotency_key,
+                request_hash=digest,
+                created_at=clock.now(),
+            )
+        )
+        db.add(
+            CareBarrierReport(
+                episode_id=episode.episode_id,
+                barrier_reasons_json=json.dumps(reasons),
+                free_text_opt_in=False,
+                prefer_not_to_say=prefer_not_to_say,
+                actor=pc.auth.actor,
+                recorded_at=clock.now(),
+            )
+        )
+        record(
+            db,
+            AuditType.NAVIGATION_BARRIER_RECORDED,
+            actor=pc.auth.actor,
+            now=clock.now(),
+            case_id=pc.case.case_id,
+            case_version=pc.case.case_version,
+            count=len(reasons),
+            prefer_not_to_say=body.prefer_not_to_say,
+        )
+        db.commit()
+    except IntegrityError:
+        recovered = _recover_concurrent_replay(
+            db,
+            episode_id=episode.episode_id,
+            idempotency_key=body.idempotency_key,
+            request_hash=digest,
+            operation="BARRIER",
+        )
+        if recovered is None:
+            raise
+        return recovered
     return episode_payload(db, episode)
 
 
