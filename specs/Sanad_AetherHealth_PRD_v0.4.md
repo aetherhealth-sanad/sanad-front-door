@@ -1,23 +1,21 @@
 # Sanad (سند) — Product Requirements Document
 
-**A private front door for men's reproductive health**
-
-**Product hypothesis:** Assessment-first private entry → semantic/context validation → evidence-backed guidance → consent-based navigation → voluntary, provenance-aware progress & barrier support; clinician-assisted journey in roadmap.
-
-**Document boundary:** Research prototype for the Future Health Digital Innovation Challenge. **Not a diagnostic system, medical device certification, or clinically approved triage protocol.**
+> **A private front door for men's reproductive health**  
+> **Product hypothesis:** Assessment-first private entry → semantic/context validation → evidence-backed guidance → consent-based navigation → voluntary, provenance-aware progress & barrier support; clinician-assisted journey in roadmap.  
+> **Document boundary:** Research prototype for the Future Health Digital Innovation Challenge. **Not a diagnostic system, medical device certification, or clinically approved triage protocol.**
 
 | Hạng mục | Nội dung |
-| --- | --- |
-| **Document ID** | `AETHERHEALTH/SANAD/PRD/0.3` |
+| :--- | :--- |
+| **Document ID** | `AETHERHEALTH/SANAD/PRD/0.4` |
 | **Document Name** | `Sanad — Product Requirements Document` |
 | **Project** | AetherHealth — Future Health Digital Innovation Challenge 2026, Fertility / Challenge 01 |
-| **Source of truth** | `Sanad_AetherHealth_BRD_v0.3.md` — 2026/10/29 |
+| **Source of truth** | `Sanad_AetherHealth_BRD_v0.4.md` — 2026/10/29 |
 | **Owner** | AetherHealth — Product / Business Analysis |
 | **Reviewers** | Product Lead, Frontend, Backend, AI/ML, QA, Security, Clinical Advisor (**TBD**) |
 | **Status** | **Draft for implementation review — clinical policy unapproved** |
 | **Creation Date** | `2026/10/27` |
-| **Last Updated** | `2026/10/29` |
-| **Version** | `0.3` |
+| **Last Updated** | `2026/11/03` |
+| **Version** | `0.4` |
 | **Internal MVP freeze** | `2026/11/19` (team target) |
 | **Challenge submission** | `2026/11/20` (reconfirm with organiser) |
 | **MVP data policy** | Public / synthetic data only; no real patient records |
@@ -27,7 +25,7 @@
 ## Lịch sử cập nhật
 
 | Version | Date | Nội dung cập nhật | Người cập nhật |
-| --- | --- | --- | --- |
+| :---: | :---: | :--- | :--- |
 | 0.1 | 2026/10/27 | Baseline Product Requirements: scope P0, consent, case contracts, J1–J5, source tracing, clinical review và research isolation. | AetherHealth BA / Product |
 | **0.2** | **2026/10/29** | Mở rộng 8-step care vision và phân P0/P1/P2; thêm Semantic Layer, SLM-first benchmark, knowledge governance, clinic notes, optional booking, result history, care plans và follow-up mock. | AetherHealth BA / Product |
 | **0.3** | **2026/10/29** | Bổ sung closed-loop navigation P0: acknowledgement, tiến độ tự khai, barrier support, verification-source và KPI funnel; không đồng nhất action UI với chăm sóc thực. Chuẩn hóa web app mobile-first. | AetherHealth BA / Product |
@@ -36,17 +34,19 @@
 
 ## Tài liệu liên quan
 
-- [Sanad BRD v0.3](./Sanad_AetherHealth_BRD_v0.3.md) — BO-01…BO-12, BR-01…BR-33, J1…J10.
-- [Sanad repository README](../README.md) — product vision / intended architecture; **không mặc định các module đã implemented**.
+- [Sanad BRD v0.4](./Sanad_AetherHealth_BRD_v0.4.md) — BO-01…BO-12, BR-01…BR-33, J1…J10.
+- [Sanad repository README](./README.md) — product vision / intended architecture; **không mặc định các module đã implemented**.
 - [Challenge 01 — Male Reproductive Health](https://hack2skill.com/event/futurehealthchallenge/) — yêu cầu cuộc thi; nhóm cần kiểm tra bản cập nhật mới nhất.
 - [WHO — Infertility guideline (2025)](https://www.who.int/publications/i/item/9789240115774); [WHO — Semen Manual, 6th edition](https://www.who.int/publications/i/item/9789240030787); [AUA/ASRM male infertility guideline](https://www.asrm.org/practice-guidance/practice-committee-documents/diagnosis-and-treatment-of-infertility-in-men-auaasrm-guideline-part-i-2020/) — tài liệu nghiên cứu để soạn *candidate rules*; việc áp dụng cần clinician sign-off và kiểm tra quyền sử dụng nội dung.
 - [SEED-ML v3 — dataset](https://data.mendeley.com/datasets/sc8rsz2vd7/3) — nhánh nghiên cứu ML độc lập, không phải data train lifestyle triage.
 - [CDC NSFG Male 2022–2023](https://www.cdc.gov/nchs/nsfg/nsfg-2022-2023-puf.htm) — khảo sát tự khai về khả năng sinh sản và tiếp cận chăm sóc, research-only.
 - [PhysioNet MIMIC-IV-Ext CDS](https://physionet.org/content/mimic-iv-ext-cds/1.0.2/) — dữ liệu khoa cấp cứu bị giới hạn truy cập, chỉ nghiên cứu khi được cấp quyền và tuân thủ DUA.
 
-**Quy ước trạng thái:** `TEAM_DECISION` = nhóm đã chọn về sản phẩm; `PROPOSED` = đề xuất cần review; `CLINICAL_TBD` = chưa được bác sĩ duyệt; `TECH_TBD` = cần xác minh kỹ thuật; `RESEARCH_ONLY` = không dùng để quyết định chăm sóc. Nếu có mâu thuẫn giữa README cũ và BRD, dùng BRD v0.3 cho phạm vi MVP và mở issue để rà soát.
+**Quy ước trạng thái:** `TEAM_DECISION` = nhóm đã chọn về sản phẩm; `PROPOSED` = đề xuất cần review; `CLINICAL_TBD` = chưa được bác sĩ duyệt; `TECH_TBD` = cần xác minh kỹ thuật; `RESEARCH_ONLY` = không dùng để quyết định chăm sóc. Nếu có mâu thuẫn giữa README cũ và BRD, dùng BRD v0.4 cho phạm vi MVP và mở issue để rà soát.
 
 ---
+
+| **0.4** | **2026/11/03** | BTC clarification aligned: three optional psychosocial inputs; FHIR R4 conceptual mapping; synthetic clinical realism checks, no production integration claims. | AetherHealth BA / Product |
 
 ## 1. Product Vision
 
@@ -102,7 +102,7 @@ flowchart TD
 ### 1.4 Eight-stage product journey & release mapping
 
 | Stage | Capability | P0 MVP | P1/P2/roadmap |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | S1. Private entry / optional appointment | Mục đích, ngôn ngữ, privacy, lịch khám tự nguyện | Entry không login, consent | P1: mock appointment intent |
 | S2. Previsit intake | Chuẩn hóa khai báo, thiếu/mâu thuẫn, pre-visit summary | Adaptive intake + Gatekeeper + Semantic facts | P1: clinic-ready handoff |
 | S3. Consultation support | Contextual charts, notes, next questions | Clinician view limited | P1: clinical note draft + structured suggestions |
@@ -124,6 +124,10 @@ flowchart TD
 - **Clinical policy:** deterministic safety, approval workflow, backend action gates; không dùng AI model để tự kê đơn, chỉ định xét nghiệm hoặc đổi triage rule.
 - **Excluded:** facial/video interview và emotion recognition; không yêu cầu camera trong assessment.
 - **Care progress layer P0:** event log + voluntary barrier reasons, UI-based acknowledgement không phải clinical confirmation; không gán `PROVIDER_VERIFIED` khi chưa có cơ sở y tế liên kết.
+
+### 1.6 Organiser clarification and implementation decision (2026/11/03)
+
+Organiser explicitly welcomes **evidence-based optional psychosocial variables** (chronic stress, sleep, anxiety) where they improve assessment without intake overload; endorses realistic synthetic patient/semen data; and treats **HL7 FHIR alignment as best practice, not mandatory prototype compliance**. This is a product direction, **not clinician approval**. Default: 2–3 questions maximum, nonblocking; FHIR R4 mapping **document P0**, sample export/validator P1; no actual Sahatna API or semen-quality predictor.
 
 ## 2. Personas & User Stories
 
@@ -205,10 +209,22 @@ flowchart TD
 
 **US-27.** Là BA/QA, tôi muốn theo dõi funnel từ hướng dẫn đến bước chăm sóc tiếp theo bằng metric rõ mẫu số và phân biệt UI/self-report/provider-verified.
 
+### P11 — Optional psychosocial context (J11)
+
+**US-23.** Là người dùng, tôi muốn trả lời hoặc bỏ qua một số câu tùy chọn về căng thẳng, giấc ngủ và lo lắng mà không bị mất quyền làm assessment.
+
+**US-24.** Tôi muốn biết dữ liệu tâm lý tự khai được dùng như bối cảnh hỗ trợ giải thích, không tự động chẩn đoán hay suy luận khả năng sinh sản.
+
+### P12 — Integration-ready synthetic workflow (J12)
+
+**US-25.** Là developer/QA, tôi muốn có mapping FHIR R4 có provenance và synthetic case/report chuẩn hóa để kiểm thử khả năng trao đổi dữ liệu trong tương lai mà không cần hồ sơ thật.
+
+**US-26.** Là clinical reviewer, tôi muốn kiểm tra nguồn tham chiếu, đơn vị và tính hợp lý của simulated semen report trước khi nhóm mô tả là clinically plausible.
+
 ## 3. Product Scope & Priorities
 
 | Priority | Ý nghĩa | Gate đưa vào phiên bản |
-| --- | --- | --- |
+| :---: | :--- | :--- |
 | **Must / P0** | Bắt buộc cho luồng demo an toàn | Không release demo nếu security/safety gate thất bại |
 | **Should / P1** | Nên có để tăng chất lượng trình diễn | Thực hiện sau khi P0 đã ổn định |
 | **Could / P2** | Tăng tính hoàn thiện, có thể defer | Không được phá vỡ P0 hoặc làm phát sinh clinical claims |
@@ -262,6 +278,10 @@ flowchart TD
 - Tự xác nhận clinical validity, legal compliance hoặc UAE population generalization.
 
 ---
+
+### 3.1 v0.4 scope additions and anti-scope-creep gate
+
+**Must/P0:** psychosocial micro-intake tối đa 3 câu tự nguyện; structured capture with `DECLINED/NOT_ASKED`; preserved semantic source/time; safe explain-only use; FHIR R4 conceptual mapping document; reproducible synthetic patient/lab fixtures with explicit clinician-review status. **Should/P1:** automated FHIR export + validator, ablation nghiên cứu, measured intake burden. **Won't/MVP:** depression/anxiety diagnosis, prediction of semen quality from stress, causal inference, automated psychosocial triage, production FHIR server, real provider/Sahatna connectivity, copying credentialed PhysioNet records into demos.
 
 ## 4. Product Data Contract
 
@@ -504,12 +524,43 @@ Phân biệt `AppointmentIntent`, `ClinicalNoteDraft`, `OrderPreparationMock`, `
 
 **Consent boundary:** Acknowledgement trong phiên là event; chia sẻ provider/clinician và gửi reminders phải có scope riêng. Progress retention trong phiên ẩn danh là quyết định product/security phải chốt. Mock booking ≠ confirmed appointment; user-reported visit ≠ provider-verified visit.
 
+### 4.14 `PsychosocialSelfReport` (P0 — optional, not diagnosis)
+
+```json
+{
+  "case_id": "SYN-J11-001", "question_id": "PSY-STRESS-01",
+  "response_code": "FREQUENT", "reference_period": "LAST_4_WEEKS",
+  "response_state": "KNOWN_POSITIVE", "source_type": "PATIENT_REPORTED",
+  "verification_status": "UNVERIFIED", "collected_at": "2026-11-03T08:00:00Z",
+  "consent_scope": "assessment", "diagnostic_label": null
+}
+```
+
+Additional catalogue: `PSY-SLEEP-01` (perceived sleep disturbance), `PSY-ANXIETY-01` (worry about reproductive health). Wording and reference periods require UX/clinical localization review. These are **single contextual prompts, not validated psychometric instruments**. Do not claim validated stress or anxiety scoring.
+
+### 4.15 FHIR R4 data mapping contract (P0 conceptual; P1 export)
+
+| Sanad source | FHIR R4 target | Mapping/limit |
+|---|---|---|
+| `AssessmentCase` subject | `Patient` | synthetic pseudonymous identifier only; real data require identity/permission design |
+| `QuestionnaireResponse` / psychosocial questions | `QuestionnaireResponse.item.answer` | question IDs, status and answer semantics; not all responses become observations |
+| `ClinicalObservation` | `Observation` | code, effectiveDateTime, valueQuantity/unit, status, subject |
+| `SyntheticSemenReport` | `DiagnosticReport` | status, code, effectiveDateTime, result references to matching Observations |
+| Future clinical referral | `ServiceRequest` | P1/P2 conceptual; no real referrals |
+| Consent ledger | `Consent` mapping candidate | internal authorization remains source of enforcement; mapping needs security review |
+
+**Implementation invariant:** no made-up clinical codes; unverified terminology remains marked `TERMINOLOGY_TBD`; no FHIR claim until validation against selected R4 profiles and reference integrity. FHIR export may omit unsupported optional internal attributes, but must list explicit gaps. See `Sanad_FHIR_R4_Mapping_v0.4.md`.
+
+### 4.16 Synthetic dataset contract
+
+`fixture_id`, `synthetic=true`, seed/template version, unit, source-of-range, review status, patient/lab linkage, negative/positive validation expectations; synthetic values may be **illustrative and require clinical sign-off**. Do not source fixtures by copying PhysioNet credentialed records. See `Sanad_Data_Dictionary_Synthetic_v0.4.md`.
+
 ## 5. Functional Requirements — Product Level
 
 ### 5.1 Danh sách yêu cầu chức năng
 
 | ID | Requirement | Input → Output | Priority | BRD mapping |
-| --- | --- | --- | --- | --- |
+|---|---|---|:---:|---|
 | **PRD-FR-01** | Pseudonymous assessment start & language | request → `case_id` | Must | FR-01, BR-01 |
 | **PRD-FR-02** | Purpose-level consent / revoke | consent decisions → ledger/gate | Must | FR-02, BR-01/02/12 |
 | **PRD-FR-03** | Deterministic emergency pre-check | symptoms → safety guidance / continue | Must | FR-03, BR-06 |
@@ -538,6 +589,17 @@ Phân biệt `AppointmentIntent`, `ClinicalNoteDraft`, `OrderPreparationMock`, `
 | **PRD-FR-26** | Optional barrier capture & supportive options | selected barrier → nonclinical assistance or defer | **Must** | FR-26, BR-30/31 |
 | **PRD-FR-27** | Closed-loop funnel & source-aware analytics | event log → labelled metrics with denominators | **Must** | FR-27, BR-29/33 |
 | **PRD-FR-28** | No-update / defer / decline without reminders | user choice → no-progress state, no forced action | **Must** | FR-28, BR-32 |
+
+### 5.1.1 Functional requirements v0.4 (additive)
+
+| ID | Requirement | I/O | Priority | BRD mapping |
+|---|---|---|---|---|
+| **PRD-FR-29** | Optional psychosocial micro-intake, max 3 items, opt-out | Answers/skip → source-linked self-report | Must | FR-29, BR-34/37 |
+| **PRD-FR-30** | Evidence-limited psychosocial context use, no semen prediction or unapproved triage | Facts → context/explanation only | Must | FR-30, BR-35/36 |
+| **PRD-FR-31** | Versioned conceptual FHIR R4 mapping | Case schema → mapping spec | Must (design) | FR-31, BR-39 |
+| **PRD-FR-32** | Synthetic cases and semen lab fixtures with ranges/units/provenance | fixture manifest → data and validation report | Must (QA) | FR-32, BR-38/40 |
+| **PRD-FR-33** | Optional FHIR R4 export with validator | synthetic case → resource bundle/validation | Should | FR-33, BR-39 |
+| **PRD-FR-34** | Controlled incremental-value research | fixed split/baseline → comparison report | Should (research) | FR-34, BR-35 |
 
 ### 5.2 Chi tiết functional requirements
 
@@ -665,10 +727,14 @@ Phân biệt `AppointmentIntent`, `ClinicalNoteDraft`, `OrderPreparationMock`, `
 
 **PRD-FR-28 — Defer/no-update.** Input: `Not now`, `Skip`, `Prefer not to say` or session exit. **AC:** continue or close privately without default reminders, inferred noncompliance or negative clinical label. Notifications remain P2 and require explicit consent.
 
+### 5.3.2 v0.4 implementation contracts
+
+**PRD-FR-29:** exactly up to 3 optional contextual questions; skip and decline never block assessment; client does not default to negative. **PRD-FR-30:** model/schema ensures `PATIENT_REPORTED` & temporal context, never outputs infertility risk probability, mental-health diagnosis or automatic escalation based solely on these fields. **PRD-FR-31:** mapping table and versioned source fields, mappings must separate `QuestionnaireResponse` and `Observation`. **PRD-FR-32:** deterministic synthetic seed, referential integrity, units, clinically reviewed reference provenance or flagged `CLINICAL_TBD`. **PRD-FR-33:** no production API needed; conformant label only after real validation. **PRD-FR-34:** report incremental benefit and burden with fixed dataset and confidence/limitations; if no appropriate patient-level dataset, use only synthetic software tests and report clinical effect `NOT_EVALUATED`.
+
 ### 5.4 SLM-first experiment protocol (P1; no clinical inference)
 
 | Variant | Architecture | Controlled evaluation |
-| --- | --- | --- |
+|---|---|---|
 | **A** | Structured form / deterministic extractor | Baseline without generative model |
 | **B** | SLM-only constrained extraction | Same cases, same output schema |
 | **C** | SLM + Semantic Layer | Temporal, negation, units, provenance consistency |
@@ -696,7 +762,7 @@ BA/QA chuẩn bị **synthetic fixture package** giúp Dev không tự đoán ex
 - **Semantic paired tests:** past/current steroid, `not smoking`/`used to smoke`, BMI with/without gym context, source self-report vs lab observation, conflicting lab dates.
 
 | Case | Input | Expected product behavior | Ground truth type |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | C01 — Context gym | BMI cao + strength training, no steroid claim | Cần đánh giá ngữ cảnh; không suy ra bệnh | Rule-consistency |
 | C02 — J1 steroid | BMI cao + reported steroid | `risk_signals[]`; draft `SPECIALIST` floor, clearly `CLINICAL_TBD` | Draft rule only |
 | C03 — Declined | Một câu hỏi quan trọng bị từ chối | `DECLINED`, limitations; no fabricated answers | Workflow |
@@ -720,14 +786,14 @@ BA/QA chuẩn bị **synthetic fixture package** giúp Dev không tự đoán ex
 
 ```text
 eval/golden/workflow_cases.jsonl
-eval/golden/rule_conformance.jsonl
-eval/golden/consent_security.jsonl
-eval/golden/evidence_grounding.jsonl
-eval/golden/clinical_holdout.jsonl      # only when actually independently labelled
-eval/golden/semantic_pairs.jsonl         # temporal / polarity / provenance
-eval/golden/care_continuity_mock.jsonl    # J6–J8 roadmap mock, P1/P2
-eval/golden/closed_loop_navigation.jsonl  # J9/J10 P0, provenance and funnel tests
-ml/seed_ml/experiment_manifest.json     # separate research workstream
+ eval/golden/rule_conformance.jsonl
+ eval/golden/consent_security.jsonl
+ eval/golden/evidence_grounding.jsonl
+ eval/golden/clinical_holdout.jsonl      # only when actually independently labelled
+ eval/golden/semantic_pairs.jsonl         # temporal / polarity / provenance
+ eval/golden/care_continuity_mock.jsonl    # J6–J8 roadmap mock, P1/P2
+ eval/golden/closed_loop_navigation.jsonl  # J9/J10 P0, provenance and funnel tests
+ ml/seed_ml/experiment_manifest.json     # separate research workstream
 ```
 
 **Minimum target for engineering regression:** 36 workflow cases (size can grow; includes positive/negative/abstention). Suggested distribution: 8 context/missing data, 6 safety, 6 consent/permissions, 5 review/state, 5 source/grounding, **6 closed-loop provenance/barrier cases**. **Đây là mục tiêu bộ test phần mềm**, không phải clinical validation.
@@ -763,10 +829,24 @@ Không dùng cùng rules engine vừa sinh nhãn vừa tính `clinical accuracy`
 
 ---
 
+### 7.3 v0.4 golden cases and boundary tests
+
+| ID | Input | Required output |
+|---|---|---|
+| `PSY-01` | All psychosocial questions skipped | Assessment continues, `NOT_ASKED/DECLINED` retained |
+| `PSY-02` | Past stress self-report | Time/source preserved, no semen inference |
+| `PSY-03` | Anxiety response | No psychiatric diagnosis, no automated triage escalation |
+| `PSY-04` | Psychosocial share denied | Backend denies external sharing even with assessment consent |
+| `SYN-01` | Synthetic lab valid schema/units | Pass software checks; clinical realism `PENDING_REVIEW` until approved |
+| `SYN-02` | Synthetic lab invalid unit | Fail validation, no normal/abnormal assertion |
+| `FHIR-01` | Assessment case + lab observations | `DiagnosticReport.result` references exist; no fabricated terminology |
+| `FHIR-02` | No FHIR validator run | Mark FHIR compliance `NOT_EVALUATED` |
+| `INT-01` | Compare base vs optional intake | Record drop-off/additional time, no presumed advantage |
+
 ## 8. Non-Functional Requirements
 
 | ID | Requirement | Minimum acceptance approach |
-| --- | --- | --- |
+|---|---|---|
 | **NFR-01 Security** | Data minimization, secure session, secrets in env/secret manager, no sensitive raw logs | Security inspection + negative API tests |
 | **NFR-02 Consent/RBAC** | Scope-based action authorization, role guard at server | Unauthorized/revoked calls denied |
 | **NFR-03 Auditability** | trace case_id, actor, time, rule/prompt/source versions, action reasons | Reconstruct test case without exposing excessive health content |
@@ -795,7 +875,7 @@ Không dùng cùng rules engine vừa sinh nhãn vừa tính `clinical accuracy`
 ### 9.1 Core product / workflow
 
 | Metric | Definition / numerator-denominator | Reported as |
-| --- | --- | --- |
+|---|---|---|
 | Assessment completion | completed assessment sessions / started consented sessions | Observed demo/test only |
 | Missing-information detection | missing/contradiction fixtures correctly detected / all such fixtures | Software QA |
 | Context sensitivity | paired-case tests with expected distinct behavior / relevant paired tests | Software QA |
@@ -837,6 +917,17 @@ Không dùng cùng rules engine vừa sinh nhãn vừa tính `clinical accuracy`
 - Khi có nguồn xác thực thực tế trong pilot, mới đo `provider_verified_booking`, `verified_visit`, `time_to_assessment` và referral closure. Chỉ số P0 lấy từ mock UI hoặc self-report cần được ghi đúng mức bằng chứng.
 
 ---
+
+### 9.4 v0.4 success metrics
+
+| Metric | Definition | Evidence gate |
+|---|---|---|
+| Optional psychosocial response | cases answering >=1 optional question / eligible cases offered | Demo UX only |
+| Question burden | Median extra time and drop-off vs non-psychosocial path | Measured A/B usability only |
+| Psychosocial data integrity | correct source/time/decline in paired fixtures / total | QA, not medical validity |
+| Synthetic semen validation | schema/unit/reference checks passed / reports | Clinical plausibility separate expert gate |
+| FHIR mapping coverage | reviewed mapped fields / scoped source fields | P0 design quality, not conformance |
+| FHIR resource conformance | validated resources / exported resources | P1 optional; else NOT_EVALUATED |
 
 ## 10. UX / Main Screens
 
@@ -883,7 +974,7 @@ Rule conformance, negative authorization tests, source validity, failure cases, 
 ### 10.1 Extended screens (P1/P2; no new P0 commitment)
 
 | Screen | UI behaviour | Scope |
-| --- | --- | --- |
+|---|---|---|
 | 10 — Appointment intent | Optional language/purpose, simulated slot, no forced booking | P1 |
 | 11 — Previsit clinician workspace | Context summary, source and temporal badges, editable notes, questions to clarify | P1 |
 | 12 — Test preparation mock | Approved checklists, simulated status, no automatically placed orders | P2 |
@@ -891,6 +982,14 @@ Rule conformance, negative authorization tests, source validity, failure cases, 
 | 14 — Approved plan & follow-up | Review status, optional reminders, revoke, completed/uncompleted tasks | P2 |
 
 **Screen policy:** Không có camera capture, facial expression score hoặc video interview trong release này. Default start remains anonymous/private text-based assessment. Không tích hợp lịch thật hoặc gửi patient records tới provider thật.
+
+### Screen 4A — Optional Psychosocial Context (P0)
+
+After core questions, show at most three neutral non-diagnostic prompts with `Skip`, `Prefer not to answer`, `Not sure`. Explain why these data are collected; preserve voluntary choices. No inferred stress/anxiety from speech/video. Output is context in report, **not clinical diagnosis**.
+
+### Screen 9A — Synthetic/FHIR Readiness Review (P0 design; P1 executable)
+
+QA-only preview maps synthetic case + report into Patient/QuestionnaireResponse/Observation/DiagnosticReport fields, shows status `MAPPING_DESIGNED` or `VALIDATED` with actual validator evidence, and flags missing units/codes. No hospital endpoint connected.
 
 ## 11. End-to-End Demo Scenarios
 
@@ -930,7 +1029,7 @@ Rule conformance, negative authorization tests, source validity, failure cases, 
 ## 12. Product-Level Acceptance Criteria
 
 | AC ID | Given / When | Then / expected result | Mapping |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | **PRD-AC-01** | New visitor chooses private start | System creates pseudonymous case without asking for name | FR-01 |
 | **PRD-AC-02** | Visitor declines assessment consent | Only general education, no assessment patient data saved | FR-02 |
 | **PRD-AC-03** | Provider share consent absent or revoked | Backend denies referral/share action (403 or explicit deny) | FR-02/10 |
@@ -977,10 +1076,23 @@ Rule conformance, negative authorization tests, source validity, failure cases, 
 
 ---
 
+### 12.1 v0.4 acceptance criteria (additive)
+
+| AC ID | Given / When | Then | Mapping |
+|---|---|---|---|
+| **PRD-AC-42** | User declines all optional psychosocial items | Assessment progresses and values remain declined/not asked | FR-29 |
+| **PRD-AC-43** | Patient reports chronic stress | Report labels self-reported context; no semen quality prediction or diagnosis | FR-30 |
+| **PRD-AC-44** | Referral flow attempts external psychosocial sharing without permission | Backend denies with auditable response | FR-29/30 |
+| **PRD-AC-45** | Synthetic semen report contains invalid unit/ref | QA flags invalid, clinician realism approval not asserted | FR-32 |
+| **PRD-AC-46** | FHIR data mapping examined | Each mapped field has source, type, transform, gap status | FR-31 |
+| **PRD-AC-47** | `DiagnosticReport.result` refers to missing Observation | Validator/test rejects export | FR-33 |
+| **PRD-AC-48** | No actual FHIR validation was executed | Compliance status remains `NOT_EVALUATED` | FR-33 |
+| **PRD-AC-49** | Research cannot find valid matched psychosocial + semen labels | No supervised benefit/clinical claim issued | FR-34 |
+
 ## 13. Traceability Matrix
 
 | Product FR | BRD requirements | Proposed modules / screen | Lead role (not assigned person) |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | PRD-FR-01 | FR-01; BR-01 | `apps/web` Welcome + `AssessmentCase` API | Frontend + Backend |
 | PRD-FR-02 | FR-02; BR-01/02/12 | Consent ledger, policy middleware, Screen 2 | Backend + Security |
 | PRD-FR-03 | FR-03; BR-06 | Rules pre-check + Screen 3 + emergency fixture | Backend + Clinical Advisor |
@@ -1018,10 +1130,21 @@ Rule conformance, negative authorization tests, source validity, failure cases, 
 
 ---
 
+### 13.1 v0.4 traceability additions
+
+| PRD FR | BRD FR | Module / owner |
+|---|---|---|
+| PRD-FR-29 | FR-29 | Frontend Intake + Backend / UX, BA |
+| PRD-FR-30 | FR-30 | Semantic Layer + Evidence / AI, Clinical Advisor |
+| PRD-FR-31 | FR-31 | FHIR mapping specification / Backend, Architect |
+| PRD-FR-32 | FR-32 | Synthetic generator and validators / QA, Clinical Advisor |
+| PRD-FR-33 | FR-33 | Optional FHIR R4 exporter / Backend |
+| PRD-FR-34 | FR-34 | Research-only controlled comparison / AI/ML |
+
 ## 14. Open Questions / Decisions Needed
 
 | ID | Decision needed | Owner role | Priority |
-| --- | --- | --- | --- |
+|---|---|---|:---:|
 | OQ-01 | Clinical advisor có phê duyệt emergency rules và J1 steroid floor không? Nếu chưa thì giới hạn demo đến đâu? | Product + Clinical | Critical |
 | OQ-02 | Chính sách approval áp dụng cho mỗi `triage_action` là gì, và mức priority có SLA nào hợp lệ? | Clinical + Product | Critical |
 | OQ-03 | Nguồn guideline cụ thể được phép index/cite, version/passage mapping có giấy phép phù hợp? | Clinical + AI | High |
@@ -1046,13 +1169,25 @@ Rule conformance, negative authorization tests, source validity, failure cases, 
 
 ---
 
+### 14.1 Open questions v0.4
+
+| ID | Decision | Owner |
+|---|---|---|
+| **OQ-19** | Clinical/Arabic review of stress/sleep/anxiety wording, periods and opt-out | Clinical + UX |
+| **OQ-20** | Any evidence-backed impact on triage beyond informational context? Do not activate absent approved protocol | Clinical |
+| **OQ-21** | Which R4 implementation guides/profiles and terminology resources are appropriate for future UAE interoperability? | Architect + partner |
+| **OQ-22** | Synthetic semen unit/range reviewer and source/version | Clinical + QA |
+| **OQ-23** | Whether Sahatna partner offers APIs, permission model and pilot opportunity | Product/Partnership |
+
 ## 15. Changelog & Implementation Review Checklist
 
 | Version | Date | Nội dung |
-| --- | --- | --- |
+| :---: | :---: | :--- |
 | 0.1 | 2026/10/27 | Baseline J1–J5, consent, clinical review, research/data separation, acceptance criteria. |
 | **0.2** | **2026/10/29** | 8-stage roadmap; assessment-first; semantic facts; SLM and knowledge layer as measured options; clinician continuation and follow-up mocks. |
 | **0.3** | **2026/10/29** | P0 closed-loop acknowledgement, voluntary progress/barriers, source-aware funnel; J9/J10; FR-24–28/AC-35–41; Responsive Web App wording. |
+
+| **0.4** | **2026/11/03** | Psychosocial micro-intake, synthetic realism contract, FHIR R4 mapping, FR-29–34 and AC-42–49. |
 
 ### Checklist trước khi chuyển trạng thái `Approved for MVP implementation`
 
@@ -1070,3 +1205,4 @@ Rule conformance, negative authorization tests, source validity, failure cases, 
 - [ ] Clinical + Security review mọi mock plan/order/reminder, không tạo tác vụ ngoài quyền.
 - [ ] Nhóm xác nhận OKF cụ thể trước khi dùng để yêu cầu implementation.
 - [ ] BA/QA xác nhận progress event taxonomy, analytics denominators và self-report UI không được trình bày như provider-verified.
+
