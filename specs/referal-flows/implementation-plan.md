@@ -2,7 +2,7 @@
 
 | Item | Value |
 |---|---|
-| **Status** | Draft for team review. Python API code exists; frontend and CI tasks remain unimplemented. |
+| **Status** | Draft for team review. Python API code exists; frontend is absent and CI coverage is partial. |
 | **Version / date** | 0.2, 2026-11-03 |
 | **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17` |
 | **Verified by** | [Test plan](test-plan.md) |
@@ -178,7 +178,7 @@ Owners follow the [README team table](../../README.md#team) as a suggestion and 
 | Task | Work | Delivers | Depends on | Suggested owner | Status |
 |---|---|---|---|---|---|
 | T1.1 | Monorepo scaffold, Docker Compose, quickstart in README, real commands in AGENTS.md | AC-01.5 | None | Trung | Not started |
-| T1.2 | CI workflow, required checks, `fixture-guard`, `spec-trace`, secret scan | AC-01.1, AC-01.3 | T1.1 | Trung | Not started |
+| T1.2 | CI workflow, required checks, `fixture-guard`, `spec-trace`, secret scan | AC-01.1, AC-01.3 | T1.1 | Trung | In progress; backend pytest and Ruff workflow added, remaining checks and branch protection pending |
 | T1.3 | Branch protection on `main` (needs repo admin) | AC-01.2 | T1.2 | Trung | Not started |
 | T1.4 | CD to HTTPS staging with `/version` | AC-01.4 | T1.2, OD-05 | Trung | Not started |
 | T1.5 | Case model, state machine table, audit log, session token, state API, OpenAPI type generation | AC-04.3, AC-04.4, AC-04.6, AC-04.7, INV-03, INV-04, INV-09 | T1.1 | Trung, Vinh | Not started |
@@ -224,7 +224,7 @@ These are additive P0 backend/design tasks from PRD v0.4; they do not activate c
 | Task | Work | Delivers | Depends on | Suggested owner | Status |
 |---|---|---|---|---|---|
 | T4.1 | Optional psychosocial micro-intake, separate provenance store, consent guard, report context only | PRD-FR-29/30, PRD-AC-42/43 | T2.2, T2.5 | Backend, Product | In progress; API code present, tests/review pending |
-| T4.2 | Session-bound guidance acknowledgement, progress/barriers, retention deletion and funnel | PRD-FR-24 to 28, PRD-AC-35 to 41 | T3.2 | Backend, Security, QA | In progress; API code present, tests/review pending |
+| T4.2 | Session-bound guidance acknowledgement, idempotent progress/barrier writes, retention deletion and funnel | PRD-FR-24 to 28, PRD-AC-35 to 41 | T3.2 | Backend, Security, QA | In progress; API code present, TC-19.6 added, CI and review pending |
 | T4.3 | Versioned conceptual FHIR R4 mapping manifest; no export or conformance claim | PRD-FR-31, PRD-AC-46/48 | T1.10, T3.7 | Backend, Architect | In progress; manifest present, review pending |
 | T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader present, review pending |
 

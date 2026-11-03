@@ -61,7 +61,8 @@ def test_send_with_an_old_version_conflicts(api: Api) -> None:
     patient = api.drafted()
     patient.consent(clinician_review=True)
     response = patient.send_for_review(case_version=1)
-    assert response.status_code == 409 and response.json()["error"]["code"] == "CASE_VERSION_CONFLICT"
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "CASE_VERSION_CONFLICT"
 
 
 def test_send_without_a_current_draft_is_refused(api: Api) -> None:

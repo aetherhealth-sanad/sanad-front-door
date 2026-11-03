@@ -533,8 +533,8 @@ The checked-in fixtures are inventoried in [fixture-manifest.v0.4.json](data/syn
 | `GET /api/cases/{id}/psychosocial` / `PUT .../psychosocial` | Read or replace up to three optional, consented self-reports; omitted questions remain `NOT_ASKED`. |
 | `GET /api/cases/{id}/navigation` | Read the current session's navigation episode and event history. |
 | `POST /api/cases/{id}/navigation/acknowledgements` | Record explicit acknowledgement of the current released guidance. |
-| `POST /api/cases/{id}/navigation/progress` | Append a user-selected status with `USER_REPORTED` provenance. |
-| `POST /api/cases/{id}/navigation/barriers` | Record optional barrier codes without free text. |
+| `POST /api/cases/{id}/navigation/progress` | Append a user-selected status with `USER_REPORTED` provenance; send an `idempotency_key` to make retries safe. |
+| `POST /api/cases/{id}/navigation/barriers` | Record optional barrier codes without free text; send an `idempotency_key` to make retries safe. |
 | `GET /api/evaluation/navigation-funnel` | Reviewer-only synthetic funnel with explicit denominators and source labels. |
 
 ```text
@@ -580,6 +580,8 @@ Run the backend test suite from `apps/api`:
 ```bash
 .venv/bin/python -m pytest
 ```
+
+GitHub Actions runs the backend pytest suite and Ruff for pushes and pull requests. Repository branch protection must separately mark the workflow check as required.
 
 Start with [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) for business scope, [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md) for product/data contracts, and the [E2E workflow v0.4](specs/Sanad_E2E_Workflow_v0.4.md) for the end-to-end flow. The backend has no model credentials or external service dependency.
 

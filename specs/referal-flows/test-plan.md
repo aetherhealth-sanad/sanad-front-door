@@ -279,6 +279,7 @@ See the truth table in §5.
 | TC-19.3 | A | B | Barrier codes are bounded, free text is rejected, and `PREFER_NOT_TO_SAY` is exclusive. | S |
 | TC-19.4 | A | B | Quick exit and expired-session cleanup delete navigation data; a new session cannot read old progress. | S |
 | TC-19.5 | A | B | Funnel has explicit numerator/denominator and source; provider verification and care completion remain `NOT_AVAILABLE`. | S |
+| TC-19.6 | A | B | Replaying a progress or barrier request with the same idempotency key and payload creates no extra data or audit event; reusing a key with a different payload returns 409 and changes nothing. | S |
 | TC-20.1 | C | — | Mapping manifest lists source, target, transform, null handling, provenance and gaps; status is design-only, not FHIR conformance. | S |
 | TC-20.2 | C | B | Fixture manifest covers every synthetic case file, has no stale path, and keeps clinical truth `NOT_EVALUATED` and unsupported reference ranges unverified. | S |
 

@@ -65,7 +65,11 @@ def test_tc_11_4_claims_without_a_verified_source_are_labelled(catalogues: Catal
     placeholder = rule.model_copy(
         update={
             "evidence_refs": (
-                EvidenceRef(source_id="GUIDELINE-TO-BE-REVIEWED", version="1", verification="VERIFIED"),
+                EvidenceRef(
+                    source_id="GUIDELINE-TO-BE-REVIEWED",
+                    version="1",
+                    verification="VERIFIED",
+                ),
             )
         }
     )  # fmt: skip

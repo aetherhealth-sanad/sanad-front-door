@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import secrets
 from datetime import datetime
@@ -16,6 +17,7 @@ from sanad_api.navigation.models import (
     CareBarrierReport,
     CareNavigationEpisode,
     CareNavigationEvent,
+    CareNavigationIdempotency,
 )
 from sanad_api.reports.models import Draft
 from sanad_api.reports.service import is_released
@@ -112,6 +114,11 @@ def append_progress(
     return event
 
 
+def payload_hash(payload: dict[str, Any]) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def episode_payload(db: Session, episode: CareNavigationEpisode) -> dict[str, Any]:
     return {
         "episode_id": episode.episode_id,
@@ -168,6 +175,9 @@ def purge_session_navigation(db: Session, session_token_hash: str) -> None:
         ).delete(synchronize_session=False)
         db.query(CareBarrierReport).filter(
             CareBarrierReport.episode_id.in_(episode_ids)
+        ).delete(synchronize_session=False)
+        db.query(CareNavigationIdempotency).filter(
+            CareNavigationIdempotency.episode_id.in_(episode_ids)
         ).delete(synchronize_session=False)
         db.query(CareNavigationEpisode).filter(
             CareNavigationEpisode.episode_id.in_(episode_ids)

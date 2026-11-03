@@ -13,6 +13,7 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
+| 0.4 | 2026-11-03 | Specified idempotency for navigation progress/barrier retries; clarified current harness and CI scope. | Codex | Pending |
 | 0.3 | 2026-11-03 | Added backend contracts for PRD v0.4 psychosocial context and session-scoped closed-loop navigation; added conceptual FHIR mapping manifest; recorded session-only progress retention choice for review. | Codex | Pending |
 | 0.2 | 2026-11-02 | Added `api-design.md`. Corrected Quick exit order in plan §4.5 so the token survives and travels in the beacon body. Replaced the API table in plan §5 with a link. Changed TC-J4-01 to a blank start. Opened CC-009. | Drafted by Claude Code for trung1234 | Pending |
 | 0.1 | 2026-11-02 | First draft of the product spec, implementation plan and test plan, covering milestones M1 to M3. Added `AGENTS.md`. Reconciled the team brief with BRD and PRD v0.3. No code written. | Drafted by Claude Code for trung1234 | Pending |

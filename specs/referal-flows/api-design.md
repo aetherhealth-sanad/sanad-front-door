@@ -87,8 +87,8 @@ The gate (§6.7) runs after checks 1 to 3, so a caller without access never sees
 | `POST /cases/{id}/navigation/start` | Set `NAVIGATION_STARTED` | Patient | T3.2 | AC-12.6 |
 | `GET /cases/{id}/navigation` | Current session's episode and events | Patient, assessment consent | T4.2 | PRD-FR-24/25 |
 | `POST /cases/{id}/navigation/acknowledgements` | Acknowledge the current released guidance explicitly | Patient, assessment consent | T4.2 | PRD-FR-24 |
-| `POST /cases/{id}/navigation/progress` | Append a user-selected progress status | Patient, assessment consent | T4.2 | PRD-FR-25/28 |
-| `POST /cases/{id}/navigation/barriers` | Append optional barrier codes; no free text | Patient, assessment consent | T4.2 | PRD-FR-26/28 |
+| `POST /cases/{id}/navigation/progress` | Append a user-selected progress status with an idempotency key | Patient, assessment consent | T4.2 | PRD-FR-25/28 |
+| `POST /cases/{id}/navigation/barriers` | Append optional barrier codes with an idempotency key; no free text | Patient, assessment consent | T4.2 | PRD-FR-26/28 |
 | `GET /evaluation/navigation-funnel` | Aggregate active synthetic episodes with denominators and source | Reviewer | T4.2 | PRD-FR-27 |
 | `GET /mock-directory` | Mock facilities by care type | Patient | T3.2 | AC-13.5 |
 | `GET /cases/{id}/referral-gate` | Gate preview, grants nothing | Patient | T3.1 | AC-12.3, AC-12.6 |
@@ -173,7 +173,7 @@ All errors share one body. `details` carries codes only, never submitted values.
 | 401 | `AUTH_REQUIRED`, `INVALID_CREDENTIALS` | No valid token, or failed sign-in |
 | 403 | `ROLE_NOT_ALLOWED`, `CONSENT_REQUIRED`, `GATE_DENIED`, `SPOUSE_SHARE_NOT_AVAILABLE` | Authenticated but not permitted |
 | 404 | `NOT_FOUND` | Missing, or not this session's case |
-| 409 | `INVALID_TRANSITION`, `CASE_VERSION_CONFLICT`, `CONSENT_VERSION_OUTDATED`, `DRAFT_NOT_CURRENT`, `BLOCKING_ITEMS_REMAIN` | Conflict with current state |
+| 409 | `INVALID_TRANSITION`, `CASE_VERSION_CONFLICT`, `CONSENT_VERSION_OUTDATED`, `DRAFT_NOT_CURRENT`, `BLOCKING_ITEMS_REMAIN`, `IDEMPOTENCY_KEY_REUSED` | Conflict with current state or retry key reused with a different payload |
 | 413 | `UPLOAD_TOO_LARGE` | File over 256 KB |
 | 415 | `UPLOAD_WRONG_TYPE` | File is not JSON |
 | 422 | `VALIDATION_FAILED`, `UPLOAD_SCHEMA_INVALID`, `UPLOAD_UNKNOWN_FIELD`, `UPLOAD_NOT_SYNTHETIC`, `UNKNOWN_SAMPLE`, `REASON_REQUIRED`, `TRIAGE_BELOW_FLOOR`, `OBSERVATION_INVALID` | Body rejected |
@@ -767,8 +767,8 @@ These endpoints implement bounded synthetic-prototype contracts from [PRD v0.4](
 
 - Navigation is available only for released guidance in `GUIDANCE_AVAILABLE` or `NAVIGATION_STARTED`. Its ID and version come from the current approved draft; stale guidance cannot be acknowledged.
 - `GUIDANCE_ACKNOWLEDGED` is an explicit, deduplicated `SYSTEM_EVENT`. Reading a report is not an acknowledgement.
-- Progress is append-only. Booking and visit statuses are `USER_REPORTED` and `UNVERIFIED`; no write path creates `PROVIDER_VERIFIED` or `CARE_COMPLETED`.
-- Barrier requests accept only the fixed code list and `PREFER_NOT_TO_SAY`. Free text is rejected. Audit entries contain counts, not barrier selections.
+- Progress is append-only. Booking and visit statuses are `USER_REPORTED` and `UNVERIFIED`; no write path creates `PROVIDER_VERIFIED` or `CARE_COMPLETED`. Progress requests require a client-generated `idempotency_key` (1–128 characters). Repeating the same key and payload in the same episode returns the existing episode without a second event or audit entry. Reusing the key with a different payload returns 409 `IDEMPOTENCY_KEY_REUSED`.
+- Barrier requests accept only the fixed code list and `PREFER_NOT_TO_SAY`. Free text is rejected. They require an `idempotency_key` with the same length and replay behavior as progress requests. Audit entries contain counts, not barrier selections.
 - Episode rows are bound to the anonymous session token hash. Quick exit deletes that session's navigation rows; expiry cleanup removes rows for expired patient sessions. Funnel metrics include active sessions only.
 - The reviewer-only funnel reports each numerator and denominator. Provider-verified visits and care completion are `NOT_AVAILABLE`.
 
@@ -796,6 +796,8 @@ The API has no endpoint for reading the audit log in this flow. Tests read the t
 | `NAVIGATION_ACKNOWLEDGED` | Explicit acknowledgement | `guidance_version` |
 | `NAVIGATION_PROGRESS_RECORDED` | User progress or navigation opened | `status`, `verification_source` |
 | `NAVIGATION_BARRIER_RECORDED` | Barrier selection | `count`, `prefer_not_to_say` (never reason codes) |
+
+Navigation write keys are unique per episode and operation. They are opaque retry tokens, not patient identifiers. The server stores a hash of the normalized request payload with each key so a retry can be distinguished from accidental key reuse.
 
 ## 8. Gaps this design found
 

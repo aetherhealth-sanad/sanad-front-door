@@ -46,3 +46,19 @@ class CareBarrierReport(Base):
     prefer_not_to_say: Mapped[bool] = mapped_column(default=False)
     actor: Mapped[str] = mapped_column(String(64))
     recorded_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class CareNavigationIdempotency(Base):
+    """Deduplication keys live separately so existing event tables need no migration."""
+
+    __tablename__ = "care_navigation_idempotency"
+    __table_args__ = (UniqueConstraint("episode_id", "operation", "idempotency_key"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    episode_id: Mapped[str] = mapped_column(
+        ForeignKey("care_navigation_episodes.episode_id"), index=True
+    )
+    operation: Mapped[str] = mapped_column(String(24))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    request_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)
