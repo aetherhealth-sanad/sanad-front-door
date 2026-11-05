@@ -12,15 +12,19 @@ export const QuickExit: React.FC<QuickExitProps> = ({
       const token = sessionStorage.getItem('sanad_session_token');
       // Fire-and-forget beacon to end session synchronously
       if (token && navigator.sendBeacon) {
-        navigator.sendBeacon('/api/session/end', JSON.stringify({ token }));
+        navigator.sendBeacon('/api/session/end', JSON.stringify({ session_token: token }));
       }
     } catch {
       // Ignore errors on exit
     }
 
     // Immediately purge state
-    sessionStorage.clear();
-    localStorage.clear();
+    sessionStorage.removeItem('sanad_session_token');
+    sessionStorage.removeItem('sanad_staff_token');
+    sessionStorage.removeItem('sanad_staff_role');
+    sessionStorage.removeItem('sanad_case_id');
+    sessionStorage.removeItem('sanad_case_start_mode');
+    sessionStorage.removeItem('sanad_case_fixture_id');
 
     // Replace history location immediately
     window.location.replace(neutralUrl);

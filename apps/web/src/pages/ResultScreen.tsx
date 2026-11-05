@@ -1,215 +1,190 @@
 import { useEffect, useState } from 'react';
-import { api, type ReportData } from '../api/client';
+import { api, type CaseConsentRecord, type CaseState, type ReportData } from '../api/client';
 import { MockBadge } from '../components/MockBadge';
 
 interface ResultScreenProps {
   caseId: string;
-  onProceedToReferral: () => void;
+  onProceedToReferral: (route: string) => void;
 }
 
-export const ResultScreen: React.FC<ResultScreenProps> = ({
-  caseId,
-  onProceedToReferral
-}) => {
+export const ResultScreen: React.FC<ResultScreenProps> = ({ caseId, onProceedToReferral }) => {
   const [report, setReport] = useState<ReportData | null>(null);
+  const [consent, setConsent] = useState<CaseConsentRecord | null>(null);
+  const [caseState, setCaseState] = useState<CaseState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [submittingReview, setSubmittingReview] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    api.getReport(caseId)
-      .then(res => {
-        if (!mounted) return;
-        setReport(res);
-        setLoading(false);
-      })
-      .catch(err => {
-        if (!mounted) return;
-        console.warn('Could not fetch report, using mock assessment fallback:', err);
-        setReport({
-          case_id: caseId,
-          summary: 'Assessment indicates contextual hormonal and lifestyle considerations. Prior anabolic steroid exposure and heavy resistance training were noted. Borderline semen motility was recorded but is not diagnostic of infertility.',
-          risk_signals: [
-            {
-              code: 'BMI_CONTEXT_NEEDED',
-              source_field: 'bmi',
-              status: 'OBSERVED',
-              label: 'Elevated BMI in athletic male (lean muscle context)'
-            },
-            {
-              code: 'REPORTS_ANABOLIC_STEROID_USE',
-              source_field: 'anabolic_steroid_use',
-              status: 'OBSERVED',
-              label: 'Exogenous androgen exposure history (HPTA suppression risk)'
-            },
-            {
-              code: 'LAB_BORDERLINE_MOTILITY',
-              source_field: 'semen_motility',
-              status: 'OBSERVED',
-              label: 'Motility 38% (WHO 6th lower reference limit: 42%)'
-            }
-          ],
-          triage_proposal: {
-            action: 'SPECIALIST',
-            rule_ids: ['DRAFT-STEROID-01', 'DRAFT-BMI-CONTEXT-01'],
-            rule_version: 'draft-0.1',
-            approval_status: 'CLINICAL_TBD',
-            disclaimer: 'Draft decision rule based on AUA/ASRM 2020 Male Infertility guidelines. For evaluation only.'
-          },
-          evidence_refs: [
-            {
-              source_id: 'AUA/ASRM-2020-GUIDELINE',
-              version: '2020.1',
-              verification: 'EVALUATION_ONLY'
-            },
-            {
-              source_id: 'WHO-SEMEN-MANUAL-6TH',
-              version: '2021',
-              verification: 'EVALUATION_ONLY'
-            }
-          ]
-        });
-        setLoading(false);
-      });
-
-    return () => { mounted = false; };
-  }, [caseId]);
-
-  const handleRequestReview = async () => {
-    setSubmittingReview(true);
+  const loadReport = async () => {
+    setLoading(true);
     setError(null);
     try {
-      await api.requestReview(caseId);
-      onProceedToReferral();
-    } catch (err: any) {
-      // If review already requested or transition valid, proceed
-      onProceedToReferral();
+      const [currentReport, currentConsent, currentState] = await Promise.all([
+        api.getReport(caseId),
+        api.getCaseConsent(caseId),
+        api.getCaseState(caseId),
+      ]);
+      setReport(currentReport);
+      setConsent(currentConsent);
+      setCaseState(currentState);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The draft report is unavailable.');
     } finally {
-      setSubmittingReview(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  useEffect(() => { void loadReport(); }, [caseId]);
+
+  const handleRequestReview = async () => {
+    if (!caseState) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const result = await api.requestReview(caseId, caseState.case_version);
+      onProceedToReferral(result.state.route);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The review request was not recorded.');
+      await loadReport();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleStartNavigation = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const state = await api.startNavigation(caseId);
+      onProceedToReferral(state.route);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Navigation could not be started.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) return <div className="max-w-md mx-auto px-4 py-20 text-center text-sm text-slate-600">Loading the current draft…</div>;
+
+  if (!report) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="inline-block w-8 h-8 border-3 border-sky-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <h2 className="text-lg font-bold text-slate-900">Synthesizing Clinical Facts...</h2>
+      <div className="max-w-xl mx-auto px-4 py-12">
+        <div role="alert" className="p-5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm">
+          <p>{error ?? 'The current draft is unavailable.'}</p>
+          <button type="button" onClick={() => void loadReport()} className="mt-3 underline font-semibold">Retry</button>
+        </div>
       </div>
     );
   }
+
+  const reviewGranted = consent?.scopes.clinician_review?.granted === true;
+  const isReleased = report.review_status === 'SIMULATED_APPROVAL';
+  const canRequestReview = report.review_status === 'NOT_SENT' && reviewGranted && caseState?.allowed_actions.includes('SEND_FOR_REVIEW');
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <MockBadge label="DRAFT REPORT · CLINICAL_TBD" />
+          <MockBadge label={`MOCK DRAFT REPORT · ${report.rule_approval_status}`} />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-          Your Health Summary & Signals
-        </h1>
-        <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-          Based on the contextual facts provided in this session. This is an objective synthesis of signals, not a medical diagnosis.
-        </p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Assessment draft</h1>
+        <p className="text-sm text-slate-600 mt-2 leading-relaxed">{report.screening_notice}</p>
       </div>
 
-      {error && (
-        <div className="mb-6 p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-sm">
-          {error}
+      {error && <div role="alert" className="mb-6 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm">{error}</div>}
+
+      <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 mb-6 space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">What this draft contains</h2>
+            <p className="text-sm text-slate-600 mt-1">{report.draft_label}</p>
+          </div>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">{report.review_status}</span>
         </div>
+        {report.known.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">Recorded information</h3>
+            <ul className="space-y-2">
+              {report.known.map((fact, index) => (
+                <li key={`${fact.concept_code}-${index}`} className="rounded-lg bg-slate-50 p-3 text-sm">
+                  <span className="font-medium">{fact.concept_code.replace(/_/g, ' ')}</span>: {String(fact.value ?? fact.verification_status)}{fact.unit ? ` ${fact.unit}` : ''}
+                  <span className="block text-xs text-slate-500 mt-1">{fact.source_type} · {fact.verification_status}{fact.temporal_status ? ` · ${fact.temporal_status}` : ''}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {report.unknown.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">Unknown or not provided</h3>
+            <ul className="flex flex-wrap gap-2">
+              {report.unknown.map(item => <li key={item.concept_code} className="rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs text-amber-900">{item.concept_code.replace(/_/g, ' ')} · {item.state}</li>)}
+            </ul>
+          </div>
+        )}
+        {report.observations.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">Reported observations</h3>
+            <ul className="space-y-2">
+              {report.observations.map((item, index) => (
+                <li key={`${item.test_code}-${index}`} className="rounded-lg bg-slate-50 p-3 text-sm">
+                  {item.test_code.replace(/_/g, ' ')}: {item.value ?? 'Unknown'}{item.unit ? ` ${item.unit}` : ''}
+                  <span className="block text-xs text-slate-500 mt-1">{item.source} · {item.confirmation_status}{item.collected_on ? ` · ${item.collected_on}` : ''}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {report.excluded_items.length > 0 && <p className="text-xs text-slate-600">Excluded from this draft: {report.excluded_items.join(', ')}</p>}
+      </section>
+
+      <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 mb-6 space-y-4">
+        <h2 className="text-base font-bold text-slate-900">Draft rule output</h2>
+        <p className="text-xs text-slate-600">Rule version {report.rule_version} · {report.rule_approval_status}</p>
+        {report.required_statements.map((statement, index) => <p key={index} className="text-sm text-slate-700">{statement}</p>)}
+        {report.limits.length > 0 && (
+          <ul className="space-y-2">
+            {report.limits.map((limit, index) => <li key={`${limit.code}-${index}`} className="rounded-lg bg-amber-50 p-3 text-sm text-amber-950">{limit.text}</li>)}
+          </ul>
+        )}
+        {report.evidence.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">Evidence status</h3>
+            <ul className="space-y-1 text-xs text-slate-600">
+              {report.evidence.map((item, index) => <li key={`${item.claim_id}-${index}`}>{item.claim_id}: {item.status}{item.citation ? ` · ${item.citation.source_id} v${item.citation.version}` : ''}</li>)}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      {report.next_step && (
+        <section className="bg-sky-50 border border-sky-200 rounded-2xl p-6 mb-6">
+          <MockBadge label="MOCK GUIDANCE · SIMULATED REVIEW" />
+          <h2 className="text-base font-bold text-sky-950 mt-3">{report.next_step.label}</h2>
+          {report.why_next_step && <p className="text-sm text-sky-900 mt-2">{report.why_next_step}</p>}
+          <button type="button" disabled={submitting} onClick={handleStartNavigation} className="mt-4 w-full sm:w-auto px-5 py-3 rounded-xl bg-sky-700 hover:bg-sky-800 text-white font-semibold disabled:opacity-60">
+            {submitting ? 'Starting…' : 'Continue to Mock Care Navigation'}
+          </button>
+        </section>
       )}
 
-      {/* Primary Narrative Summary */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs mb-6 card-hover">
-        <h2 className="text-base font-bold text-slate-900 mb-3 flex items-center justify-between">
-          <span>Clinical Synthesis</span>
-          <span className="text-xs font-mono text-slate-400">Case: {caseId}</span>
-        </h2>
-        <p className="text-slate-700 text-base leading-relaxed bg-slate-50/70 p-4 rounded-xl border border-slate-100">
-          {report?.summary}
-        </p>
-      </div>
+      {report.next_step_withheld && <p className="mb-6 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900">A next step is withheld until the required review is complete. Current status: {report.next_step_withheld}.</p>}
 
-      {/* Observed Signals Matrix */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs mb-6 space-y-4">
-        <h2 className="text-base font-bold text-slate-900 pb-2 border-b border-slate-100">
-          Detected Health Signals (Deterministic Rules)
-        </h2>
-
-        <div className="space-y-3">
-          {report?.risk_signals.map((sig, idx) => (
-            <div
-              key={idx}
-              className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3"
-            >
-              <div>
-                <span className="text-xs font-mono font-bold text-sky-800 bg-sky-100 px-2 py-0.5 rounded">
-                  {sig.code}
-                </span>
-                <p className="text-sm font-medium text-slate-800 mt-1.5">
-                  {sig.label || sig.code.replace(/_/g, ' ')}
-                </p>
-              </div>
-              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                {sig.status}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Triage & Guideline Evidence */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs mb-8 space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-          <h2 className="text-base font-bold text-slate-900">
-            Triage Recommendation: {report?.triage_proposal.action}
-          </h2>
-          <span className="text-xs font-mono text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
-            {report?.triage_proposal.approval_status}
-          </span>
-        </div>
-
-        <p className="text-xs text-slate-500 font-editorial">
-          {report?.triage_proposal.disclaimer}
-        </p>
-
-        <div className="pt-2">
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">
-            Applied Guideline Citations:
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {report?.evidence_refs.map((ev, i) => (
-              <span
-                key={i}
-                className="text-xs font-mono text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-md"
-              >
-                [{ev.source_id} v{ev.version}]
-              </span>
-            ))}
+      {canRequestReview && (
+        <section className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Request Mock Reviewer Review</h2>
+            <p className="text-xs text-slate-600 mt-1">A simulated reviewer role will review this synthetic draft. This does not represent verified clinical care.</p>
           </div>
-        </div>
-      </div>
+          <button type="button" disabled={submitting} onClick={handleRequestReview} className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-white bg-sky-700 hover:bg-sky-800 disabled:opacity-60">
+            {submitting ? 'Sending…' : 'Request Mock Review'}
+          </button>
+        </section>
+      )}
 
-      {/* Action to proceed to referral gate */}
-      <div className="bg-sky-50/70 border border-sky-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h3 className="text-base font-bold text-sky-950">
-            Next Step: Clinician Verification & Care Navigation
-          </h3>
-          <p className="text-xs text-sky-800 mt-1">
-            Submit your draft assessment to the simulated clinician review queue to unlock the referral gate.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          disabled={submittingReview}
-          onClick={handleRequestReview}
-          className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition-all btn-press whitespace-nowrap cursor-pointer"
-        >
-          {submittingReview ? 'Dispatching...' : 'Request Clinician Review (Mock) →'}
-        </button>
-      </div>
+      {report.review_status === 'NOT_SENT' && !reviewGranted && (
+        <p className="rounded-xl bg-slate-100 p-4 text-sm text-slate-700">Reviewer access was not consented to. Return to consent settings to enable this optional step.</p>
+      )}
     </div>
   );
 };

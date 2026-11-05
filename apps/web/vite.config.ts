@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
+import { fileURLToPath } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,6 +11,9 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
+    fs: {
+      allow: [fileURLToPath(new URL('../..', import.meta.url))],
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',
