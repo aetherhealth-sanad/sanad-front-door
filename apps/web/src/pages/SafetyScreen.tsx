@@ -14,9 +14,13 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({
   const [checking, setChecking] = useState(true);
   const [emergencyTriggered, setEmergencyTriggered] = useState(false);
   const [triggerRule, setTriggerRule] = useState<string | null>(null);
+  const [checkUnavailable, setCheckUnavailable] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let mounted = true;
+    setChecking(true);
+    setCheckUnavailable(false);
     api.runSafetyCheck(caseId)
       .then(res => {
         if (!mounted) return;
@@ -26,15 +30,15 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({
           setTriggerRule(res.trigger_rule || 'DRAFT-EMERG-01');
         }
       })
-      .catch(err => {
+      .catch(() => {
         if (!mounted) return;
         setChecking(false);
-        // If API fails or backend error, stay conservative
-        console.warn('Safety check API error:', err);
+        // Never present an unavailable safety check as a clear result.
+        setCheckUnavailable(true);
       });
 
     return () => { mounted = false; };
-  }, [caseId]);
+  }, [caseId, retryCount]);
 
   if (checking) {
     return (
@@ -73,6 +77,34 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({
             <p className="text-xs text-rose-600">
               Emergency guidance works offline and provides verified hospital contact channels.
             </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (checkUnavailable) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12 text-center">
+        <div className="bg-amber-50 text-amber-800 border border-amber-200 rounded-2xl p-6 sm:p-8">
+          <h1 className="text-xl font-bold text-slate-900">Safety check unavailable</h1>
+          <p className="text-sm mt-2 leading-relaxed">
+            The safety check could not be completed. Please retry before continuing with the assessment.
+          </p>
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => setRetryCount(count => count + 1)}
+              className="w-full py-3 px-5 rounded-xl font-semibold text-white bg-sky-600 hover:bg-sky-700 cursor-pointer"
+            >
+              Retry safety check
+            </button>
+            <a
+              href="/urgent.html"
+              className="text-sm font-semibold text-rose-700 underline"
+            >
+              Open emergency guidance
+            </a>
           </div>
         </div>
       </div>
