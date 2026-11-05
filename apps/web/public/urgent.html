@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Emergency Guidance — Sanad (سند)</title>
+  <title>Sanad</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -91,6 +91,15 @@
       font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: uppercase;
+    }
+    #offline-notice {
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      background: #fffbeb;
+      color: #78350f;
+      font-size: 13px;
     }
     .alert-title {
       font-size: 20px;
@@ -205,6 +214,7 @@
     </div>
 
     <div class="mock-disclosure">Mock emergency page · CLINICAL_TBD</div>
+    <div id="offline-notice" role="status" hidden>Offline mode: this Mock page was loaded from the local cache.</div>
 
     <div class="alert-card">
       <div class="alert-title">
@@ -275,20 +285,29 @@
   </div>
 
   <script>
+    const offlineNotice = document.getElementById('offline-notice');
+    function updateOfflineNotice() {
+      offlineNotice.hidden = navigator.onLine;
+    }
+    window.addEventListener('online', updateOfflineNotice);
+    window.addEventListener('offline', updateOfflineNotice);
+    updateOfflineNotice();
+
     function quickExit() {
+      let token = null;
       try {
-        const token = sessionStorage.getItem('sanad_session_token');
-        if (token && navigator.sendBeacon) {
-          navigator.sendBeacon('/api/session/end', JSON.stringify({ session_token: token }));
-        }
+        token = sessionStorage.getItem('sanad_session_token');
       } catch (e) {}
-      sessionStorage.removeItem('sanad_session_token');
-      sessionStorage.removeItem('sanad_staff_token');
-      sessionStorage.removeItem('sanad_staff_role');
-      sessionStorage.removeItem('sanad_case_id');
-      sessionStorage.removeItem('sanad_case_start_mode');
-      sessionStorage.removeItem('sanad_case_fixture_id');
-      window.location.replace('https://www.google.com');
+      document.body.replaceChildren();
+      for (const storageName of ['sessionStorage', 'localStorage']) {
+        for (const key of ['sanad_session_token', 'sanad_staff_token', 'sanad_staff_role', 'sanad_case_id', 'sanad_case_start_mode', 'sanad_case_fixture_id']) {
+          try { window[storageName].removeItem(key); } catch (e) {}
+        }
+      }
+      if (token && navigator.sendBeacon) {
+        try { navigator.sendBeacon('/api/session/end', JSON.stringify({ session_token: token })); } catch (e) {}
+      }
+      window.location.replace('about:blank');
     }
   </script>
 </body>

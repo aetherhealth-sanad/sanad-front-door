@@ -6,7 +6,7 @@ Instructions for anyone changing this repository, human or AI coding agent. Read
 
 **Sanad** is a private front door for men's reproductive health, built by AetherHealth for the Future Health Digital Innovation Challenge 2026. It is a **research prototype and not a medical device**. It does not diagnose, prescribe, or estimate a personal probability of infertility.
 
-**Current state:** the repository has a Python/FastAPI backend, synthetic fixtures, draft rule catalogues, a golden rule set and pytest API tests under `apps/api`. Patient and clinician web UI, production FHIR export/validation and model integration are not present.
+**Current state:** the repository has a Python/FastAPI backend, React/TypeScript patient and simulated staff UI under `apps/web`, synthetic fixtures, draft rule catalogues, a golden rule set and pytest API tests under `apps/api`. UI/API source integration exists but still needs acceptance and CI verification. Production FHIR export/validation and model integration are not present.
 
 ## Where the truth lives
 
@@ -79,7 +79,7 @@ Changes to clinical rules, triage levels, label taxonomy, consent scopes or data
 
 ## Scope of the current work
 
-Use the bounded P0 scope in [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) and [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md). Backend J9/J10 and optional psychosocial contracts are in T4.2/T4.1. The current source makes **no LLM calls**. FHIR is a conceptual mapping only; export, validation, RAG, research evaluation and provider integrations remain outside the implemented backend.
+Use the bounded P0 scope in [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) and [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md). J9/J10 and optional psychosocial API contracts are tracked in T4.2/T4.1, with patient UI source now present; tests and review remain pending. The current source makes **no LLM calls**. FHIR is a conceptual mapping only; export, validation, RAG, full evaluation reporting and provider integrations remain unimplemented.
 
 ## Repository layout
 
@@ -90,6 +90,9 @@ AGENTS.md
 README.md
 apps/api/sanad_api/   # Python/FastAPI backend
 apps/api/tests/       # pytest API/unit coverage
+apps/web/src/         # React/TypeScript patient and simulated staff UI
+apps/web/public/      # Static emergency page and service worker
+RUNBOOK.md            # Local API and web development setup
 catalogue/            # Versioned consent, question and service data
 data/synthetic/       # Synthetic fixtures only
 eval/golden/          # Rule conformance cases
@@ -119,6 +122,8 @@ apps/api/.venv/bin/uvicorn sanad_api.main:create_app --factory --app-dir apps/ap
 ```
 
 Run the backend suite from `apps/api` with `.venv/bin/python -m pytest`. Ruff is configured in `apps/api/pyproject.toml`; run `.venv/bin/ruff check sanad_api tests` from `apps/api`. Do not run with real patient data or connect an outbound referral transport.
+
+For the web app, run `npm ci` and `npm run dev -- --host 127.0.0.1` from `apps/web`; use the complete two-terminal setup in [RUNBOOK.md](RUNBOOK.md). The web development server proxies `/api` to the local API.
 
 ## Git and pull requests
 

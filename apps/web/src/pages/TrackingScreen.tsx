@@ -4,9 +4,10 @@ import { MockBadge } from '../components/MockBadge';
 
 interface TrackingScreenProps {
   caseId: string;
+  onRouteChange: (route: string) => void;
 }
 
-export const TrackingScreen: React.FC<TrackingScreenProps> = ({ caseId }) => {
+export const TrackingScreen: React.FC<TrackingScreenProps> = ({ caseId, onRouteChange }) => {
   const [tracking, setTracking] = useState<TrackingTimeline | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,6 +16,8 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({ caseId }) => {
     setError(null);
     try {
       setTracking(await api.getTracking(caseId));
+      const state = await api.getCaseState(caseId);
+      if (state.route !== '/tracking') onRouteChange(state.route);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Tracking information is unavailable.');
     } finally {
@@ -38,7 +41,7 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({ caseId }) => {
       {tracking?.flag && <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900"><MockBadge label="MOCK WORKFLOW TIMER" /><p className="text-sm mt-2">A simulated workflow timer flagged this stage. It is not a clinical response-time measure.</p></div>}
 
       {tracking && <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
-        <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 mb-5"><h2 className="text-base font-bold text-slate-900">Mock timeline</h2><span className="text-xs text-slate-500">{tracking.case_state}</span></div>
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 mb-5"><div><h2 className="text-base font-bold text-slate-900">Mock timeline</h2><span className="text-xs text-slate-500">{tracking.case_state}</span></div><button type="button" onClick={() => void refresh()} className="text-xs font-semibold text-sky-700 underline">Refresh status</button></div>
         {tracking.timeline.length ? <ol className="space-y-4">{tracking.timeline.map((event, index) => <li key={`${event.kind}-${event.occurred_at}-${index}`} className="border-l-2 border-sky-200 pl-4"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold text-slate-900">{event.kind.replace(/_/g, ' ')}{event.value ? ` · ${event.value.replace(/_/g, ' ')}` : ''}</h3><time className="text-xs text-slate-500">{new Date(event.occurred_at).toLocaleString()}</time></div><p className="text-xs text-slate-500 mt-1">{event.verification_source} · Mock event</p>{event.mock_appointment && <p className="text-xs text-slate-600 mt-1">Mock appointment: {event.mock_appointment.label}</p>}</li>)}</ol> : <p className="text-sm text-slate-600">No timeline events were returned.</p>}
         {tracking.referral && <p className="mt-5 pt-4 border-t border-slate-100 text-xs text-slate-600">Mock referral status: {tracking.referral.mock_status} · {tracking.referral.care_type}</p>}
       </section>}

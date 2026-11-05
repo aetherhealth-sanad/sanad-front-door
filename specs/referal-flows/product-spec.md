@@ -86,20 +86,22 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 - Arabic and RTL, reminders and notifications, spouse sharing features, and care plans.
 - J6, J7 and J8.
 
+**Parent-scope conflicts to resolve:** this draft lists Arabic/RTL as out of scope, while BRD §8.1 lists Arabic/English and key-screen RTL in P0, BRD FR-11 marks it P1, and PRD-FR-11 marks it Should. BRD §8.1 also calls for P0 evaluation/reporting while BRD FR-14 marks its dashboard P1 and PRD-FR-14 marks golden-set evaluation Must. PRD-AC-40 separately requires a J9/J10 funnel dashboard. Product must reconcile these classifications; this draft does not choose among them.
+
 ### 3.3 PRD P0 items this spec does not deliver
 
 **Finishing M1 to M3 does not finish the MVP.** These P0 items still need their own spec and owner:
 
 | Item | PRD reference | State after M3 |
 |---|---|---|
-| J9 acknowledgement and self-reported progress | PRD-FR-24, PRD-FR-25 | Not part of the original M1–M3 frontend scope. Backend support is being added under PRD v0.4 T4.2; no J9 screen exists yet. |
-| J10 care barriers and support | PRD-FR-26 | Not part of the original M1–M3 frontend scope. Session-bound backend support is being added under PRD v0.4 T4.2; no J10 screen exists yet. |
+| J9 acknowledgement and self-reported progress | PRD-FR-24, PRD-FR-25 | API and `/referral` UI source are present under T4.2; frontend acceptance checks, CI and review remain pending. |
+| J10 care barriers and support | PRD-FR-26 | Session-bound API and `/referral` UI source are present under T4.2; frontend acceptance checks, CI and review remain pending. |
 | Defer and no-update handling beyond Quick exit | PRD-FR-28 | Partly covered: leaving is never recorded as failure |
 | Evidence retrieval and citations | PRD-FR-07 | Abstention only: claims show "insufficient evidence" (AC-11.4) |
-| Funnel metrics and evaluation report | PRD-FR-14, PRD-FR-27 | Not built. Golden cases from the test plan feed it later. |
+| Funnel metrics and evaluation report | PRD-FR-14, PRD-FR-27 | Closed-loop funnel API and a reviewer-console panel are present. Golden-set evaluation runner, failure-case dashboard and report export are not built. |
 | J5 as a demonstrated journey | BRD §15 item 4 | Mechanism built in RF-06. Fixtures included, no separate demo script. |
 
-The PRD's delivery plan has not placed J9 and J10 either, and the README records the same gap. They need a home in the 13–17 Nov window at the latest.
+J9/J10 are now tracked in T4.2, matching PRD v0.4. The implementation status above records source presence separately from acceptance and review.
 
 ## 4. Actors and access
 

@@ -35,6 +35,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // If a page cannot be reached offline, serve the already-cached static emergency page.
+  // This does not cache or intercept API responses.
+  if (event.request.method === 'GET' && event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/urgent.html').then((response) => response || Response.error()))
+    );
+    return;
+  }
+
   // Precached static emergency pages
   if (event.request.method === 'GET' && ALLOWLISTED_PRECACHE.includes(url.pathname)) {
     event.respondWith(

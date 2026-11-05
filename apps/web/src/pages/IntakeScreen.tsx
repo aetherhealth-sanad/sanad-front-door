@@ -190,6 +190,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({ caseId, onAssessment
                 <label className="block text-sm font-semibold text-slate-800">
                   {question.text}{question.blocking && <span className="ml-2 text-xs text-amber-700">Needed for this draft</span>}
                 </label>
+                {question.conflicting_values.length > 0 && <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-950"><strong>Conflicting recorded values:</strong><ul className="mt-1 space-y-1">{question.conflicting_values.map((item, index) => <li key={`${item.source_type}-${index}`}>{String(item.value ?? 'Unknown')}{item.unit ? ` ${item.unit}` : ''} · {item.source_type}{item.temporal_status ? ` · ${item.temporal_status}` : ''}</li>)}</ul></div>}
                 {renderQuestionInput(question)}
                 <div className="flex flex-wrap gap-2">
                   {question.opt_out_choices.map(choice => (

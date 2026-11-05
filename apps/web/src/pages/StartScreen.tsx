@@ -4,9 +4,10 @@ import { MockBadge } from '../components/MockBadge';
 
 interface StartScreenProps {
   onCaseCreated: (caseId: string, route: string) => void;
+  emergencyCacheReady: boolean;
 }
 
-export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
+export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated, emergencyCacheReady }) => {
   const [samples, setSamples] = useState<SampleProfile[]>([]);
   const [samplesUnavailable, setSamplesUnavailable] = useState(false);
   const [selectedFixture, setSelectedFixture] = useState<string>('J1-001');
@@ -68,6 +69,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
           <MockBadge label="AETHERHEALTH · RESEARCH PROTOTYPE 2026" />
           <span className="text-xs font-mono text-slate-400">BRD & PRD v0.4 Conformance</span>
         </div>
+        <p role="status" className="mb-3 text-xs text-slate-600">{emergencyCacheReady ? 'Emergency guidance is cached for offline access.' : 'Preparing the offline emergency guidance cache…'}</p>
 
         <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-slate-900 leading-[1.15] max-w-3xl mb-4">
           A private research prototype for men's health.
@@ -144,10 +146,12 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
               {samples.slice(0, 4).map((s) => {
               const isSelected = selectedFixture === s.fixture_id;
               return (
-                <div
+                <button
                   key={s.fixture_id}
+                  type="button"
+                  aria-pressed={isSelected}
                   onClick={() => setSelectedFixture(s.fixture_id)}
-                  className={`p-4 rounded-xl border text-left cursor-pointer transition-all duration-150 card-hover flex flex-col justify-between ${
+                  className={`w-full p-4 rounded-xl border text-left cursor-pointer transition-all duration-150 card-hover flex flex-col justify-between ${
                     isSelected
                       ? 'bg-sky-50/40 border-sky-500 shadow-xs ring-1 ring-sky-200'
                       : 'bg-white border-slate-200 hover:border-slate-300'
@@ -165,7 +169,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
                   <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                     {s.description}
                   </p>
-                </div>
+                </button>
               );
             })}
           </div>

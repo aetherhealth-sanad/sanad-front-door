@@ -19,6 +19,7 @@ export function App() {
   const [currentRole, setCurrentRole] = useState<'patient' | 'clinician' | 'facility'>('patient');
   const [currentRoute, setCurrentRoute] = useState<string>('/');
   const [restoring, setRestoring] = useState(() => Boolean(sessionStorage.getItem('sanad_case_id')));
+  const [emergencyCacheReady, setEmergencyCacheReady] = useState(false);
   const [caseId, setCaseId] = useState<string | null>(() => {
     return sessionStorage.getItem('sanad_case_id');
   });
@@ -48,6 +49,36 @@ export function App() {
         }
       })
       .finally(() => { if (mounted) setRestoring(false); });
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      let token: string | null = null;
+      try { token = sessionStorage.getItem('sanad_session_token'); } catch { /* Still clear the restored page. */ }
+      document.getElementById('root')?.replaceChildren();
+      for (const storageName of ['sessionStorage', 'localStorage'] as const) {
+        for (const key of ['sanad_session_token', 'sanad_staff_token', 'sanad_staff_role', 'sanad_case_id', 'sanad_case_start_mode', 'sanad_case_fixture_id']) {
+          try { window[storageName].removeItem(key); } catch { /* Still redirect without storage access. */ }
+        }
+      }
+      if (token && navigator.sendBeacon) {
+        try { navigator.sendBeacon('/api/session/end', JSON.stringify({ session_token: token })); } catch { /* Redirect remains available offline. */ }
+      }
+      window.location.replace('about:blank');
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    let mounted = true;
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => navigator.serviceWorker.ready)
+      .then(() => { if (mounted) setEmergencyCacheReady(true); })
+      .catch(() => { if (mounted) setEmergencyCacheReady(false); });
     return () => { mounted = false; };
   }, []);
 
@@ -106,7 +137,7 @@ export function App() {
         {!restoring && currentRole === 'patient' && (
           <>
             {currentRoute === '/' && (
-              <StartScreen onCaseCreated={handleCaseCreated} />
+              <StartScreen onCaseCreated={handleCaseCreated} emergencyCacheReady={emergencyCacheReady} />
             )}
 
             {currentRoute === '/consent' && caseId && (
@@ -170,7 +201,7 @@ export function App() {
             )}
 
             {currentRoute === '/tracking' && caseId && (
-              <TrackingScreen caseId={caseId} />
+              <TrackingScreen caseId={caseId} onRouteChange={navigateTo} />
             )}
           </>
         )}
