@@ -8,3 +8,8 @@ apps/api/.venv/
 *.db
 *.sqlite
 *.sqlite3
+
+# Antigravity Kit & Skills
+.agents/
+.agents-backup*/
+skills-lock.json
