@@ -91,6 +91,10 @@ Three themes from the challenge brief are **not MVP commitments**:
 | **6. Close the loop** | The user may acknowledge guidance, start looking for a service, report progress or name a barrier. All of it is optional and tied to the anonymous session. |
 | **7. Evaluate** | Measure workflow correctness and step-by-step conversion with clear denominators. A click or self-report is never treated as verified care. |
 
+![Sanad patient flow: private entry and consent, deterministic safety checks (S0, S0b, input guardrail, S1), adaptive intake, Gatekeeper, draft rule floor and report, review and release, then optional closed-loop navigation. Emergency guidance wins at every safety check.](docs/images/sanad-patient-flow.svg)
+
+*The flow as specified in [BRD v0.4.2 §7](specs/Sanad_AetherHealth_BRD_v0.4.md#7-future-state-to-be) and [PRD v0.4.2](specs/Sanad_AetherHealth_PRD_v0.4.md) §1.3, §4.7 and §4.7.1. It shows the target design, not only what is built: the free-text emergency scan (S0b) and the input guardrail are `PROPOSED` and not implemented yet, and the steps marked "AI may draft" make no model calls in the current source. All clinical rules, triggers and wording are `CLINICAL_TBD`.*
+
 ```mermaid
 flowchart TD
     A[Responsive Patient Web App: mobile-first] --> B{Assessment consent?}
@@ -513,6 +517,7 @@ sanad-front-door/
 ├── apps/api/                   # Python/FastAPI backend and pytest suite
 ├── catalogue/                  # Consent, question, lab and Mock facility catalogues
 ├── data/synthetic/             # Synthetic assessment fixtures only
+├── docs/images/                # Patient flow diagram (SVG)
 ├── eval/golden/                # Deterministic rule-conformance cases
 ├── rules/                      # Versioned draft rules (CLINICAL_TBD)
 ├── schemas/                    # Closed synthetic upload schema
