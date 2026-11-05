@@ -43,7 +43,7 @@ Built by **AetherHealth** for the [Future Health Digital Innovation Challenge 20
 | Area | Status |
 |---|---|
 | **Requirements** | [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md), [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md), and [E2E workflow v0.4](specs/Sanad_E2E_Workflow_v0.4.md), dated 2026-11-03. Drafts; clinical rules remain pending approval. |
-| **Implementation** | A Python/FastAPI backend exists under `apps/api`. Patient web and clinician UI source are not present yet. Check each section below for implemented versus planned behavior. |
+| **Implementation** | Python/FastAPI backend and React/TypeScript patient, Mock Reviewer and Mock Facility UI source exist under `apps/`. API/UI acceptance and CI verification remain pending; check each section below for implemented versus planned behavior. |
 | **Clinical policy** | **Not approved.** Clinical advisor is still marked TBD in the specs. Any rule without sign-off must be presented as simulated policy. |
 | **Key dates** | Internal MVP freeze 19 Nov 2026. Challenge submission 20 Nov 2026 (reconfirm with the organiser). |
 
@@ -91,6 +91,10 @@ Three themes from the challenge brief are **not MVP commitments**:
 | **6. Close the loop** | The user may acknowledge guidance, start looking for a service, report progress or name a barrier. All of it is optional and tied to the anonymous session. |
 | **7. Evaluate** | Measure workflow correctness and step-by-step conversion with clear denominators. A click or self-report is never treated as verified care. |
 
+![Sanad patient flow: private entry and consent, deterministic safety checks (S0, S0b, input guardrail, S1), adaptive intake, Gatekeeper, draft rule floor and report, review and release, then optional closed-loop navigation. Emergency guidance wins at every safety check.](docs/images/sanad-patient-flow.svg)
+
+*The flow as specified in [BRD v0.4.2 §7](specs/Sanad_AetherHealth_BRD_v0.4.md#7-future-state-to-be) and [PRD v0.4.2](specs/Sanad_AetherHealth_PRD_v0.4.md) §1.3, §4.7 and §4.7.1. It shows the target design, not only what is built: the free-text emergency scan (S0b) and the input guardrail are `PROPOSED` and not implemented yet, and the steps marked "AI may draft" make no model calls in the current source. All clinical rules, triggers and wording are `CLINICAL_TBD`.*
+
 ```mermaid
 flowchart TD
     A[Responsive Patient Web App: mobile-first] --> B{Assessment consent?}
@@ -133,9 +137,9 @@ The long-term vision has eight stages that users can enter at several points. **
 | **S7** Explain and plan | Draft reports, review gate | P1: care plan draft |
 | **S8** Follow-up | Opt-in status and barrier capture, not treatment tracking | P2: mock reminders with consent |
 
-**P0 also includes:** an English patient experience and clinician console (UI source is not yet in this repository); source-labelled event logging; synthetic fixtures and security tests; optional psychosocial context (up to three voluntary self-report items, not diagnostic and not used for automatic triage); and lightweight closed-loop acknowledgement, self-reported progress and barrier capture.
+**P0 also includes:** an English patient experience and simulated reviewer console; source-labelled event logging; synthetic fixtures and security tests; optional psychosocial context (up to three voluntary self-report items, not diagnostic and not used for automatic triage); and lightweight closed-loop acknowledgement, self-reported progress and barrier capture. UI source exists, but acceptance and CI verification are pending.
 
-**P0 design also includes:** a versioned conceptual FHIR R4 mapping manifest. **P1 includes:** reviewed Arabic/right-to-left screens; a SEED-ML audit and baselines; an SLM benchmark; a versioned knowledge registry; FHIR R4 export and validation; and an evaluation dashboard. The API stores an `en` or `ar` preference, but translated screens are not present. FHIR alignment is conceptual and `NOT_EVALUATED`; there is no export or conformance claim.
+**P0 design also includes:** a versioned conceptual FHIR R4 mapping manifest. BRD §8.1 includes Arabic/English and key-screen RTL in P0, while BRD FR-11 marks it P1 and PRD-FR-11 marks it Should; translation and RTL review are open. No Arabic UI is present. Evaluation priority also differs: BRD §8.1 includes evaluation/reporting in P0 and BRD FR-14 marks the dashboard P1; PRD-FR-14 marks golden-set evaluation Must, and PRD-AC-40 requires a J9/J10 funnel dashboard. The reviewer UI has the closed-loop funnel, but no golden-set evaluation runner or report export. FHIR alignment is conceptual and `NOT_EVALUATED`; there is no export or conformance claim.
 
 **Out of scope for the MVP:**
 
@@ -399,7 +403,7 @@ Required by the specs:
 2. Spouse privacy: nothing is shared with a partner without explicit, purpose-specific consent.
 3. Sanad never infers a user's religion or fertility plans.
 4. A discreet brand and a private, text-based start.
-5. Arabic health content needs localisation review before it counts as ready. Arabic/RTL screens are not implemented in this repository.
+5. Arabic health content needs localization review before it counts as ready. Arabic/RTL screens are not implemented; their P0/P1 priority conflicts between BRD §8.1, BRD FR-11 and PRD-FR-11.
 
 Design intent carried over from earlier work, **not scoped in BRD or PRD v0.4**:
 
@@ -513,6 +517,7 @@ sanad-front-door/
 ├── apps/api/                   # Python/FastAPI backend and pytest suite
 ├── catalogue/                  # Consent, question, lab and Mock facility catalogues
 ├── data/synthetic/             # Synthetic assessment fixtures only
+├── docs/images/                # Patient flow diagram (SVG)
 ├── eval/golden/                # Deterministic rule-conformance cases
 ├── rules/                      # Versioned draft rules (CLINICAL_TBD)
 ├── schemas/                    # Closed synthetic upload schema
@@ -637,7 +642,7 @@ Figures earlier versions of this README listed, such as red-flag recall ≥ 99%,
 | **Submission freeze** | 18–19 Nov | Demo video, known limitations, stable deployment, reviewed change log |
 | **Official submission** | 20 Nov | Submit as confirmed by the organiser |
 
-The demo is designed for 5–7 minutes and covers J1, J4, J5, J3, then J9 and J10, with a consent-denied referral and a separate evaluation report. J9/J10 backend support and user-facing screens should be reported separately until implemented and reviewed.
+The demo is designed for 5–7 minutes and covers J1, J4, J5, J3, then J9 and J10, with a consent-denied referral and a separate evaluation report. J9/J10 backend and user-facing source now exist; their acceptance checks and review remain pending. The separate full evaluation report remains outstanding.
 
 **After the MVP (only with the right partners, consent and legal review):** clinical workflow support for S3–S8, verified booking and visit confirmation, opt-in notifications, real clinic integrations, real FHIR in the UAE, and UAE user research.
 

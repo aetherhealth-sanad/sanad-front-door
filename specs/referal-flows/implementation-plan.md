@@ -2,7 +2,7 @@
 
 | Item | Value |
 |---|---|
-| **Status** | Draft for team review. Python API code exists; frontend is absent and CI coverage is partial. |
+| **Status** | Draft for team review. Python API and React/TypeScript UI source exist; UI/API acceptance, browser coverage and CI verification remain partial or pending. |
 | **Version / date** | 0.2, 2026-11-03 |
 | **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17` |
 | **Verified by** | [Test plan](test-plan.md) |
@@ -182,25 +182,25 @@ Owners follow the [README team table](../../README.md#team) as a suggestion and 
 | T1.3 | Branch protection on `main` (needs repo admin) | AC-01.2 | T1.2 | Trung | Not started |
 | T1.4 | CD to HTTPS staging with `/version` | AC-01.4 | T1.2, OD-05 | Trung | Not started |
 | T1.5 | Case model, state machine table, audit log, session token, state API, OpenAPI type generation | AC-04.3, AC-04.4, AC-04.6, AC-04.7, INV-03, INV-04, INV-09 | T1.1 | Trung, Vinh | Not started |
-| T1.6 | Patient shell, route guard, UrgentLink, QuickExit placeholder | AC-04.1, AC-04.2, AC-05.8, INV-10, INV-11 | T1.5 | Vinh | Not started |
-| T1.7 | Start screen with samples, file selection and blank start | AC-02.1, AC-02.2, AC-02.3, AC-02.6 | T1.6 | Vinh | Not started |
-| T1.8 | Consent screen, consent ledger, `/privacy`, `/education` | AC-03.1 to AC-03.6 | T1.5, T1.6 | Vinh, Trung | Not started |
-| T1.9 | `urgent.html`, service worker, offline indicator | AC-04.5, AC-05.1 to AC-05.7 | T1.6 | Vinh | Not started |
+| T1.6 | Patient shell, route guard, UrgentLink, QuickExit placeholder | AC-04.1, AC-04.2, AC-05.8, INV-10, INV-11 | T1.5 | Vinh | In progress; patient shell and API-state routing present, acceptance/CI verification pending |
+| T1.7 | Start screen with samples, file selection and blank start | AC-02.1, AC-02.2, AC-02.3, AC-02.6 | T1.6 | Vinh | In progress; blank and synthetic sample starts present; file-selection/upload UI remains outstanding |
+| T1.8 | Consent screen, consent ledger, `/privacy`, `/education` | AC-03.1 to AC-03.6 | T1.5, T1.6 | Vinh, Trung | In progress; screens use consent API/catalogue; acceptance/CI verification pending |
+| T1.9 | `urgent.html`, service worker, offline indicator | AC-04.5, AC-05.1 to AC-05.7 | T1.6 | Vinh | In progress; static emergency page/cache path present; offline acceptance checks and content approval pending |
 | T1.10 | First fixtures, upload schema and validator, profile API | AC-02.4, AC-02.5, INV-02 | T1.5, T1.8 | Đạt, Vinh | Not started |
-| T1.11 | Consent, emergency and education copy draft, tagged `CLINICAL_TBD` where clinical | Copy for AC-03.1, AC-05.5, INV-08 | None | Đạt | Not started |
+| T1.11 | Consent, emergency and education copy draft, tagged `CLINICAL_TBD` where clinical | Copy for AC-03.1, AC-05.5, INV-08 | None | Đạt | In progress; unreviewed education claims removed from UI; reviewed patient-facing education/emergency copy remains pending |
 
 ### M2 J1 and J4
 
 | Task | Work | Delivers | Depends on | Suggested owner | Status |
 |---|---|---|---|---|---|
-| T2.1 | Emergency catalogue, server and browser checks, safety screen, late-trigger edge | AC-10.1 to AC-10.7, INV-01, INV-07 | T1.9 | Trung, Vinh | Not started |
-| T2.2 | Question catalogue, follow-up form, field states | AC-06.1 to AC-06.6, INV-05 | T1.8 | Vinh, Đạt | Not started |
+| T2.1 | Emergency catalogue, server and browser checks, safety screen, late-trigger edge | AC-10.1 to AC-10.7, INV-01, INV-07 | T1.9 | Trung, Vinh | In progress; draft catalogue is shared with browser screen; browser acceptance checks and clinical content approval pending |
+| T2.2 | Question catalogue, follow-up form, field states | AC-06.1 to AC-06.6, INV-05 | T1.8 | Vinh, Đạt | In progress; catalogue-driven intake and explicit unknown/declined states present; acceptance/CI verification pending |
 | T2.3 | Thin `SemanticFact` and Gatekeeper | AC-06.3, AC-11.2 | T2.2 | Trung | Not started |
 | T2.4 | Triage rules, risk signals, floor enforcement | AC-11.1, AC-11.5, AC-11.6, INV-06 | T2.3 | Trung | Not started |
-| T2.5 | Template drafts for patient and reviewer, `/result` | AC-11.3, AC-11.4 | T2.4 | Vinh | Not started |
-| T2.6 | MockBadge and send button with just-in-time consent | AC-07.1 to AC-07.6, AC-17.1, AC-17.2, AC-17.4 | T2.5 | Vinh | Not started |
-| T2.7 | Reviewer sign-in, role checks, queue, detail, decisions, version conflict, banner | AC-08.1 to AC-08.9 | T2.6 | Vinh, Trung | Not started |
-| T2.8 | Quick exit, full wipe, session end, back-forward cache protection, neutral titles | AC-09.1 to AC-09.8 | T1.9, T1.6 | Vinh | Not started |
+| T2.5 | Template drafts for patient and reviewer, `/result` | AC-11.3, AC-11.4 | T2.4 | Vinh | In progress; patient report screen reads API draft; acceptance/CI verification pending |
+| T2.6 | MockBadge and send button with just-in-time consent | AC-07.1 to AC-07.6, AC-17.1, AC-17.2, AC-17.4 | T2.5 | Vinh | In progress; review request and consent checks are wired; acceptance/CI verification pending |
+| T2.7 | Reviewer sign-in, role checks, queue, detail, decisions, version conflict, banner | AC-08.1 to AC-08.9 | T2.6 | Vinh, Trung | In progress; Mock Reviewer sign-in, queue and decision UI present; negative-path/CI verification pending |
+| T2.8 | Quick exit, full wipe, session end, back-forward cache protection, neutral titles | AC-09.1 to AC-09.8 | T1.9, T1.6 | Vinh | In progress; pre-network screen/storage wipe, BFCache redirect and neutral titles are wired; acceptance/CI verification pending |
 | T2.9 | Remaining J1, J4 and J5 fixtures, golden cases, J1 and J4 E2E | Journey tests in the test plan | T2.1 to T2.8 | Đạt, Hoàng | Not started |
 
 ### M3 J2, J3 and the referral path
@@ -208,10 +208,10 @@ Owners follow the [README team table](../../README.md#team) as a suggestion and 
 | Task | Work | Delivers | Depends on | Suggested owner | Status |
 |---|---|---|---|---|---|
 | T3.1 | `evaluate_gate`, send endpoint, preview endpoint, architecture tests | AC-12.1 to AC-12.5, AC-12.7 to AC-12.9 | T2.7 | Trung | Not started |
-| T3.2 | `NAVIGATION_STARTED`, `/referral` screen, three-condition display | AC-12.6 | T3.1 | Vinh | Not started |
+| T3.2 | `NAVIGATION_STARTED`, `/referral` screen, three-condition display | AC-12.6 | T3.1 | Vinh | In progress; referral gate and J9/J10 UI are wired to API; acceptance/CI verification pending |
 | T3.3 | Referral and event models, lifecycle table | AC-13.2, AC-13.3, AC-13.6 | T3.1 | Trung | Not started |
-| T3.4 | Mock facility console and mock directory | AC-13.1, AC-13.2, AC-13.4, AC-13.5 | T3.3 | Vinh | Not started |
-| T3.5 | Tracking screen, timeline, delayed flag | AC-14.1 to AC-14.7 | T3.3 | Vinh, Trung | Not started |
+| T3.4 | Mock facility console and mock directory | AC-13.1, AC-13.2, AC-13.4, AC-13.5 | T3.3 | Vinh | In progress; Mock Facility screen is wired to API; acceptance/CI verification pending |
+| T3.5 | Tracking screen, timeline, delayed flag | AC-14.1 to AC-14.7 | T3.3 | Vinh, Trung | In progress; tracking screen reads API timeline and state; acceptance/CI verification pending |
 | T3.6 | Consent revocation in flight | AC-13.4, OD-10 | T3.4 | Trung | Not started |
 | T3.7 | J3 lab entry, confirmation, conflict handling, draft rules | AC-15.1 to AC-15.6 | T2.5 | Vinh, Hoàng | Not started |
 | T3.8 | J2 selective evidence (drop first if late) | AC-16.1 to AC-16.4 | T3.1 | Vinh, Đạt | Not started |
@@ -223,8 +223,8 @@ These are additive P0 backend/design tasks from PRD v0.4; they do not activate c
 
 | Task | Work | Delivers | Depends on | Suggested owner | Status |
 |---|---|---|---|---|---|
-| T4.1 | Optional psychosocial micro-intake, separate provenance store, consent guard, report context only | PRD-FR-29/30, PRD-AC-42/43 | T2.2, T2.5 | Backend, Product | In progress; API code present, tests/review pending |
-| T4.2 | Session-bound guidance acknowledgement, idempotent progress/barrier writes, retention deletion and funnel | PRD-FR-24 to 28, PRD-AC-35 to 41 | T3.2 | Backend, Security, QA | In progress; API code present, TC-19.6 added, CI and review pending |
+| T4.1 | Optional psychosocial micro-intake, separate provenance store, consent guard, report context only | PRD-FR-29/30, PRD-AC-42/43 | T2.2, T2.5 | Backend, Product | In progress; API and intake/report UI source present, acceptance tests and review pending |
+| T4.2 | Session-bound guidance acknowledgement, idempotent progress/barrier writes, retention deletion and funnel | PRD-FR-24 to 28, PRD-AC-35 to 41 | T3.2 | Backend, Security, QA | In progress; API and `/referral` J9/J10 UI source present, TC-19.6 added, frontend acceptance/CI and review pending |
 | T4.3 | Versioned conceptual FHIR R4 mapping manifest; no export or conformance claim | PRD-FR-31, PRD-AC-46/48 | T1.10, T3.7 | Backend, Architect | In progress; manifest present, review pending |
 | T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader present, review pending |
 

@@ -1,138 +1,134 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api } from '../api/client';
 import { MockBadge } from '../components/MockBadge';
+import emergencyCatalogue from '../../../../rules/emergency.draft-0.1.json';
+
+type SafetyResponse = 'YES' | 'NO' | 'NOT_SURE' | 'PREFER_NOT_TO_ANSWER';
 
 interface SafetyScreenProps {
   caseId: string;
-  onSafetyPass: () => void;
+  onSafetyPass: (route: string) => void;
 }
 
-export const SafetyScreen: React.FC<SafetyScreenProps> = ({
-  caseId,
-  onSafetyPass
-}) => {
-  const [checking, setChecking] = useState(true);
+export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass }) => {
+  const [answers, setAnswers] = useState<Record<string, SafetyResponse | ''>>({});
+  const [checking, setChecking] = useState(false);
   const [emergencyTriggered, setEmergencyTriggered] = useState(false);
-  const [triggerRule, setTriggerRule] = useState<string | null>(null);
   const [checkUnavailable, setCheckUnavailable] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let mounted = true;
-    setChecking(true);
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
     setCheckUnavailable(false);
-    api.runSafetyCheck(caseId)
-      .then(res => {
-        if (!mounted) return;
-        setChecking(false);
-        if (res.emergency_triggered) {
-          setEmergencyTriggered(true);
-          setTriggerRule(res.trigger_rule || 'DRAFT-EMERG-01');
-        }
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setChecking(false);
-        // Never present an unavailable safety check as a clear result.
+    const unanswered = emergencyCatalogue.questions.filter(question => !answers[question.question_id]);
+    if (unanswered.length) {
+      setError('Choose an answer, “Not sure,” or “Prefer not to answer” for each draft question.');
+      return;
+    }
+
+    const submitted = Object.entries(answers).map(([question_id, response]) => ({
+      question_id,
+      response: response as SafetyResponse,
+    }));
+
+    // Apply the bundled draft rule before waiting on the API, so this path also works offline.
+    const localTrigger = emergencyCatalogue.rules.some(rule => {
+      const question = emergencyCatalogue.questions.find(item => item.concept_code === rule.concept_code);
+      const response = question ? answers[question.question_id] : undefined;
+      if (!question || !response) return false;
+      const mappedValue = emergencyCatalogue.response_values[response].value;
+      return rule.trigger_values.some(value => value === mappedValue);
+    });
+    if (localTrigger) {
+      setEmergencyTriggered(true);
+      void api.runSafetyCheck(caseId, submitted, emergencyCatalogue.catalogue_version).catch(() => undefined);
+      return;
+    }
+
+    setChecking(true);
+    try {
+      const result = await api.runSafetyCheck(caseId, submitted, emergencyCatalogue.catalogue_version);
+      if (result.result === 'EMERGENCY_GUIDANCE_ISSUED' || result.state.route === '/urgent.html') {
+        setEmergencyTriggered(true);
+      } else if (result.needs_recheck || result.result === 'NEEDS_RECHECK') {
         setCheckUnavailable(true);
-      });
-
-    return () => { mounted = false; };
-  }, [caseId, retryCount]);
-
-  if (checking) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <div className="inline-block w-8 h-8 border-3 border-sky-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <h2 className="text-lg font-bold text-slate-900">Running Pre-assessment Safety Rules...</h2>
-        <p className="text-xs text-slate-500 mt-1">Verifying absence of acute emergency triggers</p>
-      </div>
-    );
-  }
+        setError('The draft safety check needs another pass. You can retry or open the emergency guidance.');
+      } else {
+        onSafetyPass(result.state.route);
+      }
+    } catch (err) {
+      setCheckUnavailable(true);
+      setError(err instanceof Error ? err.message : 'The draft safety check could not be completed.');
+    } finally {
+      setChecking(false);
+    }
+  };
 
   if (emergencyTriggered) {
     return (
       <div className="max-w-xl mx-auto px-4 py-12">
         <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-6 sm:p-8 text-center shadow-sm">
-          <div className="w-14 h-14 bg-rose-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-            !
-          </div>
-          <span className="text-xs font-mono font-semibold text-rose-700 bg-rose-100 px-2 py-0.5 rounded">
-            RULE TRIGGERED: {triggerRule}
-          </span>
-          <h1 className="text-2xl font-bold text-rose-950 mt-3 mb-2">
-            Acute Warning Signs Detected
-          </h1>
+          <MockBadge label="MOCK EMERGENCY RULE · CLINICAL_TBD" />
+          <h1 className="text-2xl font-bold text-rose-950 mt-4 mb-2">Draft emergency rule triggered</h1>
           <p className="text-sm text-rose-800 leading-relaxed mb-6">
-            The profile indicators suggest acute symptoms (such as severe scrotal pain, fever, or injury). For your safety, online triage cannot proceed.
+            This simulated rule set is not clinically approved. The online assessment is stopped for this session.
           </p>
-
-          <div className="space-y-3">
-            <a
-              href="/urgent.html"
-              className="w-full inline-block py-3.5 px-6 rounded-xl font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md transition-all btn-press no-underline"
-            >
-              Open Emergency Care Guidance Now →
-            </a>
-            <p className="text-xs text-rose-600">
-              Emergency guidance works offline and provides verified hospital contact channels.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (checkUnavailable) {
-    return (
-      <div className="max-w-lg mx-auto px-4 py-12 text-center">
-        <div className="bg-amber-50 text-amber-800 border border-amber-200 rounded-2xl p-6 sm:p-8">
-          <h1 className="text-xl font-bold text-slate-900">Safety check unavailable</h1>
-          <p className="text-sm mt-2 leading-relaxed">
-            The safety check could not be completed. Please retry before continuing with the assessment.
-          </p>
-          <div className="mt-6 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => setRetryCount(count => count + 1)}
-              className="w-full py-3 px-5 rounded-xl font-semibold text-white bg-sky-600 hover:bg-sky-700 cursor-pointer"
-            >
-              Retry safety check
-            </button>
-            <a
-              href="/urgent.html"
-              className="text-sm font-semibold text-rose-700 underline"
-            >
-              Open emergency guidance
-            </a>
-          </div>
+          <a href="/urgent.html" className="w-full inline-block py-3.5 px-6 rounded-xl font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md no-underline">
+            Open emergency guidance now →
+          </a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-12 text-center">
-      <div className="w-16 h-16 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full flex items-center justify-center text-2xl mx-auto mb-5">
-        ✓
+    <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <MockBadge label={`MOCK SAFETY QUESTIONS · ${emergencyCatalogue.approval_status}`} />
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Safety check</h1>
+        <p className="text-sm text-slate-600 mt-2 leading-relaxed">These draft questions and rules are simulated and not clinically approved. Emergency guidance is available at any time.</p>
       </div>
-      <div className="inline-flex items-center gap-2 mb-2">
-        <MockBadge label="SAFETY PRE-CHECK PASSED" />
-      </div>
-      <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-        Safety Check Clear
-      </h1>
-      <p className="text-sm text-slate-600 mt-2 mb-8 leading-relaxed">
-        No immediate acute red flags were triggered. You may now proceed to answer contextual questions regarding your health history and goals.
-      </p>
 
-      <button
-        type="button"
-        onClick={onSafetyPass}
-        className="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition-all btn-press cursor-pointer"
-      >
-        Continue to Questions →
-      </button>
+      {error && (
+        <div role="alert" className="mb-6 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm">
+          {error}
+          {checkUnavailable && <a className="ml-2 font-semibold underline" href="/urgent.html">Open emergency guidance</a>}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {emergencyCatalogue.questions.map(question => (
+          <fieldset key={question.question_id} className="bg-white rounded-xl border border-slate-200 p-5">
+            <legend className="px-1 text-sm font-semibold text-slate-900">{question.text}</legend>
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              {([
+                ['YES', 'Yes'],
+                ['NO', 'No'],
+                ['NOT_SURE', 'Not sure'],
+                ['PREFER_NOT_TO_ANSWER', 'Prefer not to answer'],
+              ] as const).map(([value, label]) => (
+                <label key={value} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer ${answers[question.question_id] === value ? 'border-sky-500 bg-sky-50' : 'border-slate-200'}`}>
+                  <input
+                    type="radio"
+                    name={question.question_id}
+                    value={value}
+                    checked={answers[question.question_id] === value}
+                    onChange={() => setAnswers(previous => ({ ...previous, [question.question_id]: value }))}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ))}
+
+        <button type="submit" disabled={checking} className="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-sky-600 hover:bg-sky-700 disabled:opacity-60">
+          {checking ? 'Checking draft rules…' : 'Continue after draft safety check'}
+        </button>
+      </form>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, type ConsentScope } from '../api/client';
+import { api, type ConsentCatalogue, type ConsentScope } from '../api/client';
 import { MockBadge } from '../components/MockBadge';
 
 interface ConsentScreenProps {
@@ -12,67 +12,55 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
   onConsentComplete
 }) => {
   const [scopesConfig, setScopesConfig] = useState<ConsentScope[]>([]);
-  const [selectedScopes, setSelectedScopes] = useState<Record<string, boolean>>({
-    assessment: true,
-    clinician_review: true,
-    provider_share: false,
-    spouse_share: false,
-    research_use: false,
-  });
+  const [consentCatalogue, setConsentCatalogue] = useState<ConsentCatalogue | null>(null);
+  const [selectedScopes, setSelectedScopes] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
+  const [loadingCopy, setLoadingCopy] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getCurrentConsent()
-      .then(res => setScopesConfig(res.scopes))
-      .catch(() => {
-        // Fallback scope explanations if API not connected
-        setScopesConfig([
-          {
-            scope: 'assessment',
-            data_covered: 'Your answers, contextual lifestyle factors, and lab values you choose to enter.',
-            used_for: 'Executing rule-based safety screening and personalized clinical triage proposal.',
-            who_sees_it: 'Stored only in this anonymous session.',
-            if_off: 'You receive only general public education.',
-            used_in_this_flow: true,
-          },
-          {
-            scope: 'clinician_review',
-            data_covered: 'Your draft result and extracted health facts.',
-            used_for: 'Allowing a medical professional (simulated in demo) to audit and approve the assessment.',
-            who_sees_it: 'Authorized review portal.',
-            if_off: 'No human clinician reviews your case.',
-            used_in_this_flow: true,
-          },
-          {
-            scope: 'provider_share',
-            data_covered: 'A curated summary packet (case code, care tier, reviewer notes).',
-            used_for: 'Generating a simulated referral to a specialized care center.',
-            who_sees_it: 'Mock clinic dispatch.',
-            if_off: 'No referral packet is dispatched.',
-            used_in_this_flow: true,
-          },
-        ]);
-      });
-  }, []);
+    let mounted = true;
+    Promise.all([api.getCurrentConsent(), api.getCaseConsent(caseId)])
+      .then(([catalogue, current]) => {
+        if (!mounted) return;
+        setConsentCatalogue(catalogue);
+        setScopesConfig(catalogue.scopes);
+        setSelectedScopes(Object.fromEntries(Object.entries(current.scopes).map(([key, value]) => [key, value.granted])));
+      })
+      .catch((err: Error) => {
+        if (mounted) setError(err.message || 'Consent information is unavailable.');
+      })
+      .finally(() => { if (mounted) setLoadingCopy(false); });
+    return () => { mounted = false; };
+  }, [caseId]);
 
   const handleToggle = (scopeName: string) => {
-    setSelectedScopes(prev => ({
-      ...prev,
-      [scopeName]: !prev[scopeName],
-    }));
+    if (scopeName !== 'assessment' && !selectedScopes.assessment && !selectedScopes[scopeName]) {
+      setError('Grant assessment consent before enabling another consent scope.');
+      return;
+    }
+    setError(null);
+    setSelectedScopes(prev => {
+      const next = { ...prev, [scopeName]: !prev[scopeName] };
+      if (scopeName === 'assessment' && !next.assessment) {
+        for (const scope of Object.keys(next)) next[scope] = false;
+      }
+      return next;
+    });
   };
 
   const handleAgree = async () => {
     setLoading(true);
     setError(null);
     try {
-      await api.updateCaseConsent(caseId, selectedScopes);
-      if (selectedScopes.assessment) {
-        onConsentComplete('/safety');
-      } else {
-        onConsentComplete('/education');
+      if (!consentCatalogue) throw new Error('Consent information is unavailable. Reload this page after the API is available.');
+      const result = await api.updateCaseConsent(caseId, consentCatalogue.consent_version, selectedScopes);
+      let route = result.state?.route || (selectedScopes.assessment ? '/safety' : '/education');
+      if (selectedScopes.assessment && result.state?.allowed_actions.includes('LOAD_PROFILE') && sessionStorage.getItem('sanad_case_start_mode') === 'SAMPLE') {
+        const profileState = await api.applySampleProfile(caseId);
+        route = profileState.route;
       }
+      onConsentComplete(route);
     } catch (err: any) {
       setError(err.message || 'Failed to record consent');
     } finally {
@@ -84,13 +72,8 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
     setLoading(true);
     setError(null);
     try {
-      await api.updateCaseConsent(caseId, {
-        assessment: false,
-        clinician_review: false,
-        provider_share: false,
-        spouse_share: false,
-        research_use: false,
-      });
+      if (!consentCatalogue) throw new Error('Consent information is unavailable. Reload this page after the API is available.');
+      await api.updateCaseConsent(caseId, consentCatalogue.consent_version, { assessment: false });
       onConsentComplete('/education');
     } catch (err: any) {
       setError(err.message || 'Failed to record refusal');
@@ -103,15 +86,17 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
     <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
-          <MockBadge label="CONSENT LEDGER · CONSENT-0.1" />
+          <MockBadge label={`CONSENT COPY · ${consentCatalogue?.copy_status ?? 'MOCK'}`} />
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
           How Your Health Information is Handled
         </h1>
         <p className="text-slate-600 text-sm sm:text-base mt-2 leading-relaxed">
-          Sanad operates on granular, revocable consent. You control exactly what data is used and who can see it. No personal identifiers are ever sold or shared with third parties.
+          Choose which parts of this research prototype you agree to use. Optional permissions start off and can be left disabled.
         </p>
       </div>
+
+      {loadingCopy && <p className="mb-6 text-sm text-slate-500">Loading consent choices…</p>}
 
       {error && (
         <div className="mb-6 p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-sm">
@@ -166,6 +151,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
                     type="button"
                     role="switch"
                     aria-checked={isEnabled}
+                    aria-label={`${isEnabled ? 'Disable' : 'Enable'} ${scopeItem.scope.replace('_', ' ')} consent`}
                     onClick={() => handleToggle(scopeItem.scope)}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
                       isEnabled ? 'bg-sky-600' : 'bg-slate-200'
@@ -188,7 +174,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
       <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-200">
         <button
           type="button"
-          disabled={loading}
+          disabled={loading || loadingCopy || !consentCatalogue}
           onClick={handleAgree}
           className="w-full sm:flex-1 py-3 px-5 rounded-xl font-semibold text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition-all duration-150 btn-press cursor-pointer flex items-center justify-center gap-2"
         >
@@ -197,7 +183,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
 
         <button
           type="button"
-          disabled={loading}
+          disabled={loading || loadingCopy || !consentCatalogue}
           onClick={handleDecline}
           className="w-full sm:w-auto py-3 px-5 rounded-xl font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors btn-press cursor-pointer text-sm"
         >

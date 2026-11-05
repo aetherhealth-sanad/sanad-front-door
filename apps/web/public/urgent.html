@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Emergency Guidance — Sanad (سند)</title>
+  <title>Sanad</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -78,6 +78,28 @@
       border-radius: 8px;
       padding: 20px;
       margin-bottom: 24px;
+    }
+    .mock-disclosure {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 4px 9px;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    #offline-notice {
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      background: #fffbeb;
+      color: #78350f;
+      font-size: 13px;
     }
     .alert-title {
       font-size: 20px;
@@ -191,6 +213,9 @@
       </button>
     </div>
 
+    <div class="mock-disclosure">Mock emergency page · CLINICAL_TBD</div>
+    <div id="offline-notice" role="status" hidden>Offline mode: this Mock page was loaded from the local cache.</div>
+
     <div class="alert-card">
       <div class="alert-title">
         <span>⚠</span> Immediate Medical Attention Required
@@ -231,7 +256,7 @@
     </div>
 
     <div class="card">
-      <h2>Emergency Contacts</h2>
+      <h2>Emergency Contacts · Mock</h2>
       <p style="font-size: 14px; color: #475569;">In the United Arab Emirates (UAE):</p>
       <div class="emergency-numbers">
         <a href="tel:998" class="call-btn">
@@ -260,16 +285,29 @@
   </div>
 
   <script>
+    const offlineNotice = document.getElementById('offline-notice');
+    function updateOfflineNotice() {
+      offlineNotice.hidden = navigator.onLine;
+    }
+    window.addEventListener('online', updateOfflineNotice);
+    window.addEventListener('offline', updateOfflineNotice);
+    updateOfflineNotice();
+
     function quickExit() {
+      let token = null;
       try {
-        const token = sessionStorage.getItem('sanad_session_token');
-        if (token && navigator.sendBeacon) {
-          navigator.sendBeacon('/api/session/end', JSON.stringify({ token: token }));
-        }
+        token = sessionStorage.getItem('sanad_session_token');
       } catch (e) {}
-      sessionStorage.clear();
-      localStorage.clear();
-      window.location.replace('https://www.google.com');
+      document.body.replaceChildren();
+      for (const storageName of ['sessionStorage', 'localStorage']) {
+        for (const key of ['sanad_session_token', 'sanad_staff_token', 'sanad_staff_role', 'sanad_case_id', 'sanad_case_start_mode', 'sanad_case_fixture_id']) {
+          try { window[storageName].removeItem(key); } catch (e) {}
+        }
+      }
+      if (token && navigator.sendBeacon) {
+        try { navigator.sendBeacon('/api/session/end', JSON.stringify({ session_token: token })); } catch (e) {}
+      }
+      window.location.replace('about:blank');
     }
   </script>
 </body>

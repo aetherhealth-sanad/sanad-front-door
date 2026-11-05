@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Clinician
+                Mock Reviewer
               </button>
               <button
                 type="button"

@@ -25,7 +25,14 @@ The API loads rules, consent/question catalogues, and synthetic fixtures from th
 
 ## Start the API
 
-In terminal 1, from the repository root:
+In terminal 1, from the repository root, set local-only passwords first if you need the simulated staff consoles:
+
+```bash
+export SANAD_DEMO_REVIEWER_PASSWORD='choose-a-local-only-password'
+export SANAD_DEMO_MOCK_FACILITY_PASSWORD='choose-another-local-only-password'
+```
+
+Then start Uvicorn from `apps/api`:
 
 ```bash
 cd apps/api
@@ -38,14 +45,7 @@ The SQLite database is created at `apps/api/sanad-dev.db`; it is ignored by Git.
 - OpenAPI JSON: <http://127.0.0.1:8000/api/openapi.json>
 - Version endpoint: <http://127.0.0.1:8000/version>
 
-To enable the API's seeded staff accounts for direct API development, set local-only passwords in this terminal before starting Uvicorn:
-
-```bash
-export SANAD_DEMO_REVIEWER_PASSWORD='choose-a-local-only-password'
-export SANAD_DEMO_MOCK_FACILITY_PASSWORD='choose-another-local-only-password'
-```
-
-The usernames are `demo-reviewer` and `demo-mock-facility`. Without these environment variables, staff sign-in is disabled. Do not put passwords in source files or commit them. The current web UI does not include a staff sign-in flow.
+The seeded usernames are `demo-reviewer` and `demo-mock-facility`. Without the password environment variables, staff sign-in is disabled. Do not put passwords in source files or commit them. In the web app, choose **Mock Reviewer** or **Mock Facility** in the top navigation and sign in with the corresponding account.
 
 ## Start the web app
 
@@ -57,6 +57,13 @@ npm run dev -- --host 127.0.0.1
 ```
 
 Open <http://127.0.0.1:3000>. Vite proxies requests under `/api` to `http://127.0.0.1:8000`, so start the API first. The development server serves the static emergency page at <http://127.0.0.1:3000/urgent.html>.
+
+## Try the local flows
+
+- Start a blank case or choose a synthetic sample on the start screen. The app asks for consent before applying sample data.
+- Use the **Mock Reviewer** and **Mock Facility** navigation options for their simulated staff flows. Configure the local-only passwords above before starting the API.
+- Keep the emergency page reachable at <http://127.0.0.1:3000/urgent.html>. The service worker caches this static page and does not cache API responses.
+- Use separate browser tabs for patient and staff roles if you need to keep their session tokens separate.
 
 ## Stop and reset
 
@@ -83,8 +90,16 @@ npm run preview
 
 ## Current implementation limits
 
-The web source exists under `apps/web/src`, but the patient, reviewer, facility, and tracking screens are not yet reliably integrated with the current API contracts. For example, consent, safety, intake, report, review, referral, and tracking requests use payloads or response shapes that differ from the API. Some screens show local fallback content after request failures. The current safety screen therefore blocks assessment continuation when its safety request fails; the screen still needs to collect and submit the required safety answers. Quick Exit also sends a session-end field name the API does not accept, so server-side session cleanup waits for token expiry.
+The web source under `apps/web/src` includes patient, Mock Reviewer, Mock Facility, tracking, consent, safety, intake, report, referral, and closed-loop navigation screens wired to the local API contracts. Source presence is not acceptance evidence: browser, contract and CI checks remain pending for this integration work. The following product work also remains open:
+
+- Synthetic sample and blank start are present; a user-facing upload/file-selection flow remains incomplete (T1.7).
+- Manual lab entry is P1 and is not implemented; `/lab` is a labelled placeholder.
+- No Arabic translation or RTL UI is present. BRD §8.1 and BRD FR-11/PRD-FR-11 classify its priority differently; see the open scope decision and localization review question before scheduling it.
+- The reviewer console shows the API's closed-loop funnel. A full evaluation dashboard with rule-conformance runs, failure-case inspection and report export is not present.
+- Emergency-page content is marked `CLINICAL_TBD`; it is not clinically approved guidance.
+
+There is no LLM/model integration, real clinic connection, FHIR export or production validation. Use synthetic fixtures only.
 
 Use this setup for local software development with synthetic data only. A server starting successfully does not mean the user journeys pass, the mock screens represent events stored by the API, or any clinical content has been approved. Check the BRD and PRD acceptance criteria before using the app in a demo.
 
-The README, `AGENTS.md`, and referral-flow implementation plan contain older statements that the web UI is absent. This runbook reflects the source currently present in `apps/web`.
+Milestone-by-milestone implementation status is tracked in `specs/referal-flows/implementation-plan.md`; its change history is in `specs/referal-flows/change-log.md`.

@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="page-type" content="service" />
     <meta name="site-kind" content="service" />
-    <meta name="description" content="Sanad (سند) — A private, confidential digital front door for men's reproductive and hormonal health. Research prototype." />
-    <title>Sanad (سند) — Private Front Door for Men's Health</title>
+    <meta name="description" content="Sanad research prototype." />
+    <title>Sanad</title>
     <!-- Fonts: Plus Jakarta Sans & Newsreader -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,14 +16,5 @@
   <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen selection:bg-cyan-100 selection:text-cyan-900">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.debug('ServiceWorker registration skipped:', err);
-          });
-        });
-      }
-    </script>
   </body>
 </html>

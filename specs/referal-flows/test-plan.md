@@ -378,9 +378,9 @@ Access checks run before the gate. Another patient's token, a reviewer's token o
 | PRD-AC-33 no camera | TC-INV-07 |
 | PRD-AC-41 boundary: no completed care from the mock | TC-13.3, TC-14.5 |
 
-**Not covered here:** PRD-AC-16 (Arabic), PRD-AC-18 and 19 (evaluation run), PRD-AC-20 and 34 (research isolation), PRD-AC-27 to 32 (P1 and P2 features), PRD-AC-35 to 40 (J9, J10, funnel). These stay open for the MVP.
+**Not covered here:** PRD-AC-16 (Arabic), PRD-AC-18 and 19 (evaluation run), PRD-AC-20 and 34 (research isolation), and PRD-AC-27 to 32 (P1 and P2 features). TC-19.1 to TC-19.6 define service-level J9/J10 checks, but this plan has no patient UI or dashboard interaction checks for PRD-AC-35 to 40; those remain open for MVP acceptance.
 
-**Golden sets.** Journey and gate cases feed `eval/golden/workflow_cases.jsonl`, `rule_conformance.jsonl` and `consent_security.jsonl`, counting towards the PRD's 36-case target. `closed_loop_navigation.jsonl` and `evidence_grounding.jsonl` belong to the uncovered items.
+**Golden sets.** Journey and gate cases are planned for `eval/golden/workflow_cases.jsonl`, `rule_conformance.jsonl` and `consent_security.jsonl`, counting towards the PRD's 36-case target. Only `rule_conformance.jsonl` currently exists. `closed_loop_navigation.jsonl` and `evidence_grounding.jsonl` are also planned, but neither is present yet.
 
 ## 7. Manual checklists
 

@@ -4,10 +4,12 @@ import { MockBadge } from '../components/MockBadge';
 
 interface StartScreenProps {
   onCaseCreated: (caseId: string, route: string) => void;
+  emergencyCacheReady: boolean;
 }
 
-export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
+export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated, emergencyCacheReady }) => {
   const [samples, setSamples] = useState<SampleProfile[]>([]);
+  const [samplesUnavailable, setSamplesUnavailable] = useState(false);
   const [selectedFixture, setSelectedFixture] = useState<string>('J1-001');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,35 +22,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
           setSelectedFixture(res.samples[0].fixture_id);
         }
       })
-      .catch(() => {
-        // Fallback fixtures
-        setSamples([
-          {
-            fixture_id: 'J1-001',
-            title: 'Sample B · Omar (24yo Athletic)',
-            description: 'Heavy strength training with past anabolic steroid use. Explores hormonal context without jumping to infertility conclusions.',
-            is_synthetic: true
-          },
-          {
-            fixture_id: 'J3-001',
-            title: 'Sample E · Tariq (Semen Lab Holder)',
-            description: 'Borderline semen motility (38%) requiring structured explanation against WHO 6th edition reference distributions.',
-            is_synthetic: true
-          },
-          {
-            fixture_id: 'J4-001',
-            title: 'Sample G · Zayd (Acute Warning Signs)',
-            description: 'Sudden scrotal pain and fever. Tests immediate deterministic emergency interception without waiting for a questionnaire.',
-            is_synthetic: true
-          },
-          {
-            fixture_id: 'J2-001',
-            title: 'Sample J · Hamad (Complex Lifestyle)',
-            description: 'Multiple metabolic and dietary observations demonstrating selective consent controls and fact extraction.',
-            is_synthetic: true
-          }
-        ]);
-      });
+      .catch(() => setSamplesUnavailable(true));
   }, []);
 
   const handleLaunchCase = async (fixtureId?: string) => {
@@ -59,9 +33,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
       const res = await api.createCase('SAMPLE', targetFixture);
       sessionStorage.setItem('sanad_session_token', res.session_token);
       sessionStorage.setItem('sanad_case_id', res.case_id);
-      
-      // Auto-apply sample profile
-      await api.applySampleProfile(res.case_id).catch(() => {});
+      sessionStorage.setItem('sanad_case_start_mode', 'SAMPLE');
+      sessionStorage.setItem('sanad_case_fixture_id', targetFixture);
       
       onCaseCreated(res.case_id, res.state?.route || '/consent');
     } catch (err: any) {
@@ -78,6 +51,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
       const res = await api.createCase('BLANK');
       sessionStorage.setItem('sanad_session_token', res.session_token);
       sessionStorage.setItem('sanad_case_id', res.case_id);
+      sessionStorage.setItem('sanad_case_start_mode', 'BLANK');
+      sessionStorage.removeItem('sanad_case_fixture_id');
       onCaseCreated(res.case_id, res.state?.route || '/consent');
     } catch (err: any) {
       setError(err.message || 'Failed to start blank case');
@@ -94,13 +69,14 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
           <MockBadge label="AETHERHEALTH · RESEARCH PROTOTYPE 2026" />
           <span className="text-xs font-mono text-slate-400">BRD & PRD v0.4 Conformance</span>
         </div>
+        <p role="status" className="mb-3 text-xs text-slate-600">{emergencyCacheReady ? 'Emergency guidance is cached for offline access.' : 'Preparing the offline emergency guidance cache…'}</p>
 
         <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-slate-900 leading-[1.15] max-w-3xl mb-4">
-          Private reproductive and hormonal guidance for men.
+          A private research prototype for men's health.
         </h1>
 
         <p className="text-base sm:text-xl text-slate-600 max-w-2xl font-normal leading-relaxed mb-8">
-          Assessment-first private entry. Evaluates training context, anabolic history, and semen parameters against published WHO and AUA/ASRM clinical guidelines—without diagnosing or storing personal identifiers.
+          Explore the consent, safety, and draft assessment flow with synthetic profiles. This prototype does not connect to a real provider or model.
         </p>
 
         {/* 4 Trust Pillars (Equal Grid) */}
@@ -115,26 +91,26 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
 
           <div className="p-3.5 rounded-xl bg-white border border-slate-200">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-1">
-              Clinical Guard
+              Data Handling
             </span>
-            <span className="text-sm font-bold text-slate-900 block">Context-Aware</span>
-            <p className="text-[11px] text-slate-500 mt-0.5">High BMI is never conflated with adiposity</p>
+            <span className="text-sm font-bold text-slate-900 block">Draft rules · Mock</span>
+            <p className="text-[11px] text-slate-500 mt-0.5">Unknown and declined answers stay distinct</p>
           </div>
 
           <div className="p-3.5 rounded-xl bg-white border border-slate-200">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-1">
               Safety Architecture
             </span>
-            <span className="text-sm font-bold text-slate-900 block">Deterministic</span>
-            <p className="text-[11px] text-slate-500 mt-0.5">Urgent warnings execute offline with zero delay</p>
+            <span className="text-sm font-bold text-slate-900 block">Mock safety check</span>
+            <p className="text-[11px] text-slate-500 mt-0.5">Emergency guidance link stays available</p>
           </div>
 
           <div className="p-3.5 rounded-xl bg-white border border-slate-200">
             <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-1">
               Referral Gate
             </span>
-            <span className="text-sm font-bold text-slate-900 block">Tri-party Lock</span>
-            <p className="text-[11px] text-slate-500 mt-0.5">User Consent + Reviewer + Policy Floor</p>
+            <span className="text-sm font-bold text-slate-900 block">Mock-only</span>
+            <p className="text-[11px] text-slate-500 mt-0.5">Consent, simulated review, and backend policy gate</p>
           </div>
         </div>
       </section>
@@ -145,6 +121,13 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
         </div>
       )}
 
+      {samplesUnavailable && (
+        <div className="mb-8 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm">
+          Synthetic profiles could not be loaded. You can start a blank assessment or retry after reconnecting to the API.
+          <button type="button" onClick={() => { setSamplesUnavailable(false); api.getSamples().then(res => { setSamples(res.samples); setSelectedFixture(res.samples[0]?.fixture_id ?? ''); }).catch(() => setSamplesUnavailable(true)); }} className="ml-2 underline font-semibold">Retry</button>
+        </div>
+      )}
+
       {/* Main Interactive Stage: Case Scenarios & Pipeline Diagram */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
         {/* Left: Scenarios Selector (7 cols) */}
@@ -152,7 +135,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
               <h2 className="text-base font-bold text-slate-900">Select a Synthetic Profile</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Verified golden fixtures from <code className="text-slate-700 bg-slate-100 px-1 py-0.5 rounded">data/synthetic/</code></p>
+              <p className="text-xs text-slate-500 mt-0.5">Synthetic profiles from <code className="text-slate-700 bg-slate-100 px-1 py-0.5 rounded">data/synthetic/</code> · Mock</p>
             </div>
             <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
               {samples.length} Profiles
@@ -160,13 +143,15 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
           </div>
 
           <div className="space-y-3">
-            {samples.slice(0, 4).map((s) => {
+              {samples.slice(0, 4).map((s) => {
               const isSelected = selectedFixture === s.fixture_id;
               return (
-                <div
+                <button
                   key={s.fixture_id}
+                  type="button"
+                  aria-pressed={isSelected}
                   onClick={() => setSelectedFixture(s.fixture_id)}
-                  className={`p-4 rounded-xl border text-left cursor-pointer transition-all duration-150 card-hover flex flex-col justify-between ${
+                  className={`w-full p-4 rounded-xl border text-left cursor-pointer transition-all duration-150 card-hover flex flex-col justify-between ${
                     isSelected
                       ? 'bg-sky-50/40 border-sky-500 shadow-xs ring-1 ring-sky-200'
                       : 'bg-white border-slate-200 hover:border-slate-300'
@@ -175,7 +160,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-sky-600' : 'bg-slate-300'}`} />
-                      <h3 className="text-sm font-bold text-slate-900">{s.title}</h3>
+                    <h3 className="text-sm font-bold text-slate-900">{s.title} · Mock</h3>
                     </div>
                     <span className="text-[11px] font-mono font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
                       {s.fixture_id}
@@ -184,7 +169,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
                   <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                     {s.description}
                   </p>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -193,11 +178,11 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
           <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-3">
             <button
               type="button"
-              disabled={loading}
+              disabled={loading || samples.length === 0 || !selectedFixture}
               onClick={() => handleLaunchCase()}
               className="w-full sm:flex-1 py-3.5 px-6 rounded-xl font-bold text-sm text-white bg-slate-900 hover:bg-slate-800 shadow-sm transition-all btn-press cursor-pointer flex items-center justify-center gap-2"
             >
-              {loading ? 'Initializing Session...' : 'Launch Assessment with Selected Case →'}
+              {loading ? 'Initializing Session...' : 'Launch Assessment with Selected Mock Profile →'}
             </button>
 
             <button
@@ -223,7 +208,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed">
-            How your facts move through the system without generating ungrounded claims:
+              Mock journey stages. Draft outputs are not validated care decisions.
           </p>
 
           <div className="space-y-4 text-xs font-mono">
@@ -233,8 +218,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
                 1
               </span>
               <div>
-                <strong className="text-white block font-sans text-xs">Pre-check Safety Rules</strong>
-                <span className="text-slate-400 text-[11px]">Immediate check for acute testicular torsion or trauma.</span>
+                <strong className="text-white block font-sans text-xs">Mock safety questions</strong>
+                <span className="text-slate-400 text-[11px]">Draft rule catalogue · CLINICAL_TBD</span>
               </div>
             </div>
 
@@ -244,8 +229,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
                 2
               </span>
               <div>
-                <strong className="text-white block font-sans text-xs">Semantic Fact Extraction</strong>
-                <span className="text-slate-400 text-[11px]">Standardizes units, time polarity, and source verification.</span>
+                <strong className="text-white block font-sans text-xs">Structured intake</strong>
+                <span className="text-slate-400 text-[11px]">Answers keep their source and status.</span>
               </div>
             </div>
 
@@ -255,8 +240,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
                 3
               </span>
               <div>
-                <strong className="text-white block font-sans text-xs">Versioned Rule Floor</strong>
-                <span className="text-slate-400 text-[11px]">Locks minimum triage action to guideline floor policy.</span>
+                <strong className="text-white block font-sans text-xs">Draft assessment</strong>
+                <span className="text-slate-400 text-[11px]">Rule output is simulated and pending review.</span>
               </div>
             </div>
 
@@ -266,8 +251,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onCaseCreated }) => {
                 4
               </span>
               <div>
-                <strong className="text-white block font-sans text-xs">Authorized Human Review</strong>
-                <span className="text-slate-400 text-[11px]">Clinical reviewer verifies findings before referral release.</span>
+                <strong className="text-white block font-sans text-xs">Mock Reviewer</strong>
+                <span className="text-slate-400 text-[11px]">A simulated approval is bound to the draft version.</span>
               </div>
             </div>
           </div>
