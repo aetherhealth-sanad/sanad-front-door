@@ -7,6 +7,8 @@ export const MockBadge: React.FC<MockBadgeProps> = ({
   label = 'MOCK · SIMULATED DATA',
   className = '',
 }) => {
+  const displayLabel = /mock/i.test(label) ? label : `MOCK · ${label}`;
+
   return (
     <span
       data-testid="mock-badge"
@@ -15,7 +17,7 @@ export const MockBadge: React.FC<MockBadgeProps> = ({
       title="Research prototype simulated element. No real care or clinical provider is connected."
     >
       <span className="w-1.5 h-1.5 rounded-[2px] bg-[#C84B31]" />
-      {label}
+      {displayLabel}
     </span>
   );
 };

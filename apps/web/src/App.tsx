@@ -228,7 +228,7 @@ export function App() {
             {currentRoute === '/privacy' && (
               <section className="max-w-2xl mx-auto px-4 py-12">
                 <div className="dossier-card bg-white p-6 sm:p-8">
-                  <MockBadge label="SESSION CONSENT STATE" />
+                  <MockBadge label="MOCK SESSION CONSENT STATE" />
                   <h1 className="text-2xl font-extrabold text-[#0B1310] mt-4">
                     Assessment consent is no longer active
                   </h1>

@@ -385,7 +385,7 @@ export const api = {
   getQuestions: (caseId: string) => request<QuestionsResponse>(`/cases/${caseId}/questions`),
   submitAnswers: (caseId: string, answers: IntakeAnswer[]) =>
     patientPost<CaseState>(`/cases/${caseId}/answers`, { answers }),
-  assessCase: (caseId: string, entryPath: 'FULL_INTAKE' | 'LAB_ENTRY' = 'FULL_INTAKE') =>
+  assessCase: (caseId: string, entryPath: 'FULL_INTAKE' | 'LAB_ONLY' = 'FULL_INTAKE') =>
     patientPost<AssessmentResponse>(`/cases/${caseId}/assess`, { entry_path: entryPath }),
   selectEvidence: (caseId: string, items: Array<{ item_id: string; use: boolean }>) =>
     request<EvidenceSelectionResponse>(`/cases/${caseId}/evidence-selection`, {

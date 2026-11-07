@@ -49,7 +49,7 @@ const PIPELINE_STAGES = [
   {
     code: 'STAGE 01',
     title: 'Deterministic Safety Gate',
-    badge: 'DRAFT-EMERG-01..03 · CLINICAL_TBD',
+    badge: 'MOCK · DRAFT-EMERG-01..03 · CLINICAL_TBD',
     summary:
       'Runs before any intake question or network wait. Acute red flags route immediately to offline-cached emergency guidance.',
     metrics: [
@@ -61,7 +61,7 @@ const PIPELINE_STAGES = [
   {
     code: 'STAGE 02',
     title: 'Structured Intake & Lab Observations (J3)',
-    badge: 'GATEKEEPER · SEMANTIC FACTS',
+    badge: 'MOCK · GATEKEEPER · SEMANTIC FACTS',
     summary:
       'Preserves UNKNOWN, NOT_ASKED, and DECLINED as distinct epistemic states. Supports manual lab entry without unit conversion.',
     metrics: [
@@ -73,7 +73,7 @@ const PIPELINE_STAGES = [
   {
     code: 'STAGE 03',
     title: 'Draft Synthesis & Selective Evidence (J2)',
-    badge: 'TEMPLATE DRAFTS · MOCK REVIEWER',
+    badge: 'MOCK · TEMPLATE DRAFTS · MOCK REVIEWER',
     summary:
       'Generates deterministic patient and clinician drafts. Patients control evidence selection and optional simulated clinician review.',
     metrics: [
@@ -85,7 +85,7 @@ const PIPELINE_STAGES = [
   {
     code: 'STAGE 04',
     title: 'Tri-Condition Referral Gate & Closed-Loop',
-    badge: 'EVALUATE_GATE · SESSION SCOPED',
+    badge: 'MOCK · EVALUATE_GATE · SESSION SCOPED',
     summary:
       'A Mock referral is created only when active provider consent, version-matched clinician approval, and backend policy all pass.',
     metrics: [
@@ -204,7 +204,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           <div className="lg:col-span-7 space-y-6 animate-reveal-1">
             {/* Element 1: Brand & Offline Cache Strip */}
             <div className="flex flex-wrap items-center gap-2.5">
-              <MockBadge label="AETHERHEALTH · RESEARCH PROTOTYPE 2026" />
+              <MockBadge label="MOCK · AETHERHEALTH RESEARCH PROTOTYPE 2026" />
               <span
                 role="status"
                 className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[2px] text-[11px] font-mono bg-white border border-[#0B1310] text-[#0B1310]"
@@ -255,17 +255,32 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               </button>
             </div>
 
-            {/* Architectural Photography Dossier Frame */}
+            {/* Architectural Blueprint Dossier Frame */}
             <div className="pt-2">
               <div className="dossier-card overflow-hidden bg-white">
                 <div className="grid grid-cols-1 sm:grid-cols-12">
-                  <div className="sm:col-span-7 relative min-h-[220px] bg-[#E6EAE4] border-b sm:border-b-0 sm:border-r border-[#0B1310]">
-                    <img
-                      src="https://picsum.photos/seed/sanad-architectural-clinic/900/600"
-                      alt="Minimalist architectural healthcare sanctuary space"
-                      className="w-full h-full object-cover grayscale contrast-110"
-                      loading="eager"
-                    />
+                  <div className="sm:col-span-7 relative min-h-[220px] bg-[#E6EAE4] border-b sm:border-b-0 sm:border-r border-[#0B1310] flex items-center justify-center p-4 select-none overflow-hidden">
+                    <svg viewBox="0 0 320 180" className="w-full h-full text-[#0B1310]" fill="none" stroke="currentColor" strokeWidth="1.2">
+                      <defs>
+                        <pattern id="arch-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#C5CEC9" strokeWidth="0.5" strokeDasharray="2 2" />
+                        </pattern>
+                      </defs>
+                      <rect width="320" height="180" fill="url(#arch-grid)" />
+                      <rect x="25" y="20" width="270" height="140" fill="#FFFFFF" fillOpacity="0.85" stroke="#0B1310" strokeWidth="1.8" />
+                      <rect x="40" y="35" width="115" height="110" fill="#E6F2EE" fillOpacity="0.7" stroke="#0F523E" strokeWidth="1.4" />
+                      <text x="50" y="55" fill="#0F523E" fontSize="9" fontFamily="monospace" fontWeight="bold">SANCTUARY ZONE A</text>
+                      <text x="50" y="70" fill="#3F4E48" fontSize="8" fontFamily="monospace">Acoustic Baffle: 48 dB</text>
+                      <text x="50" y="85" fill="#3F4E48" fontSize="8" fontFamily="monospace">Pseudonymous Node</text>
+                      <circle cx="97" cy="115" r="14" fill="#0F523E" fillOpacity="0.15" stroke="#0F523E" strokeWidth="1" />
+                      <circle cx="97" cy="115" r="3" fill="#0F523E" />
+                      <rect x="175" y="35" width="105" height="50" fill="#FFFFFF" stroke="#0B1310" strokeWidth="1.2" />
+                      <text x="185" y="55" fill="#0B1310" fontSize="9" fontFamily="monospace" fontWeight="bold">LOCAL CORE</text>
+                      <text x="185" y="70" fill="#3F4E48" fontSize="8" fontFamily="monospace">Zero External Calls</text>
+                      <rect x="175" y="95" width="105" height="50" fill="#FEF2F2" stroke="#B91C1C" strokeWidth="1.2" strokeDasharray="3 2" />
+                      <text x="185" y="115" fill="#B91C1C" fontSize="9" fontFamily="monospace" fontWeight="bold">REFERRAL GATE</text>
+                      <text x="185" y="130" fill="#7F1D1D" fontSize="8" fontFamily="monospace">Tri-Condition Gate</text>
+                    </svg>
                   </div>
                   <div className="sm:col-span-5 p-4 sm:p-5 flex flex-col justify-between bg-white">
                     <div>
@@ -449,7 +464,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                       CLOSED UPLOAD SCHEMA · RF-02
                     </span>
                     <span className="font-mono text-[10px] px-1.5 py-0.5 bg-white border border-[#0B1310]">
-                      MAX 64 KB
+                      MAX 256 KB
                     </span>
                   </div>
                   <p className="text-xs text-[#3F4E48] leading-relaxed">
@@ -678,13 +693,18 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             </div>
 
             <div className="mt-6 pt-5 border-t border-[#C5CEC9] grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-              <div className="sm:col-span-5 h-28 rounded-[2px] overflow-hidden border border-[#0B1310] bg-[#E6EAE4]">
-                <img
-                  src="https://picsum.photos/seed/sanad-laboratory-precision/600/320"
-                  alt="Clinical laboratory research instruments"
-                  className="w-full h-full object-cover grayscale"
-                  loading="lazy"
-                />
+              <div className="sm:col-span-5 h-28 rounded-[2px] overflow-hidden border border-[#0B1310] bg-[#E6EAE4] flex items-center justify-center p-3 select-none">
+                <svg viewBox="0 0 200 90" className="w-full h-full text-[#0B1310]" fill="none" stroke="currentColor" strokeWidth="1.2">
+                  <rect x="15" y="15" width="170" height="60" rx="2" fill="#FFFFFF" stroke="#0B1310" strokeWidth="1.5" />
+                  <path d="M 35 45 L 75 45" stroke="#0F523E" strokeWidth="2" strokeDasharray="3 1" />
+                  <circle cx="95" cy="45" r="14" fill="#E6F2EE" stroke="#0F523E" strokeWidth="1.4" />
+                  <circle cx="95" cy="45" r="5" fill="#0F523E" />
+                  <path d="M 115 45 L 165 45" stroke="#0F523E" strokeWidth="2" />
+                  <rect x="160" y="30" width="10" height="30" fill="#0B1310" />
+                  <text x="35" y="32" fill="#3F4E48" fontSize="7" fontFamily="monospace">SAMPLE FLOW</text>
+                  <text x="80" y="72" fill="#0F523E" fontSize="7" fontFamily="monospace" fontWeight="bold">SYNTHETIC CORE</text>
+                  <text x="140" y="72" fill="#3F4E48" fontSize="7" fontFamily="monospace">SENSOR</text>
+                </svg>
               </div>
               <div className="sm:col-span-7 space-y-1">
                 <span className="font-mono text-[11px] font-bold text-[#C84B31]">
@@ -713,7 +733,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                 <strong className="font-mono text-[#C84B31]">NOT_EVALUATED</strong>
               </p>
             </div>
-            <MockBadge label="EXPORT DISABLED · NOT_EVALUATED" />
+            <MockBadge label="MOCK · EXPORT DISABLED · NOT_EVALUATED" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">

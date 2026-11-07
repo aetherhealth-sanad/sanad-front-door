@@ -146,6 +146,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
       await api.savePsychosocial(caseId, submittedPsychosocial);
 
       const assessment = await api.assessCase(caseId, 'FULL_INTAKE');
+      sessionStorage.setItem('sanad_case_entry_path', 'FULL_INTAKE');
       if (assessment.draft_ready) {
         onAssessmentComplete(assessment.state.route);
       } else {

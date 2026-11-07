@@ -384,7 +384,7 @@ export const MockFacilityPortal: React.FC = () => {
                     {detail.mock_status}
                   </p>
                 </div>
-                <MockBadge label="SIMULATED DATA" />
+                <MockBadge label="MOCK · SIMULATED DATA" />
               </div>
 
               {detail.snapshot && (

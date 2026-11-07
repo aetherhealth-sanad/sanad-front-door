@@ -28,7 +28,15 @@ export const StepProgress: React.FC<StepProgressProps> = ({
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-1.5 sm:gap-2.5 w-full overflow-x-auto no-scrollbar">
           {STEPS.map((step, idx) => {
-            const isCompleted = idx < currentIndex;
+            const visitedLab =
+              typeof window !== 'undefined' &&
+              sessionStorage.getItem('sanad_visited_lab') === 'true';
+            const isCompleted =
+              step.id === '/lab'
+                ? visitedLab && idx < currentIndex
+                : idx < currentIndex;
+            const isSkippedLab =
+              step.id === '/lab' && !visitedLab && idx < currentIndex;
             const isCurrent = idx === currentIndex;
             const isInteractive =
               onNavigate &&
@@ -42,13 +50,16 @@ export const StepProgress: React.FC<StepProgressProps> = ({
                     ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
                     : isCompleted
                     ? 'bg-[#E6F2EE] text-[#0F523E] border-[#0F523E] font-semibold'
+                    : isSkippedLab
+                    ? 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
                     : isInteractive
                     ? 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4] font-semibold'
                     : 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
                 }`}
               >
-                <span>{isCompleted ? '✓' : step.label}</span>
+                <span>{isCompleted ? '✓' : isSkippedLab ? '—' : step.label}</span>
                 {isCompleted && <span>{step.label.slice(3)}</span>}
+                {isSkippedLab && <span>Lab (Optional)</span>}
               </div>
             );
 

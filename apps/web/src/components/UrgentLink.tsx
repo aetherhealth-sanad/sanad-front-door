@@ -15,10 +15,10 @@ export const UrgentLink: React.FC<UrgentLinkProps> = ({
       >
         <div className="flex items-center gap-2.5">
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[2px] bg-[#B91C1C] text-white font-mono text-[10px] font-bold uppercase tracking-wider">
-            ACUTE SAFETY
+            MOCK · CLINICAL_TBD
           </span>
           <span className="font-medium text-[#0B1310]">
-            Experiencing sudden severe testicular pain, trauma, or fever with swelling?
+            Experiencing acute or sudden testicular pain or trauma?
           </span>
         </div>
         <a

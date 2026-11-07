@@ -131,7 +131,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
       <div className="mb-8 pb-5 border-b border-[#0B1310]">
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <MockBadge label={`CONSENT LEDGER · ${consentCatalogue?.copy_status ?? 'MOCK'}`} />
+          <MockBadge label={`MOCK CONSENT LEDGER · ${consentCatalogue?.copy_status ?? 'DRAFT'}`} />
           {consentCatalogue && (
             <span className="font-mono text-xs text-[#3F4E48]">
               VERSION: {consentCatalogue.consent_version}

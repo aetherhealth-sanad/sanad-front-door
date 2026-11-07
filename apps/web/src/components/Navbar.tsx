@@ -33,7 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           </a>
-          <MockBadge className="hidden xl:inline-flex" />
+          <MockBadge className="hidden sm:inline-flex" />
         </div>
 
         {/* Role Switcher, Case Telemetry & Safety Controls */}

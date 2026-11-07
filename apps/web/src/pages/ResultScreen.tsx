@@ -138,7 +138,11 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
     setError(null);
     try {
       await api.selectEvidence(caseId, [{ item_id: itemId, use: currentlyExcluded }]);
-      await api.assessCase(caseId, 'FULL_INTAKE');
+      const entryPath =
+        (sessionStorage.getItem('sanad_case_entry_path') as
+          | 'FULL_INTAKE'
+          | 'LAB_ONLY') || 'FULL_INTAKE';
+      await api.assessCase(caseId, entryPath);
       await loadReport();
     } catch (err) {
       setError(
@@ -361,7 +365,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                 Include or exclude optional evidence categories and regenerate the draft immediately.
               </p>
             </div>
-            <MockBadge label="SELECT_EVIDENCE" />
+            <MockBadge label="MOCK · SELECT_EVIDENCE" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -369,7 +373,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
               const isExcluded = report.excluded_items.includes(meta.item_id);
               const hasRelevantFact =
                 meta.concepts.some(c => presentConcepts.has(c)) || isExcluded;
-              if (!hasRelevantFact && meta.item_id === 'ITEM-GENETICS-RESULT' && !report.genetics_support_available) {
+              if (!hasRelevantFact) {
                 return null;
               }
               return (

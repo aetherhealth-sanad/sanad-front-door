@@ -22,10 +22,8 @@ export const LabScreen: React.FC<LabScreenProps> = ({
   const [testCode, setTestCode] = useState<string>(TEST_ENTRIES[0]?.[0] ?? 'VOLUME_PLACEHOLDER');
   const [valueStr, setValueStr] = useState<string>('');
   const [unit, setUnit] = useState<string>(TEST_ENTRIES[0]?.[1]?.accepted_units[0] ?? 'mL');
-  const [collectedOn, setCollectedOn] = useState<string>('2026-10-15');
-  const [referenceSource, setReferenceSource] = useState<string>(
-    labCatalogue.reference_sources[0] ?? 'Synthetic report',
-  );
+  const [collectedOn, setCollectedOn] = useState<string>('');
+  const [referenceSource, setReferenceSource] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -152,7 +150,9 @@ export const LabScreen: React.FC<LabScreenProps> = ({
     setSubmitting(true);
     setError(null);
     try {
-      const outcome = await api.assessCase(caseId, 'LAB_ENTRY');
+      const outcome = await api.assessCase(caseId, 'LAB_ONLY');
+      sessionStorage.setItem('sanad_case_entry_path', 'LAB_ONLY');
+      sessionStorage.setItem('sanad_visited_lab', 'true');
       onAssessmentComplete(outcome.state.route);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lab entry assessment could not be completed.');
@@ -317,6 +317,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                 onChange={e => setReferenceSource(e.target.value)}
                 className="w-full px-3 py-2 rounded-[2px] border border-[#0B1310] bg-white text-sm"
               >
+                <option value="">Choose reference source...</option>
                 {labCatalogue.reference_sources.map(src => (
                   <option key={src} value={src}>
                     {src}
