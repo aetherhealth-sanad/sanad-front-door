@@ -1,0 +1,45 @@
+{
+  "catalogue_id": "emergency-text",
+  "catalogue_version": "emergency-text-draft-0.1",
+  "approval_status": "CLINICAL_TBD",
+  "is_simulated": true,
+  "status_note": "Stage 2a (S0b) word patterns for text typed in the chat (PRD-FR-03, PRD 4.7.1, GOLD IG-01). Each rule restates one existing draft trigger in emergency.draft-0.1.json and adds no new trigger. A rule fires when the text contains at least one word from every group. Matching ignores negation on purpose, so 'no sudden severe testicle pain' also fires: a false alarm shows emergency guidance, and a missed alarm is the worse error. English only; text in another script is not sent anywhere and the user is asked to use the buttons. No clinician has approved these patterns (OD-02, OQ-30). The browser does not use this file.",
+  "languages": ["en"],
+  "rules": [
+    {
+      "rule_id": "DRAFT-EMERG-TEXT-01",
+      "version": "draft-0.1",
+      "approval_status": "CLINICAL_TBD",
+      "restates_rule_id": "DRAFT-EMERG-01",
+      "all_of": [
+        ["sudden", "suddenly", "severe", "severely", "intense", "extreme", "excruciating", "worst", "unbearable", "agony", "agonizing", "agonising", "sharp"],
+        ["pain", "pains", "painful", "hurt", "hurts", "hurting", "ache", "aches", "aching"],
+        ["scrotum", "scrotal", "testicle", "testicles", "testicular", "testis", "testes", "balls"]
+      ],
+      "source": "Restates DRAFT-EMERG-01 (sudden severe scrotal pain) as word groups"
+    },
+    {
+      "rule_id": "DRAFT-EMERG-TEXT-02",
+      "version": "draft-0.1",
+      "approval_status": "CLINICAL_TBD",
+      "restates_rule_id": "DRAFT-EMERG-02",
+      "all_of": [
+        ["fever", "fevers", "feverish", "febrile", "temperature", "chills"],
+        ["swollen", "swelling", "swell", "swells", "swelled"],
+        ["scrotum", "scrotal", "testicle", "testicles", "testicular", "testis", "testes", "balls"]
+      ],
+      "source": "Restates DRAFT-EMERG-02 (fever with painful scrotal swelling) as word groups. Pain is not required, so a fever with swelling alone also fires."
+    },
+    {
+      "rule_id": "DRAFT-EMERG-TEXT-03",
+      "version": "draft-0.1",
+      "approval_status": "CLINICAL_TBD",
+      "restates_rule_id": "DRAFT-EMERG-03",
+      "all_of": [
+        ["injury", "injuries", "injured", "injure", "injuring", "trauma", "traumatic", "hit", "kicked", "kick", "struck", "blow", "crushed", "accident", "fell"],
+        ["scrotum", "scrotal", "testicle", "testicles", "testicular", "testis", "testes", "balls"]
+      ],
+      "source": "Restates DRAFT-EMERG-03 (scrotal trauma) as word groups"
+    }
+  ]
+}

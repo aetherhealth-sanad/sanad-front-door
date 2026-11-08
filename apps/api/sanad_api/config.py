@@ -37,6 +37,18 @@ class Settings:
     mock_facility_password: str | None = None
     cases_per_minute_per_ip: int = 30
     logins_per_minute_per_ip: int = 10
+    # T4.5, CC-011: the model adapter is off unless an operator turns it on. "disabled" makes
+    # no network call. "azure_openai" sends typed chat text to the configured Azure resource.
+    model_provider: str = "disabled"
+    azure_openai_endpoint: str | None = None
+    azure_openai_deployment: str | None = None
+    azure_openai_api_key: str | None = field(default=None, repr=False)
+    # "api_key" or "entra_id" (DefaultAzureCredential, for example a managed identity).
+    azure_openai_auth: str = "api_key"
+    # PRD 4.7.2 engineering defaults (TECH_TBD, OQ-32). One deadline covers every attempt.
+    model_timeout_ms: int = 12_000
+    model_max_attempts: int = 2
+    model_max_completion_tokens: int = 800
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -60,5 +72,15 @@ class Settings:
             ),
             logins_per_minute_per_ip=_int_env(
                 "SANAD_LOGINS_PER_MINUTE_PER_IP", cls.logins_per_minute_per_ip
+            ),
+            model_provider=os.environ.get("SANAD_MODEL_PROVIDER", cls.model_provider),
+            azure_openai_endpoint=os.environ.get("SANAD_AZURE_OPENAI_ENDPOINT") or None,
+            azure_openai_deployment=os.environ.get("SANAD_AZURE_OPENAI_DEPLOYMENT") or None,
+            azure_openai_api_key=os.environ.get("SANAD_AZURE_OPENAI_API_KEY") or None,
+            azure_openai_auth=os.environ.get("SANAD_AZURE_OPENAI_AUTH", cls.azure_openai_auth),
+            model_timeout_ms=_int_env("SANAD_MODEL_TIMEOUT_MS", cls.model_timeout_ms),
+            model_max_attempts=_int_env("SANAD_MODEL_MAX_ATTEMPTS", cls.model_max_attempts),
+            model_max_completion_tokens=_int_env(
+                "SANAD_MODEL_MAX_COMPLETION_TOKENS", cls.model_max_completion_tokens
             ),
         )

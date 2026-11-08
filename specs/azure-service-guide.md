@@ -7,7 +7,7 @@
 
 This guide maps the current Sanad prototype to Azure services. It follows the README, BRD v0.4 and PRD v0.4: a synthetic/public-data research prototype, not a medical device, with no real clinic transport and no real patient records. BRD/PRD scope wins over the README where they differ.
 
-The repository currently contains a Python 3.12+ FastAPI API. It has no patient or clinician web UI, no Azure integration, and no model calls. The API defaults to a local SQLite database (`sqlite:///./sanad-dev.db`) and accepts `SANAD_DATABASE_URL`. Azure should therefore be treated as a possible host for the existing API and its synthetic demo data, not as a reason to add AI or planned roadmap features.
+The repository currently contains a Python 3.12+ FastAPI API and a React web app. Its only Azure integration is an optional Azure OpenAI adapter for chat answer matching (RF-21, §9), off by default; with default settings it makes no model calls. The API defaults to a local SQLite database (`sqlite:///./sanad-dev.db`) and accepts `SANAD_DATABASE_URL`. Azure should therefore be treated as a possible host for the existing API and its synthetic demo data, not as a reason to add AI or planned roadmap features.
 
 ## 2. Recommendation
 
@@ -73,7 +73,8 @@ The UI is planned, not present in this repository. Until it exists, the diagram 
 | API Management | Not needed for a private challenge demo with one API. | Adds configuration and cost. Revisit for a real external API product, partner-facing policies, or a reviewed multi-API gateway requirement. It does not replace FastAPI’s consent and authorization checks. |
 | Azure Static Web Apps | Future option for a static frontend. | Its managed APIs are Azure Functions; bringing an existing API is a separate integration. Static content is globally distributed. Keep all case data in the API and verify routing, caching, and region behavior before a pilot. |
 | PostgreSQL Flexible Server | Good hosted persistence option if durable synthetic demo data is required. | Requires migration/compatibility work and an explicit retention/deletion plan. Never interpret persistence as approval to use real data. |
-| Azure OpenAI / Foundry Models, AI Search, Agent Service | Out of current implementation scope. | The code makes no model calls; BRD/PRD separate deterministic rules from optional model work and require replaceability/fallback. Do not add these services to the P0 cloud footprint. Any future model or retrieval work needs its own source, privacy, region, quota, Arabic, licensing, and safety review. |
+| Azure OpenAI / Foundry Models | Optional, off by default: one bounded task that matches typed chat text to a catalogue answer (RF-21, T4.5). `PROPOSED`, pending CC-011. | The adapter sits behind a provider-neutral port, so the flow runs unchanged with no model (NFR-09). It needs a privacy, region, deployment-type and abuse-monitoring decision before it is enabled (§9, OD-13). |
+| AI Search, Agent Service | Out of current implementation scope. | BRD/PRD separate deterministic rules from optional model work and require replaceability/fallback. Do not add these services to the P0 cloud footprint. Any future retrieval or agent work needs its own source, privacy, region, quota, Arabic, licensing, and safety review. |
 | Healthcare Agent Service, Document Intelligence, Content Safety | Not needed for current backend. OCR is a later synthetic-only option; clinical content/rules remain human reviewed. | Do not use a healthcare-branded service as evidence of clinical validity, medical-device status, or regulatory compliance. Confirm availability and feature support before a future evaluation. |
 | Azure Health Data Services (FHIR) | Not for the prototype. | The FHIR artifact is conceptual and `NOT_EVALUATED`; there is no exporter or conformance claim. Reassess only after legal, residency, partner, profile, security, and implementation reviews. |
 
@@ -123,7 +124,42 @@ Microsoft service documentation was checked on 2026-11-04. Region lists and plan
 - [Static Web Apps API options](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-overview) and [Static Web Apps FAQ: global distribution and regions](https://learn.microsoft.com/en-us/azure/static-web-apps/faq)
 - [Azure public region list](https://learn.microsoft.com/en-us/azure/reliability/regions-list)
 
-## 9. Source documents
+## 9. Azure OpenAI for RF-21 answer matching
+
+**Research date:** 2026-11-08. **Status:** `TECH_TBD`; the adapter exists and is off by default. Enabling it needs CC-011 approval. Microsoft pages change; re-check them before a demo.
+
+### 9.1 Client and API
+
+- **v1 API.** Use the standard `OpenAI` client with `base_url` set to `https://<resource>.openai.azure.com/openai/v1/`. With the v1 GA API, `api-version` is no longer required, and Microsoft's samples use `OpenAI()` instead of `AzureOpenAI()`. The `services.ai.azure.com` host form is also accepted.
+- **Auth.** Pass an API key as `api_key`, or pass a Microsoft Entra ID token provider: `get_bearer_token_provider(DefaultAzureCredential(), "https://ai.azure.com/.default")`. The Entra identity needs the `Cognitive Services OpenAI User` role. Prefer Entra ID or managed identity over keys for a hosted demo (§2).
+- **`model`** is the deployment name, not the model family name.
+- **Structured outputs.** Chat Completions takes `response_format: {"type": "json_schema", "json_schema": {"name", "strict": true, "schema"}}`. All fields must be required (optional fields use a `null` union), `additionalProperties: false` is mandatory, and keywords such as `minimum`, `maximum`, `pattern`, `format`, `minItems` and `maxItems` are not supported. Sanad therefore checks ranges in its own validator. Up to 100 properties and five levels of nesting. Microsoft lists the models that support it, including the gpt-4o (2024-08-06 and later), gpt-4.1, o-series and gpt-5 families.
+- **Reasoning models** (for example gpt-5) use `max_completion_tokens` and do not support `temperature`. The adapter sends `max_completion_tokens` and no `temperature`, so it works with either kind.
+- **Content filtering.** A filtered prompt returns HTTP 400 with code `content_filter`; a filtered completion returns `finish_reason: "content_filter"`. Structured-output refusals appear in `message.refusal`. The adapter treats all three as "no answer" and never retries them.
+- **SDK version.** The adapter was written and smoke-tested against `openai` 3.46.0 (which uses `httpx2`). Microsoft's structured-output samples were tested on 1.42, so pin and test the SDK version you deploy.
+
+### 9.2 Data handling (summary of Microsoft's statements, not legal advice)
+
+- Prompts and completions are not used to train foundation models without the customer's permission, and the models are stateless.
+- Abuse monitoring may store flagged prompts and completions for human review in the resource's geography. Eligible enterprise customers can apply for modified abuse monitoring, which turns that storage and human review off; automated checks still run. The pages read did not state a retention period.
+- **Deployment type decides where prompts are processed.** Standard (regional): within the resource's geography. Data Zone: within a Microsoft data zone (US, EU or APAC). Global: in any Azure region. Data at rest stays in the resource's geography in every case. For Sanad, prefer a Standard (regional) deployment, and confirm model and region availability in the subscription. None of the pages read mention UAE North; check the model availability table before choosing a region (§5).
+- Stored completions and the Responses API keep message history in the resource. Sanad uses Chat Completions and never asks for stored completions.
+
+### 9.3 What Sanad sends and keeps
+
+The request holds a fixed system prompt, one intake question (text, answer type, unit, options) and the user's typed text, with no case ID, token or earlier answer. Sanad stores no typed text; its audit trace holds codes and counts only (`MODEL_TASK_RUN`). Text in another script, or with an email address or long number, is refused before sending. Typed emergency wording is caught by code before any model call.
+
+### 9.4 Sources (read 2026-11-08)
+
+- [Azure OpenAI v1 API and API version lifecycle](https://learn.microsoft.com/en-us/azure/foundry/openai/api-version-lifecycle)
+- [Structured outputs with Azure OpenAI](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/structured-outputs)
+- [Work with chat completion models](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/chatgpt)
+- [Data, privacy, and security for Azure Direct Models](https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy)
+- [Deployment types](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types)
+- [Abuse monitoring](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/abuse-monitoring)
+- [Content filtering](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/content-filter)
+
+## 10. Source documents
 
 - [README](../README.md) — intended architecture, current implementation, data boundaries, and existing Azure proposal.
 - [BRD v0.4](Sanad_AetherHealth_BRD_v0.4.md) — bounded scope, business rules, data policy, and unresolved Azure/residency questions.
