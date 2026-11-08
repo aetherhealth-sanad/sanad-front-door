@@ -6,8 +6,10 @@ and response types are used, so the mapping is tested against the real classes.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from dataclasses import replace
+from pathlib import Path
 from typing import Any
 
 import httpx2
@@ -263,6 +265,66 @@ def test_tc_21_11_entra_id_uses_a_token_provider(azure_settings: Settings) -> No
 
 def test_tc_21_11_settings_never_print_the_key(azure_settings: Settings) -> None:
     assert SECRET not in repr(azure_settings)
+
+
+# AC-21.11: settings from apps/api/.env ---------------------------------------------------------
+
+EXAMPLE_ENV = Path(__file__).resolve().parents[1] / ".env.example"
+
+
+@pytest.fixture
+def clean_env(monkeypatch: pytest.MonkeyPatch) -> pytest.MonkeyPatch:
+    """Hide any SANAD_* variables from the developer's own shell."""
+    for name in [name for name in os.environ if name.startswith("SANAD_")]:
+        monkeypatch.delenv(name)
+    return monkeypatch
+
+
+def test_tc_21_11_settings_read_the_env_file_and_the_shell_wins(
+    tmp_path: Path, clean_env: pytest.MonkeyPatch
+) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "SANAD_MODEL_PROVIDER=azure_openai\n"
+        f"SANAD_AZURE_OPENAI_API_KEY={SECRET}\n"
+        "SANAD_AZURE_OPENAI_DEPLOYMENT=from-file\n"
+        "SANAD_DEMO_REVIEWER_PASSWORD='pa$$word'\n"
+        "SANAD_MODEL_MAX_ATTEMPTS=3\n"
+        "SANAD_AZURE_OPENAI_AUTH=\n",
+        encoding="utf-8",
+    )
+    clean_env.setenv("SANAD_AZURE_OPENAI_DEPLOYMENT", "from-shell")
+    loaded = Settings.from_env(env_file)
+    assert loaded.model_provider == "azure_openai"
+    assert loaded.azure_openai_api_key == SECRET
+    assert loaded.azure_openai_deployment == "from-shell"  # the shell wins
+    assert loaded.reviewer_password == "pa$$word"  # taken literally, not expanded
+    assert loaded.model_max_attempts == 3
+    assert loaded.azure_openai_auth == "api_key"  # empty means unset
+    assert "SANAD_AZURE_OPENAI_API_KEY" not in os.environ  # the file does not leak into os.environ
+    assert SECRET not in repr(loaded) and "pa$$word" not in repr(loaded)
+
+
+def test_tc_21_11_env_file_location_can_be_changed(
+    tmp_path: Path, clean_env: pytest.MonkeyPatch
+) -> None:
+    env_file = tmp_path / "other.env"
+    env_file.write_text("SANAD_MODEL_TIMEOUT_MS=5000\n", encoding="utf-8")
+    clean_env.setenv("SANAD_ENV_FILE", str(env_file))
+    assert Settings.from_env().model_timeout_ms == 5000
+    clean_env.setenv("SANAD_ENV_FILE", str(tmp_path / "missing.env"))
+    assert Settings.from_env() == Settings.from_env(tmp_path / "missing.env")
+    assert Settings.from_env().model_provider == "disabled"
+
+
+def test_tc_21_11_example_env_file_keeps_the_model_off_and_holds_no_secret(
+    clean_env: pytest.MonkeyPatch,
+) -> None:
+    example = Settings.from_env(EXAMPLE_ENV)
+    assert example.model_provider == "disabled"
+    assert example.azure_openai_api_key is None
+    assert example.reviewer_password is None and example.mock_facility_password is None
+    assert isinstance(build_model_adapter(example), DisabledAdapter)
 
 
 # AC-21.12 ------------------------------------------------------------------------------------

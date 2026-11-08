@@ -197,6 +197,7 @@ flowchart LR
 - **Precedence.** `chat/routes.py` runs the guard, decoding, S0b (`rules_engine/emergency_text.py`), input checks (`chat/guardrail.py`), then the task. A proposal is never written; the client saves it through `POST /answers`, which runs the existing emergency gate.
 - **Trace.** `MODEL_TASK_RUN` and `INPUT_CHECKED` audit events hold codes and counts only.
 - **Settings.** `SANAD_MODEL_PROVIDER` (`disabled` or `azure_openai`), `SANAD_AZURE_OPENAI_ENDPOINT`, `SANAD_AZURE_OPENAI_DEPLOYMENT`, `SANAD_AZURE_OPENAI_AUTH` (`api_key` or `entra_id`), `SANAD_AZURE_OPENAI_API_KEY`, `SANAD_MODEL_TIMEOUT_MS` (12000), `SANAD_MODEL_MAX_ATTEMPTS` (2), `SANAD_MODEL_MAX_COMPLETION_TOKENS` (800). The defaults are the PRD's engineering defaults and stay `TECH_TBD` (OQ-32).
+- **Where settings live.** `config.Settings.from_env` reads `apps/api/.env` (Git-ignored, located from the package, or `SANAD_ENV_FILE`) through `python-dotenv`, overlaid by the real environment, which wins. `os.environ` is not changed, values are literal, and empty values count as unset. `apps/api/.env.example` is the committed template with placeholders only; a test fails if it holds a key or password or turns the model on. Hosted deployments use protected app settings or Key Vault instead of a file.
 
 ## 5. API
 

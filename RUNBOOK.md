@@ -25,12 +25,20 @@ The API loads rules, consent/question catalogues, and synthetic fixtures from th
 
 ## Start the API
 
-In terminal 1, from the repository root, set local-only passwords first if you need the simulated staff consoles:
+In terminal 1, from the repository root, create your local settings file once:
 
 ```bash
-export SANAD_DEMO_REVIEWER_PASSWORD='choose-a-local-only-password'
-export SANAD_DEMO_MOCK_FACILITY_PASSWORD='choose-another-local-only-password'
+cp apps/api/.env.example apps/api/.env
 ```
+
+`apps/api/.env` is ignored by Git. If you need the simulated staff consoles, set local-only passwords in it:
+
+```dotenv
+SANAD_DEMO_REVIEWER_PASSWORD=choose-a-local-only-password
+SANAD_DEMO_MOCK_FACILITY_PASSWORD=choose-another-local-only-password
+```
+
+Shell variables still work and win over the file, for example `export SANAD_DEMO_REVIEWER_PASSWORD=...`.
 
 Then start Uvicorn from `apps/api`:
 
@@ -45,7 +53,7 @@ The SQLite database is created at `apps/api/sanad-dev.db`; it is ignored by Git.
 - OpenAPI JSON: <http://127.0.0.1:8000/api/openapi.json>
 - Version endpoint: <http://127.0.0.1:8000/version>
 
-The seeded usernames are `demo-reviewer` and `demo-mock-facility`. Without the password environment variables, staff sign-in is disabled. Do not put passwords in source files or commit them. In the web app, choose **Mock Reviewer** or **Mock Facility** in the top navigation and sign in with the corresponding account.
+The seeded usernames are `demo-reviewer` and `demo-mock-facility`. Without the password settings, staff sign-in is disabled. Keep passwords in `apps/api/.env` or the shell only; never put them in `.env.example`, source files or commits. In the web app, choose **Mock Reviewer** or **Mock Facility** in the top navigation and sign in with the corresponding account.
 
 ## Optional: Azure OpenAI answer matching in the chat
 
@@ -58,7 +66,14 @@ cd apps/api
 .venv/bin/python -m pip install -e '.[azure]'   # or: uv pip install --python .venv/bin/python -e '.[azure]'
 ```
 
-Set these in the API's environment before starting Uvicorn. Never put a key in a file in the repository.
+Put the settings in `apps/api/.env`, which Git ignores. Start from the committed template:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+# then edit apps/api/.env: set SANAD_MODEL_PROVIDER=azure_openai and fill in the Azure values
+```
+
+The API reads `apps/api/.env` at start-up wherever Uvicorn is started from. A variable set in your shell wins over the file, `SANAD_ENV_FILE=/path/to/file` points to a different file, and empty values count as unset. Never put a real key in `.env.example`, and never commit `.env`. A test fails if the example ever holds a key or password.
 
 | Variable | Value |
 |---|---|
@@ -69,19 +84,27 @@ Set these in the API's environment before starting Uvicorn. Never put a key in a
 | `SANAD_AZURE_OPENAI_API_KEY` | The key from the Azure portal (resource → Keys and Endpoint). Leave it unset with `entra_id`. |
 | `SANAD_MODEL_TIMEOUT_MS`, `SANAD_MODEL_MAX_ATTEMPTS`, `SANAD_MODEL_MAX_COMPLETION_TOKENS` | Optional. Defaults 12000, 2 and 800 (`TECH_TBD`). |
 
+A filled-in `apps/api/.env` looks like this:
+
+```dotenv
+SANAD_MODEL_PROVIDER=azure_openai
+SANAD_AZURE_OPENAI_ENDPOINT=https://<resource>.openai.azure.com
+SANAD_AZURE_OPENAI_DEPLOYMENT=<deployment-name>
+SANAD_AZURE_OPENAI_AUTH=api_key
+SANAD_AZURE_OPENAI_API_KEY=<key>
+```
+
+Then start the API as usual from `apps/api`:
+
 ```bash
-export SANAD_MODEL_PROVIDER=azure_openai
-export SANAD_AZURE_OPENAI_ENDPOINT='https://<resource>.openai.azure.com'
-export SANAD_AZURE_OPENAI_DEPLOYMENT='<deployment-name>'
-export SANAD_AZURE_OPENAI_API_KEY='<key>'
-SANAD_DATABASE_URL='sqlite:///./sanad-dev.db' .venv/bin/uvicorn sanad_api.main:create_app --factory --reload --host 127.0.0.1 --port 8000
+.venv/bin/uvicorn sanad_api.main:create_app --factory --reload --host 127.0.0.1 --port 8000
 ```
 
 The start-up log then shows `model adapter: azure_openai (<deployment>)`. A missing or invalid setting stops start-up and names the setting without printing the key.
 
 With `SANAD_AZURE_OPENAI_AUTH=entra_id`, the API uses `DefaultAzureCredential` (for example `az login` locally, or a managed identity when hosted). The identity needs the `Cognitive Services OpenAI User` role on the resource. Hosted deployments should keep the key in Key Vault or protected app settings ([Azure service guide](specs/azure-service-guide.md)).
 
-To turn typing off again, unset `SANAD_MODEL_PROVIDER` or set it to `disabled`. Emergency handling, consent and the rules never depend on this setting.
+To turn typing off again, set `SANAD_MODEL_PROVIDER=disabled` in `apps/api/.env` (or remove the line). Emergency handling, consent and the rules never depend on this setting.
 
 ## Start the web app
 

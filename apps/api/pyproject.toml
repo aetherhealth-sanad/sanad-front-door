@@ -10,6 +10,8 @@ dependencies = [
     "pydantic>=2.7",
     "jsonschema>=4.22",
     "python-multipart>=0.0.9",
+    # Reads apps/api/.env for local settings. Real environment variables still win.
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
