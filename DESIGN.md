@@ -1,72 +1,67 @@
 ---
-name: Sanad Clinical Prestige
-description: Design tokens and visual language specification for Sanad (سند) Front Door. Warm precision healthcare aesthetic, anti-slop, zero purple.
+version: 2.0
+name: Sanad Editorial Clinical Brutalism
+description: Design tokens and visual language specification for Sanad (سند) Front Door. Editorial Clinical Brutalism — sharp architectural grid, Forest-Obsidian & Mineral Stone palette, zero purple, zero AI-slop.
 colors:
-  background: "#f8fafc"
-  surface: "#ffffff"
-  surfaceAlt: "#f1f5f9"
-  ink: "#0f172a"
-  inkMuted: "#64748b"
-  inkSubtle: "#94a3b8"
-  primary: "#0284c7"
-  primaryHover: "#0369a1"
-  primarySurface: "#f0f9ff"
-  border: "#e2e8f0"
-  borderHover: "#cbd5e1"
-  emergency: "#dc2626"
-  emergencySurface: "#fef2f2"
-  emergencyBorder: "#fecaca"
-  warning: "#d97706"
-  warningSurface: "#fffbeb"
-  mockText: "#475569"
-  mockBackground: "#f1f5f9"
-  mockBorder: "#cbd5e1"
+  background: "#F3F4F1"
+  surface: "#FFFFFF"
+  surfaceAlt: "#E6EAE4"
+  ink: "#0B1310"
+  inkMuted: "#3F4E48"
+  inkSubtle: "#63736C"
+  primary: "#0F523E"
+  primaryHover: "#093B2C"
+  primarySurface: "#E6F2EE"
+  signal: "#C84B31"
+  signalSurface: "#FDF2EF"
+  border: "#0B1310"
+  borderMuted: "#C5CEC9"
+  emergency: "#B91C1C"
+  emergencySurface: "#FEF2F2"
+  emergencyBorder: "#F87171"
+  warning: "#B45309"
+  warningSurface: "#FFFBEB"
+  mockText: "#0B1310"
+  mockBackground: "#E6EAE4"
+  mockBorder: "#0B1310"
 typography:
   display:
     fontFamily: Plus Jakarta Sans
-    fontSize: 36px
+    fontSize: 48px
+    fontWeight: 800
+    lineHeight: 1.06
+    letterSpacing: -0.035em
+  h1:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 32px
     fontWeight: 700
     lineHeight: 1.15
     letterSpacing: -0.025em
-  h1:
-    fontFamily: Plus Jakarta Sans
-    fontSize: 28px
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: -0.02em
   h2:
     fontFamily: Plus Jakarta Sans
     fontSize: 20px
-    fontWeight: 600
-    lineHeight: 1.3
+    fontWeight: 700
+    lineHeight: 1.25
     letterSpacing: -0.015em
   body:
     fontFamily: Plus Jakarta Sans
     fontSize: 16px
     fontWeight: 400
-    lineHeight: 1.55
+    lineHeight: 1.6
   bodySmall:
     fontFamily: Plus Jakarta Sans
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: Plus Jakarta Sans
-    fontSize: 13px
+    fontFamily: JetBrains Mono
+    fontSize: 12px
     fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: 0.02em
-  citation:
-    fontFamily: Newsreader
-    fontSize: 15px
-    fontWeight: 400
-    fontStyle: italic
-    lineHeight: 1.5
+    letterSpacing: 0.06em
 rounded:
-  sm: 6px
-  md: 10px
-  lg: 16px
-  btn: 8px
+  none: 0px
+  xs: 2px
   full: 9999px
 spacing:
   s1: 4px
@@ -81,59 +76,62 @@ components:
   card:
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.border}"
-    rounded: "{rounded.lg}"
+    rounded: "{rounded.xs}"
     padding: "{spacing.s5}"
   buttonPrimary:
     backgroundColor: "{colors.primary}"
-    color: "#ffffff"
-    rounded: "{rounded.btn}"
-    padding: "10px 20px"
+    textColor: "#FFFFFF"
+    rounded: "{rounded.xs}"
+    padding: "12px 24px"
   buttonSecondary:
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.border}"
-    color: "{colors.ink}"
-    rounded: "{rounded.btn}"
-    padding: "10px 20px"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.xs}"
+    padding: "12px 24px"
   mockBadge:
     backgroundColor: "{colors.mockBackground}"
     borderColor: "{colors.mockBorder}"
-    color: "{colors.mockText}"
-    rounded: "{rounded.full}"
+    textColor: "{colors.mockText}"
+    rounded: "{rounded.xs}"
 ---
 
 # Sanad Design Specification (DESIGN.md)
 
 ## Overview
-Sanad (سند) is a confidential digital front door for men's reproductive and hormonal health. The visual language conveys calm clinical dignity, scientific rigor, privacy, and approachable clarity. It adheres strictly to **Taste Skill 2.5 (Anti-Slop)** and **Frontend Specialist Rules**.
+Sanad (سند) is a confidential digital front door for men's health research. Its visual language uses **Editorial Clinical Brutalism**: an architectural dossier layout with exposed structural hairlines, crisp `2px` geometry, mineral stone surfaces (`#F3F4F1`), deep forest-obsidian ink (`#0B1310`), and locked forest-emerald interactive accents (`#0F523E`).
 
-## Colors & Philosophy
-- **95% Neutral Interface:** White card surfaces (`#ffffff`) on warm slate background (`#f8fafc`).
-- **Deep Near-Black Ink:** Slate-900 (`#0f172a`) ensures high contrast ($\ge 7:1$) without the harshness of `#000000`.
-- **Primary Clinical Blue:** Sky-600 (`#0284c7`), avoiding cold medical cyan or generic AI violet/purple.
-- **Strict Purple Ban:** Zero violet, lavender, magenta, or gradient mesh slop.
-- **Safety Red:** Red-600 (`#dc2626`) reserved strictly for emergency guidance and high-stakes alerts.
+- **Design Read:** Research-grade men's health front door and clinical simulation console with an Editorial Clinical Brutalist language, leaning toward Swiss architectural grids, tactile press physics, and strict anti-slop discipline.
+- **Three Dials:** `DESIGN_VARIANCE: 8` · `MOTION_INTENSITY: 6` · `VISUAL_DENSITY: 5`
+
+## Colors
+- **Mineral Stone (`#F3F4F1`):** Calm, non-clinical-white paper base that avoids sterile hospital clichés and banned beige/brass tropes.
+- **Obsidian Forest (`#0B1310`):** High-contrast ink ($\ge 14:1$) and structural grid border color.
+- **Deep Forest Emerald (`#0F523E`):** Locked primary interactive accent across the entire experience.
+- **Clinical Crimson (`#B91C1C`):** Reserved strictly for always-reachable Emergency Guidance and Quick Exit controls.
+- **Zero Purple:** Complete ban on indigo, violet, lavender, or gradient mesh glows.
 
 ## Typography
-- **Primary Interface:** Plus Jakarta Sans — modern geometric clarity with open counters.
-- **Editorial Citations & Scientific Disclaimers:** Newsreader (serif, italic) for clinical rule IDs, guidelines, and research prototype disclaimers.
-- Paragraph text is strictly $\ge 16\text{px}$ with line-height $\ge 1.5$. No 14px paragraphs.
+- **Display & UI:** `Plus Jakarta Sans` (`700`/`800` for architectural headers, `400`/`500` for body copy at $\ge 16\text{px}$).
+- **Telemetry & Audit Metadata:** `JetBrains Mono` for case versions, rule IDs (`[DRAFT-STEROID-01]`), and verification provenance.
 
-## Layout & Rhythm
-- Mobile-first patient experience: centered content max-width 640px on mobile/tablet, responsive 12-column grid.
-- Desktop Clinician Console: dual-pane review layout (patient context vs guideline decisions).
-- Equal margins on left and right (`--gut`), strict mathematical spacing rhythm.
+## Layout
+- **Asymmetric Architectural Ledger:** Breaks the standard 50/50 split and 3-equal-card clichés. Uses exposed 12-column Swiss dossier grids with numbered clinical stages, photography panels, and interactive case launchpads.
+- **Viewport Stability:** Uses `min-h-[100dvh]`, never `h-screen`. Top hero padding capped at `pt-12` on desktop.
 
 ## Elevation & Depth
-- Flat, tactile planes. No heavy drop-shadows or blurry glow effects.
-- Cards elevate by `2px` on hover with a crisp 1px hairline border highlight.
+- **Tactile Brutalist Planes:** Crisp `1px` and `2px` solid structural borders (`#0B1310`) with hard offset shadows (`4px 4px 0px #0B1310`) on primary interactive modules and physical `:active` translation (`translate(1px, 1px)`).
 
-## Components & Invariants
-- **MockBadge:** Must be prominently visible on every simulated screen, case review, or referral item.
-- **QuickExit:** Red or neutral high-contrast button present in the navigation bar on every patient screen.
-- **UrgentLink:** Plain HTML anchor directly leading to `/urgent.html`, guaranteed to function offline.
+## Shapes
+- **Shape Consistency Lock:** All cards, buttons, inputs, and badges use sharp `2px` corners (`rounded-[2px]`). Zero mixed pill-and-rounded-2xl collisions.
+
+## Components
+- **MockBadge:** Prominent architectural stamp (`MOCK · SIMULATED DATA`) on every simulated view, review item, and referral record.
+- **UrgentLink:** Plain HTML `<a href="/urgent.html">` banner and nav control, reachable without consent and cached for offline use.
+- **QuickExit:** Instant synchronous DOM wipe, `sessionStorage`/`localStorage` purge, `/api/session/end` beacon, and `about:blank` redirect.
 
 ## Do's and Don'ts
-- **DO** use clear, neutral language ("men's health", not "infertility").
-- **DO** show clear source attribution and rule IDs (e.g. `[DRAFT-STEROID-01] CLINICAL_TBD`).
-- **DON'T** use purple gradients, floating cards with 40px blur, or generic AI chatter.
-- **DON'T** make emergency guidance wait for network requests, models, or consent checks.
+- **Do** keep `UNKNOWN`, `NOT_ASKED`, and `DECLINED` visually and semantically distinct.
+- **Do** maintain neutral language ("men's health", never "infertility").
+- **Don't** use em-dashes, AI-purple gradients, fake div screenshots, or >1 eyebrow per 3 sections.
+- **Don't** claim clinical validation, `PROVIDER_VERIFIED`, or `CARE_COMPLETED`.

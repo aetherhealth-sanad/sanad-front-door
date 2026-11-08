@@ -1,59 +1,85 @@
 interface StepProgressProps {
   currentRoute: string;
+  onNavigate?: (route: string) => void;
+  canEnterObservations?: boolean;
 }
 
 const STEPS = [
-  { id: '/', label: 'Start' },
-  { id: '/consent', label: 'Consent' },
-  { id: '/safety', label: 'Safety' },
-  { id: '/intake', label: 'Questions' },
-  { id: '/result', label: 'Synthesis' },
-  { id: '/referral', label: 'Gate' },
-  { id: '/tracking', label: 'Tracking' },
+  { id: '/', label: '01 Start' },
+  { id: '/consent', label: '02 Consent' },
+  { id: '/safety', label: '03 Safety' },
+  { id: '/lab', label: '04 Lab (J3)' },
+  { id: '/intake', label: '05 Intake' },
+  { id: '/result', label: '06 Synthesis' },
+  { id: '/referral', label: '07 Gate' },
+  { id: '/tracking', label: '08 Tracking' },
 ];
 
-export const StepProgress: React.FC<StepProgressProps> = ({ currentRoute }) => {
+export const StepProgress: React.FC<StepProgressProps> = ({
+  currentRoute,
+  onNavigate,
+  canEnterObservations = false,
+}) => {
   const currentIndex = STEPS.findIndex(s => s.id === currentRoute);
   if (currentIndex === -1) return null;
 
   return (
-    <div className="w-full bg-white border-b border-slate-200 py-3 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-1 sm:gap-3 w-full overflow-x-auto no-scrollbar">
+    <div className="w-full bg-white border-b border-[#0B1310] py-2.5 px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 w-full overflow-x-auto no-scrollbar">
           {STEPS.map((step, idx) => {
-            const isCompleted = idx < currentIndex;
+            const visitedLab =
+              typeof window !== 'undefined' &&
+              sessionStorage.getItem('sanad_visited_lab') === 'true';
+            const isCompleted =
+              step.id === '/lab'
+                ? visitedLab && idx < currentIndex
+                : idx < currentIndex;
+            const isSkippedLab =
+              step.id === '/lab' && !visitedLab && idx < currentIndex;
             const isCurrent = idx === currentIndex;
+            const isInteractive =
+              onNavigate &&
+              ((step.id === '/lab' && (currentRoute === '/intake' || currentRoute === '/result') && canEnterObservations) ||
+                (step.id === '/intake' && currentRoute === '/lab'));
+
+            const badgeContent = (
+              <div
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-[2px] border text-xs font-mono transition-colors ${
+                  isCurrent
+                    ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
+                    : isCompleted
+                    ? 'bg-[#E6F2EE] text-[#0F523E] border-[#0F523E] font-semibold'
+                    : isSkippedLab
+                    ? 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
+                    : isInteractive
+                    ? 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4] font-semibold'
+                    : 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
+                }`}
+              >
+                <span>{isCompleted ? '✓' : isSkippedLab ? '—' : step.label}</span>
+                {isCompleted && <span>{step.label.slice(3)}</span>}
+                {isSkippedLab && <span>Lab (Optional)</span>}
+              </div>
+            );
 
             return (
-              <div key={step.id} className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-                      isCurrent
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : isCompleted
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-slate-100 text-slate-400'
-                    }`}
+              <div key={step.id} className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                {isInteractive ? (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(step.id)}
+                    className="cursor-pointer btn-press"
                   >
-                    {isCompleted ? '✓' : idx + 1}
-                  </div>
-                  <span
-                    className={`text-xs transition-colors ${
-                      isCurrent
-                        ? 'font-bold text-slate-900'
-                        : isCompleted
-                        ? 'font-medium text-slate-700'
-                        : 'text-slate-400'
-                    }`}
-                  >
-                    {step.label}
-                  </span>
-                </div>
+                    {badgeContent}
+                  </button>
+                ) : (
+                  badgeContent
+                )}
                 {idx < STEPS.length - 1 && (
                   <div
-                    className={`w-3 sm:w-6 h-px transition-colors ${
-                      idx < currentIndex ? 'bg-emerald-300' : 'bg-slate-200'
+                    className={`w-2 sm:w-4 h-px ${
+                      idx < currentIndex ? 'bg-[#0F523E]' : 'bg-[#C5CEC9]'
                     }`}
                   />
                 )}
@@ -62,8 +88,8 @@ export const StepProgress: React.FC<StepProgressProps> = ({ currentRoute }) => {
           })}
         </div>
 
-        <div className="hidden md:flex items-center gap-2 pl-4 border-l border-slate-200 text-[11px] font-mono text-slate-400 whitespace-nowrap">
-          <span>Step {currentIndex + 1} of {STEPS.length}</span>
+        <div className="hidden md:flex items-center gap-2 pl-4 border-l border-[#C5CEC9] text-[11px] font-mono text-[#3F4E48] whitespace-nowrap">
+          <span>STAGE {currentIndex + 1}/{STEPS.length}</span>
         </div>
       </div>
     </div>

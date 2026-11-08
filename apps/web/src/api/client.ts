@@ -138,6 +138,40 @@ export interface TriageProposal {
   approval_status: string;
 }
 
+export interface ObservationRecord {
+  observation_id: string;
+  test_code: string;
+  value: number | null;
+  unit: string | null;
+  collected_on: string | null;
+  reference_source: string | null;
+  source: string;
+  confirmation_status: string;
+  issues: string[];
+  used_in_assessment: boolean;
+}
+
+export interface ObservationInput {
+  test_code: string;
+  value?: number | null;
+  unit?: string | null;
+  collected_on?: string | null;
+  reference_source?: string | null;
+}
+
+export interface EvidenceSelectionItem {
+  item_id: string;
+  kind: string;
+  use: boolean;
+  used_in_assessment: boolean;
+  concept_codes: string[];
+}
+
+export interface EvidenceSelectionResponse {
+  items: EvidenceSelectionItem[];
+  state: CaseState;
+}
+
 export interface ReportData {
   report_type: string;
   draft_label: string;
@@ -265,6 +299,21 @@ export interface NavigationFunnel {
   care_completed: 'NOT_AVAILABLE';
 }
 
+// In-memory store for a user-selected synthetic upload File (never persisted to storage, wiped on QuickExit).
+let pendingUploadFile: File | null = null;
+
+export function setPendingUploadFile(file: File | null): void {
+  pendingUploadFile = file;
+}
+
+export function getPendingUploadFile(): File | null {
+  return pendingUploadFile;
+}
+
+export function clearPendingUploadFile(): void {
+  pendingUploadFile = null;
+}
+
 type AuthMode = 'patient' | 'staff' | 'none';
 
 function getAuthHeader(mode: AuthMode): Record<string, string> {
@@ -279,7 +328,9 @@ async function request<T>(
   authMode: AuthMode = 'patient',
 ): Promise<T> {
   const headers = new Headers(options.headers);
-  headers.set('Content-Type', 'application/json');
+  if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
   for (const [key, value] of Object.entries(getAuthHeader(authMode))) headers.set(key, value);
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
@@ -288,7 +339,10 @@ async function request<T>(
     let errorDetail = `HTTP ${res.status}: ${res.statusText}`;
     try {
       const errJson = await res.json();
-      errorDetail = errJson.message || errJson.detail || JSON.stringify(errJson);
+      const details = Array.isArray(errJson.details) && errJson.details.length > 0
+        ? ` (${errJson.details.join(', ')})`
+        : '';
+      errorDetail = (errJson.message || errJson.detail || JSON.stringify(errJson)) + details;
     } catch {
       // Keep the status-based message when the response is not JSON.
     }
@@ -309,12 +363,21 @@ export const api = {
       body: JSON.stringify({ start_mode, fixture_id: start_mode === 'SAMPLE' ? fixture_id : undefined, preferred_language }),
     }, 'none'),
   getCaseState: (caseId: string) => request<CaseState>(`/cases/${caseId}/state`),
+  closeCase: (caseId: string) => patientPost<CaseState>(`/cases/${caseId}/close`),
   getCaseConsent: (caseId: string) => request<CaseConsentRecord>(`/cases/${caseId}/consent`),
   updateCaseConsent: (caseId: string, consent_version: string, decisions: Record<string, boolean>) =>
     request<CaseConsentRecord>(`/cases/${caseId}/consent`, {
       method: 'PUT', body: JSON.stringify({ consent_version, decisions }),
     }),
   applySampleProfile: (caseId: string) => patientPost<CaseState>(`/cases/${caseId}/profile/sample`),
+  uploadProfile: (caseId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<CaseState>(`/cases/${caseId}/profile/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
   runSafetyCheck: (caseId: string, answers: Array<{ question_id: string; response: 'YES' | 'NO' | 'NOT_SURE' | 'PREFER_NOT_TO_ANSWER' }>, catalogue_version?: string) =>
     patientPost<{ result: string; rule_ids: string[]; catalogue_version: string; approval_status: string; disclosure: string; needs_recheck: boolean; state: CaseState }>(
       `/cases/${caseId}/safety-check`, { answers, catalogue_version },
@@ -322,7 +385,28 @@ export const api = {
   getQuestions: (caseId: string) => request<QuestionsResponse>(`/cases/${caseId}/questions`),
   submitAnswers: (caseId: string, answers: IntakeAnswer[]) =>
     patientPost<CaseState>(`/cases/${caseId}/answers`, { answers }),
-  assessCase: (caseId: string) => patientPost<AssessmentResponse>(`/cases/${caseId}/assess`, { entry_path: 'FULL_INTAKE' }),
+  assessCase: (caseId: string, entryPath: 'FULL_INTAKE' | 'LAB_ONLY' = 'FULL_INTAKE') =>
+    patientPost<AssessmentResponse>(`/cases/${caseId}/assess`, { entry_path: entryPath }),
+  selectEvidence: (caseId: string, items: Array<{ item_id: string; use: boolean }>) =>
+    request<EvidenceSelectionResponse>(`/cases/${caseId}/evidence-selection`, {
+      method: 'PUT',
+      body: JSON.stringify({ items }),
+    }),
+  getObservations: (caseId: string) =>
+    request<{ observations: ObservationRecord[] }>(`/cases/${caseId}/observations`),
+  createObservation: (caseId: string, body: ObservationInput) =>
+    patientPost<ObservationRecord>(`/cases/${caseId}/observations`, body),
+  replaceObservation: (caseId: string, observationId: string, body: ObservationInput) =>
+    request<ObservationRecord>(`/cases/${caseId}/observations/${observationId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  deleteObservation: (caseId: string, observationId: string) =>
+    request<void>(`/cases/${caseId}/observations/${observationId}`, {
+      method: 'DELETE',
+    }),
+  confirmObservation: (caseId: string, observationId: string) =>
+    patientPost<ObservationRecord>(`/cases/${caseId}/observations/${observationId}/confirm`),
   getPsychosocialQuestions: () => request<PsychosocialCatalogue>('/psychosocial/questions', {}, 'none'),
   savePsychosocial: (caseId: string, answers: PsychosocialAnswer[]) =>
     request(`/cases/${caseId}/psychosocial`, { method: 'PUT', body: JSON.stringify({ answers }) }),

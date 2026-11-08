@@ -6,52 +6,67 @@ interface NavbarProps {
   currentRole?: 'patient' | 'clinician' | 'facility';
   onRoleSelect?: (role: 'patient' | 'clinician' | 'facility') => void;
   caseId?: string | null;
+  onCloseCase?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentRole = 'patient',
   onRoleSelect,
-  caseId
+  caseId,
+  onCloseCase,
 }) => {
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        {/* Brand */}
-        <div className="flex items-center gap-3">
-          <a href="/" className="flex items-center gap-2.5 text-slate-900 no-underline group">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 text-sky-400 flex items-center justify-center font-bold text-base shadow-xs group-hover:bg-slate-800 transition-colors">
+    <header className="sticky top-0 z-40 w-full bg-[#F3F4F1]/95 backdrop-blur-md border-b border-[#0B1310]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        {/* Brand Identity */}
+        <div className="flex items-center gap-3 min-w-0">
+          <a href="/" className="flex items-center gap-2.5 text-[#0B1310] no-underline group shrink-0">
+            <div className="w-9 h-9 rounded-[2px] bg-[#0B1310] text-white border border-[#0B1310] flex items-center justify-center font-bold text-lg group-hover:bg-[#0F523E] transition-colors">
               س
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-slate-900 leading-tight tracking-tight text-base sm:text-lg flex items-center gap-1.5">
-                Sanad <span className="text-slate-400 font-normal text-sm">سند</span>
+              <span className="font-extrabold text-[#0B1310] leading-none tracking-tight text-base flex items-center gap-1.5">
+                SANAD <span className="text-[#3F4E48] font-normal text-xs font-mono">سند</span>
               </span>
-              <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">
+              <span className="text-[10px] text-[#3F4E48] font-mono uppercase tracking-wider mt-0.5">
                 Men's Health Front Door
               </span>
             </div>
           </a>
-          <MockBadge className="hidden md:inline-flex" />
+          <MockBadge className="hidden sm:inline-flex" />
         </div>
 
-        {/* Role Switcher & Case ID Indicator */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        {/* Role Switcher, Case Telemetry & Safety Controls */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {caseId && (
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-md text-xs font-mono text-slate-600 border border-slate-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span>Case: {caseId}</span>
+            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 bg-white rounded-[2px] text-xs font-mono text-[#0B1310] border border-[#0B1310]">
+              <span className="w-2 h-2 rounded-[2px] bg-[#0F523E]" />
+              <span>CASE: {caseId}</span>
+              {onCloseCase && (
+                <button
+                  type="button"
+                  onClick={onCloseCase}
+                  title="Close this case without recording failure or non-adherence"
+                  className="ml-1 pl-2 border-l border-[#C5CEC9] text-[11px] font-bold text-[#C84B31] hover:underline cursor-pointer"
+                >
+                  Close
+                </button>
+              )}
             </div>
           )}
 
           {onRoleSelect && (
-            <nav className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600">
+            <nav
+              aria-label="Workspace role selector"
+              className="flex items-center bg-[#E6EAE4] p-0.5 rounded-[2px] border border-[#0B1310] text-xs font-mono"
+            >
               <button
                 type="button"
                 onClick={() => onRoleSelect('patient')}
-                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-[2px] transition-all cursor-pointer whitespace-nowrap ${
                   currentRole === 'patient'
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#0B1310] text-white font-bold'
+                    : 'text-[#3F4E48] hover:text-[#0B1310]'
                 }`}
               >
                 Patient
@@ -59,10 +74,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => onRoleSelect('clinician')}
-                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-[2px] transition-all cursor-pointer whitespace-nowrap ${
                   currentRole === 'clinician'
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#0B1310] text-white font-bold'
+                    : 'text-[#3F4E48] hover:text-[#0B1310]'
                 }`}
               >
                 Mock Reviewer
@@ -70,10 +85,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => onRoleSelect('facility')}
-                className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-[2px] transition-all cursor-pointer whitespace-nowrap ${
                   currentRole === 'facility'
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#0B1310] text-white font-bold'
+                    : 'text-[#3F4E48] hover:text-[#0B1310]'
                 }`}
               >
                 Mock Facility
@@ -81,8 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </nav>
           )}
 
-          {/* Safety Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <UrgentLink />
             <QuickExit />
           </div>

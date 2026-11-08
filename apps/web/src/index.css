@@ -3,31 +3,35 @@
 @layer base {
   :root {
     color-scheme: light;
-    /* Taste Skill Clinical Tokens */
-    --ink: #0f172a;
-    --muted: #64748b;
-    --muted-light: #94a3b8;
-    
-    --g-main: #f8fafc;
-    --g-alt: #ffffff;
-    --g-card: #ffffff;
-    --g-border: #e2e8f0;
-    --g-border-hover: #cbd5e1;
+    /* Editorial Clinical Brutalism Tokens (DESIGN.md v2.0) */
+    --ink: #0B1310;
+    --muted: #3F4E48;
+    --muted-light: #63736C;
 
-    /* Primary Accent: Clinical Cyan/Slate (Zero Purple) */
-    --action: #0284c7;
-    --action-hover: #0369a1;
-    --action-surface: #f0f9ff;
-    
+    --g-main: #F3F4F1;
+    --g-alt: #E6EAE4;
+    --g-card: #FFFFFF;
+    --g-border: #0B1310;
+    --g-border-muted: #C5CEC9;
+
+    /* Locked Primary Accent: Deep Forest Emerald */
+    --action: #0F523E;
+    --action-hover: #093B2C;
+    --action-surface: #E6F2EE;
+
+    /* Secondary Signal Accent: Terracotta Telemetry */
+    --signal: #C84B31;
+    --signal-surface: #FDF2EF;
+
     /* Emergency Alert */
-    --emergency: #dc2626;
-    --emergency-surface: #fef2f2;
-    --emergency-border: #fecaca;
+    --emergency: #B91C1C;
+    --emergency-surface: #FEF2F2;
+    --emergency-border: #F87171;
 
     /* Mock State Badge */
-    --mock-border: #cbd5e1;
-    --mock-text: #475569;
-    --mock-bg: #f1f5f9;
+    --mock-border: #0B1310;
+    --mock-text: #0B1310;
+    --mock-bg: #E6EAE4;
 
     /* Spacing Rhythm Scale */
     --s-1: 4px;
@@ -38,14 +42,9 @@
     --s-6: 32px;
     --s-7: 48px;
     --s-8: 64px;
-    --s-9: 96px;
-    --s-10: 128px;
 
-    /* Radius: Soft */
-    --r-sm: 6px;
-    --r-md: 10px;
-    --r-lg: 16px;
-    --r-btn: 8px;
+    /* Locked Shape Scale: Crisp 2px Architectural Geometry */
+    --r-xs: 2px;
 
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
@@ -59,39 +58,111 @@
     background-color: var(--g-main);
     color: var(--ink);
     font-size: 16px;
-    line-height: 1.5;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Editorial citation & disclaimer styling */
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
   .font-editorial {
-    font-family: 'Newsreader', serif;
+    font-family: 'Newsreader', Georgia, serif;
     font-style: italic;
   }
 }
 
-/* Micro-interaction Utilities */
+/* Architectural Surface & Brutalist Shadow Utilities */
+.dossier-card {
+  background-color: var(--g-card);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  box-shadow: 4px 4px 0px rgba(11, 19, 16, 0.9);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dossier-panel {
+  background-color: var(--g-card);
+  border: 1px solid var(--g-border-muted);
+  border-radius: 2px;
+}
+
 .card-hover {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
-              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.2s ease;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease,
+              background-color 0.22s ease;
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
-  border-color: var(--g-border-hover);
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  transform: translate(-2px, -2px);
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0px var(--ink);
 }
 
 .btn-press {
-  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.16s ease,
+              border-color 0.16s ease;
 }
 
-.btn-press:hover {
-  transform: translateY(-1px);
+.btn-press:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
 }
 
-.btn-press:active {
-  transform: scale(0.98);
+.btn-press:active:not(:disabled) {
+  transform: translate(1px, 1px) scale(0.99);
+}
+
+/* Subtle Architectural Grid Texture */
+.bg-architectural-grid {
+  background-image:
+    linear-gradient(to right, rgba(11, 19, 16, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(11, 19, 16, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Spring Staggered Entrance Animations */
+@keyframes springRevealUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal-1 {
+  animation: springRevealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both;
+}
+
+.animate-reveal-2 {
+  animation: springRevealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+
+.animate-reveal-3 {
+  animation: springRevealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.20s both;
+}
+
+.animate-reveal-4 {
+  animation: springRevealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-reveal-1,
+  .animate-reveal-2,
+  .animate-reveal-3,
+  .animate-reveal-4,
+  .card-hover,
+  .btn-press,
+  .dossier-card {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }

@@ -3,19 +3,21 @@ interface MockBadgeProps {
   className?: string;
 }
 
-export const MockBadge: React.FC<MockBadgeProps> = ({ 
+export const MockBadge: React.FC<MockBadgeProps> = ({
   label = 'MOCK · SIMULATED DATA',
-  className = ''
+  className = '',
 }) => {
+  const displayLabel = /mock/i.test(label) ? label : `MOCK · ${label}`;
+
   return (
-    <span 
+    <span
       data-testid="mock-badge"
       data-mock="true"
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide bg-slate-100 text-slate-700 border border-slate-300 select-none ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[2px] text-[11px] font-mono font-bold tracking-wider uppercase bg-[#E6EAE4] text-[#0B1310] border border-[#0B1310] select-none ${className}`}
       title="Research prototype simulated element. No real care or clinical provider is connected."
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-      {label}
+      <span className="w-1.5 h-1.5 rounded-[2px] bg-[#C84B31]" />
+      {displayLabel}
     </span>
   );
 };
