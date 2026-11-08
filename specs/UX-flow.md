@@ -1,6 +1,6 @@
 # Sanad: UX flow (session dashboard with chat)
 
-Status: **PROPOSED v0.2 (2026-11-08)**. Not reviewed. Follows [BRD v0.4](Sanad_AetherHealth_BRD_v0.4.md), [PRD v0.4](Sanad_AetherHealth_PRD_v0.4.md), the [referral-flow product spec](referal-flows/product-spec.md) and [AGENTS.md](../AGENTS.md).
+Status: **PROPOSED v0.3 (2026-11-08)**. Not reviewed. Follows [BRD v0.4](Sanad_AetherHealth_BRD_v0.4.md), [PRD v0.4](Sanad_AetherHealth_PRD_v0.4.md), the [referral-flow product spec](referal-flows/product-spec.md) and [AGENTS.md](../AGENTS.md).
 
 - This file is not in the AGENTS.md "where the truth lives" table. Where it conflicts with the BRD, PRD or product spec, those documents win. The conflicts already known are listed in §11.
 - The session dashboard (§3) changes the patient route model in product-spec §5. It cannot be built until the spec changes in §11 are made and reviewed.
@@ -12,6 +12,7 @@ Sanad screens and navigates. **It does not diagnose.** Every result view says "S
 |---|---|---|
 | 0.1 | 2026-11-08 | First draft: chat to summary. |
 | 0.2 | 2026-11-08 | Adds the session dashboard that hosts the chat. Aligns with BRD/PRD v0.4 and the product spec: start order, five consent scopes, action codes instead of colours, no response times, honest assistant label, the review request step and the current task IDs. Updates open decisions. |
+| 0.3 | 2026-11-08 | Adds the reference dashboard screenshot as a wireframe with a widget-by-widget mapping (§3.5). Redraws §3.1 in the same card grid. |
 
 ## 1. The idea in one paragraph
 
@@ -36,32 +37,36 @@ The dashboard is the patient's workspace for one session. It replaces the separa
 
 ### 3.1 Desktop layout
 
+The layout borrows the card grid of the reference screenshot (§3.5): a left rail, one large card and narrower cards beside it. Only the layout is reused.
+
 ```text
 +--------------------------------------------------------------------------------------+
 | Sanad   Screening, not diagnosis    [EN | AR]    Is this an emergency?  [Quick exit] |
 | Sample profile, not a real person  ·  Draft rules, not clinically approved           |
-+---------------------+------------------------------------------+---------------------+
-| YOUR SESSION        | CHAT                                     | WHAT YOU'VE TOLD US |
-|  ✓ Consent          | Sanad assistant                          | Core: 6 of 9 done   |
-|  ✓ Safety check     | Scripted questions from a draft catalogue|                     |
-|  ● Questions        |                                          | Basics              |
-|  ○ Summary          | Have you ever used anabolic steroids?    |  Age ........ 24    |
-|  ○ Next step        | [Yes, now] [Yes, in the past] [No]       |  BMI ........ 31    |
-|                     | [Not sure] [Prefer not to say]           | Health history      |
-| SUMMARY             |  Why we ask                              |  Steroids ... Needs |
-|  Not ready yet      |                                          |   your confirmation |
-|                     |                                          | Lifestyle           |
-| LAB RESULTS         |                                          |  Smoking .... Prefer|
-|  Add (optional)     |                                          |   not to say        |
-|                     |                                          | Optional wellbeing  |
-| PRIVACY             |                                          |  Sleep ..... Skipped |
-|  Assessment: on     |                                          |                     |
-|  Review: off        |                                          |                     |
-|  [Review or revoke] |                                          |                     |
-+---------------------+------------------------------------------+---------------------+
++---------------+----------------------------------------------------------------------+
+| YOUR SESSION  | +-------------------------------+ +--------------+ +---------------+ |
+|               | | CHAT                          | | SUMMARY      | | WHAT YOU'VE   | |
+| ✓ Consent     | | Sanad assistant               | | Not ready yet| | TOLD US       | |
+| ✓ Safety check| | Scripted, draft catalogue     | |              | | Core questions| |
+| ● Questions   | |                               | +--------------+ |  6 of 9 done  | |
+| ○ Summary     | | Have you ever used anabolic   | | LAB RESULTS  | |               | |
+| ○ Next step   | | steroids?                     | | Optional     | | Age ...... 24 | |
+|               | | [Yes, now] [Yes, in the past] | | [Add]        | | BMI ...... 31 | |
+|               | | [No] [Not sure]               | +--------------+ | Steroids:     | |
+|               | | [Prefer not to say]           | | PRIVACY      | |  needs your   | |
+|               | | (i) Why we ask                | | Assessment on| |  confirmation | |
+|               | |                               | | Review off   | | Smoking:      | |
+|               | |                               | | [Review or   | |  prefer not   | |
+|               | | Buttons and numbers only      | |  revoke]     | |  to say       | |
+|               | |                               | |              | | Sleep: skipped| |
+|               | +-------------------------------+ +--------------+ +---------------+ |
+|               | +------------------------------------------------------------------+ |
+|               | | NEXT STEP   Not available yet. Opens when guidance is released.  | |
+|               | +------------------------------------------------------------------+ |
++---------------+----------------------------------------------------------------------+
 ```
 
-The values in the sketch are synthetic examples.
+The values in the sketch are synthetic examples. The Next step card shows no case data until guidance is released.
 
 ### 3.2 Panels
 
@@ -94,6 +99,51 @@ The "Core: n of m done" line counts core questions that have any response, inclu
 - On reload, the dashboard returns to the same step with its data (AC-04.1). The chat history is rebuilt from the recorded answers and the catalogue. No separate transcript is stored (proposed, see §10).
 - No panel shows a score, percentage, gauge, ring or organ widget about health. Step and question counts are the only counts.
 - The tab title is "Sanad" in every state (AC-09.8).
+
+### 3.5 Reference screenshot and what Sanad takes from it
+
+The team's reference is a screenshot of a third-party commercial medical admin template. The screenshot is not stored in this repository. It has its own branding and artwork, a stock photo of a person and a sample diagnosis. The wireframe below records its layout only. The numbers match the table.
+
+```text
++---------------+----------------------------------------------------------------------+
+| Logo + name   | [2] [=] [Search ..........]     User name, ADMIN  [photo] [o] [o]    |
++---------------+----------------------------------------------------------------------+
+| [1] Dashboard | +-[3]-------+ +-[4]----------------+ +-[5]----------+ +-[7]--------+ |
+|   Patients    | | Lungs  90%| | Body composition   | | Patient card | | Calendar   | |
+|   Doctor      | | Stomach99%| |                    | | [photo]      | | month view | |
+|   Hospital    | | Liver  95%| | (donut chart of    | | name         | | booked slot| |
+|  Appointments | | Heart  89%| |  element %s)       | | last check-in| | highlighted| |
+|  Patients   > | | Brain  85%| |                    | | sex, age,    | +-[8]--------+ |
+|  Reports      | |           | | (anatomy figure)   | | department   | | Appointment| |
+|  Doctors    > | |           | |                    | +-[6]----------+ | type, date,| |
+|               | +-[9]------------------------------+ | Latest       | | clinician  | |
+|  COMPONENTS   | | Bar chart, Jan to Dec            | | diagnosis:   | | name       | |
+|  Features   > | | (calories)                       | | condition    | | [report]   | |
+|  Forms      > | |                                  | | [History ->] | +-[11]-------+ |
+|  Charts     > | |  |  |   |    | |  ||  | |  |     | +-[10]---------+ | Checkup    | |
+|  Apps       > | |  |  |   | |  | |  ||  | |  |     | | Progress     | | card, date,| |
+|  Auth       > | |  |  | | | |  | |  ||  | |  |     | | gauge 85%    | | clinician, | |
+|  Misc       > | |                                  | |              | | trend line | |
+|               | +----------------------------------+ +--------------+ +------------+ |
++---------------+----------------------------------------------------------------------+
+```
+
+| # | Reference widget | In Sanad | Why |
+|---|---|---|---|
+| 1 | Sidebar menu of admin sections (patients, doctors, hospital, reports) | Patient view: the "Your session" steps rail. A section menu suits the Clinician portal (PRD Screen 7), not the patient. | The patient has one case on one path, and the server holds the step (RF-04). |
+| 2 | Top bar with search, user name, role, avatar and icons | Top bar with "Sanad", "Screening, not diagnosis", language, emergency link and Quick Exit. No search, name or avatar. | No account and no identifiers (BR-18, AGENTS.md rule 9). Emergency link and Quick Exit on every screen (RF-05, RF-09). |
+| 3 | Organ cards with percentages | Dropped. "What you've told us" lists recorded items with their state. | They imply measurements Sanad does not make (AGENTS.md rule 8, §8). |
+| 4 | Body composition donut and anatomy figure | Dropped. This slot holds the chat. | No body-composition measurement exists, and BMI is never read on its own (BR-04). |
+| 5 | Patient card: photo, name, sex, age, department, last check-in | The top banner says where the data came from: "Sample profile, not a real person" or "Uploaded file, unverified". Age appears only in "What you've told us". | No names, photos or identifiers (rule 9). No camera (rule 13). |
+| 6 | Latest diagnosis card with a history button | Summary card: Not ready yet, Limited summary, Needs review, Pending review (Mock), Ready or Closed, with "View My Summary" when the state allows it. | No diagnosis (rule 8). Unreviewed judgment stays hidden (BR-14). |
+| 7 | Calendar with a booked slot | Dropped. | No booking in the MVP. Appointment intent is P1 and Mock (PRD-FR-16). No reminders (BR-32). |
+| 8 | Appointment card: therapy type, date, clinician name, report file | Next step card: the allowed next step and mock services labelled **Mock**. | No real provider or clinician names (AGENTS.md). Nothing simulated looks real (rule 6). |
+| 9 | Calories bar chart | Dropped. | No health tracking or wearables in scope (BRD §8.2). |
+| 10 | Monthly progress gauge (85%) | The text line "Core questions: 6 of 9 done", which counts questions only. | No gauges or rings that look like health measurements (§8). |
+| 11 | Checkup card with clinician and trend line | Mock referral tracking in the Next step card, with the delayed flag (RF-14), labelled **Mock**. No trend lines. | No verified care and no `CARE_COMPLETED` (rule 7). |
+| — | Template options: dark mode, multi-colour, RTL ready | Light theme (§8). RTL mirrored layout if Arabic is in the demo (§10, decision 3). | Visual guidance in §8 |
+
+What Sanad keeps: a fixed top bar, a left rail, a grid of cards with clear titles, generous spacing and at most one primary button per card.
 
 ## 4. Flow at a glance
 
@@ -317,7 +367,7 @@ Always on the page: Quick Exit, the emergency link, and "Screening, not diagnosi
 ## 8. Visual guidance
 
 - Calm, neutral, clinical. Light theme, high-contrast text, large touch targets, clear focus states, full keyboard use.
-- The dashboard and result page may use a dashboard-style layout: a left summary column and cards. The reference screenshot (a commercial admin template) is a layout idea only. Do not copy its branding or icons, and do not use its organ-percentage widgets, which imply measurements Sanad does not make.
+- The dashboard and result page may use a dashboard-style layout: a left summary column and cards. The reference screenshot (a commercial admin template) is a layout idea only; §3.5 lists what is kept and what is dropped. Do not copy its branding, icons, photos or illustrations, and do not use its organ-percentage, body-composition, diagnosis or gauge widgets, which imply measurements and conclusions Sanad does not make.
 - No scores, percentages, gauges or progress rings that look like health measurements. Show recorded values and plain labels.
 - Do not colour-code triage levels as a traffic light. The action wording carries the meaning.
 - Every simulated element uses the shared Mock badge.
