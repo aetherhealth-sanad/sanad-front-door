@@ -10,7 +10,7 @@ Sanad's harness is the deterministic rules, consent and state gates, audit loggi
 2. **Policy sits outside the model and defaults to deny.** Every action with a side effect (writing a record, sending a referral) passes through a code gate. No rule that allows it means it is blocked.
 3. **Numbers come from code.** Any implemented comparison uses deterministic code and versioned catalogue values. Clinical thresholds remain draft or absent; no WHO threshold or model explanation is claimed.
 4. **Least privilege.** Each agent has only the tools its role needs.
-5. **Reviewers see enough to judge.** Yellow and above needs doctor review, and the review screen shows the sources, the rule that fired and the floor.
+5. **Reviewers see enough to judge.** Cases the state machine routes to review need a reviewer, and the review screen shows the sources, the rule that fired and the floor. Which actions need review is `CLINICAL_TBD`.
 6. **Every decision leaves a trace and has a test.** Audit events, traces and evals run in CI.
 7. **No model in the current backend.** If model integration is proposed later, it requires a separate reviewed contract, provider abstraction, constrained output, deterministic checks and a bake-off before use. No SLM choice is made by this document.
 
@@ -27,6 +27,8 @@ A call moves from top to bottom, and the policy layer blocks it before any tool 
 
 Thirty rules in six groups. The "Enforced by" column says whether a rule is guaranteed by code, a test or a process, so that no rule lives only in a prompt.
 
+The `T-xx` IDs in the Task column come from the source backlog. They do not match the `T*` IDs in the [implementation plan](referal-flows/implementation-plan.md) (for example `T1.1`); mapping them is pending.
+
 ### A. Triage and rules
 
 | ID | Rule | Enforced by | Task |
@@ -35,14 +37,14 @@ Thirty rules in six groups. The "Enforced by" column says whether a rule is guar
 | HR-02 | The emergency gate runs before ordinary assessment, independent of follow-up completeness | Emergency gate and API tests; no model call exists | T-14 |
 | HR-03 | Any future proposal must respect the floor ranked by the versioned catalogue; current actions are rule-derived | Catalogue action rank and floor unit tests | T-15, T-19 |
 | HR-04 | Clinical thresholds and constants come from the versioned rule catalogue, never from retrieved text | Catalogue in git; version-load test | T-12, T-15 |
-| HR-05 | Numbers (WHO 2021 thresholds, unit conversion, age, BMI, time to conceive) are computed by code; the model only explains | Deterministic tool; eval against the golden set | T-15, T-33 |
+| HR-05 | Numbers (unit conversion, age, BMI, time to conceive, and any reference threshold once approved) are computed by code from the versioned catalogue, never by a model. No WHO threshold is approved or claimed (`CLINICAL_TBD`), and no model exists today | Deterministic tool; eval against the golden set | T-15, T-33 |
 | HR-06 | Changing a clinical rule goes through change control: PR, reviewer, golden-set rerun | PR template and CI gate | T-06, T-35 |
 
 ### B. Consent and identity
 
 | ID | Rule | Enforced by | Task |
 | --- | --- | --- | --- |
-| HR-07 | Every tool that reads or writes data checks consent for the right purpose (profile\_import, provider\_share, spouse\_share) on the server | Backend middleware; negative-consent tests | T-11, T-65 |
+| HR-07 | Every tool that reads or writes data checks consent for the right purpose (the scopes in `catalogue/consent-0.1.json`: assessment, clinician\_review, provider\_share, spouse\_share, research\_use) on the server | Backend middleware; negative-consent tests | T-11, T-65 |
 | HR-08 | Revoking consent takes effect at once: the next call is blocked | Mid-session revocation test | T-11, T-02 |
 | HR-09 | Tools run in the context of the anonymous case, never with an admin account, and never forward the client's token to a downstream service | Service identities and a secrets store; code review | T-04, T-07 |
 | HR-10 | The referral gate opens only when all three conditions hold: provider\_share consent is active, the review is APPROVED, and the backend authorizes the caller (RBAC). Missing any one returns 403, writes an audit event and leaves the case state unchanged | Policy module in section 5; bypass tests | T-26, T-37 |
@@ -55,7 +57,7 @@ Thirty rules in six groups. The "Enforced by" column says whether a rule is guar
 | --- | --- | --- | --- |
 | HR-13 | The state machine requires review before releasing guidance or requesting referral; action-specific clinical review levels and timing are not approved | State machine and API gate tests; clinical policy remains `CLINICAL_TBD` | T-08, T-25 |
 | HR-14 | The review screen shows the rule that fired, the floor, the cited passages and a diff against the previous version, so approval is not a one-tap habit | UI checklist; usability test | T-25 |
-| HR-15 | The review SLA has a clock; overdue cases raise a warning and escalate, and are never auto-approved | Overdue-check job | T-25, T-27 |
+| HR-15 | Waiting cases are never auto-approved. No review SLA, overdue clock or escalation time is set until a clinician approves response times (`CLINICAL_TBD`, BRD §9.1) | No auto-approval path exists; overdue job not implemented | T-25, T-27 |
 | HR-16 | A simulated reviewer must be labelled "Simulated review" on screen and in the audit, because the team has no clinical advisor yet | Mandatory reviewer\_type field | T-13, T-25 |
 
 ### D. Tools and data
@@ -75,7 +77,7 @@ Thirty rules in six groups. The "Enforced by" column says whether a rule is guar
 | ID | Rule | Enforced by | Task |
 | --- | --- | --- | --- |
 | HR-24 | The state machine allows only valid transitions; an illegal one is blocked | Transition table; unit test | T-08 |
-| HR-25 | Each case has a cap on steps, tool calls and tokens; exceeding it stops the case safely | Counters in the orchestrator | T-05 |
+| HR-25 | Each case has a cap on steps, tool calls and tokens; exceeding it stops the case safely | Planned counters in a future orchestrator; no orchestrator exists | T-05 |
 | HR-26 | Every write (referral, event, progress) carries an idempotency key so a retry creates no duplicate | Duplicate-guard key at the API | T-28, T-29 |
 | HR-27 | If a future model or search call times out, return a rules-only result with a label and never invent content | Planned provider abstraction; no model/search calls exist in the current API | T-05 |
 
@@ -89,11 +91,11 @@ Thirty rules in six groups. The "Enforced by" column says whether a rule is guar
 
 ## Agent and tool matrix
 
-Every tool is denied by default; the table lists what each agent may call (rule HR-17). No agent may send a referral directly.
+Every tool is denied by default; the table lists what each agent may call (rule HR-17). No agent may send a referral directly. This matrix is future design: no agent runtime exists today.
 
 | Agent | May call | Forbidden | Runs as |
 | --- | --- | --- | --- |
-| Gatekeeper | Read the consented FHIR profile (profile\_import), ask follow-up questions, normalise facts | Send a referral, call retrieval, write Consent | SLM agent |
+| Gatekeeper | Read consented case facts, ask follow-up questions, normalise facts (no `profile_import` scope exists in consent catalogue 0.1) | Send a referral, call retrieval, write Consent | SLM agent |
 | Rules engine | Read normalised facts and the rule catalogue, compute the triage floor | Call the SLM, call external networks | Code, no model |
 | Evidence | Read the case's uploaded files, run OCR, return fields with units | Write to the record before unit and source are confirmed, send data outside | OCR service |
 | Clinical Risk | Read facts, search approved sources, return a proposed level with citations | Go below the floor, read data without consent, call write tools | SLM agent |
@@ -102,6 +104,8 @@ Every tool is denied by default; the table lists what each agent may call (rule 
 | Orchestrator | Coordinate handoffs between agents, read case state | Move a case to SENT itself, skip the rules or the gate | Code with SLM planning |
 
 ## Referral gate as policy-as-code
+
+**Implemented:** [`evaluate_gate`](../apps/api/sanad_api/referral/gate.py) (`gate-0.1`) is the real gate. It goes beyond the sample below: approval is bound to the case version as well as the report hash, and backend policy also checks case state, triage eligibility, the synthetic flag, one referral per case and a Mock-directory target. Role checks run before the gate. The sample is kept as the original design note.
 
 The HR-10 gate should be a plain Python function in the backend: deny by default, with unit tests. Moving to a policy engine such as OPA or Cedar only makes sense if the rule count grows; with three conditions and three weeks, a function is enough. This is a sample for Vinh and Trung to align on, not final code.
 
@@ -136,7 +140,7 @@ def referral_gate(g: GateInput) -> dict:
 
 The handler calls `referral_gate` before any send. If `allow` is false, it returns 403, writes an audit event (policy\_version, reasons, anonymous case id) and leaves the case state unchanged.
 
-Required tests for the gate (T-37):
+Required tests for the gate (T-37), as originally designed. The reason codes below are superseded: the implemented gate returns `CONSENT_PROVIDER_SHARE_MISSING`, `CONSENT_PROVIDER_SHARE_REVOKED`, `APPROVAL_MISSING`, `APPROVAL_REJECTED`, `APPROVAL_STALE` and the backend-policy codes in [`gate.py`](../apps/api/sanad_api/referral/gate.py); role failures are rejected by the route guard before the gate runs. Write tests against `gate.py`, not this list.
 
 - Missing provider\_share consent, other conditions met: 403, reason NO\_PROVIDER\_SHARE\_CONSENT.
 - Not reviewed, or review rejected: 403, reason NO\_VALID\_APPROVAL.
@@ -150,8 +154,8 @@ Required tests for the gate (T-37):
 
 Future agent evals should check traces as well as final answers. The current repository has no agent, browser client, or trace-evaluation runner. The backend workflow runs pytest (including the emergency golden set and API gate tests) and Ruff on pushes and pull requests. It does not claim browser parity or model behavioral coverage.
 
-| Case | Assertion | Status | Rule |
-| --- | --- | --- | --- |
+| Case | Assertion | Status |
+| --- | --- | --- |
 | J4: severe testicular pain | Emergency gate fires and the case cannot proceed to review/referral | Backend tests |
 | J1: high BMI, steroid use | Draft action uses the configured `SPECIALIST` floor; no diagnosis is produced | Backend tests |
 | J3: semen report uploaded | Unverified reference ranges are not compared; confirmation status is preserved | Backend tests |
@@ -176,10 +180,10 @@ The target for 20/11 is to fully reach L2 and the first part of L3 and L4 on the
 
 | Level | Target for 20/11 | Related rules |
 | --- | --- | --- |
-| L1 Basic controls | Reached: tool allowlist, output schema, central logging | HR-17, HR-19, HR-28 |
-| L2 Correct authorization | Reached: default-deny policy, purpose-level consent, doctor review | HR-01 to HR-03, HR-07 to HR-16 |
-| L3 Durable operation | Partial: state machine, idempotency, timeout and fallback, quota and tracing at the model gateway. No durable checkpointing yet | HR-24 to HR-27 |
-| L4 Continuous measurement | Partial: evals on traces in CI, golden set, one round of cross red-team. No SLOs yet | Section 6 |
+| L1 Basic controls | Partial: API schemas (Pydantic) and thin audit logging exist. Tool allowlist is planned; no agent tools exist | HR-17, HR-19, HR-28 |
+| L2 Correct authorization | Partial: default-deny referral gate, purpose-level consent and simulated review exist in the backend; API/UI acceptance pending | HR-01 to HR-03, HR-07 to HR-16 |
+| L3 Durable operation | Partial: state machine and idempotency for navigation writes exist. Model timeout, fallback, quota and gateway tracing are planned; no model gateway exists. No durable checkpointing | HR-24 to HR-27 |
+| L4 Continuous measurement | Partial: backend pytest and Ruff in CI, emergency golden set. Trace evals and red-team are planned, not run. No SLOs | Section 6 |
 | L5 Self-improving | Not done: repeated failures are turned into new rules or tests by a person | Not applied |
 
 Ownership by person:
@@ -199,7 +203,7 @@ Next step: add a Rule column to the backlog and put the HR IDs into each task's 
 The source document was written for enterprise agents (quotes, CRM), so some parts do not apply directly to Sanad in three weeks.
 
 - **Cedar and OPA:** not used. The referral gate is a tested Python function; revisit only if the rule count grows.
-- **MCP, OAuth 2.1, tool-definition pinning:** Sanad calls tools through its own backend and API gateway, not third-party MCP servers. Pin the OpenAPI version instead (HR-19). If MCP is added later, add rules against tool poisoning and token passthrough.
+- **MCP, OAuth 2.1, tool-definition pinning:** Sanad calls tools through its own backend and API gateway, not third-party MCP servers. Pin the OpenAPI version instead (HR-19). If MCP is added later, add rules against tool poisoning and token passthrough. A `PROPOSED` design with draft rules HR-31 to HR-46 is in [mcp-context-design.md](mcp-context-design.md); it is not adopted.
 - **Semantic cache at the gateway:** not used on any step that touches health data or has side effects.
 - **Trace naming:** use the OpenTelemetry names `invoke_agent` and `execute_tool`, plus a custom `policy.check` span. That convention is still in Development status, so pin its version.
 - **Harness² from Google:** not used to modify Sanad's guardrails automatically. It is research code, not an officially supported Google product.

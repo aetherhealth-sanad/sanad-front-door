@@ -407,6 +407,8 @@ Definition of `knowledge_search_evidence`:
 
 When `status` is `MODEL_MISMATCH` or `KNOWLEDGE_UNAVAILABLE`, `topic_results` and `passages` are empty, and the version fields may be `null`.
 
+`content_sha256` is the hash of the full chunk `content`. `excerpt` is display text cut to 1,200 characters, and a 200–500 token chunk can be longer than that. Clients check a citation with `knowledge_verify_citation`, never by hashing `excerpt`.
+
 Definition of `calendar_list_mock_slots`. JSON Schema treats `format` as an annotation, so dates also carry a `pattern`.
 
 ```json
@@ -540,7 +542,7 @@ CREATE TABLE knowledge.index_build (
     built_at           timestamptz NOT NULL,
     source_count       integer     NOT NULL,
     chunk_count        integer     NOT NULL,
-    status             text        NOT NULL CHECK (status IN ('BUILDING', 'ACTIVE', 'RETIRED'))
+    status             text        NOT NULL CHECK (status IN ('BUILDING', 'ACTIVE', 'RETIRED', 'FAILED'))
 );
 -- At most one active build. This index is checked row by row and cannot be deferred (§7.3).
 CREATE UNIQUE INDEX one_active_index ON knowledge.index_build (status) WHERE status = 'ACTIVE';
@@ -596,6 +598,8 @@ Because `embedding` has no fixed dimension, a build made with a new model (and a
    - each chunk has one language;
    - every chunk vector and every topic vector has `vector_dims(embedding) = embedding_dim`;
    - every topic in the vocabulary has a topic query.
+
+   If any check fails, the CLI marks the build `FAILED`. A `FAILED` build is never activated, and the ingest role needs no `DELETE` right to leave it behind.
 8. **Activate.** Retire the old build first, then activate the new one, in one transaction:
 
 ```sql
@@ -627,7 +631,7 @@ FROM knowledge.index_build AS b
 JOIN knowledge.topic_query AS q
   ON q.index_version = b.index_version AND q.topic_code = :topic_code
 JOIN knowledge.chunk AS c
-  ON c.index_version = b.index_version AND :topic_code = ANY (c.topic_codes)
+  ON c.index_version = b.index_version AND c.topic_codes @> ARRAY[:topic_code]  -- @> can use chunk_topics_idx; = ANY cannot
 JOIN knowledge.source AS s
   ON s.source_id = c.source_id AND s.source_version = c.source_version
 WHERE b.status = 'ACTIVE'
@@ -848,7 +852,7 @@ These extend [harness.md](harness.md). The harness says MCP is not applied yet, 
 | HR-42 | Claims fail closed: if retrieval or verification fails, the claim shows insufficient evidence and the rules-only result is labelled (HR-27). | Verifier; outage test | KN-08 |
 | HR-43 | An appointment intent is created or withdrawn only through the REST API by the patient's own action, and confirmed or declined only by the Mock Facility role. The backend checks each action at that moment. Agents can only suggest slots. | No write tool; route guards; idempotency key | CAL-03, CAL-04 |
 | HR-44 | Every slot, intent and facility response is Mock: `is_mock: true`, `verification_source: SIMULATED`, `verification_status: UNVERIFIED`, and "Mock appointment, not a real booking". Facilities come from the Mock directory only (HR-30, OD-09). | Schema constants; UI label check | CAL-02 |
-| HR-45 | An intent never produces `BOOKING_SELF_REPORTED`, `VISIT_SELF_REPORTED`, `PROVIDER_VERIFIED` or `CARE_COMPLETED`, and the passing of a slot time changes nothing | Status enum; negative tests | CAL-05 |
+| HR-45 | An intent never produces `BOOKING_SELF_REPORTED`, `VISIT_SELF_REPORTED`, `PROVIDER_VERIFIED` or `CARE_COMPLETED`. The passing of a slot time never changes a `MOCK_SLOT_CONFIRMED` intent; it only moves an unanswered `MOCK_INTENT_REQUESTED` to `MOCK_INTENT_EXPIRED` (§8.3) | Status enum; negative tests | CAL-05 |
 | HR-46 | The calendar and booking modules have no outbound transport: no HTTP, email, SMS or calendar client, no file export, and no third-party calendar or MCP server (invariant 12, AC-12.8 extended) | Import test | CAL-07 |
 
 ## 11. Proposed tests
