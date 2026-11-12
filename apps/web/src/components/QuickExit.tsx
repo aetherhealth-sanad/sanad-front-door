@@ -7,7 +7,7 @@ interface QuickExitProps {
 
 export const QuickExit: React.FC<QuickExitProps> = ({
   className = '',
-  neutralUrl = 'about:blank',
+  neutralUrl = 'https://www.google.com',
 }) => {
   const handleQuickExit = () => {
     let token: string | null = null;
