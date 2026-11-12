@@ -38,7 +38,9 @@ export const UrgentLink: React.FC<UrgentLinkProps> = ({
       title="Access emergency guidance for acute reproductive warning signs"
       className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold text-[#D92D20] bg-[#FEF3F2] hover:bg-[#FEE4E2] border border-[#FECDCA] transition-[transform,background-color,border-color,box-shadow] duration-160 ease-[var(--ease-out)] active:scale-[0.97] no-underline whitespace-nowrap shadow-xs ${className}`}
     >
-      <span className="w-2 h-2 rounded-[2px] bg-[#B91C1C]" />
+      <svg className="w-3.5 h-3.5 text-[#D92D20] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
       Urgent Help
     </a>
   );
