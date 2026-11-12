@@ -10,9 +10,10 @@ const STEPS = [
   { id: '/safety', label: '03 Safety' },
   { id: '/lab', label: '04 Lab (J3)' },
   { id: '/intake', label: '05 Intake' },
-  { id: '/result', label: '06 Synthesis' },
-  { id: '/referral', label: '07 Gate' },
-  { id: '/tracking', label: '08 Tracking' },
+  { id: '/review', label: '06 Review' },
+  { id: '/result', label: '07 Synthesis' },
+  { id: '/referral', label: '08 Gate' },
+  { id: '/tracking', label: '09 Tracking' },
 ];
 
 export const StepProgress: React.FC<StepProgressProps> = ({
@@ -57,7 +58,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
                     : 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
                 }`}
               >
-                <span>{isCompleted ? '✓' : isSkippedLab ? '—' : step.label}</span>
+                <span>{isCompleted ? '✓' : isSkippedLab ? '-' : step.label}</span>
                 {isCompleted && <span>{step.label.slice(3)}</span>}
                 {isSkippedLab && <span>Lab (Optional)</span>}
               </div>

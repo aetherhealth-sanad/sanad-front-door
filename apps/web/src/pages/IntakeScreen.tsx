@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   api,
   type IntakeAnswer,
   type PsychosocialQuestion,
   type QuestionsResponse,
+  type QuestionItem,
 } from '../api/client';
 import { MockBadge } from '../components/MockBadge';
+import { ChatIntake } from './ChatIntake';
 
 interface IntakeScreenProps {
   caseId: string;
   onAssessmentComplete: (route: string) => void;
   onOpenLab?: () => void;
+  onNavigateToReview?: () => void;
+  onAnswerRecorded?: (question: QuestionItem, answer: IntakeAnswer, label: string) => void;
 }
 
 type AnswerChoice = IntakeAnswer['choice'] | '';
@@ -40,7 +44,10 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
   caseId,
   onAssessmentComplete,
   onOpenLab,
+  onNavigateToReview,
+  onAnswerRecorded,
 }) => {
+  const [view, setView] = useState<'chat' | 'form'>('chat');
   const [catalogue, setCatalogue] = useState<QuestionsResponse | null>(null);
   const [psychQuestions, setPsychQuestions] = useState<PsychosocialQuestion[]>([]);
   const [draftAnswers, setDraftAnswers] = useState<Record<string, DraftAnswer>>({});
@@ -81,7 +88,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
     });
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleProceedToReview = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
     setError(null);
@@ -90,7 +97,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
       const submittedAnswers: IntakeAnswer[] = [];
       for (const question of catalogue.questions) {
         const draft = draftAnswers[question.question_id];
-        if (!draft || !draft.choice) continue; // Unanswered remains NOT_ASKED.
+        if (!draft || !draft.choice) continue;
         if (draft.choice !== 'ANSWERED') {
           submittedAnswers.push({
             question_id: question.question_id,
@@ -143,25 +150,26 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
           },
         ];
       });
-      await api.savePsychosocial(caseId, submittedPsychosocial);
+      if (submittedPsychosocial.length > 0) {
+        await api.savePsychosocial(caseId, submittedPsychosocial);
+      }
 
-      const assessment = await api.assessCase(caseId, 'FULL_INTAKE');
-      sessionStorage.setItem('sanad_case_entry_path', 'FULL_INTAKE');
-      if (assessment.draft_ready) {
-        onAssessmentComplete(assessment.state.route);
+      if (onNavigateToReview) {
+        onNavigateToReview();
       } else {
-        const refreshed = await api.getQuestions(caseId);
-        setCatalogue(refreshed);
-        setDraftAnswers({});
-        setError(
-          refreshed.questions.length
-            ? 'More information is needed before a draft can be prepared. Answer the follow-up questions or leave them unknown.'
-            : 'The assessment is not ready yet. The case remains in its current state.',
-        );
+        const assessment = await api.assessCase(caseId, 'FULL_INTAKE');
+        sessionStorage.setItem('sanad_case_entry_path', 'FULL_INTAKE');
+        if (assessment.draft_ready) {
+          onAssessmentComplete(assessment.state.route);
+        } else {
+          const refreshed = await api.getQuestions(caseId);
+          setCatalogue(refreshed);
+          setDraftAnswers({});
+        }
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'The assessment could not be submitted.',
+        err instanceof Error ? err.message : 'The answers could not be saved.',
       );
     } finally {
       setLoading(false);
@@ -248,190 +256,222 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
     );
   };
 
+  // If in Chat view, render ChatIntake with toggle to Form
+  if (view === 'chat') {
+    return (
+      <ChatIntake
+        caseId={caseId}
+        onNavigateToReview={onNavigateToReview || (() => handleProceedToReview({ preventDefault: () => {} } as React.FormEvent))}
+        onSwitchToForm={() => setView('form')}
+        onOpenLab={onOpenLab}
+        onAnswerSaved={onAnswerRecorded}
+      />
+    );
+  }
+
+  // Otherwise, render full Form view with toggle back to Chat
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <div className="mb-8 pb-5 border-b border-[#0B1310] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <MockBadge
-              label={`MOCK INTAKE QUESTIONS · ${catalogue?.approval_status ?? 'CLINICAL_TBD'}`}
-            />
-            {catalogue && (
-              <span className="font-mono text-xs text-[#3F4E48]">
-                {catalogue.catalogue_version}
-              </span>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top Banner & View Switcher */}
+      <div className="dossier-card bg-white p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#0B1310] pb-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <MockBadge label="INTAKE QUESTIONNAIRE" />
+              <span className="font-mono text-xs text-[#3F4E48]">Screening, not diagnosis</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
+              Intake Questions
+            </h1>
+            <p className="text-sm text-[#3F4E48] mt-1 leading-relaxed">
+              Approved clinical questions. Not sure and Prefer not to say are always valid answers and never mean low risk.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setView('chat')}
+              className="px-3.5 py-2 rounded-[2px] border border-[#0B1310] bg-[#E6F2EE] font-mono text-xs font-bold text-[#0F523E] hover:bg-[#D5EAE2] cursor-pointer btn-press"
+            >
+              Switch to assistant chat
+            </button>
+            {onOpenLab && (
+              <button
+                type="button"
+                onClick={onOpenLab}
+                className="px-3.5 py-2 rounded-[2px] border border-[#0B1310] bg-white font-mono text-xs font-bold text-[#0B1310] hover:bg-[#E6EAE4] cursor-pointer btn-press"
+              >
+                + Add lab values
+              </button>
             )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
-            Structured Context Questions
-          </h1>
-          <p className="text-sm sm:text-base text-[#3F4E48] mt-1.5 leading-relaxed">
-            Question wording and rules are draft research content. Skipped, unknown, and declined answers stay distinct.
-          </p>
         </div>
 
-        {onOpenLab && (
-          <button
-            type="button"
-            onClick={onOpenLab}
-            className="px-4 py-2.5 rounded-[2px] font-mono font-bold text-xs text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] btn-press cursor-pointer whitespace-nowrap"
-          >
-            Open J3 Lab Observations →
-          </button>
+        {error && (
+          <div role="alert" className="p-4 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-xs font-semibold">
+            {error}
+          </div>
         )}
       </div>
 
-      {error && (
-        <div
-          role="alert"
-          className="mb-6 p-4 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-sm font-medium"
-        >
-          {error}
+      {loadingCatalogue ? (
+        <div className="dossier-card bg-white p-8 text-center font-mono text-sm text-[#3F4E48]">
+          Loading catalogue…
         </div>
-      )}
-      {loadingCatalogue && (
-        <p className="text-sm font-mono text-[#3F4E48]">Loading draft questions…</p>
-      )}
-
-      {!loadingCatalogue && catalogue && (
-        <form onSubmit={handleSubmit} className="space-y-6">
+      ) : (
+        <form onSubmit={handleProceedToReview} className="space-y-6">
           <div className="dossier-card bg-white p-6 space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-[#0B1310]">
-              <h2 className="text-base font-extrabold text-[#0B1310]">
-                Questions for this case ({catalogue.questions.length})
-              </h2>
-              <span className="font-mono text-xs text-[#3F4E48]">
-                EPISTEMIC HONESTY ENFORCED
-              </span>
-            </div>
+            <h2 className="text-base font-extrabold text-[#0B1310] border-b border-[#0B1310] pb-2">
+              Clinical Questions
+            </h2>
 
-            {catalogue.questions.length === 0 && (
-              <p className="text-sm text-[#3F4E48]">
-                No follow-up questions are currently requested. You may continue to the draft assessment.
-              </p>
-            )}
+            <div className="space-y-5">
+              {catalogue?.questions.map((question, index) => {
+                const current = draftAnswers[question.question_id];
+                const isConflict = question.conflicting_values && question.conflicting_values.length > 0;
 
-            {catalogue.questions.map(question => (
-              <div
-                key={question.question_id}
-                className="space-y-3 border-b border-[#C5CEC9] pb-5 last:border-0 last:pb-0"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <label className="block text-sm font-bold text-[#0B1310]">
-                    {question.text}
-                  </label>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono text-[10px] px-2 py-0.5 bg-[#F3F4F1] border border-[#C5CEC9] text-[#3F4E48]">
-                      {question.question_id} · {question.reason}
-                    </span>
-                    {question.blocking && (
-                      <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-[#FFFBEB] border border-[#B45309] text-[#78350F]">
-                        Needed for this draft
-                      </span>
+                return (
+                  <div
+                    key={question.question_id}
+                    className={`p-4 rounded-[2px] border ${
+                      isConflict ? 'border-[#B45309] bg-[#FFFBEB]' : 'border-[#C5CEC9] bg-white'
+                    } space-y-3`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <span className="font-mono text-xs text-[#63736C]">
+                          Question {index + 1} of {catalogue.questions.length}
+                          {question.blocking && ' · Core required'}
+                        </span>
+                        <p className="text-sm font-bold text-[#0B1310] leading-snug">
+                          {question.text}
+                        </p>
+                        {question.reason && (
+                          <p className="text-xs text-[#3F4E48] leading-relaxed">
+                            {question.reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {isConflict && (
+                      <p className="text-xs font-mono text-[#78350F]">
+                        Conflicting values recorded. Your selection will update this record.
+                      </p>
                     )}
-                  </div>
-                </div>
 
-                {question.conflicting_values.length > 0 && (
-                  <div className="rounded-[2px] bg-[#FFFBEB] border border-[#B45309] p-3 text-xs text-[#78350F] font-mono">
-                    <strong>Conflicting recorded values:</strong>
-                    <ul className="mt-1 space-y-1">
-                      {question.conflicting_values.map((item, index) => (
-                        <li key={`${item.source_type}-${index}`}>
-                          {String(item.value ?? 'Unknown')}
-                          {item.unit ? ` ${item.unit}` : ''} · {item.source_type}
-                          {item.temporal_status ? ` · ${item.temporal_status}` : ''}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                    {renderQuestionInput(question)}
 
-                {renderQuestionInput(question)}
-
-                <div className="flex flex-wrap gap-2">
-                  {question.opt_out_choices.map(choice => {
-                    const active = draftAnswers[question.question_id]?.choice === choice;
-                    return (
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#E6EAE4]">
                       <button
                         type="button"
-                        key={choice}
                         onClick={() =>
-                          setAnswer(question.question_id, {
-                            choice: choice as IntakeAnswer['choice'],
-                          })
+                          setAnswer(question.question_id, { choice: 'NOT_SURE' })
                         }
-                        className={`px-3 py-1.5 rounded-[2px] border font-mono text-xs cursor-pointer transition-colors ${
-                          active
-                            ? 'bg-[#0B1310] border-[#0B1310] text-white font-bold'
-                            : 'bg-[#F3F4F1] border-[#0B1310] text-[#0B1310] hover:bg-[#E6EAE4]'
+                        className={`px-3 py-1.5 rounded-[2px] font-mono text-xs border cursor-pointer btn-press ${
+                          current?.choice === 'NOT_SURE'
+                            ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
+                            : 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4]'
                         }`}
                       >
-                        {choice === 'NOT_SURE' ? 'Not sure' : 'Prefer not to answer'}
+                        Not sure
                       </button>
-                    );
-                  })}
-                  {draftAnswers[question.question_id] && (
-                    <button
-                      type="button"
-                      onClick={() => setAnswer(question.question_id, null)}
-                      className="px-3 py-1.5 rounded-[2px] font-mono text-xs text-[#3F4E48] underline cursor-pointer"
-                    >
-                      Leave not asked
-                    </button>
-                  )}
-                </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAnswer(question.question_id, { choice: 'PREFER_NOT_TO_ANSWER' })
+                        }
+                        className={`px-3 py-1.5 rounded-[2px] font-mono text-xs border cursor-pointer btn-press ${
+                          current?.choice === 'PREFER_NOT_TO_ANSWER'
+                            ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
+                            : 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4]'
+                        }`}
+                      >
+                        Prefer not to answer
+                      </button>
+
+                      {current?.choice && (
+                        <button
+                          type="button"
+                          onClick={() => setAnswer(question.question_id, null)}
+                          className="px-3 py-1.5 rounded-[2px] font-mono text-xs text-[#63736C] hover:text-[#0B1310] underline cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Optional Psychosocial Questions */}
+          {psychQuestions.length > 0 && (
+            <div className="dossier-card bg-white p-6 space-y-4">
+              <div>
+                <h2 className="text-base font-extrabold text-[#0B1310]">
+                  Wellbeing Context (Optional)
+                </h2>
+                <p className="font-mono text-xs text-[#63736C] mt-1">
+                  Up to three optional questions about how you have been. Self-reported context only, never used for triage.
+                </p>
               </div>
-            ))}
-          </div>
 
-          {/* Optional Psychosocial Micro-Intake (PRD-FR-29/30) */}
-          <div className="dossier-card bg-[#E6EAE4] p-6 space-y-4">
-            <div>
-              <MockBadge label="MOCK OPTIONAL CONTEXT · CLINICAL_TBD" />
-              <h2 className="text-base font-extrabold text-[#0B1310] mt-2">
-                Optional Psychosocial Self-Reports (Max 3)
-              </h2>
-              <p className="text-xs text-[#3F4E48] mt-1 leading-relaxed">
-                These optional self-reports are unverified context only (<code className="font-mono">PATIENT_REPORTED</code>,{' '}
-                <code className="font-mono">UNVERIFIED</code>) and never enter triage rules. You can skip all three.
-              </p>
+              <div className="space-y-4">
+                {psychQuestions.map(question => (
+                  <div key={question.question_id} className="p-4 rounded-[2px] border border-[#C5CEC9] space-y-2">
+                    <p className="text-sm font-semibold text-[#0B1310]">
+                      {question.draft_text}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(['KNOWN_POSITIVE', 'KNOWN_NEGATIVE', 'UNKNOWN', 'DECLINED'] as const).map(
+                        stateKey => (
+                          <button
+                            key={stateKey}
+                            type="button"
+                            onClick={() =>
+                              setPsychAnswers(prev => ({ ...prev, [question.question_id]: stateKey }))
+                            }
+                            className={`px-3 py-1.5 rounded-[2px] font-mono text-xs border cursor-pointer btn-press ${
+                              psychAnswers[question.question_id] === stateKey
+                                ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
+                                : 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4]'
+                            }`}
+                          >
+                            {stateKey === 'KNOWN_POSITIVE'
+                              ? 'Yes'
+                              : stateKey === 'KNOWN_NEGATIVE'
+                              ? 'No'
+                              : stateKey === 'UNKNOWN'
+                              ? 'Not sure'
+                              : 'Prefer not to say'}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="space-y-3">
-              {psychQuestions.map(question => (
-                <label
-                  key={question.question_id}
-                  className="block p-3.5 rounded-[2px] bg-white border border-[#0B1310] text-sm font-semibold text-[#0B1310]"
-                >
-                  <span className="block mb-1.5">{question.draft_text}</span>
-                  <select
-                    value={psychAnswers[question.question_id] ?? 'NOT_ASKED'}
-                    onChange={event =>
-                      setPsychAnswers(previous => ({
-                        ...previous,
-                        [question.question_id]: event.target.value as PsychosocialState,
-                      }))
-                    }
-                    className="w-full px-3 py-2 rounded-[2px] border border-[#0B1310] bg-[#F3F4F1] text-sm font-normal"
-                  >
-                    <option value="NOT_ASKED">Skip (not asked)</option>
-                    <option value="KNOWN_POSITIVE">Yes</option>
-                    <option value="KNOWN_NEGATIVE">No</option>
-                    <option value="UNKNOWN">Not sure</option>
-                    <option value="DECLINED">Prefer not to say</option>
-                  </select>
-                </label>
-              ))}
-            </div>
-          </div>
+          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 px-6 rounded-[2px] font-mono font-bold text-sm text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer disabled:opacity-60"
-          >
-            {loading ? 'Preparing draft…' : 'Save answers and prepare draft →'}
-          </button>
+          {/* Submit / Proceed to Review CTA */}
+          <div className="dossier-card bg-white p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-[#3F4E48] leading-relaxed">
+              When ready, proceed to review what Sanad has recorded before submitting.
+            </p>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto px-6 py-3 rounded-[2px] font-mono font-bold text-sm text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer text-center"
+            >
+              {loading ? 'Saving answers…' : 'Proceed to Review Profile →'}
+            </button>
+          </div>
         </form>
       )}
     </div>

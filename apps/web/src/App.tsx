@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { api, clearPendingUploadFile } from './api/client';
+import {
+  api,
+  clearPendingUploadFile,
+  type QuestionItem,
+  type ObservationRecord,
+  type IntakeAnswer,
+  type PsychosocialQuestion,
+} from './api/client';
 import { Navbar } from './components/Navbar';
 import { MockBadge } from './components/MockBadge';
 import { StartScreen } from './pages/StartScreen';
@@ -7,6 +14,8 @@ import { ConsentScreen } from './pages/ConsentScreen';
 import { SafetyScreen } from './pages/SafetyScreen';
 import { LabScreen } from './pages/LabScreen';
 import { IntakeScreen } from './pages/IntakeScreen';
+import { ReviewProfileScreen } from './pages/ReviewProfileScreen';
+import { SubmitReceiptScreen } from './pages/SubmitReceiptScreen';
 import { ResultScreen } from './pages/ResultScreen';
 import { ReferralScreen } from './pages/ReferralScreen';
 import { TrackingScreen } from './pages/TrackingScreen';
@@ -15,6 +24,11 @@ import { ClinicianPortal } from './pages/ClinicianPortal';
 import { MockFacilityPortal } from './pages/MockFacilityPortal';
 import { UrgentLink } from './components/UrgentLink';
 import { StepProgress } from './components/StepProgress';
+import {
+  SessionDashboard,
+  type RecordedFactItem,
+  type SessionStep,
+} from './components/SessionDashboard';
 
 export function App() {
   const [currentRole, setCurrentRole] = useState<'patient' | 'clinician' | 'facility'>('patient');
@@ -25,6 +39,28 @@ export function App() {
     return sessionStorage.getItem('sanad_case_id');
   });
 
+  // Recorded facts & session data
+  const [questions, setQuestions] = useState<QuestionItem[]>([]);
+  const [recordedAnswers, setRecordedAnswers] = useState<
+    Record<
+      string,
+      {
+        choice: string;
+        value?: boolean | number | string | null;
+        temporal_status?: string | null;
+        label: string;
+        source?: string;
+      }
+    >
+  >({});
+  const [observations, setObservations] = useState<ObservationRecord[]>([]);
+  const [psychQuestions, setPsychQuestions] = useState<PsychosocialQuestion[]>([]);
+  const [psychAnswers, setPsychAnswers] = useState<Record<string, string>>({});
+  const [isSubmittingAssessment, setIsSubmittingAssessment] = useState(false);
+  const [assessmentError, setAssessmentError] = useState<string | null>(null);
+  const [receiptReady, setReceiptReady] = useState(false);
+
+  // Restore session from sessionStorage
   useEffect(() => {
     const storedId = sessionStorage.getItem('sanad_case_id');
     if (!storedId) return;
@@ -58,6 +94,27 @@ export function App() {
     };
   }, []);
 
+  // Fetch session data (questions, observations, psychosocial) whenever caseId is active
+  useEffect(() => {
+    if (!caseId) return;
+    let mounted = true;
+    Promise.all([
+      api.getQuestions(caseId).catch(() => null),
+      api.getObservations(caseId).catch(() => null),
+      api.getPsychosocialQuestions().catch(() => null),
+    ]).then(([questionsRes, obsRes, psychRes]) => {
+      if (!mounted) return;
+      if (questionsRes) setQuestions(questionsRes.questions);
+      if (obsRes) setObservations(obsRes.observations);
+      if (psychRes) setPsychQuestions(psychRes.questions);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [caseId, currentRoute]);
+
+  // Handle pageshow / bfcache wipe for confidential privacy
   useEffect(() => {
     const handlePageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return;
@@ -101,6 +158,7 @@ export function App() {
     return () => window.removeEventListener('pageshow', handlePageShow);
   }, []);
 
+  // Service worker registration
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     let mounted = true;
@@ -151,6 +209,10 @@ export function App() {
       sessionStorage.removeItem(key);
     }
     setCaseId(null);
+    setRecordedAnswers({});
+    setQuestions([]);
+    setObservations([]);
+    setPsychAnswers({});
     setCurrentRoute('/');
     setCurrentRole('patient');
   };
@@ -171,6 +233,95 @@ export function App() {
       resetSession();
     }
   };
+
+  const handleAnswerRecorded = (question: QuestionItem, answer: IntakeAnswer, label: string) => {
+    setRecordedAnswers(prev => ({
+      ...prev,
+      [question.question_id]: {
+        choice: answer.choice,
+        value: answer.value,
+        temporal_status: answer.temporal_status,
+        label,
+        source: 'Intake chat',
+      },
+    }));
+  };
+
+  const handleSubmitAssessment = async () => {
+    if (!caseId) return;
+    setIsSubmittingAssessment(true);
+    setAssessmentError(null);
+    setReceiptReady(false);
+    navigateTo('/receipt');
+
+    try {
+      const entryPath =
+        (sessionStorage.getItem('sanad_case_entry_path') as 'FULL_INTAKE' | 'LAB_ONLY') ||
+        'FULL_INTAKE';
+      const result = await api.assessCase(caseId, entryPath);
+      if (result.state.route === '/urgent.html') {
+        window.location.replace('/urgent.html');
+        return;
+      }
+      setReceiptReady(true);
+      setTimeout(() => {
+        navigateTo(result.state.route || '/result');
+        setIsSubmittingAssessment(false);
+      }, 1200);
+    } catch (err) {
+      setAssessmentError(err instanceof Error ? err.message : 'Could not submit assessment.');
+      setIsSubmittingAssessment(false);
+      navigateTo('/review');
+    }
+  };
+
+  // Convert recorded facts for dashboard right rail
+  const recordedFactsList: RecordedFactItem[] = [
+    ...Object.entries(recordedAnswers).map(([qId, ans]) => {
+      const q = questions.find(item => item.question_id === qId);
+      return {
+        id: qId,
+        question: q?.text || qId,
+        answerLabel: ans.label,
+        sourceType: ans.source || 'PATIENT_REPORTED',
+        status: (ans.choice === 'NOT_SURE'
+          ? 'Not sure'
+          : ans.choice === 'PREFER_NOT_TO_ANSWER'
+          ? 'Prefer not to say'
+          : 'Answered') as RecordedFactItem['status'],
+        onEdit: () => navigateTo('/review'),
+      };
+    }),
+    ...observations.map(obs => ({
+      id: obs.observation_id,
+      question: `Lab: ${obs.test_code.toUpperCase()}`,
+      answerLabel: obs.value !== null ? `${obs.value} ${obs.unit || ''}` : 'Recorded',
+      sourceType: 'OBSERVATION',
+      status: 'Unverified' as RecordedFactItem['status'],
+      onEdit: () => navigateTo('/lab'),
+    })),
+  ];
+
+  // Core questions progress count
+  const coreQuestions = questions.filter(q => q.blocking);
+  const coreDoneCount = coreQuestions.filter(
+    q => recordedAnswers[q.question_id] && recordedAnswers[q.question_id].choice !== 'NOT_ASKED',
+  ).length;
+
+  // Determine current session step for the dashboard left rail
+  const getSessionStep = (): SessionStep => {
+    if (currentRoute === '/consent') return 'consent';
+    if (currentRoute === '/safety') return 'safety';
+    if (currentRoute === '/intake' || currentRoute === '/lab') return 'questions';
+    if (currentRoute === '/review') return 'review';
+    if (currentRoute === '/receipt') return 'submit';
+    if (currentRoute === '/result') return 'summary';
+    return 'next_step';
+  };
+
+  const isInsideDashboard =
+    Boolean(caseId) &&
+    ['/safety', '/intake', '/lab', '/review', '/receipt'].includes(currentRoute);
 
   return (
     <div className="min-h-[100dvh] bg-[#F3F4F1] flex flex-col font-sans text-[#0B1310] selection:bg-[#0F523E] selection:text-white">
@@ -246,24 +397,70 @@ export function App() {
               </section>
             )}
 
-            {currentRoute === '/lab' && caseId && (
-              <LabScreen
+            {/* Unified Session Dashboard Workspace */}
+            {isInsideDashboard && caseId && (
+              <SessionDashboard
+                currentStep={getSessionStep()}
                 caseId={caseId}
-                onContinueToIntake={() => navigateTo('/intake')}
-                onAssessmentComplete={navigateTo}
-              />
-            )}
-
-            {currentRoute === '/safety' && caseId && (
-              <SafetyScreen caseId={caseId} onSafetyPass={navigateTo} />
-            )}
-
-            {currentRoute === '/intake' && caseId && (
-              <IntakeScreen
-                caseId={caseId}
-                onAssessmentComplete={navigateTo}
+                coreCount={{ done: coreDoneCount, total: coreQuestions.length }}
+                recordedFacts={recordedFactsList}
+                summaryStatus={
+                  currentRoute === '/receipt'
+                    ? 'Processing…'
+                    : currentRoute === '/review'
+                    ? 'Review required'
+                    : 'Not ready yet'
+                }
                 onOpenLab={() => navigateTo('/lab')}
-              />
+                onOpenPrivacy={() => navigateTo('/privacy')}
+              >
+                {currentRoute === '/safety' && (
+                  <SafetyScreen caseId={caseId} onSafetyPass={navigateTo} />
+                )}
+
+                {currentRoute === '/lab' && (
+                  <LabScreen
+                    caseId={caseId}
+                    onContinueToIntake={() => navigateTo('/intake')}
+                    onAssessmentComplete={navigateTo}
+                  />
+                )}
+
+                {currentRoute === '/intake' && (
+                  <IntakeScreen
+                    caseId={caseId}
+                    onAssessmentComplete={navigateTo}
+                    onOpenLab={() => navigateTo('/lab')}
+                    onNavigateToReview={() => navigateTo('/review')}
+                    onAnswerRecorded={handleAnswerRecorded}
+                  />
+                )}
+
+                {currentRoute === '/review' && (
+                  <ReviewProfileScreen
+                    caseId={caseId}
+                    questions={questions}
+                    answers={recordedAnswers}
+                    observations={observations}
+                    psychQuestions={psychQuestions}
+                    psychAnswers={psychAnswers}
+                    onEditQuestion={() => navigateTo('/intake')}
+                    onOpenLab={() => navigateTo('/lab')}
+                    onReturnToQuestions={() => navigateTo('/intake')}
+                    onSubmitAssessment={handleSubmitAssessment}
+                    isSubmitting={isSubmittingAssessment}
+                    error={assessmentError}
+                  />
+                )}
+
+                {currentRoute === '/receipt' && (
+                  <SubmitReceiptScreen
+                    caseId={caseId}
+                    isReady={receiptReady}
+                    onViewSummary={() => navigateTo('/result')}
+                  />
+                )}
+              </SessionDashboard>
             )}
 
             {currentRoute === '/result' && caseId && (
