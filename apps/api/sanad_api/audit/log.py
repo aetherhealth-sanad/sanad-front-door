@@ -37,6 +37,8 @@ class AuditType(StrEnum):
     NAVIGATION_ACKNOWLEDGED = "NAVIGATION_ACKNOWLEDGED"
     NAVIGATION_PROGRESS_RECORDED = "NAVIGATION_PROGRESS_RECORDED"
     NAVIGATION_BARRIER_RECORDED = "NAVIGATION_BARRIER_RECORDED"
+    INPUT_CHECKED = "INPUT_CHECKED"
+    MODEL_TASK_RUN = "MODEL_TASK_RUN"
 
 
 ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
@@ -59,6 +61,26 @@ ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
     AuditType.NAVIGATION_ACKNOWLEDGED: frozenset({"guidance_version"}),
     AuditType.NAVIGATION_PROGRESS_RECORDED: frozenset({"status", "verification_source"}),
     AuditType.NAVIGATION_BARRIER_RECORDED: frozenset({"count", "prefer_not_to_say"}),
+    # Typed chat text (T4.5): reason codes and versions only, never the text (PRD-AC-54).
+    AuditType.INPUT_CHECKED: frozenset({"result", "reason_code", "origin", "question_id"}),
+    # The bounded task trace (PRD 4.7.2, NFR-21).
+    AuditType.MODEL_TASK_RUN: frozenset(
+        {
+            "request_id",
+            "task_id",
+            "provider",
+            "model_id",
+            "prompt_version",
+            "schema_version",
+            "question_catalogue_version",
+            "question_id",
+            "status",
+            "error_code",
+            "outcome",
+            "attempts",
+            "elapsed_ms",
+        }
+    ),
 }
 
 _CODE = re.compile(r"^[A-Za-z0-9_.:\-]{1,80}$")

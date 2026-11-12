@@ -10,6 +10,7 @@ apps/api/.venv/
 *.sqlite3
 
 # Local environment files (keep .env.example tracked)
+# Local settings and secrets. Copy apps/api/.env.example to apps/api/.env.
 .env
 .env.*
 !.env.example

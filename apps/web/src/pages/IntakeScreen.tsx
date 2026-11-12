@@ -6,12 +6,28 @@ import {
   type QuestionsResponse,
 } from '../api/client';
 import { MockBadge } from '../components/MockBadge';
+import { ChatIntake } from './ChatIntake';
 
 interface IntakeScreenProps {
   caseId: string;
   onAssessmentComplete: (route: string) => void;
   onOpenLab?: () => void;
 }
+
+interface IntakeFormProps extends IntakeScreenProps {
+  onSwitchToChat: () => void;
+}
+
+/** `/intake`: the chat view (RF-21) by default, with the full form one tap away. Both use
+ * the same answer endpoint, so the server checks are identical. */
+export const IntakeScreen: React.FC<IntakeScreenProps> = props => {
+  const [view, setView] = useState<'chat' | 'form'>('chat');
+  return view === 'chat' ? (
+    <ChatIntake {...props} onSwitchToForm={() => setView('form')} />
+  ) : (
+    <IntakeForm {...props} onSwitchToChat={() => setView('chat')} />
+  );
+};
 
 type AnswerChoice = IntakeAnswer['choice'] | '';
 type DraftAnswer = {
@@ -36,10 +52,11 @@ const psychResponse: Record<
   DECLINED: null,
 };
 
-export const IntakeScreen: React.FC<IntakeScreenProps> = ({
+const IntakeForm: React.FC<IntakeFormProps> = ({
   caseId,
   onAssessmentComplete,
   onOpenLab,
+  onSwitchToChat,
 }) => {
   const [catalogue, setCatalogue] = useState<QuestionsResponse | null>(null);
   const [psychQuestions, setPsychQuestions] = useState<PsychosocialQuestion[]>([]);
@@ -270,15 +287,24 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
           </p>
         </div>
 
-        {onOpenLab && (
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={onOpenLab}
+            onClick={onSwitchToChat}
             className="px-4 py-2.5 rounded-[2px] font-mono font-bold text-xs text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] btn-press cursor-pointer whitespace-nowrap"
           >
-            Open J3 Lab Observations →
+            Answer in the chat
           </button>
-        )}
+          {onOpenLab && (
+            <button
+              type="button"
+              onClick={onOpenLab}
+              className="px-4 py-2.5 rounded-[2px] font-mono font-bold text-xs text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] btn-press cursor-pointer whitespace-nowrap"
+            >
+              Open J3 Lab Observations →
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (

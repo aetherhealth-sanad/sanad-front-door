@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from sanad_api.catalogues import Catalogues
 from sanad_api.clock import Clock
 from sanad_api.config import Settings
+from sanad_api.model_adapter.port import ModelAdapter
 
 
 def get_db(request: Request) -> Iterator[Session]:
@@ -33,3 +34,8 @@ def get_settings(request: Request) -> Settings:
 def get_catalogues(request: Request) -> Catalogues:
     catalogues: Catalogues = request.app.state.catalogues
     return catalogues
+
+
+def get_model_adapter(request: Request) -> ModelAdapter:
+    adapter: ModelAdapter = request.app.state.model_adapter
+    return adapter

@@ -113,6 +113,47 @@ export interface PsychosocialAnswer {
   response_code?: 'YES' | 'NO' | 'NOT_SURE' | null;
 }
 
+/** RF-21: how to label the assistant and whether typing is on (server config). */
+export interface AssistantInfo {
+  assistant_label: string;
+  assistant_note: string;
+  copy_status: string;
+  typing_enabled: boolean;
+  max_text_chars: number;
+  model: { provider: string; label: string; match_label: string } | null;
+  disclosure: string | null;
+  disclosure_version: string | null;
+}
+
+export interface InterpretResponse {
+  outcome: 'EMERGENCY_GUIDANCE' | 'NEEDS_CORRECTION' | 'PROPOSAL' | 'FALLBACK';
+  reason_code: string | null;
+  message: string;
+  proposal: {
+    question_id: string;
+    choice: IntakeAnswer['choice'];
+    value: boolean | number | string | null;
+    temporal_status: 'CURRENT' | 'PAST' | null;
+    echo_label: string;
+  } | null;
+  produced_by: {
+    provider: string;
+    model_id: string;
+    label: string;
+    is_ai_generated: boolean;
+    verification_status: string;
+    needs_user_confirmation: boolean;
+  } | null;
+  emergency: {
+    rule_ids: string[];
+    catalogue_version: string;
+    approval_status: string;
+    is_simulated: boolean;
+    disclosure: string;
+  } | null;
+  state: CaseState;
+}
+
 export interface AssessmentResponse {
   gatekeeper_status: string | null;
   blocking_question_ids: string[];
@@ -385,6 +426,9 @@ export const api = {
   getQuestions: (caseId: string) => request<QuestionsResponse>(`/cases/${caseId}/questions`),
   submitAnswers: (caseId: string, answers: IntakeAnswer[]) =>
     patientPost<CaseState>(`/cases/${caseId}/answers`, { answers }),
+  getAssistant: () => request<AssistantInfo>('/chat/assistant', {}, 'none'),
+  interpretText: (caseId: string, question_id: string, text: string, disclosure_version: string | null) =>
+    patientPost<InterpretResponse>(`/cases/${caseId}/chat/interpret`, { question_id, text, disclosure_version }),
   assessCase: (caseId: string, entryPath: 'FULL_INTAKE' | 'LAB_ONLY' = 'FULL_INTAKE') =>
     patientPost<AssessmentResponse>(`/cases/${caseId}/assess`, { entry_path: entryPath }),
   selectEvidence: (caseId: string, items: Array<{ item_id: string; use: boolean }>) =>
