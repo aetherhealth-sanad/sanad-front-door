@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from sanad_api.audit.models import AuditEvent
 from sanad_api.errors import ApiError, ErrorCode
+from sanad_api.observability import LangfuseTelemetry
 
 
 class AuditType(StrEnum):
@@ -97,6 +98,26 @@ def record(
         details_json=json.dumps(clean, sort_keys=True),
     )
     db.add(event)
+    if event_type in {
+        AuditType.GATE_EVALUATED,
+        AuditType.CONSENT_DENIED,
+        AuditType.TRANSITION_DENIED,
+        AuditType.SHARE_DENIED,
+    }:
+        decision = str(clean.get("decision", "DENY"))
+        reasons = clean.get("reason_codes", [])
+        if not isinstance(reasons, list):
+            reasons = []
+        LangfuseTelemetry.record_policy(
+            event_type=event_type.value,
+            decision=decision,
+            reason_codes=reasons,
+            policy_version=(
+                clean.get("policy_version")
+                if isinstance(clean.get("policy_version"), str)
+                else None
+            ),
+        )
     return event
 
 

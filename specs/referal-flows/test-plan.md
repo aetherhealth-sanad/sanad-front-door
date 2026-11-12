@@ -266,6 +266,21 @@ See the truth table in §5.
 | TC-17.3 | E | B | The audit reads `eval/mock-screens.json`, visits each screen and fails on a missing label. A check confirms that each route with simulated data is on the list. | S |
 | TC-17.4 | E | B | Text scan on mock screens finds no raw enum code standing alone. | S |
 
+### RF-18 Harness controls (PROPOSED; not an active CI gate)
+
+These tests remain proposed and are not an active CI gate. They need to be authored and made blocking after CC-011 approval; the implementation work is present but has not been accepted. They verify software behavior, not clinical accuracy.
+
+| ID | Setup / action | Blocking? | Expected |
+|---|---|---:|---|
+| TC-HR-01 | Run referral actions through the backend guard and `evaluate_gate` | B | Missing consent, approval or backend authorization denies; no alternate referral creator exists |
+| TC-HR-02 | Submit invalid or oversized structured input and inspect response/logs | B | Closed-schema rejection with reason codes only; submitted values are not repeated in logs or errors |
+| TC-HR-03 | Trigger the existing emergency catalogue while optional harness services are disabled or unavailable | B | Existing emergency path is unchanged and does not call MCP or Langfuse |
+| TC-HR-04 | Start the API with Langfuse unset or disabled | B | No Langfuse client is initialized and no telemetry is sent |
+| TC-HR-05 | Enable Langfuse against a test sink and submit synthetic cases | B | Export contains only the approved operational allowlist; no request body, answer, lab, prompt, passage, token or case identifier |
+| TC-HR-06 | Make the configured Langfuse sink unavailable during a request | B | API response, audit write and policy decision are unchanged; exporter failure is contained |
+| TC-HR-07 | Inspect MCP discovery and tool listing for Mode A | B | Pinned protocol and tool manifest; read-only tools only; no case, consent, review, referral, calendar or write capability |
+| TC-HR-08 | Query MCP with no active approved source, a non-approved source, or a mismatched protocol/tool manifest | B | No passage is returned; result is `NO_GROUNDED_EVIDENCE` or a closed failure code; triage and referral gate do not change |
+
 ### PRD v0.4 psychosocial, navigation and FHIR design
 
 | Test | Lvl | Block | Check | Oracle |

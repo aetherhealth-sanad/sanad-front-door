@@ -43,7 +43,7 @@ Built by **AetherHealth** for the [Future Health Digital Innovation Challenge 20
 | Area | Status |
 |---|---|
 | **Requirements** | [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md), [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md), and [E2E workflow v0.4](specs/Sanad_E2E_Workflow_v0.4.md), dated 2026-11-03. Drafts; clinical rules remain pending approval. |
-| **Implementation** | Python/FastAPI backend and React/TypeScript patient, Mock Reviewer and Mock Facility UI source exist under `apps/`. API/UI acceptance and CI verification remain pending; check each section below for implemented versus planned behavior. |
+| **Implementation** | Python/FastAPI backend and React/TypeScript patient, Mock Reviewer and Mock Facility UI source exist under `apps/`. The deterministic referral gate, structured profile validation, optional redacted Langfuse telemetry, and authoring-only knowledge MCP code are present. API/UI acceptance and CI verification remain pending; check each section below for implemented versus planned behavior. |
 | **Clinical policy** | **Not approved.** Clinical advisor is still marked TBD in the specs. Any rule without sign-off must be presented as simulated policy. |
 | **Key dates** | Internal MVP freeze 19 Nov 2026. Challenge submission 20 Nov 2026 (reconfirm with the organiser). |
 
@@ -93,7 +93,7 @@ Three themes from the challenge brief are **not MVP commitments**:
 
 ![Sanad patient flow: private entry and consent, deterministic safety checks (S0, S0b, input guardrail, S1), adaptive intake, Gatekeeper, draft rule floor and report, review and release, then optional closed-loop navigation. Emergency guidance wins at every safety check.](docs/images/sanad-patient-flow.svg)
 
-*The flow as specified in [BRD v0.4.2 §7](specs/Sanad_AetherHealth_BRD_v0.4.md#7-future-state-to-be) and [PRD v0.4.2](specs/Sanad_AetherHealth_PRD_v0.4.md) §1.3, §4.7 and §4.7.1. It shows the target design, not only what is built: the free-text emergency scan (S0b) and the input guardrail are `PROPOSED` and not implemented yet, and the steps marked "AI may draft" make no model calls in the current source. All clinical rules, triggers and wording are `CLINICAL_TBD`.*
+*The flow as specified in [BRD v0.4.2 §7](specs/Sanad_AetherHealth_BRD_v0.4.md#7-future-state-to-be) and [PRD v0.4.2](specs/Sanad_AetherHealth_PRD_v0.4.md) §1.3, §4.7 and §4.7.1. It shows the target design, not only what is built: the free-text emergency scan (S0b) remains `PROPOSED`; structured profile shape and synthetic-data checks are implemented, but do not classify clinical content. The steps marked "AI may draft" make no model calls in the current source. All clinical rules, triggers and wording are `CLINICAL_TBD`.*
 
 ```mermaid
 flowchart TD
@@ -424,6 +424,8 @@ Design intent carried over from earlier work, **not scoped in BRD or PRD v0.4**:
 | **Clinical policy** | Deterministic safety, approval workflow and backend action gates. Models never prescribe, order tests or change triage rules. | P0, `CLINICAL_TBD` |
 | **Care progress** | Event log and voluntary barrier reasons. | P0 |
 
+The current backend retains the single pure Python `evaluate_gate` referral policy. Langfuse tracing is opt-in and records only route templates, methods, status, duration, and allowlisted policy codes. The separate `apps/knowledge` MCP server is authoring-only, stdio, read-only, and accepts fixed topic codes rather than user text. The checked-in source manifest is empty, so this code does not currently return approved evidence. Neither MCP nor Langfuse is called by emergency input routes.
+
 SLM benchmark variants, each on the same cases: (A) structured form, (B) SLM, (C) SLM + Semantic Layer, (D) adding knowledge and RAG, (E) a larger LLM for reference. Benchmark results must be measured, and no gain is claimed in advance.
 
 ### Proposed agent roles
@@ -515,6 +517,7 @@ Rows from different sources are never joined into one "patient". The SEED-ML bas
 ```text
 sanad-front-door/
 ├── apps/api/                   # Python/FastAPI backend and pytest suite
+├── apps/knowledge/             # Authoring-only, read-only knowledge MCP server
 ├── catalogue/                  # Consent, question, lab and Mock facility catalogues
 ├── data/synthetic/             # Synthetic assessment fixtures only
 ├── docs/images/                # Patient flow diagram (SVG)

@@ -20,6 +20,13 @@ def _int_env(name: str, default: int) -> int:
     return int(raw) if raw else default
 
 
+def _bool_env(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass(frozen=True)
 class Settings:
     database_url: str = "sqlite:///./sanad-dev.db"
@@ -37,6 +44,11 @@ class Settings:
     mock_facility_password: str | None = None
     cases_per_minute_per_ip: int = 30
     logins_per_minute_per_ip: int = 10
+    # Observability is explicitly opt-in; never infer enablement from credentials alone.
+    langfuse_enabled: bool = False
+    langfuse_base_url: str | None = None
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -61,4 +73,8 @@ class Settings:
             logins_per_minute_per_ip=_int_env(
                 "SANAD_LOGINS_PER_MINUTE_PER_IP", cls.logins_per_minute_per_ip
             ),
+            langfuse_enabled=_bool_env("SANAD_LANGFUSE_ENABLED"),
+            langfuse_base_url=os.environ.get("LANGFUSE_BASE_URL") or None,
+            langfuse_public_key=os.environ.get("LANGFUSE_PUBLIC_KEY") or None,
+            langfuse_secret_key=os.environ.get("LANGFUSE_SECRET_KEY") or None,
         )

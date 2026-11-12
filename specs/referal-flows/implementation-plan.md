@@ -228,6 +228,16 @@ These are additive P0 backend/design tasks from PRD v0.4; they do not activate c
 | T4.3 | Versioned conceptual FHIR R4 mapping manifest; no export or conformance claim | PRD-FR-31, PRD-AC-46/48 | T1.10, T3.7 | Backend, Architect | In progress; manifest present, review pending |
 | T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader present, review pending |
 
+### Harness implementation (CC-011; code present, acceptance pending)
+
+These tasks are outside the current M1–M3 exit path. The requester explicitly asked for the bounded code implementation and identified themself as Product/Security approver. Formal Tech Lead review, M3 exit criteria, acceptance checks and CC-011 closure remain pending. No task may add a clinical rule or runtime model call under this scope.
+
+| Task | Work | Delivers | Depends on | Suggested owner | Status |
+|---|---|---|---|---|---|
+| T5.11 | Preserve the existing emergency ordering, closed API schemas, reason-code errors and single Python `evaluate_gate` referral path; add structured input guardrail | RF-18, AC-18.1/2, HR-01/02/10/19/28 | M3 exit, CC-011 | Backend, Security, QA | Code present; TC-HR acceptance and formal review pending |
+| T5.12 | Optional Langfuse spans with explicit field allowlist, off-by-default config, no automatic body/prompt capture and non-blocking exporter failure | RF-18, AC-18.4/5, PRD NFR-03/08/21 | T5.11, Tech Lead review, self-hosted endpoint/operator configuration | Backend, Security | Code present; TC-HR acceptance and operator configuration pending |
+Mode A MCP code now covers the empty source manifest and topic catalogue, read-only database schema, pinned tool manifest, and stdio server. Offline ingestion, shared report citation verification and the CI checks remain open. Mode B case-context and calendar MCP remain dependent on PRD-FR-37 and separate change control. The existing Python referral gate is the policy engine for this scope; adopting OPA/Cedar is not proposed.
+
 ### Critical path
 
 ```mermaid

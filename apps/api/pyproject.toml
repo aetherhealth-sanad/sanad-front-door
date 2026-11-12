@@ -19,6 +19,9 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
 ]
+observability = [
+    "langfuse>=5,<6",
+]
 
 [build-system]
 requires = ["setuptools>=69"]

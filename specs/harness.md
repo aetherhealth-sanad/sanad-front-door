@@ -4,7 +4,7 @@ Nov 3, 2026 · @Nguyen Thanh Trung
 
 ## Goals and principles
 
-Sanad's harness is the deterministic rules, consent and state gates, audit logging, and automated checks around the backend. This is a research prototype: the current API makes no model calls, has no browser client, and sends no data outside the app. The HR rules below mix implemented backend controls with future model-agent design; they are targets, not claims that every item is implemented. The current automated gate is the backend pytest suite and Ruff. Model traces, browser/server parity, model timeouts and agent-tool restrictions are not executable until those components exist.
+Sanad's harness is the deterministic rules, consent and state gates, audit logging, and automated checks around the backend. This is a research prototype: the current API makes no model calls. Optional, self-hosted Langfuse telemetry can export only allowlisted operational metadata when explicitly enabled; an authoring-only MCP server is separate from the API. The HR rules below mix implemented backend controls with future model-agent design; they are targets, not claims that every item is implemented. The current automated gate is the backend pytest suite and Ruff. Model traces, browser/server parity, model timeouts and agent-tool restrictions are not executable until those components exist.
 
 1. **Rules first.** Emergency and draft triage rules run deterministically. There is currently no model result to combine with the rule floor.
 2. **Policy sits outside the model and defaults to deny.** Every action with a side effect (writing a record, sending a referral) passes through a code gate. No rule that allows it means it is blocked.
@@ -199,7 +199,7 @@ Next step: add a Rule column to the backlog and put the HR IDs into each task's 
 The source document was written for enterprise agents (quotes, CRM), so some parts do not apply directly to Sanad in three weeks.
 
 - **Cedar and OPA:** not used. The referral gate is a tested Python function; revisit only if the rule count grows.
-- **MCP, OAuth 2.1, tool-definition pinning:** Sanad calls tools through its own backend and API gateway, not third-party MCP servers. Pin the OpenAPI version instead (HR-19). If MCP is added later, add rules against tool poisoning and token passthrough.
+- **MCP and OAuth 2.1:** There is no patient-runtime MCP client or third-party MCP connection. The authoring-only knowledge server uses stdio, a strict pinned tool manifest and a separate read-only database login. The API continues to pin its OpenAPI contract (HR-19).
 - **Semantic cache at the gateway:** not used on any step that touches health data or has side effects.
 - **Trace naming:** use the OpenTelemetry names `invoke_agent` and `execute_tool`, plus a custom `policy.check` span. That convention is still in Development status, so pin its version.
 - **Harness² from Google:** not used to modify Sanad's guardrails automatically. It is research code, not an officially supported Google product.
@@ -212,5 +212,9 @@ SLM-specific notes:
 - Run a bake-off of the SLM against a larger model on the same golden set before locking the choice; Hoàng owns this (T-45, T-46).
 
 Source caveats: "harness engineering" is not a standard issued by a standards body. The performance figures in the source document are published by the vendors themselves. OWASP numbering may differ between the 2025 and 2026 editions, so cite the edition when quoting.
+
+### Bounded implementation (CC-011; formal review and acceptance pending)
+
+The bounded code is present following the user's direct implementation request and stated Product/Security approval. It adds optional, off-by-default Langfuse operational spans and a read-only authoring-time MCP server. It does not add runtime model calls, patient-context MCP, new clinical rules or a second referral gate. The current pure Python `evaluate_gate` remains the action policy. Formal Tech Lead review, M3 exit criteria, acceptance checks and release approval remain pending; see [the change log](referal-flows/change-log.md#cc-011-deterministic-harness-langfuse-and-authoring-time-mcp).
 
 Source: the attached document "Harness Know-how: a standard harness engineering framework for enterprise AI agents" (compared against FPT AI EOS).

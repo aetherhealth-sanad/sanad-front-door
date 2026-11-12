@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from jsonschema import Draft202012Validator, ValidationError
 from sqlalchemy.orm import Session
 
 from sanad_api.audit.log import AuditType, record
@@ -35,6 +34,7 @@ from sanad_api.facts.service import (
 )
 from sanad_api.gatekeeper.service import GatekeeperResult, GatekeeperStatus
 from sanad_api.gatekeeper.service import evaluate as evaluate_gatekeeper
+from sanad_api.guardrails import InputDisposition, evaluate_profile_input
 from sanad_api.observations.models import Observation
 from sanad_api.observations.service import ObservationFields, is_confirmed
 from sanad_api.observations.service import create as create_observation
@@ -54,22 +54,15 @@ MAX_UPLOAD_BYTES = 256 * 1024
 def check_profile(data: object, schema: dict[str, Any]) -> dict[str, Any]:
     """Validates an upload against the closed schema. Errors name the rule broken and repeat
     none of the file's content (AC-02.5)."""
-    if not isinstance(data, dict):
-        raise ApiError(422, ErrorCode.UPLOAD_SCHEMA_INVALID)
-    if data.get("is_synthetic") is not True:
+    decision = evaluate_profile_input(data, schema)
+    if decision.disposition is InputDisposition.ACCEPTED:
+        assert isinstance(data, dict)
+        return data
+    if decision.reason_codes == ("NOT_SYNTHETIC",):
         raise ApiError(422, ErrorCode.UPLOAD_NOT_SYNTHETIC)
-    errors = list(Draft202012Validator(schema).iter_errors(data))
-    if any(_is_unknown_field(error) for error in errors):
+    if decision.reason_codes == ("UNKNOWN_FIELD",):
         raise ApiError(422, ErrorCode.UPLOAD_UNKNOWN_FIELD)
-    if errors:
-        raise ApiError(422, ErrorCode.UPLOAD_SCHEMA_INVALID)
-    return data
-
-
-def _is_unknown_field(error: ValidationError) -> bool:
-    if error.validator == "additionalProperties":
-        return True
-    return any(_is_unknown_field(child) for child in error.context or [])
+    raise ApiError(422, ErrorCode.UPLOAD_SCHEMA_INVALID)
 
 
 def apply_profile(

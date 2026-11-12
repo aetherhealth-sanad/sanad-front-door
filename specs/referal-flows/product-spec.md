@@ -2,9 +2,9 @@
 
 | Item | Value |
 |---|---|
-| **Document ID** | `AETHERHEALTH/SANAD/SPEC/REFERRAL-FLOWS/0.1` |
+| **Document ID** | `AETHERHEALTH/SANAD/SPEC/REFERRAL-FLOWS/0.2` |
 | **Status** | Draft for team review. Not approved. Clinical content not approved. |
-| **Version / date** | 0.1, 2026-11-02 |
+| **Version / date** | 0.2, 2026-11-12 |
 | **Parent documents** | [BRD v0.4](../Sanad_AetherHealth_BRD_v0.4.md), [PRD v0.4](../Sanad_AetherHealth_PRD_v0.4.md); this document retains the v0.3 M1–M3 referral-flow detail where not superseded |
 | **Companion documents** | [Implementation plan](implementation-plan.md), [API design](api-design.md), [Test plan](test-plan.md), [Change log](change-log.md) |
 | **Milestones** | M1 App foundation, M2 Journeys J1 and J4, M3 Journeys J2 and J3 plus the referral path |
@@ -70,6 +70,7 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 | RF-15 | *Implied by* "hoàn thiện J2, J3" | J3 manual lab entry | M3 |
 | RF-16 | *Implied by* "hoàn thiện J2, J3" | J2 selective evidence (exploratory) | M3 |
 | RF-17 | Mọi chỗ giả lập phải ghi rõ là "Mock" để không nhầm với dữ liệu thật. | Mock labelling across the app | M2, M3 |
+| RF-18 | Add bounded deterministic harness controls, optional redacted observability and read-only authoring-time MCP. | Harness controls proposal (CC-011); no runtime model calls or new clinical rules | Post-M3, pending review |
 
 ## 3. Scope
 
@@ -85,6 +86,8 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 - LLM or SLM tasks, RAG, knowledge registry and OCR. PDF or image upload is excluded with them.
 - Arabic and RTL, reminders and notifications, spouse sharing features, and care plans.
 - J6, J7 and J8.
+
+RF-18 is a review proposal only. These out-of-scope items remain excluded until CC-011 is approved; its Mode A MCP proposal must also resolve the source-manifest, protocol and knowledge-store decisions in `mcp-context-design.md`.
 
 **Parent-scope conflicts to resolve:** this draft lists Arabic/RTL as out of scope, while BRD §8.1 lists Arabic/English and key-screen RTL in P0, BRD FR-11 marks it P1, and PRD-FR-11 marks it Should. BRD §8.1 also calls for P0 evaluation/reporting while BRD FR-14 marks its dashboard P1 and PRD-FR-14 marks golden-set evaluation Must. PRD-AC-40 separately requires a J9/J10 funnel dashboard. Product must reconcile these classifications; this draft does not choose among them.
 
@@ -438,6 +441,18 @@ PRD mapping: PRD §11.3, NFR-17. BRD mapping: BR-11, BR-14.
 | AC-17.2 | Each API response carrying simulated data includes `is_mock: true`, with `verification_source: SIMULATED` on events. |
 | AC-17.3 | An automated check visits every screen listing simulated data and fails CI if the word Mock is not visible. |
 | AC-17.4 | Enum values such as `SIMULATED` or `MOCK_ACCEPTED` are shown to users through plain labels that include Mock, never as raw codes alone. |
+
+### RF-18 Harness controls (PROPOSED; CC-011)
+
+This proposal extends the deterministic API. It does not authorize model calls, new clinical rules or a patient-facing free-text flow. Implementation remains blocked until Product, Security and Tech Lead review CC-011 and the dependencies in the implementation plan pass.
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-18.1 | Existing action authorization remains server-side and default-deny. Referral decisions continue through the pure Python `evaluate_gate`; no alternate code path creates a referral. |
+| AC-18.2 | Deterministic input checks use closed schemas and reason codes. Existing emergency checks run before non-emergency disposition. RF-18 adds no clinical trigger, threshold or emergency wording. |
+| AC-18.3 | MCP is limited to local authoring-time `sanad-knowledge` in this proposal. It is read-only, uses only approved manifest sources, has no case-store access and is absent from the patient and emergency paths. Runtime MCP remains deferred until PRD-FR-37 and its reviewed contract are implemented. |
+| AC-18.4 | Langfuse is disabled by default. When explicitly enabled against an approved endpoint, only allow-listed operational codes, versions, status and duration may be exported. Request bodies, answers, labs, prompts, passages, tokens and case identifiers are never exported. Export failure cannot change an API or policy decision. |
+| AC-18.5 | The existing audit log remains the authoritative policy record. Langfuse is diagnostic telemetry only and cannot authorize actions, alter case state or establish clinical validity. |
 
 ## 8. Invariants
 

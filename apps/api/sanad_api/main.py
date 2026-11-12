@@ -34,6 +34,7 @@ from sanad_api.mock_facility.routes import router as mock_facility_router
 from sanad_api.navigation import models as _navigation_models  # noqa: F401
 from sanad_api.navigation.routes import router as navigation_router
 from sanad_api.navigation.service import purge_expired_navigation
+from sanad_api.observability import LangfuseTelemetry
 from sanad_api.observations import models as _observation_models  # noqa: F401
 from sanad_api.observations.routes import router as observations_router
 from sanad_api.psychosocial import models as _psychosocial_models  # noqa: F401
@@ -49,7 +50,8 @@ from sanad_api.tracking.routes import router as tracking_router
 DESCRIPTION = (
     "Sanad referral-flow API. Research prototype, not a medical device. Screening, not "
     "diagnosis. Synthetic data only. Rules are drafts (CLINICAL_TBD), review is simulated and "
-    "every referral is Mock. Nothing is sent outside the app."
+    "every referral is Mock. Optional Langfuse telemetry is off by default and, when enabled, "
+    "contains operational metadata only."
 )
 
 
@@ -79,6 +81,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         task.cancel()
         with suppress(asyncio.CancelledError):
             await task
+        app.state.telemetry.shutdown()
 
 
 def _configure_logging() -> None:
@@ -107,6 +110,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
         lifespan=_lifespan,
     )
     app.state.settings = settings
+    app.state.telemetry = LangfuseTelemetry.from_settings(settings)
     app.state.clock = clock or SystemClock()
     app.state.catalogues = catalogues
     app.state.engine = engine
@@ -116,7 +120,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
         "login": RateLimiter(settings.logins_per_minute_per_ip),
     }
     register_error_handlers(app)
-    app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(RequestContextMiddleware, telemetry=app.state.telemetry)
 
     @app.get("/version", tags=["meta"])
     def version() -> dict[str, Any]:

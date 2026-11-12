@@ -23,6 +23,48 @@ cd ../..
 
 The API loads rules, consent/question catalogues, and synthetic fixtures from this repository when it starts. It makes no model calls and needs no cloud credentials.
 
+## Optional Langfuse telemetry
+
+Tracing is disabled by default. To enable the optional exporter, install its extra:
+
+```bash
+apps/api/.venv/bin/python -m pip install -e 'apps/api[observability]'
+```
+
+Set `SANAD_LANGFUSE_ENABLED=true`, `LANGFUSE_BASE_URL`, `LANGFUSE_PUBLIC_KEY`, and
+`LANGFUSE_SECRET_KEY` in the API process environment to use a self-hosted endpoint. Keep the keys
+in a local secret manager or shell environment, never in source control. The exporter receives
+route templates, method, response status, duration, and allowlisted policy codes. It does not
+receive request bodies, case IDs, answers, lab values, prompts, or retrieved passages. Requests
+that write intake facts and run emergency checks are excluded from Langfuse.
+
+## Optional authoring knowledge MCP server
+
+The MCP server is a separate authoring tool. It uses stdio and the separate PostgreSQL knowledge
+database; it does not connect to the API case database. The reader connection must use the
+`sanad_kn_mcp` read-only role. The checked-in source manifest is empty and no approved corpus is
+available, so evidence searches abstain until a reviewed corpus and index exist. The embedding
+model ID and max-distance threshold must be configured to match a reviewed index and evaluation;
+without them, search returns `KNOWLEDGE_UNAVAILABLE`.
+
+```bash
+python3 -m venv apps/knowledge/.venv
+apps/knowledge/.venv/bin/python -m pip install -e apps/knowledge
+```
+
+Configure `SANAD_KNOWLEDGE_DATABASE_URL`, `SANAD_EMBEDDING_MODEL_ID`, and
+`SANAD_KNOWLEDGE_MAX_DISTANCE` in the process environment. `SANAD_KNOWLEDGE_TIMEOUT_MS` is
+optional and defaults to 3000. Then launch:
+
+```bash
+apps/knowledge/.venv/bin/sanad-knowledge-mcp
+```
+
+The command stays attached to stdin/stdout for its MCP host. It accepts only fixed topic codes and
+source/chunk identifiers; it has no case, consent, referral, calendar, or write tools. Apply the
+one-time database bootstrap in `knowledge/migrations/0001_init.sql` only to the separate knowledge
+database. Do not add patient data or unapproved sources to it.
+
 ## Start the API
 
 In terminal 1, from the repository root, set local-only passwords first if you need the simulated staff consoles:
