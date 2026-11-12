@@ -23,20 +23,49 @@ cd ../..
 
 The API loads rules, consent/question catalogues, and synthetic fixtures from this repository when it starts. It makes no model calls and needs no cloud credentials.
 
-## Optional Langfuse telemetry
+## Cách chạy Langfuse (self-hosted)
 
-Tracing is disabled by default. To enable the optional exporter, install its extra:
+Langfuse cần Postgres, ClickHouse, Redis và MinIO. Dùng Docker Compose trong repository chính
+của Langfuse (nằm ngoài repository Sanad). Đây là cách chạy local để phát triển; Docker Compose
+không cung cấp high availability hoặc backup. Trước khi chạy, cập nhật các secret được đánh dấu
+`CHANGEME` trong file compose của Langfuse. Vite của Sanad dùng cổng `3000`, nên đổi port mapping
+của Langfuse web từ `3000:3000` thành `127.0.0.1:3100:3000` để hai ứng dụng có thể chạy cùng lúc.
 
 ```bash
-apps/api/.venv/bin/python -m pip install -e 'apps/api[observability]'
+# 1. Chạy server Langfuse
+git clone https://github.com/langfuse/langfuse.git ~/langfuse
+cd ~/langfuse
+docker compose up -d
+# Chờ khoảng 2-3 phút; kiểm tra log tới khi langfuse-web báo Ready.
+docker compose logs -f langfuse-web
 ```
 
-Set `SANAD_LANGFUSE_ENABLED=true`, `LANGFUSE_BASE_URL`, `LANGFUSE_PUBLIC_KEY`, and
-`LANGFUSE_SECRET_KEY` in the API process environment to use a self-hosted endpoint. Keep the keys
-in a local secret manager or shell environment, never in source control. The exporter receives
-route templates, method, response status, duration, and allowlisted policy codes. It does not
-receive request bodies, case IDs, answers, lab values, prompts, or retrieved passages. Requests
-that write intake facts and run emergency checks are excluded from Langfuse.
+Mở <http://localhost:3100>, tạo user, organization và project. Vào **Settings → API Keys** để
+tạo cặp `pk-lf-...` / `sk-lf-...`.
+
+```bash
+# 2. Cài extra cho API (từ repository Sanad)
+cd /Users/macmini/Desktop/AIApp/sanad-front-door
+apps/api/.venv/bin/python -m pip install -e 'apps/api[observability]'
+
+# 3. Chạy API với biến môi trường; không commit key
+export SANAD_LANGFUSE_ENABLED=true
+export SANAD_DATABASE_URL=sqlite:///./apps/api/sanad-dev.db
+export LANGFUSE_BASE_URL=http://localhost:3100
+export LANGFUSE_PUBLIC_KEY=pk-lf-...
+export LANGFUSE_SECRET_KEY=sk-lf-...
+apps/api/.venv/bin/uvicorn sanad_api.main:create_app --factory --app-dir apps/api --reload
+```
+
+Gọi `http://127.0.0.1:8000/version` hoặc tạo case tổng hợp qua UI, rồi xem tab **Traces** trong
+project. Mỗi request được trace sẽ có span `http.request` với metadata `http.route`,
+`http.status_code` và thời lượng. Metadata `policy.*` chỉ có trên request phát sinh policy audit
+event.
+
+Mở trace và xác nhận input/output trống. Các endpoint ghi câu trả lời như `answers` và kiểm tra an
+toàn như `safety-check` bị loại khỏi tracing nên không tạo trace. Tracing tắt theo mặc định; khi
+bật, exporter chỉ gửi route template, method, status, thời lượng và policy codes được cho phép.
+Request/response body, case ID, câu trả lời, giá trị xét nghiệm, prompt và passages không được gửi.
 
 ## Optional authoring knowledge MCP server
 
