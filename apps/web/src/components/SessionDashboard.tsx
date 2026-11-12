@@ -44,7 +44,7 @@ const SOURCE_LABELS: Record<string, string> = {
   USER_ENTERED: 'You',
   SAMPLE_PROFILE: 'Sample profile',
   SAMPLE_FIXTURE: 'Sample profile',
-  USER_UPLOADED: 'Uploaded file, unverified',
+  USER_UPLOADED: 'Uploaded file',
   OBSERVATION: 'Manual lab',
 };
 
@@ -58,7 +58,7 @@ export const SessionDashboard: React.FC<SessionDashboardProps> = ({
   onOpenPrivacy,
   children,
 }) => {
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   const currentStepIndex = STEP_DEFINITIONS.findIndex(s => s.id === currentStep);
   const percentComplete = coreCount && coreCount.total > 0
@@ -66,65 +66,61 @@ export const SessionDashboard: React.FC<SessionDashboardProps> = ({
     : Math.round(((currentStepIndex + 1) / STEP_DEFINITIONS.length) * 100);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      {/* Session Header / Disclaimer Strip */}
-      <div className="mb-6 pb-4 border-b border-[#E2ECF8] flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <span className="font-mono text-xs font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      {/* ── Session telemetry strip ── */}
+      <div className="mb-5 pb-3 border-b border-[#E2ECF8] flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[11px] font-bold text-[#0062FF] bg-[#EBF4FF] px-2.5 py-0.5 rounded-full border border-[#BAD6FE] flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0062FF] glow-pulse" />
             ACTIVE SESSION
           </span>
-          <span className="font-mono text-xs text-[#829AB8] bg-white/70 px-2.5 py-0.5 rounded-full border border-[#E2ECF8]">
+          <span className="font-mono text-[10px] sm:text-[11px] text-[#829AB8] bg-white px-2 py-0.5 rounded-full border border-[#E2ECF8]">
             Screening, not diagnosis
           </span>
-          <span className="hidden sm:inline text-[#BCD8FE]">•</span>
-          <span className="font-mono text-[11px] text-[#4A6588] bg-white/70 px-2.5 py-0.5 rounded-full border border-[#E2ECF8]">
-            Session ID: {caseId.slice(0, 16)}...
+          <span className="hidden sm:inline font-mono text-[11px] text-[#829AB8]">
+            ID: {caseId.slice(0, 8).toUpperCase()}
           </span>
         </div>
 
-        {/* Mobile toggle button for session steps and facts */}
+        {/* Mobile floating toggle button */}
         <div className="flex items-center gap-2 lg:hidden">
           <button
             type="button"
-            onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-            className="btn-pill-secondary px-4 py-1.5 text-xs font-mono font-semibold"
+            onClick={() => setMobileSheetOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#BAD6FE] text-xs font-semibold text-[#0062FF] shadow-xs active:scale-95 transition-transform"
           >
-            {mobileDrawerOpen ? 'Close session drawer' : 'View session steps & facts'}
+            <span>📋 Facts ({recordedFacts.length})</span>
           </button>
         </div>
       </div>
 
-      {/* Main 3-Panel Architectural Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[230px_minmax(0,1fr)_300px] gap-6 items-start">
-        {/* Left Rail: YOUR SESSION STEPS */}
-        <aside
-          className={`medical-card p-5 space-y-4 ${
-            mobileDrawerOpen ? 'block' : 'hidden lg:block'
-          }`}
-          aria-label="Your session progress"
-        >
+      {/* ── Main 3-Panel Layout (Desktop) / Workspace (Mobile) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_280px] gap-6 items-start">
+
+        {/* ── Left Rail: Step Navigator (Desktop) ── */}
+        <aside className="medical-card p-4 space-y-4 hidden lg:block" aria-label="Session progress">
           <div className="border-b border-[#E2ECF8] pb-3">
-            <h2 className="font-mono font-bold text-xs uppercase tracking-wider text-[#072254]">
-              Your Session
+            <h2 className="font-mono font-bold text-[11px] uppercase tracking-wider text-[#07215A]">
+              Session Steps
             </h2>
-            <div className="flex items-center justify-between mt-1.5">
-              <span className="font-mono text-xs font-semibold text-[#0066EE]">
-                Stage {currentStepIndex + 1} of {STEP_DEFINITIONS.length}
+            <div className="flex items-center justify-between mt-1">
+              <span className="font-mono text-xs font-semibold text-[#0062FF]">
+                {currentStepIndex + 1} of {STEP_DEFINITIONS.length}
               </span>
-              <span className="font-mono text-[11px] text-[#829AB8] bg-[#EBF3FF] px-2 py-0.5 rounded-full">
+              <span className="font-mono text-[10px] text-[#829AB8] bg-[#EBF4FF] px-2 py-0.5 rounded-full font-bold">
                 {percentComplete}%
               </span>
             </div>
-            {/* Visual Mini Progress Bar */}
-            <div className="w-full bg-[#EBF3FF] h-1.5 rounded-full mt-2.5 overflow-hidden">
+            {/* Visual Progress Bar */}
+            <div className="w-full bg-[#EBF4FF] h-1.5 rounded-full mt-2 overflow-hidden">
               <div
-                className="bg-[#0066EE] h-full rounded-full transition-[width] duration-250 ease-[var(--ease-out)]"
+                className="bg-[#0062FF] h-full rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>
           </div>
 
-          <nav className="space-y-1.5" aria-label="Session stages">
+          <nav className="space-y-1" aria-label="Session stages">
             {STEP_DEFINITIONS.map((step, idx) => {
               const isPast = idx < currentStepIndex;
               const isCurrent = idx === currentStepIndex;
@@ -132,81 +128,76 @@ export const SessionDashboard: React.FC<SessionDashboardProps> = ({
               return (
                 <div
                   key={step.id}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-full font-mono text-xs transition-[background-color,color,box-shadow] duration-160 ease-[var(--ease-out)] ${
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     isCurrent
-                      ? 'bg-[#0066EE] text-white font-bold shadow-xs'
+                      ? 'bg-[#0062FF] text-white font-bold shadow-xs'
                       : isPast
-                      ? 'bg-[#EBF3FF] text-[#0066EE] font-medium'
-                      : 'text-[#829AB8] hover:text-[#072254]'
+                      ? 'bg-[#EBF4FF] text-[#0062FF]'
+                      : 'text-[#829AB8]'
                   }`}
                 >
                   <span
-                    className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[11px] ${
+                    className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-mono shrink-0 ${
                       isPast
-                        ? 'bg-[#BCD8FE] text-[#0066EE] font-bold'
+                        ? 'bg-[#BAD6FE] text-[#0048C8] font-bold'
                         : isCurrent
-                        ? 'bg-white text-[#0066EE] font-bold'
-                        : 'border border-[#BCD8FE] text-[#829AB8]'
+                        ? 'bg-white text-[#0062FF] font-bold'
+                        : 'border border-[#BAD6FE] text-[#829AB8]'
                     }`}
                   >
-                    {isPast ? '✓' : isCurrent ? '●' : '○'}
+                    {isPast ? '✓' : idx + 1}
                   </span>
-                  <span>{step.label}</span>
+                  <span className="truncate">{step.label}</span>
                 </div>
               );
             })}
           </nav>
 
-          <div className="border-t border-[#E2ECF8] pt-3 text-[11px] font-mono text-[#829AB8] space-y-1">
+          <div className="border-t border-[#E2ECF8] pt-2.5 text-[10px] font-mono text-[#829AB8] space-y-0.5">
             <p>Protocol: Draft rules</p>
-            <p>Clinical status: CLINICAL_TBD</p>
+            <p>Status: CLINICAL_TBD</p>
           </div>
         </aside>
 
-        {/* Central Workspace: Active Panel (Chat, Review, Lab, etc.) */}
+        {/* ── Center: Active Workspace ── */}
         <section className="min-w-0 w-full" aria-label="Active workspace">
           {children}
         </section>
 
-        {/* Right Rail: SUPPORTING CARDS & RECORDED FACTS */}
-        <aside
-          className={`space-y-5 ${
-            mobileDrawerOpen ? 'block' : 'hidden lg:block'
-          }`}
-          aria-label="Recorded information and summary status"
-        >
-          {/* Summary Status Card - Deep Sapphire Style */}
-          <div className="medical-card-sapphire p-5 space-y-3">
+        {/* ── Right Rail: Recorded Facts & Actions (Desktop) ── */}
+        <aside className="space-y-4 hidden lg:block" aria-label="Session summary">
+          {/* Status card */}
+          <div className="medical-card-sapphire p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-[#BCD8FE]">
+              <h3 className="font-mono font-bold text-[10px] uppercase tracking-wider text-[#BAD6FE]">
                 Assessment Status
               </h3>
-              <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] glow-pulse" />
             </div>
-            <p className="text-base font-extrabold text-white tracking-tight">
+            <p className="text-sm font-extrabold text-white tracking-tight">
               {summaryStatus}
             </p>
-            <p className="font-mono text-[11px] text-[#BCD8FE] leading-relaxed border-t border-white/15 pt-2">
-              Summary releases only after verified clinician review and explicit submit.
+            <p className="font-mono text-[10px] text-[#BAD6FE] leading-relaxed border-t border-white/15 pt-2">
+              Summary generated within this private session only.
             </p>
           </div>
 
           {/* Optional Lab Card */}
           {onOpenLab && (
-            <div className="medical-card p-5 space-y-3">
+            <div className="medical-card p-4 space-y-2.5">
               <div className="flex items-center justify-between">
-                <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-[#072254]">
-                  Lab Results (J3)
+                <h3 className="font-mono font-bold text-[11px] uppercase tracking-wider text-[#07215A]">
+                  Lab Results
                 </h3>
-                <span className="font-mono text-[10px] text-[#829AB8] bg-[#F8FAFD] px-2 py-0.5 rounded-full border border-[#E2ECF8]">Optional</span>
+                <span className="font-mono text-[10px] text-[#829AB8] bg-[#F6F9FF] px-2 py-0.5 rounded-full border border-[#E2ECF8]">Optional</span>
               </div>
               <p className="text-xs text-[#4A6588] leading-relaxed">
-                Add semen analysis or hormone lab values at any time during your session.
+                Add semen analysis values anytime during your session.
               </p>
               <button
                 type="button"
                 onClick={onOpenLab}
-                className="btn-pill-primary w-full py-2.5 text-xs text-center"
+                className="btn-pill-secondary w-full py-2 text-xs font-semibold"
               >
                 + Add Lab Values
               </button>
@@ -214,39 +205,35 @@ export const SessionDashboard: React.FC<SessionDashboardProps> = ({
           )}
 
           {/* Privacy Scope Card */}
-          <div className="medical-card p-5 space-y-2.5">
+          <div className="medical-card p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-[#072254]">
+              <h3 className="font-mono font-bold text-[11px] uppercase tracking-wider text-[#07215A]">
                 Privacy Scopes
               </h3>
-              <span className="font-mono text-[10px] text-[#0066EE] bg-[#EBF3FF] px-2 py-0.5 rounded-full font-semibold">Active</span>
+              <span className="font-mono text-[10px] text-[#0062FF] bg-[#EBF4FF] px-2 py-0.5 rounded-full font-semibold">Active</span>
             </div>
             <p className="text-xs text-[#4A6588] leading-relaxed">
-              Assessment scope active for this intake. No external transfer without explicit separate consent.
+              Assessment scope active for this private session only.
             </p>
             {onOpenPrivacy && (
               <button
                 type="button"
                 onClick={onOpenPrivacy}
-                className="font-mono text-[11px] text-[#0066EE] font-bold hover:underline cursor-pointer block mt-1"
+                className="font-mono text-[11px] text-[#0062FF] font-bold hover:underline cursor-pointer block mt-1"
               >
                 Manage consent scopes →
               </button>
             )}
           </div>
-
-          {/* Recorded Information Ledger */}
-          <div className="medical-card p-5 space-y-3">
-            <div className="border-b border-[#E2ECF8] pb-2.5">
-              <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-[#072254]">
-                Recorded Information
+          <div className="medical-card p-4 space-y-3">
+            <div className="border-b border-[#E2ECF8] pb-2">
+              <h3 className="font-mono font-bold text-[11px] uppercase tracking-wider text-[#07215A]">
+                Recorded Answers
               </h3>
               {coreCount && (
-                <div className="flex items-center justify-between mt-1">
-                  <span className="font-mono text-xs font-semibold text-[#0066EE]">
-                    Core facts confirmed
-                  </span>
-                  <span className="font-mono text-xs font-bold text-[#072254] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full">
+                <div className="flex items-center justify-between mt-1 text-xs">
+                  <span className="text-[#4A6588]">Core facts</span>
+                  <span className="font-mono font-bold text-[#0062FF] bg-[#EBF4FF] px-2 py-0.5 rounded-full text-[11px]">
                     {coreCount.done} / {coreCount.total}
                   </span>
                 </div>
@@ -255,46 +242,182 @@ export const SessionDashboard: React.FC<SessionDashboardProps> = ({
 
             {recordedFacts.length === 0 ? (
               <p className="text-xs font-mono text-[#829AB8] py-2">
-                Your answers in this session will appear here as they are recorded.
+                Answers will appear here as they are recorded.
               </p>
             ) : (
-              <ul className="space-y-3 max-h-[38vh] overflow-y-auto pr-1">
+              <ul className="space-y-2.5 max-h-[35vh] overflow-y-auto pr-1 no-scrollbar">
                 {recordedFacts.map(fact => {
                   const source = SOURCE_LABELS[fact.sourceType] ?? fact.sourceType;
                   return (
                     <li
                       key={fact.id}
-                      className="border-b border-[#E2ECF8] pb-2.5 last:border-0 space-y-1"
+                      className="border-b border-[#E2ECF8]/70 pb-2 last:border-0 space-y-0.5 text-xs"
                     >
-                      <p className="text-xs text-[#4A6588] line-clamp-1">{fact.question}</p>
+                      <p className="text-[#829AB8] truncate">{fact.question}</p>
                       <div className="flex items-center justify-between gap-1">
-                        <span className="text-sm font-bold text-[#072254]">
+                        <span className="font-bold text-[#07215A]">
                           {fact.answerLabel}
                         </span>
                         {fact.onEdit && (
                           <button
                             type="button"
                             onClick={fact.onEdit}
-                            className="font-mono text-[10px] text-[#0066EE] font-bold underline hover:text-[#004EB8] cursor-pointer"
+                            className="text-[10px] text-[#0062FF] font-semibold hover:underline cursor-pointer"
                           >
                             Edit
                           </button>
                         )}
                       </div>
-                      <p className="font-mono text-[10px] text-[#829AB8]">
-                        {fact.status} • from {source}
+                      <p className="font-mono text-[9px] text-[#829AB8]">
+                        {fact.status} · {source}
                       </p>
                     </li>
                   );
                 })}
               </ul>
             )}
-            <p className="text-[10px] font-mono text-[#829AB8] border-t border-[#E2ECF8] pt-2">
-              Session-only storage. Answers are cleared upon Quick Exit.
+            <p className="text-[9px] font-mono text-[#829AB8] border-t border-[#E2ECF8] pt-2">
+              Session storage only · Erased upon Quick Exit.
             </p>
           </div>
         </aside>
       </div>
+
+      {/* ── Mobile iOS-style Bottom Sheet for Recorded Facts & Steps ── */}
+      {mobileSheetOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden">
+          {/* Blurred backdrop */}
+          <div
+            className="fixed inset-0 bg-[#07215A]/40 backdrop-blur-sm modal-backdrop-animate"
+            onClick={() => setMobileSheetOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Sheet panel */}
+          <div
+            className="relative bg-white rounded-t-3xl max-h-[82dvh] flex flex-col overflow-hidden shadow-2xl sheet-animate border-t border-[#BAD6FE]"
+            style={{ boxShadow: '0 -10px 40px rgba(7,33,90,0.2)' }}
+          >
+            {/* Grab handle bar */}
+            <div className="w-full flex items-center justify-center pt-3 pb-2 cursor-grab">
+              <div className="w-10 h-1.5 rounded-full bg-[#CBD5E1]" />
+            </div>
+
+            {/* Sheet header */}
+            <div className="px-5 py-3 border-b border-[#E2ECF8] flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-extrabold text-[#07215A]">Your Session Snapshot</h3>
+                <p className="text-xs text-[#829AB8] font-mono">
+                  Stage {currentStepIndex + 1} of {STEP_DEFINITIONS.length} · {percentComplete}% complete
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileSheetOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#F6F9FF] border border-[#E2ECF8] text-[#4A6588] font-bold text-sm flex items-center justify-center cursor-pointer active:scale-95"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Sheet content */}
+            <div className="overflow-y-auto p-5 space-y-5 no-scrollbar safe-bottom">
+              {/* Steps overview */}
+              <div className="p-3.5 rounded-2xl bg-[#F6F9FF] border border-[#E2ECF8] space-y-2">
+                <span className="text-[11px] font-mono font-bold text-[#829AB8] uppercase tracking-wider">
+                  Session Steps
+                </span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {STEP_DEFINITIONS.map((step, idx) => {
+                    const isPast = idx < currentStepIndex;
+                    const isCurrent = idx === currentStepIndex;
+                    return (
+                      <div
+                        key={step.id}
+                        className={`flex items-center gap-2 p-2 rounded-xl text-xs ${
+                          isCurrent
+                            ? 'bg-[#0062FF] text-white font-bold'
+                            : isPast
+                            ? 'bg-white text-[#0062FF] font-medium border border-[#BAD6FE]'
+                            : 'text-[#829AB8]'
+                        }`}
+                      >
+                        <span className="text-[10px] font-mono font-bold">
+                          {isPast ? '✓' : idx + 1}
+                        </span>
+                        <span className="truncate">{step.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Recorded facts */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-mono text-xs font-bold text-[#07215A] uppercase tracking-wider">
+                    Recorded Answers ({recordedFacts.length})
+                  </h4>
+                  {coreCount && (
+                    <span className="font-mono text-xs text-[#0062FF] bg-[#EBF4FF] px-2 py-0.5 rounded-full font-bold">
+                      {coreCount.done}/{coreCount.total} core
+                    </span>
+                  )}
+                </div>
+
+                {recordedFacts.length === 0 ? (
+                  <p className="text-xs text-[#829AB8] py-4 text-center">
+                    No answers recorded yet in this round.
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-56 overflow-y-auto no-scrollbar">
+                    {recordedFacts.map(fact => (
+                      <div
+                        key={fact.id}
+                        className="p-3 rounded-xl bg-white border border-[#E2ECF8] space-y-1"
+                      >
+                        <p className="text-xs text-[#829AB8] truncate">{fact.question}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-[#07215A]">{fact.answerLabel}</span>
+                          {fact.onEdit && (
+                            <button
+                              type="button"
+                              onClick={() => { fact.onEdit?.(); setMobileSheetOpen(false); }}
+                              className="text-xs text-[#0062FF] font-semibold underline cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Quick actions inside sheet */}
+              <div className="space-y-2 pt-2">
+                {onOpenLab && (
+                  <button
+                    type="button"
+                    onClick={() => { onOpenLab(); setMobileSheetOpen(false); }}
+                    className="btn-pill-secondary w-full py-3 text-xs font-bold"
+                  >
+                    + Enter Semen Analysis Lab Values
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setMobileSheetOpen(false)}
+                  className="btn-pill-primary w-full py-3 text-xs font-bold"
+                >
+                  Return to Questionnaire
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

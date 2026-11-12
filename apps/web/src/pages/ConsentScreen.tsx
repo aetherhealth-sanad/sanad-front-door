@@ -241,7 +241,24 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         </div>
 
         {loadingCopy && (
-          <p className="mb-6 text-sm text-[#0066EE] animate-pulse">Loading privacy settings...</p>
+          <div className="space-y-4 my-6">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#0062FF]">
+              <div className="spinner spinner-sm" />
+              <span>Loading privacy settings & consent scopes…</span>
+            </div>
+            {[1, 2, 3].map(i => (
+              <div key={i} className="p-4 sm:p-5 rounded-2xl border border-[#E2ECF8] bg-white space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl skeleton shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="skeleton h-4 w-1/3" />
+                    <div className="skeleton h-3 w-3/4" />
+                  </div>
+                  <div className="w-12 h-6 rounded-full skeleton shrink-0" />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Status or Error Notifications */}
@@ -488,13 +505,18 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
             type="button"
             disabled={loading || loadingCopy || !consentCatalogue}
             onClick={() => void handleAgree()}
-            className="btn-pill-primary w-full sm:flex-1 py-3.5 px-6 text-sm disabled:opacity-50 cursor-pointer"
+            className="btn-pill-primary w-full sm:flex-1 py-4 px-6 text-sm disabled:opacity-50 cursor-pointer shadow-md"
           >
-            {loading
-              ? 'Saving Preferences...'
-              : isAssessmentEnabled
-              ? 'Save Preferences & Continue →'
-              : 'Continue to Health Education →'}
+            {loading ? (
+              <span className="flex items-center gap-2 justify-center">
+                <span className="spinner spinner-sm spinner-white" />
+                <span>Saving Preferences…</span>
+              </span>
+            ) : isAssessmentEnabled ? (
+              'Save Preferences & Continue →'
+            ) : (
+              'Continue to Health Education →'
+            )}
           </button>
 
           <button

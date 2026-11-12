@@ -207,47 +207,47 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   };
 
   return (
-    <div className="w-full space-y-12 py-6 sm:py-10">
-      {/* SECTION 1: ELEGANT, WARM, HUMAN HERO & QUICK START CONSOLE */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="medical-canvas p-6 sm:p-10 lg:p-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            {/* Left 7 Columns: Editorial Warmth, Trust & Reassurance */}
-            <div className="lg:col-span-7 space-y-6 animate-reveal-1">
-              {/* Trust Indicator & Offline Cache Status */}
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0066EE]">
-                  <span className="w-2 h-2 rounded-full bg-[#0066EE] animate-pulse" />
-                  Private & Anonymous Health Front Door
-                </span>
+    <div className="w-full space-y-10 py-5 sm:py-8 pb-8">
+      {/* ══ HERO: Mobile-first, two-column on large screens ══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-5">
+        <div className="medical-canvas p-5 sm:p-8 lg:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
 
+            {/* ── Left: Trust copy & CTAs ── */}
+            <div className="lg:col-span-7 space-y-5 animate-reveal-1">
+              {/* Status pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EBF4FF] border border-[#BAD6FE] text-[#0062FF]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0062FF] glow-pulse" />
+                  Private & Anonymous
+                </span>
                 <span
                   role="status"
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#F8FAFD] border border-[#E2ECF8] text-[#4A6588]"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F6F9FF] border border-[#E2ECF8] text-[#4A6588]"
                 >
                   <span
-                    className={`w-2 h-2 rounded-full ${
-                      emergencyCacheReady ? 'bg-[#12B76A]' : 'bg-[#F79009]'
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      emergencyCacheReady ? 'bg-[#10B981]' : 'bg-[#F59E0B]'
                     }`}
                   />
                   {emergencyCacheReady
-                    ? 'Emergency guidance ready offline'
-                    : 'Preparing offline guidance...'}
+                    ? 'Emergency guidance cached offline'
+                    : 'Preparing offline cache…'}
                 </span>
               </div>
 
-              {/* Patient-Centric Headline */}
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#072254] leading-[1.12]">
-                Clear, private answers for your reproductive health.
+              {/* Headline */}
+              <h1 className="text-[28px] sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-[#07215A] leading-[1.1] text-balance">
+                Clear, private answers for your men's health.
               </h1>
 
-              {/* Empathetic Subtext */}
-              <p className="text-base sm:text-lg text-[#4A6588] max-w-[56ch] font-normal leading-relaxed">
-                Check symptoms, understand semen analysis results, and discover clear next steps with zero judgment. No account needed, no personal phone numbers, and full control over your privacy.
+              {/* Sub-copy */}
+              <p className="text-base sm:text-lg text-[#4A6588] max-w-[52ch] leading-relaxed text-pretty">
+                Check symptoms, understand semen analysis results, and find clear next steps - with zero judgment. No account, no phone number, full control.
               </p>
 
-              {/* Main Quick Action CTAs */}
-              <div className="flex flex-wrap items-center gap-3.5 pt-1">
+              {/* Primary CTAs */}
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   disabled={loading || (startMode === 'SAMPLE' && (samples.length === 0 || !selectedFixture))}
@@ -256,9 +256,16 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     else if (startMode === 'BLANK') void handleStartBlank();
                     else void handleLaunchSample();
                   }}
-                  className="btn-pill-primary px-7 py-3.5 text-sm disabled:opacity-50"
+                  className="btn-pill-primary px-7 py-3.5 text-sm"
                 >
-                  {loading ? 'Starting Assessment...' : 'Start Private Assessment →'}
+                  {loading ? (
+                    <span className="flex items-center gap-2.5">
+                      <span className="spinner spinner-sm spinner-white" />
+                      Starting…
+                    </span>
+                  ) : (
+                    'Start Private Assessment →'
+                  )}
                 </button>
 
                 <button
@@ -271,104 +278,94 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                 </button>
               </div>
 
-              {/* Authentic Real-Life Photography Spotlight */}
-              <div className="pt-2">
-                <div className="medical-card overflow-hidden bg-white border border-[#E2ECF8] shadow-xs">
-                  <div className="grid grid-cols-1 sm:grid-cols-12 items-center">
-                    <div className="sm:col-span-6 relative min-h-[190px] h-full overflow-hidden bg-[#0A3E8A]">
-                      <img
-                        src="/assets/images/real_doctor_consultation.jpg"
-                        alt="Friendly empathetic doctor having a consultation with a male patient"
-                        className="w-full h-full object-cover transform hover:scale-102 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#072254]/50 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute bottom-2.5 left-3">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/95 text-[#072254] shadow-xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#0066EE]" />
-                          Confidential Consultation
-                        </span>
-                      </div>
+              {/* Trust card - private by design */}
+              <div className="medical-card overflow-hidden">
+                <div className="grid grid-cols-1 sm:grid-cols-2 items-stretch">
+                  {/* Photo side */}
+                  <div className="relative h-40 sm:h-full overflow-hidden" style={{ background: '#0A3882', minHeight: 160 }}>
+                    <img
+                      src="/assets/images/real_doctor_consultation.jpg"
+                      alt="Compassionate doctor in a private consultation"
+                      className="w-full h-full object-cover"
+                      style={{ transition: 'transform 0.6s var(--ease-out)' }}
+                      onMouseEnter={e => { (e.target as HTMLImageElement).style.transform = 'scale(1.04)'; }}
+                      onMouseLeave={e => { (e.target as HTMLImageElement).style.transform = 'scale(1)'; }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#07215A]/55 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-3 left-3">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/95 text-[#07215A]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0062FF]" />
+                        Confidential
+                      </span>
                     </div>
-                    <div className="sm:col-span-6 p-5 flex flex-col justify-between bg-white">
-                      <div>
-                        <span className="text-xs font-bold text-[#0066EE] uppercase tracking-wide">
-                          No Personal Identity Asked
-                        </span>
-                        <h2 className="text-sm font-bold text-[#072254] mt-1.5">
-                          Private by Design
-                        </h2>
-                        <p className="text-xs text-[#4A6588] mt-1 leading-relaxed">
-                          We do not ask for your real name, phone number, or government ID. Your session runs safely on your own device and is erased when you leave.
-                        </p>
-                      </div>
-                      <div className="pt-3 mt-3 border-t border-[#E2ECF8] flex items-center justify-between text-xs text-[#4A6588]">
-                        <span>Zero Commercial Tracking</span>
-                        <span className="font-bold text-[#0066EE]">Confidential</span>
-                      </div>
+                  </div>
+                  {/* Text side */}
+                  <div className="p-5 flex flex-col justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-[#0062FF] uppercase tracking-wide">No identity required</span>
+                      <h2 className="text-sm font-bold text-[#07215A] mt-1.5">Private by Design</h2>
+                      <p className="text-xs text-[#4A6588] mt-1.5 leading-relaxed">
+                        No real name, phone number, or ID ever asked. Your session runs privately on your device and is erased when you leave.
+                      </p>
+                    </div>
+                    <div className="pt-3 mt-3 border-t border-[#E2ECF8] flex items-center justify-between text-xs text-[#829AB8]">
+                      <span>Zero commercial tracking</span>
+                      <span className="font-bold text-[#0062FF]">Session-only</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right 5 Columns: Compact & Intuitive Case Launchpad */}
-            <div className="lg:col-span-5 medical-card p-6 sm:p-7 bg-white space-y-5 animate-reveal-2 border border-[#E2ECF8]">
-              <div className="flex items-center justify-between pb-3.5 border-b border-[#E2ECF8]">
+            {/* ── Right: Session Launchpad ── */}
+            <div className="lg:col-span-5 medical-card p-5 sm:p-6 space-y-4 animate-reveal-2">
+              {/* Card header */}
+              <div className="flex items-center justify-between pb-4 border-b border-[#E2ECF8]">
                 <div>
-                  <h2 className="text-lg font-extrabold text-[#072254] tracking-tight">
-                    Start Your Session
-                  </h2>
-                  <p className="text-xs text-[#829AB8] mt-0.5">
-                    Choose how you want to begin
-                  </p>
+                  <h2 className="text-[17px] font-extrabold text-[#07215A] tracking-tight">Start Your Session</h2>
+                  <p className="text-xs text-[#829AB8] mt-0.5">Choose how you want to begin</p>
                 </div>
-                {/* Language Selector */}
-                <div className="flex items-center border border-[#BCD8FE] rounded-full bg-[#EBF3FF] p-1 text-[11px] font-mono">
-                  <button
-                    type="button"
-                    onClick={() => setPreferredLanguage('en')}
-                    className={`px-3 py-1 rounded-full cursor-pointer transition-[background-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] ${
-                      preferredLanguage === 'en'
-                        ? 'bg-[#0066EE] text-white font-bold shadow-xs'
-                        : 'text-[#4A6588]'
-                    }`}
-                  >
-                    EN
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreferredLanguage('ar')}
-                    className={`px-3 py-1 rounded-full cursor-pointer transition-[background-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] ${
-                      preferredLanguage === 'ar'
-                        ? 'bg-[#0066EE] text-white font-bold shadow-xs'
-                        : 'text-[#4A6588]'
-                    }`}
-                  >
-                    AR
-                  </button>
+                {/* Language toggle */}
+                <div className="flex items-center bg-[#EBF4FF] border border-[#BAD6FE] rounded-full p-1 text-[11px] font-mono gap-0.5">
+                  {(['en', 'ar'] as const).map(lang => (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => setPreferredLanguage(lang)}
+                      className={`px-2.5 py-1 rounded-full cursor-pointer transition-all duration-150 active:scale-95 uppercase font-bold ${
+                        preferredLanguage === lang
+                          ? 'bg-[#0062FF] text-white'
+                          : 'text-[#4A6588] hover:text-[#07215A]'
+                      }`}
+                    >
+                      {lang}
+                    </button>
+                  ))}
                 </div>
               </div>
 
+              {/* Error banner */}
               {error && (
                 <div
                   role="alert"
-                  className="p-3.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-xs font-medium"
+                  className="p-3 rounded-xl text-xs font-medium animate-reveal-1"
+                  style={{ background: '#FFF1F0', border: '1px solid #FFCCC7', color: '#D92D20' }}
                 >
                   {error}
                 </div>
               )}
 
               {samplesUnavailable && (
-                <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#FEDF89] text-[#B54708] text-xs">
-                  Sample profiles are temporarily loading. You can start a fresh session immediately.
+                <div className="p-3 rounded-xl text-xs" style={{ background: '#FFFBEB', border: '1px solid #FDE68A', color: '#92400E' }}>
+                  Sample profiles temporarily loading. You can start fresh immediately.
                 </div>
               )}
 
-              {/* Simplified Mode Tabs */}
+              {/* Mode tabs */}
               <div
                 role="tablist"
-                aria-label="Start Mode"
-                className="grid grid-cols-3 gap-1 bg-[#EBF3FF] p-1 rounded-full border border-[#BCD8FE] text-xs"
+                aria-label="Start mode"
+                className="grid grid-cols-3 gap-1 bg-[#EBF4FF] p-1 rounded-full border border-[#BAD6FE] text-xs"
               >
                 {(['SAMPLE', 'BLANK', 'UPLOAD'] as StartModeTab[]).map(mode => (
                   <button
@@ -376,31 +373,37 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     type="button"
                     role="tab"
                     aria-selected={startMode === mode}
-                    onClick={() => {
-                      setStartMode(mode);
-                      setError(null);
-                    }}
-                    className={`py-2 px-2 rounded-full font-bold transition-[background-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer text-center ${
+                    onClick={() => { setStartMode(mode); setError(null); }}
+                    className={`py-2 px-1 rounded-full font-bold cursor-pointer text-center transition-all duration-150 active:scale-95 ${
                       startMode === mode
-                        ? 'bg-[#0066EE] text-white shadow-xs'
-                        : 'text-[#4A6588] hover:text-[#072254]'
+                        ? 'bg-[#0062FF] text-white'
+                        : 'text-[#4A6588] hover:text-[#07215A]'
                     }`}
+                    style={startMode === mode ? { boxShadow: '0 2px 8px -2px rgba(0,98,255,0.4)' } : {}}
                   >
-                    {mode === 'SAMPLE'
-                      ? 'Examples'
-                      : mode === 'BLANK'
-                      ? 'Fresh Start'
-                      : 'Upload File'}
+                    {mode === 'SAMPLE' ? 'Examples' : mode === 'BLANK' ? 'Fresh Start' : 'Upload'}
                   </button>
                 ))}
               </div>
 
-              {/* Tab Panel 1: EXAMPLE PROFILES */}
+              {/* Tab Panel: SAMPLE */}
               {startMode === 'SAMPLE' && (
-                <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
-                  <p className="text-xs text-[#4A6588] mb-1">
-                    Select a realistic demonstration profile to experience the assessment flow immediately:
-                  </p>
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-0.5 no-scrollbar">
+                  <p className="text-xs text-[#4A6588]">Select a demonstration profile:</p>
+
+                  {/* Skeleton while loading */}
+                  {samples.length === 0 && !samplesUnavailable && (
+                    <div className="space-y-2.5">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="rounded-xl border border-[#E2ECF8] p-3.5 space-y-2">
+                          <div className="skeleton h-3 w-2/3" />
+                          <div className="skeleton h-2.5 w-full" />
+                          <div className="skeleton h-2.5 w-4/5" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {samples.map(s => {
                     const isSelected = selectedFixture === s.fixture_id;
                     return (
@@ -409,30 +412,26 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => setSelectedFixture(s.fixture_id)}
-                        className={`w-full p-3.5 rounded-xl border text-left cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.985] ${
+                        className={`w-full p-3.5 rounded-xl border text-left cursor-pointer interactive-option ${
                           isSelected
-                            ? 'bg-[#EBF3FF] border-[#0066EE] ring-1 ring-[#0066EE] shadow-xs'
-                            : 'bg-white border-[#E2ECF8] hover:border-[#BCD8FE]'
+                            ? 'bg-[#EBF4FF] border-[#0062FF] ring-1 ring-[#0062FF]'
+                            : 'bg-white border-[#E2ECF8] hover:border-[#BAD6FE]'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <span
-                              className={`w-2 h-2 rounded-full ${
-                                isSelected ? 'bg-[#0066EE]' : 'bg-[#829AB8]'
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                isSelected ? 'bg-[#0062FF]' : 'bg-[#C4D4E8]'
                               }`}
                             />
-                            <h3 className="text-xs font-bold text-[#072254]">
-                              {s.title}
-                            </h3>
+                            <h3 className="text-xs font-bold text-[#07215A]">{s.title}</h3>
                           </div>
-                          <span className="text-[10px] font-mono text-[#0066EE] bg-white px-2 py-0.5 rounded-full border border-[#BCD8FE]">
+                          <span className="text-[10px] font-mono text-[#0062FF] bg-white px-2 py-0.5 rounded-full border border-[#BAD6FE] shrink-0">
                             {s.fixture_id}
                           </span>
                         </div>
-                        <p className="text-xs text-[#4A6588] mt-1 leading-relaxed">
-                          {s.description}
-                        </p>
+                        <p className="text-xs text-[#4A6588] mt-1.5 leading-relaxed">{s.description}</p>
                       </button>
                     );
                   })}
@@ -441,22 +440,25 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     type="button"
                     disabled={loading || samples.length === 0}
                     onClick={() => void handleLaunchSample()}
-                    className="btn-pill-primary w-full py-3.5 px-4 text-xs font-bold mt-2"
+                    className="btn-pill-primary w-full py-3.5 px-4 text-xs font-bold mt-1"
                   >
-                    {loading ? 'Loading Case...' : 'Explore Selected Example →'}
+                    {loading ? (
+                      <span className="flex items-center gap-2 justify-center">
+                        <span className="spinner spinner-sm spinner-white" />
+                        Loading…
+                      </span>
+                    ) : 'Explore Selected Example →'}
                   </button>
                 </div>
               )}
 
-              {/* Tab Panel 2: FRESH START */}
+              {/* Tab Panel: BLANK */}
               {startMode === 'BLANK' && (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-[#F8FAFD] border border-[#E2ECF8] space-y-2">
-                    <span className="text-xs font-bold text-[#0066EE]">
-                      Fresh, Blank Assessment
-                    </span>
+                <div className="space-y-4 animate-reveal-1">
+                  <div className="p-4 rounded-xl space-y-1.5" style={{ background: '#F4F8FF', border: '1px solid #E2ECF8' }}>
+                    <span className="text-xs font-bold text-[#0062FF]">Fresh, Blank Assessment</span>
                     <p className="text-xs text-[#4A6588] leading-relaxed">
-                      Starts a clean assessment from scratch with zero pre-filled data. You will review purpose consent, complete an immediate safety check, and answer questions at your own comfort level.
+                      Starts clean with zero pre-filled data. You'll consent, complete a safety check, and answer questions at your pace.
                     </p>
                   </div>
                   <button
@@ -465,47 +467,46 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     onClick={() => void handleStartBlank()}
                     className="btn-pill-primary w-full py-3.5 px-4 text-xs font-bold"
                   >
-                    {loading ? 'Creating Assessment...' : 'Begin Blank Assessment →'}
+                    {loading ? (
+                      <span className="flex items-center gap-2 justify-center">
+                        <span className="spinner spinner-sm spinner-white" />
+                        Creating…
+                      </span>
+                    ) : 'Begin Blank Assessment →'}
                   </button>
                 </div>
               )}
 
-              {/* Tab Panel 3: UPLOAD FILE */}
+              {/* Tab Panel: UPLOAD */}
               {startMode === 'UPLOAD' && (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-[#F8FAFD] border border-[#E2ECF8] space-y-2">
-                    <span className="text-xs font-bold text-[#0066EE]">
-                      Import Synthetic Record
-                    </span>
+                <div className="space-y-4 animate-reveal-1">
+                  <div className="p-4 rounded-xl space-y-1.5" style={{ background: '#F4F8FF', border: '1px solid #E2ECF8' }}>
+                    <span className="text-xs font-bold text-[#0062FF]">Import Synthetic Record</span>
                     <p className="text-xs text-[#4A6588] leading-relaxed">
-                      Load a structured synthetic test profile in JSON format. Personal identifying fields and contact records are excluded by design.
+                      Load a structured synthetic test profile in JSON format. No personal identifiers.
                     </p>
                   </div>
-
-                  <div>
-                    <input
-                      id="synthetic-json-upload"
-                      type="file"
-                      accept=".json,application/json"
-                      onChange={e => {
-                        const file = e.target.files?.[0] ?? null;
-                        setSelectedFile(file);
-                        setError(null);
-                      }}
-                      className="w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#0066EE] file:text-white file:font-semibold hover:file:bg-[#0050D0] border border-[#E2ECF8] p-2 bg-white rounded-xl"
-                    />
-                    {selectedFile && (
-                      <p className="mt-2 text-xs text-[#0066EE] font-semibold">
-                        Ready to load: {selectedFile.name} ({selectedFile.size} bytes)
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-2.5">
+                  <input
+                    id="synthetic-json-upload"
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={e => {
+                      const file = e.target.files?.[0] ?? null;
+                      setSelectedFile(file);
+                      setError(null);
+                    }}
+                    className="w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#0062FF] file:text-white file:font-semibold hover:file:bg-[#004ED9] border border-[#E2ECF8] p-2 bg-white rounded-xl transition-colors"
+                  />
+                  {selectedFile && (
+                    <p className="text-xs text-[#0062FF] font-semibold animate-reveal-1">
+                      Ready: {selectedFile.name} ({selectedFile.size}B)
+                    </p>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       type="button"
                       onClick={handleLoadSyntheticTemplateFile}
-                      className="btn-pill-secondary flex-1 py-3 px-3 text-xs"
+                      className="btn-pill-secondary flex-1 py-3 text-xs"
                     >
                       Use Sample JSON
                     </button>
@@ -513,9 +514,14 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                       type="button"
                       disabled={loading || !selectedFile}
                       onClick={() => void handleStartUpload()}
-                      className="btn-pill-primary flex-1 py-3 px-3 text-xs disabled:opacity-50"
+                      className="btn-pill-primary flex-1 py-3 text-xs font-bold"
                     >
-                      {loading ? 'Starting...' : 'Continue with File →'}
+                      {loading ? (
+                        <span className="flex items-center gap-2 justify-center">
+                          <span className="spinner spinner-sm spinner-white" />
+                          Starting…
+                        </span>
+                      ) : 'Continue with File →'}
                     </button>
                   </div>
                 </div>
@@ -525,82 +531,105 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         </div>
       </section>
 
-      {/* SECTION 2: 4 SIMPLE, COMPACT STEPS WITH REAL-LIFE PHOTOGRAPHY */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <span className="text-xs font-bold text-[#0066EE] uppercase tracking-wider bg-[#EBF3FF] px-3 py-1 rounded-full border border-[#BCD8FE]">
+      {/* ══ HOW IT WORKS: 4 steps with photos ══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-5 animate-reveal-3">
+        <div className="text-center max-w-xl mx-auto mb-7">
+          <span className="text-[11px] font-bold text-[#0062FF] uppercase tracking-wider bg-[#EBF4FF] px-3 py-1 rounded-full border border-[#BAD6FE]">
             How Sanad Works
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight mt-3">
-            Four simple steps to clear, confidential guidance.
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A] tracking-tight mt-3">
+            Four steps to clear, confidential guidance.
           </h2>
-          <p className="text-sm sm:text-base text-[#4A6588] mt-2">
-            Designed for real people: straightforward, respectful, and easy to complete in under 5 minutes.
+          <p className="text-sm text-[#4A6588] mt-2">
+            Straightforward, respectful, and done in under 5 minutes.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {HOW_IT_WORKS_STEPS.map(item => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {HOW_IT_WORKS_STEPS.map((item, idx) => (
             <div
               key={item.step}
-              className="medical-card overflow-hidden bg-white border border-[#E2ECF8] flex flex-col justify-between"
+              className="medical-card overflow-hidden flex flex-col"
+              style={{ animationDelay: `${idx * 60}ms` }}
             >
-              <div>
-                <div className="h-40 w-full overflow-hidden relative bg-[#EBF3FF]">
-                  <img
-                    src={item.image}
-                    alt={item.alt}
-                    className="w-full h-full object-cover transform hover:scale-103 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#0066EE] text-white font-bold text-xs shadow-xs">
-                      {item.step}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <span className="text-[11px] font-semibold text-[#0066EE] uppercase tracking-wide">
-                    {item.subtitle}
+              {/* Photo */}
+              <div className="relative h-36 w-full overflow-hidden" style={{ background: '#0A3882' }}>
+                <img
+                  src={item.image}
+                  alt={item.alt}
+                  className="w-full h-full object-cover"
+                  style={{ transition: 'transform 0.5s var(--ease-out)' }}
+                  onMouseEnter={e => { (e.target as HTMLImageElement).style.transform = 'scale(1.06)'; }}
+                  onMouseLeave={e => { (e.target as HTMLImageElement).style.transform = 'scale(1)'; }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
+                {/* Step badge */}
+                <div className="absolute top-3 left-3">
+                  <span
+                    className="w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center"
+                    style={{
+                      background: 'linear-gradient(145deg, #1A7AFF, #0048C8)',
+                      boxShadow: '0 2px 8px rgba(0,98,255,0.4)',
+                    }}
+                  >
+                    {item.step}
                   </span>
-                  <h3 className="text-base font-bold text-[#072254] mt-1">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-[#4A6588] mt-2 leading-relaxed">
-                    {item.description}
-                  </p>
                 </div>
+              </div>
+              {/* Content */}
+              <div className="p-4 flex-1">
+                <span className="text-[10px] font-bold text-[#0062FF] uppercase tracking-wider">{item.subtitle}</span>
+                <h3 className="text-sm font-bold text-[#07215A] mt-1">{item.title}</h3>
+                <p className="text-xs text-[#4A6588] mt-1.5 leading-relaxed">{item.description}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* SECTION 3: REAL-LIFE LIFESTYLE & PATIENT REASSURANCE BANNER */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="medical-card bg-gradient-to-r from-[#0F3D7C] to-[#0A2E62] text-white p-8 sm:p-10 rounded-3xl overflow-hidden relative shadow-md">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+      {/* ══ PEACE OF MIND BANNER ══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-5 animate-reveal-4">
+        <div
+          className="rounded-3xl overflow-hidden relative"
+          style={{
+            background: 'linear-gradient(145deg, #0D3E7E 0%, #0A2D60 100%)',
+            boxShadow: '0 20px 60px -12px rgba(5,20,60,0.5)',
+          }}
+        >
+          {/* Subtle pattern overlay */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.2) 0%, transparent 50%)',
+            }}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center p-7 sm:p-10 relative z-10">
             <div className="lg:col-span-7 space-y-4">
-              <span className="text-xs font-semibold text-[#BCD8FE] uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full border border-white/20">
+              <span className="text-xs font-semibold text-[#9EC8FF] uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full border border-white/20 inline-block">
                 Peace of Mind
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug text-balance">
                 Take the first step in the comfort and privacy of your own home.
               </h2>
-              <p className="text-sm sm:text-base text-[#D0E1F9] leading-relaxed max-w-xl">
-                Men often delay health conversations out of hesitation or privacy concerns. Sanad gives you an unhurried, pressure-free way to understand your situation before talking to anyone.
+              <p className="text-sm text-[#C8DFFF] leading-relaxed max-w-lg">
+                Men often delay health conversations out of hesitation. Sanad gives you an unhurried, pressure-free way to understand your situation before talking to anyone.
               </p>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => void handleStartBlank()}
-                  className="btn-pill-primary px-6 py-3 text-sm bg-white text-[#0066EE] hover:bg-[#EBF3FF]"
-                >
-                  Start Your Private Check →
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => void handleStartBlank()}
+                className="btn-pill-primary px-6 py-3 text-sm"
+                style={{
+                  background: 'rgba(255,255,255,0.95)',
+                  color: '#0062FF',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                }}
+              >
+                Start Your Private Check →
+              </button>
             </div>
 
-            <div className="lg:col-span-5 h-64 rounded-2xl overflow-hidden border border-white/20 shadow-lg">
+            <div className="lg:col-span-5 h-56 rounded-2xl overflow-hidden border border-white/15">
               <img
                 src="/assets/images/real_patient_peace_of_mind.jpg"
                 alt="Man reviewing health insights peacefully at home"
@@ -611,41 +640,50 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         </div>
       </section>
 
-      {/* SECTION 4: FREQUENTLY ASKED QUESTIONS (HUMAN, PLAIN LANGUAGE) */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6">
-        <div className="text-center mb-8">
-          <span className="text-xs font-bold text-[#0066EE] uppercase tracking-wider bg-[#EBF3FF] px-3 py-1 rounded-full border border-[#BCD8FE]">
+      {/* ══ FAQ ══ */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-5">
+        <div className="text-center mb-7">
+          <span className="text-[11px] font-bold text-[#0062FF] uppercase tracking-wider bg-[#EBF4FF] px-3 py-1 rounded-full border border-[#BAD6FE]">
             Common Questions
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight mt-3">
-            Everything you need to know about your privacy.
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A] tracking-tight mt-3">
+            Everything about your privacy.
           </h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {FAQS.map((faq, idx) => {
             const isOpen = openFaqIndex === idx;
             return (
               <div
                 key={faq.question}
-                className="medical-card p-5 sm:p-6 bg-white border border-[#E2ECF8] rounded-2xl transition-[border-color,box-shadow] duration-160 ease-[var(--ease-out)]"
+                className={`medical-card overflow-hidden transition-all duration-300 ease-out ${
+                  isOpen ? 'shadow-md border-[#BAD6FE]' : ''
+                }`}
               >
                 <button
                   type="button"
                   onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between text-left gap-4 cursor-pointer"
+                  className="w-full flex items-center justify-between gap-4 cursor-pointer p-5 text-left"
                 >
-                  <h3 className="text-sm sm:text-base font-bold text-[#072254]">
-                    {faq.question}
-                  </h3>
-                  <span className="w-6 h-6 rounded-full bg-[#EBF3FF] text-[#0066EE] font-bold text-sm flex items-center justify-center shrink-0">
-                    {isOpen ? '−' : '+'}
+                  <h3 className="text-sm font-bold text-[#07215A] text-pretty">{faq.question}</h3>
+                  <span
+                    className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all duration-200"
+                    style={{
+                      background: isOpen ? '#0062FF' : '#EBF4FF',
+                      color: isOpen ? 'white' : '#0062FF',
+                      transform: isOpen ? 'rotate(45deg)' : 'none',
+                    }}
+                  >
+                    +
                   </span>
                 </button>
                 {isOpen && (
-                  <p className="text-xs sm:text-sm text-[#4A6588] mt-3 pt-3 border-t border-[#E2ECF8] leading-relaxed">
-                    {faq.answer}
-                  </p>
+                  <div className="px-5 pb-5 animate-reveal-1">
+                    <p className="text-xs sm:text-sm text-[#4A6588] border-t border-[#E2ECF8] pt-4 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </div>
                 )}
               </div>
             );
@@ -653,59 +691,49 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         </div>
       </section>
 
-      {/* SECTION 5: DISCRETE TECHNICAL & ARCHITECTURAL APPENDIX (COLLAPSIBLE FOR RESEARCHERS & DEVELOPERS) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-4">
-        <div className="border-t border-[#E2ECF8] pt-6 text-center">
+      {/* ══ Technical Appendix (collapsible) ══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-5">
+        <div className="border-t border-[#E2ECF8] pt-5 text-center">
           <button
             type="button"
             onClick={() => setShowTechAppendix(!showTechAppendix)}
-            className="text-xs font-mono font-semibold text-[#829AB8] hover:text-[#0066EE] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            className="text-xs font-mono font-semibold text-[#829AB8] hover:text-[#0062FF] transition-colors cursor-pointer inline-flex items-center gap-2"
           >
-            <span>{showTechAppendix ? '▲ Hide' : '▼ View'} Technical Specifications & FHIR R4 Conceptual Ledger</span>
+            <svg
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${showTechAppendix ? 'rotate-180' : ''}`}
+              viewBox="0 0 12 12" fill="currentColor"
+            >
+              <path d="M6 8L2 4h8L6 8z" />
+            </svg>
+            {showTechAppendix ? 'Hide' : 'View'} Technical Specifications & FHIR R4 Conceptual Ledger
           </button>
         </div>
 
         {showTechAppendix && (
-          <div className="medical-canvas p-6 sm:p-8 mt-6 animate-reveal-1">
+          <div className="medical-canvas p-6 sm:p-8 mt-5 animate-reveal-1">
             <div className="pb-4 border-b border-[#E2ECF8]">
-              <h3 className="text-base font-bold text-[#072254]">
-                Technical Architecture & Conceptual FHIR R4 Mapping Manifest
+              <h3 className="text-base font-bold text-[#07215A]">
+                Technical Architecture & Conceptual FHIR R4 Mapping
               </h3>
               <p className="text-xs text-[#829AB8] font-mono mt-1">
-                Manifest sanad-fhir-r4-conceptual v0.1 • Status: Research Specification • Compliance: Evaluated under Golden Rules
+                sanad-fhir-r4-conceptual v0.1 · Status: Research Specification · NOT_EVALUATED
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-              <div className="p-4 rounded-xl bg-[#F8FAFD] border border-[#E2ECF8] space-y-1.5">
-                <div className="flex items-center justify-between font-mono text-xs">
-                  <span className="font-bold text-[#0066EE]">AssessmentCase</span>
-                  <span className="text-[#829AB8]">→ Patient</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+              {[
+                { label: 'AssessmentCase', maps: 'Patient', desc: 'Synthetic pseudonym identifiers only. Direct identity fields omitted.' },
+                { label: 'ClinicalObservation', maps: 'Observation', desc: 'Preserves semen parameters and test codes without automatic conversions.' },
+                { label: 'ConsentLedger', maps: 'Consent', desc: 'Dual gatekeeper: consent, role, and case version checked on the backend.' },
+              ].map(item => (
+                <div key={item.label} className="p-4 rounded-xl space-y-1.5" style={{ background: '#F4F8FF', border: '1px solid #E2ECF8' }}>
+                  <div className="flex items-center justify-between font-mono text-xs">
+                    <span className="font-bold text-[#0062FF]">{item.label}</span>
+                    <span className="text-[#829AB8]">→ {item.maps}</span>
+                  </div>
+                  <p className="text-xs text-[#4A6588] leading-relaxed">{item.desc}</p>
                 </div>
-                <p className="text-xs text-[#4A6588] leading-relaxed">
-                  Uses synthetic pseudonym identifiers only. Direct identity fields omitted by design to guarantee privacy.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#F8FAFD] border border-[#E2ECF8] space-y-1.5">
-                <div className="flex items-center justify-between font-mono text-xs">
-                  <span className="font-bold text-[#0066EE]">ClinicalObservation</span>
-                  <span className="text-[#829AB8]">→ Observation</span>
-                </div>
-                <p className="text-xs text-[#4A6588] leading-relaxed">
-                  Preserves semen parameters, test codes, and units without unapproved automatic conversions.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-[#F8FAFD] border border-[#E2ECF8] space-y-1.5">
-                <div className="flex items-center justify-between font-mono text-xs">
-                  <span className="font-bold text-[#0066EE]">ConsentLedger</span>
-                  <span className="text-[#829AB8]">→ Consent</span>
-                </div>
-                <p className="text-xs text-[#4A6588] leading-relaxed">
-                  Dual gatekeeper policy: consent, role, and case version are strictly checked on the backend server.
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         )}

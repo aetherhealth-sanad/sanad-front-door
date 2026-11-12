@@ -32,6 +32,8 @@ export function App() {
   const [currentRole, setCurrentRole] = useState<'patient' | 'clinician' | 'facility'>('patient');
   const [currentRoute, setCurrentRoute] = useState<string>('/');
   const [restoring, setRestoring] = useState(() => Boolean(sessionStorage.getItem('sanad_case_id')));
+  // Track route changes for page transitions
+  const [pageKey, setPageKey] = useState(0);
   const [emergencyCacheReady, setEmergencyCacheReady] = useState(false);
   const [caseId, setCaseId] = useState<string | null>(() => {
     return sessionStorage.getItem('sanad_case_id');
@@ -180,6 +182,7 @@ export function App() {
       window.location.assign('/urgent.html');
       return;
     }
+    setPageKey(k => k + 1); // trigger re-mount for page-enter animation
     setCurrentRoute(route || '/');
   };
 
@@ -323,7 +326,7 @@ export function App() {
     ['/safety', '/intake', '/lab', '/review', '/receipt'].includes(currentRoute);
 
   return (
-    <div className="min-h-[100dvh] bg-[#F3F4F1] flex flex-col font-sans text-[#0B1310] selection:bg-[#0F523E] selection:text-white">
+    <div className="min-h-[100dvh] bg-[#F3F4F1] flex flex-col font-sans text-[#0B1310] selection:bg-[#0062FF]/20">
       {/* Main Navbar */}
       <Navbar
         currentRole={currentRole}
@@ -344,16 +347,36 @@ export function App() {
       {/* Main Content Viewport */}
       <main className="flex-1">
         {restoring && (
-          <div className="max-w-md mx-auto px-4 py-20 text-center text-sm font-mono text-[#3F4E48]">
-            Restoring this session…
+          /* ── Beautiful restore loading state ── */
+          <div className="min-h-[60dvh] flex flex-col items-center justify-center px-4 py-20 gap-6">
+            <div className="relative">
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 rounded-full bg-[#0062FF]/10 scale-150 animate-ping" style={{ animationDuration: '2s' }} />
+              {/* Logo mark */}
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0062FF] to-[#4FA8FF] text-white flex items-center justify-center font-bold text-3xl shadow-lg shadow-[#0062FF]/30">
+                س
+              </div>
+            </div>
+            <div className="text-center space-y-1.5">
+              <p className="text-sm font-semibold text-[#07215A]">Restoring your session…</p>
+              <div className="dot-pulse flex gap-1 justify-center text-[#0062FF]">
+                <span /><span /><span />
+              </div>
+            </div>
+            {/* Skeleton preview */}
+            <div className="w-full max-w-sm space-y-3 opacity-50">
+              <div className="skeleton h-4 w-3/4 mx-auto" />
+              <div className="skeleton h-3 w-1/2 mx-auto" />
+            </div>
           </div>
         )}
-        {!restoring && currentRole === 'clinician' && <ClinicianPortal />}
 
+        {!restoring && currentRole === 'clinician' && <ClinicianPortal />}
         {!restoring && currentRole === 'facility' && <MockFacilityPortal />}
 
         {!restoring && currentRole === 'patient' && (
-          <>
+          /* Page transition wrapper */
+          <div key={pageKey} className="page-enter">
             {currentRoute === '/' && (
               <StartScreen
                 onCaseCreated={handleCaseCreated}
@@ -375,19 +398,19 @@ export function App() {
             {currentRoute === '/privacy' && (
               <section className="max-w-2xl mx-auto px-4 py-12">
                 <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md">
-                  <span className="font-mono text-xs font-bold text-[#D92D20] bg-[#FEF3F2] px-2.5 py-0.5 rounded-full border border-[#FECDCA]">
+                  <span className="font-mono text-xs font-bold text-[#D92D20] bg-[#FFF1F0] px-2.5 py-0.5 rounded-full border border-[#FFCCC7]">
                     CONSENT INACTIVE
                   </span>
-                  <h1 className="text-2xl font-extrabold text-[#0B1310] mt-4">
+                  <h1 className="text-2xl font-extrabold text-[#07215A] mt-4">
                     Assessment consent is no longer active
                   </h1>
-                  <p className="text-sm text-[#3F4E48] mt-2 leading-relaxed">
+                  <p className="text-sm text-[#4A6588] mt-2 leading-relaxed">
                     This case cannot continue through the assessment flow. You can close this session or start a new one.
                   </p>
                   <button
                     type="button"
                     onClick={resetSession}
-                    className="mt-5 rounded-[2px] bg-[#0B1310] text-white px-5 py-2.5 font-mono text-xs font-bold border border-[#0B1310] cursor-pointer btn-press"
+                    className="mt-5 btn-pill-primary px-5 py-2.5 text-xs font-bold"
                   >
                     Close session
                   </button>
@@ -485,34 +508,32 @@ export function App() {
                 onCloseCase={() => void handleCloseCase()}
               />
             )}
-          </>
+          </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[#0B1310] bg-white py-6 text-xs text-[#3F4E48]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-            <span className="font-bold text-[#0B1310]">
-              Sanad (سند) · Future Health Digital Innovation Challenge
-            </span>
-            <span className="hidden sm:inline text-[#C5CEC9]">|</span>
-            <span className="font-mono text-[11px] text-[#3F4E48]">
-              Research Prototype · Mock / Simulated Data Only · Zero Outbound Transport · Not a Medical Device
+      {/* Footer - minimal, mobile-friendly */}
+      <footer className="border-t border-[#E2ECF8]/60 bg-white/80 backdrop-blur-sm py-5 text-xs text-[#4A6588]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-4 text-center sm:text-left">
+            <span className="font-bold text-[#07215A] text-sm">Sanad (سند)</span>
+            <span className="font-mono text-[10px] text-[#829AB8] leading-relaxed">
+              Research Prototype · Synthetic Data Only · Not a Medical Device
             </span>
           </div>
 
           <div className="flex items-center gap-4 font-mono">
             <a
               href="/urgent.html"
-              className="text-[#B91C1C] hover:text-[#7F1D1D] font-bold no-underline"
+              className="text-[#D92D20] hover:text-[#B42318] font-bold no-underline transition-colors duration-150 flex items-center gap-1.5"
             >
-              Emergency Care (Offline)
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D92D20] bio-pulse-soft inline-block" />
+              Emergency Care
             </a>
             <button
               type="button"
               onClick={resetSession}
-              className="text-[#0B1310] hover:text-[#0F523E] font-semibold underline cursor-pointer"
+              className="text-[#4A6588] hover:text-[#07215A] font-semibold underline cursor-pointer transition-colors duration-150"
             >
               Reset Session
             </button>

@@ -454,10 +454,19 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
                 : 'opacity-50 cursor-not-allowed'
             }`}
           >
-            <span>{isSubmitting ? 'Submitting assessment...' : 'Submit Assessment'}</span>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <span className="spinner spinner-sm spinner-white" />
+                <span>Submitting assessment…</span>
+              </span>
+            ) : (
+              <>
+                <span>Submit Assessment</span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </>
+            )}
           </button>
         </div>
 

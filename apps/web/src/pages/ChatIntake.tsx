@@ -182,9 +182,27 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
 
   if (loading) {
     return (
-      <div className="medical-card bg-white p-12 text-center text-sm text-[#64748B] rounded-2xl shadow-sm">
-        <div className="inline-block w-6 h-6 border-2 border-[#0066EE] border-t-transparent rounded-full animate-spin mb-3" />
-        <p>Loading intake questions...</p>
+      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4 max-w-xl mx-auto animate-reveal-1">
+        <div className="flex items-center gap-3 pb-3 border-b border-[#E2ECF8]">
+          <div className="w-10 h-10 rounded-full skeleton shrink-0" />
+          <div className="space-y-1.5 flex-1">
+            <div className="skeleton h-4 w-1/3" />
+            <div className="skeleton h-3 w-1/2" />
+          </div>
+        </div>
+        <div className="space-y-3 py-3">
+          <div className="flex gap-2.5">
+            <div className="w-7 h-7 rounded-full skeleton shrink-0" />
+            <div className="skeleton h-14 w-3/4 rounded-2xl" />
+          </div>
+          <div className="flex justify-end">
+            <div className="skeleton h-10 w-2/5 rounded-2xl" />
+          </div>
+        </div>
+        <p className="text-center text-xs text-[#0062FF] font-medium flex items-center justify-center gap-2 pt-2">
+          <span className="spinner spinner-sm" />
+          <span>Starting your private guided conversation…</span>
+        </p>
       </div>
     );
   }
@@ -279,6 +297,20 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
             </p>
           );
         })}
+        {busy && (
+          <div className="flex items-center gap-2.5 max-w-[85%] chat-bubble-enter">
+            <img
+              src="/assets/images/medical_doctor_avatar.jpg"
+              alt="Companion Avatar"
+              className="w-7 h-7 rounded-full object-cover border border-[#BCD8FE] shrink-0 shadow-2xs"
+            />
+            <div className="rounded-2xl rounded-tl-sm border border-[#DCE9FA] bg-[#F2F7FF] px-4 py-3 text-xs text-[#0062FF] flex items-center gap-1.5 shadow-2xs">
+              <span className="dot-pulse flex gap-1">
+                <span /><span /><span />
+              </span>
+            </div>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 

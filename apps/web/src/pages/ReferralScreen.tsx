@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { LoadingView } from '../components/LoadingView';
 import {
   api,
   type GateDecision,
@@ -205,9 +206,12 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto px-4 py-24 text-center text-sm text-[#64748B]">
-        <div className="inline-block w-8 h-8 border-3 border-[#0066EE] border-t-transparent rounded-full animate-spin mb-3" />
-        <p>Loading Mock directory and gate status...</p>
+      <div className="max-w-xl mx-auto px-4 py-12 animate-reveal-1">
+        <LoadingView
+          title="Loading Care Directory & Referral Gate"
+          subtitle="Verifying provider gate rules and consent scopes…"
+          variant="card"
+        />
       </div>
     );
   }

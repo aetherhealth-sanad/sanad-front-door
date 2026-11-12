@@ -4,248 +4,348 @@
   :root {
     color-scheme: light;
     
-    /* Luxe Clinical Medical Tokens (Bio-Medical Glass & Sapphire Atmosphere) */
-    --medical-ink: #072254;
-    --medical-navy: #0F3D7C;
+    /* ── Design Tokens: Sanad Clinical Blue ── */
+    --medical-ink: #07215A;
+    --medical-navy: #0E3B7A;
     --medical-slate: #4A6588;
     --medical-muted: #829AB8;
 
-    /* Primary Sapphire & Bio-Blue */
-    --sapphire-primary: #0066EE;
-    --sapphire-hover: #0050D0;
-    --sapphire-gradient: linear-gradient(135deg, #0066EE 0%, #0044B8 100%);
-    --sapphire-surface: #EBF3FF;
-    --sapphire-border: #BCD8FE;
-    --sapphire-card-bg: #14468C;
+    /* Primary Sapphire */
+    --sapphire-primary: #0062FF;
+    --sapphire-hover: #004ED9;
+    --sapphire-gradient: linear-gradient(145deg, #1A7AFF 0%, #0048C8 100%);
+    --sapphire-surface: #EBF4FF;
+    --sapphire-border: #BAD6FE;
+    --sapphire-card-bg: #12438A;
 
-    /* Emergency Alert Ruby */
+    /* Emergency */
     --emergency-ruby: #D92D20;
     --emergency-hover: #B42318;
-    --emergency-surface: #FEF3F2;
-    --emergency-border: #FECDCA;
+    --emergency-surface: #FFF1F0;
+    --emergency-border: #FFCCC7;
 
-    /* Legacy Token Aliases for backward compatibility */
-    --ink: #072254;
+    /* Surface palette */
+    --surface-0: #FFFFFF;
+    --surface-1: #F6F9FF;
+    --surface-2: #EDF3FC;
+    --border-soft: #E2ECF8;
+    --border-mid: #BAD6FE;
+
+    /* Legacy aliases */
+    --ink: #07215A;
     --muted: #4A6588;
     --muted-light: #829AB8;
-    --g-main: #EBF3FF;
+    --g-main: #EBF4FF;
     --g-alt: #F0F6FF;
     --g-card: #FFFFFF;
     --g-border: #D0E1F9;
     --g-border-muted: #E2ECF8;
-    --action: #0066EE;
-    --action-hover: #004EB8;
-    --action-surface: #EBF3FF;
-    --signal: #0F3D7C;
+    --action: #0062FF;
+    --action-hover: #004ED9;
+    --action-surface: #EBF4FF;
+    --signal: #0E3B7A;
     --signal-surface: #F0F6FF;
     --emergency: #D92D20;
-    --emergency-surface: #FEF3F2;
-    --emergency-border: #FECDCA;
+    --emergency-surface: #FFF1F0;
+    --emergency-border: #FFCCC7;
     --mock-border: #829AB8;
-    --mock-text: #072254;
-    --mock-bg: #EBF3FF;
+    --mock-text: #07215A;
+    --mock-bg: #EBF4FF;
 
-    /* Geometry */
-    --radius-canvas: 28px;
-    --radius-card: 20px;
-    --radius-subcard: 14px;
+    /* Geometry - mobile-first */
+    --radius-canvas: 24px;
+    --radius-card: 18px;
+    --radius-subcard: 12px;
     --radius-pill: 9999px;
 
-    /* Emil Kowalski Animation Easing Curves */
+    /* ── Animation: Emil Kowalski Physics ── */
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
     --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);  /* bouncy spring */
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Timing */
+    --dur-instant: 80ms;
+    --dur-fast: 160ms;
+    --dur-base: 240ms;
+    --dur-slow: 380ms;
 
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 
   * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Prevent layout shift from scrollbar */
+    scrollbar-gutter: stable;
   }
 
   body {
     margin: 0;
-    background: radial-gradient(circle at 50% -10%, rgba(120, 195, 255, 0.45) 0%, rgba(20, 95, 215, 0.2) 45%, transparent 80%),
-                linear-gradient(155deg, #09479E 0%, #105AC2 45%, #1872E6 100%);
+    /* Refined atmospheric gradient - less generic, more intentional */
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(90, 160, 255, 0.5) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 80% at 90% 90%, rgba(0, 50, 180, 0.15) 0%, transparent 60%),
+      linear-gradient(165deg, #0A3E92 0%, #0D52B8 40%, #1668D6 75%, #1E7AEF 100%);
     background-attachment: fixed;
     color: var(--medical-ink);
     font-size: 16px;
     line-height: 1.6;
-    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+  }
+
+  /* Better mobile scroll */
+  main {
+    overflow-anchor: none;
   }
 
   .font-mono {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
+
+  /* Native-feel selection */
+  ::selection {
+    background: rgba(0, 98, 255, 0.2);
+    color: inherit;
+  }
 }
 
-/* Master Floating Medical Canvas */
+/* ═══════════════════════════════════════════════════════════
+   CARDS & SURFACES
+   ═══════════════════════════════════════════════════════════ */
+
+/* Master Floating Medical Canvas - glass morphism panel */
 .medical-canvas {
-  background-color: #FFFFFF;
-  border-radius: 28px;
-  box-shadow: 0 25px 70px -15px rgba(2, 28, 80, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24px;
+  box-shadow:
+    0 2px 1px rgba(255, 255, 255, 0.5) inset,
+    0 32px 80px -16px rgba(2, 24, 72, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 /* Elegant Medical Cards */
 .medical-card {
   background-color: #FFFFFF;
   border: 1px solid #E2ECF8;
-  border-radius: 20px;
-  box-shadow: 0 4px 18px -2px rgba(10, 42, 95, 0.05);
-  transition: transform 200ms var(--ease-out),
-              box-shadow 200ms var(--ease-out),
-              border-color 180ms ease;
+  border-radius: 18px;
+  box-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.8) inset,
+    0 4px 20px -4px rgba(10, 42, 95, 0.07),
+    0 1px 4px rgba(10, 42, 95, 0.04);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-fast) ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .medical-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 28px -4px rgba(10, 42, 95, 0.1);
-    border-color: #BCD8FE;
+    box-shadow:
+      0 1px 2px rgba(255, 255, 255, 0.8) inset,
+      0 12px 32px -6px rgba(10, 42, 95, 0.12),
+      0 2px 8px rgba(10, 42, 95, 0.05);
+    border-color: #BAD6FE;
   }
 }
 
 /* Deep Sapphire Feature Card */
 .medical-card-sapphire {
-  background: linear-gradient(140deg, #13468D 0%, #0D336A 100%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 20px;
+  background: linear-gradient(145deg, #12468D 0%, #0C3368 60%, #081F4A 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
   color: #FFFFFF;
-  box-shadow: 0 12px 36px -6px rgba(5, 25, 60, 0.35);
-  transition: transform 200ms var(--ease-out),
-              box-shadow 200ms var(--ease-out),
-              border-color 180ms ease;
+  box-shadow:
+    0 1px 1px rgba(255, 255, 255, 0.1) inset,
+    0 14px 40px -8px rgba(5, 20, 55, 0.5);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .medical-card-sapphire:hover {
     transform: translateY(-2px);
-    box-shadow: 0 16px 42px -6px rgba(5, 25, 60, 0.45);
+    box-shadow:
+      0 1px 1px rgba(255, 255, 255, 0.1) inset,
+      0 20px 50px -8px rgba(5, 20, 55, 0.6);
   }
 }
 
-/* Backward-compatible dossier-card mapped to luxury medical styling */
+/* Backward-compatible dossier-card */
 .dossier-card {
   background-color: #FFFFFF;
   border: 1px solid #E2ECF8;
-  border-radius: 20px;
-  box-shadow: 0 4px 18px -2px rgba(10, 42, 95, 0.05);
-  transition: transform 200ms var(--ease-out),
-              box-shadow 200ms var(--ease-out),
-              border-color 180ms ease;
+  border-radius: 18px;
+  box-shadow: 0 4px 20px -4px rgba(10, 42, 95, 0.07);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-fast) ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .dossier-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 28px -4px rgba(10, 42, 95, 0.1);
-    border-color: #BCD8FE;
+    box-shadow: 0 12px 32px -6px rgba(10, 42, 95, 0.12);
+    border-color: #BAD6FE;
   }
 }
 
 .dossier-panel {
-  background-color: #F8FAFD;
+  background-color: #F6F9FF;
   border: 1px solid #E2ECF8;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
-/* Emil Kowalski Button Physics & Micro-Interactions */
+/* ═══════════════════════════════════════════════════════════
+   BUTTONS - Emil Kowalski micro-interaction physics
+   ═══════════════════════════════════════════════════════════ */
+
 .btn-pill-primary {
-  background: linear-gradient(135deg, #0066EE 0%, #0044B8 100%);
+  background: linear-gradient(145deg, #1A7AFF 0%, #0048C8 100%);
   color: #FFFFFF;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 16px -2px rgba(0, 102, 238, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  /* layered shadow for 3D depth */
+  box-shadow:
+    0 1px 1px rgba(255, 255, 255, 0.25) inset,
+    0 5px 18px -3px rgba(0, 90, 220, 0.5),
+    0 1px 4px rgba(0, 60, 180, 0.3);
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform 160ms var(--ease-out),
-              box-shadow 160ms var(--ease-out),
-              background 160ms ease,
-              border-color 160ms ease;
+  /* Respond on press, not on release */
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) ease,
+    opacity var(--dur-fast) ease;
+  /* Minimum touch target */
+  min-height: 44px;
+  padding-block: 10px;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .btn-pill-primary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 22px rgba(0, 102, 238, 0.55);
-    background: linear-gradient(135deg, #1075FF 0%, #0050CC 100%);
+    transform: translateY(-1.5px);
+    box-shadow:
+      0 1px 1px rgba(255, 255, 255, 0.25) inset,
+      0 8px 24px -4px rgba(0, 90, 220, 0.6),
+      0 2px 8px rgba(0, 60, 180, 0.3);
+    background: linear-gradient(145deg, #2884FF 0%, #0052D9 100%);
   }
 }
 
+/* Press: instant, tactile (100ms) */
 .btn-pill-primary:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.1) inset,
+    0 2px 8px -2px rgba(0, 90, 220, 0.3);
+  transition-duration: 80ms;
+}
+
+.btn-pill-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .btn-pill-secondary {
-  background: #FFFFFF;
-  color: #0066EE;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0062FF;
   border-radius: 9999px;
-  border: 1.5px solid #0066EE;
+  border: 1.5px solid rgba(0, 98, 255, 0.5);
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform 160ms var(--ease-out),
-              background-color 160ms ease,
-              border-color 160ms ease,
-              box-shadow 160ms var(--ease-out);
+  box-shadow: 0 2px 10px -2px rgba(0, 98, 255, 0.1);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) var(--ease-out);
+  min-height: 44px;
+  padding-block: 10px;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .btn-pill-secondary:hover:not(:disabled) {
-    background: #EBF3FF;
+    background: #EBF4FF;
+    border-color: #0062FF;
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px -2px rgba(0, 102, 238, 0.15);
+    box-shadow: 0 6px 18px -3px rgba(0, 98, 255, 0.18);
   }
 }
 
 .btn-pill-secondary:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition-duration: 80ms;
 }
 
 .btn-pill-ruby {
-  background: linear-gradient(135deg, #D92D20 0%, #B42318 100%);
+  background: linear-gradient(145deg, #E03125 0%, #B42318 100%);
   color: #FFFFFF;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 4px 14px -2px rgba(217, 45, 32, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 1px 1px rgba(255, 255, 255, 0.2) inset,
+    0 5px 16px -3px rgba(200, 40, 30, 0.5);
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: transform 160ms var(--ease-out),
-              box-shadow 160ms var(--ease-out),
-              background 160ms ease;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) ease;
+  min-height: 44px;
+  padding-block: 10px;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .btn-pill-ruby:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(217, 45, 32, 0.5);
-    background: linear-gradient(135deg, #E5392B 0%, #C4261B 100%);
+    box-shadow:
+      0 1px 1px rgba(255, 255, 255, 0.2) inset,
+      0 8px 22px -4px rgba(200, 40, 30, 0.6);
+    background: linear-gradient(145deg, #EF3828 0%, #C4261B 100%);
   }
 }
 
 .btn-pill-ruby:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition-duration: 80ms;
 }
 
 .btn-press {
-  transition: transform 160ms var(--ease-out),
-              box-shadow 160ms var(--ease-out),
-              background-color 160ms ease,
-              border-color 160ms ease;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -255,34 +355,43 @@
 }
 
 .btn-press:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition-duration: 80ms;
 }
 
 /* Micro-interaction Option Card */
 .interactive-option {
-  transition: transform 160ms var(--ease-out),
-              box-shadow 160ms var(--ease-out),
-              border-color 160ms ease,
-              background-color 160ms ease;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+  /* Minimum touch target */
+  min-height: 48px;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .interactive-option:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px -3px rgba(10, 42, 95, 0.08);
+    box-shadow: 0 6px 20px -4px rgba(10, 42, 95, 0.1);
   }
 }
 
 .interactive-option:active:not(:disabled) {
   transform: scale(0.985);
+  transition-duration: 80ms;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   GLASS & PILL TAGS
+   ═══════════════════════════════════════════════════════════ */
 
 /* Frosted Glass Pill Tag */
 .frosted-pill {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   color: #FFFFFF;
   border-radius: 9999px;
   padding: 4px 14px;
@@ -292,9 +401,9 @@
 }
 
 .frosted-pill-dark {
-  background: #EBF3FF;
-  border: 1px solid #BCD8FE;
-  color: #0050CC;
+  background: #EBF4FF;
+  border: 1px solid #BAD6FE;
+  color: #0048C8;
   border-radius: 9999px;
   padding: 4px 12px;
   font-size: 11px;
@@ -303,43 +412,52 @@
   text-transform: uppercase;
 }
 
-/* Staggered Entrance Animations (Emil Kowalski Philosophy: under 300ms, subtle 8-10px translate) */
+/* ═══════════════════════════════════════════════════════════
+   ENTRANCE ANIMATIONS
+   Emil Kowalski: <300ms, 8-12px translate, ease-out springs
+   ═══════════════════════════════════════════════════════════ */
+
 @keyframes springRevealUp {
   0% {
     opacity: 0;
-    transform: translateY(10px) scale(0.985);
+    transform: translateY(12px) scale(0.98);
+    filter: blur(1px);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: blur(0px);
   }
 }
 
-.animate-reveal-1 {
-  animation: springRevealUp 260ms var(--ease-out) 30ms both;
+@keyframes springRevealLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 
-.animate-reveal-2 {
-  animation: springRevealUp 260ms var(--ease-out) 70ms both;
-}
+/* Staggered page entrance */
+.animate-reveal-1 { animation: springRevealUp 280ms var(--ease-out) 20ms both; }
+.animate-reveal-2 { animation: springRevealUp 280ms var(--ease-out) 60ms both; }
+.animate-reveal-3 { animation: springRevealUp 280ms var(--ease-out) 100ms both; }
+.animate-reveal-4 { animation: springRevealUp 280ms var(--ease-out) 140ms both; }
+.animate-reveal-5 { animation: springRevealUp 280ms var(--ease-out) 180ms both; }
+.animate-reveal-6 { animation: springRevealUp 280ms var(--ease-out) 220ms both; }
 
-.animate-reveal-3 {
-  animation: springRevealUp 260ms var(--ease-out) 110ms both;
-}
+/* Slide from left (for step transitions) */
+.animate-slide-left-1 { animation: springRevealLeft 240ms var(--ease-out) 30ms both; }
+.animate-slide-left-2 { animation: springRevealLeft 240ms var(--ease-out) 70ms both; }
 
-.animate-reveal-4 {
-  animation: springRevealUp 260ms var(--ease-out) 150ms both;
-}
-
-.animate-reveal-5 {
-  animation: springRevealUp 260ms var(--ease-out) 190ms both;
-}
-
-/* Chat bubble entry transition */
+/* Chat bubble entry */
 @keyframes chatBubbleEnter {
   0% {
     opacity: 0;
-    transform: translateY(6px) scale(0.98);
+    transform: translateY(8px) scale(0.97);
   }
   100% {
     opacity: 1;
@@ -351,7 +469,40 @@
   animation: chatBubbleEnter 220ms var(--ease-out) both;
 }
 
-/* Modal and Dialog physics */
+/* ═══════════════════════════════════════════════════════════
+   PAGE TRANSITION SYSTEM
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pageExit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.99);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 320ms var(--ease-out) both;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODALS & DIALOGS
+   ═══════════════════════════════════════════════════════════ */
+
 @keyframes modalBackdropFade {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -360,11 +511,23 @@
 @keyframes modalScaleEnter {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.94) translateY(8px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Mobile sheet - slides from bottom like iOS */
+@keyframes sheetEnter {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -373,20 +536,238 @@
 }
 
 .modal-dialog-animate {
-  animation: modalScaleEnter 220ms var(--ease-out) both;
+  animation: modalScaleEnter 240ms var(--ease-out) both;
 }
 
-/* Soft bio-pulse for medical badges and hero accents */
+.sheet-animate {
+  animation: sheetEnter 320ms var(--ease-drawer) both;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOADING STATES
+   ═══════════════════════════════════════════════════════════ */
+
+/* Skeleton shimmer - smooth, not flashy */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #E8EFFA 0%,
+    #EEF4FC 30%,
+    #F4F8FE 50%,
+    #EEF4FC 70%,
+    #E8EFFA 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.skeleton-round {
+  background: linear-gradient(
+    90deg,
+    #E8EFFA 0%,
+    #EEF4FC 30%,
+    #F4F8FE 50%,
+    #EEF4FC 70%,
+    #E8EFFA 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 9999px;
+}
+
+/* Spinner variants */
+@keyframes spin-smooth {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(0, 98, 255, 0.2);
+  border-top-color: #0062FF;
+  border-radius: 50%;
+  animation: spin-smooth 0.8s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.spinner-lg {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+.spinner-white {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+}
+
+/* Dot-pulse loader */
+@keyframes dotPulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.dot-pulse span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.dot-pulse span:nth-child(2) { animation-delay: 0.16s; }
+.dot-pulse span:nth-child(3) { animation-delay: 0.32s; }
+
+/* Processing animation for submit screen */
+@keyframes processingRing {
+  0% { stroke-dashoffset: 125; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -125; }
+}
+
+@keyframes completePop {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Progress bar fill animation */
+@keyframes fillProgress {
+  from { width: 0%; }
+  to { width: var(--progress-width, 100%); }
+}
+
+.progress-fill {
+  animation: fillProgress 0.6s var(--ease-out) both;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STEP PROGRESS - compact horizontal mobile bar
+   ═══════════════════════════════════════════════════════════ */
+
+.step-track {
+  height: 3px;
+  background: rgba(0, 98, 255, 0.12);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.step-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0062FF, #2FA0FF);
+  border-radius: 9999px;
+  transition: width 0.4s var(--ease-out);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAVBAR MOBILE - sticky bottom approach on small screens
+   ═══════════════════════════════════════════════════════════ */
+
+/* Safe area awareness */
+.safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BIO PULSE - for status indicators
+   ═══════════════════════════════════════════════════════════ */
+
 @keyframes bioPulseSoft {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.02); }
+  50% { opacity: 0.7; transform: scale(1.08); }
 }
 
 .bio-pulse-soft {
-  animation: bioPulseSoft 3.5s var(--ease-in-out) infinite;
+  animation: bioPulseSoft 2.8s var(--ease-in-out) infinite;
 }
 
-/* Accessibility: Respect prefers-reduced-motion across the entire application */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 98, 255, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 98, 255, 0); }
+}
+
+.glow-pulse {
+  animation: glow-pulse 2s ease infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLLBAR STYLING - subtle, iOS-like
+   ═══════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(10, 42, 95, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(10, 42, 95, 0.3);
+}
+
+/* Hide scrollbar visually but keep functional */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   FOCUS RING - accessible, not ugly
+   ═══════════════════════════════════════════════════════════ */
+
+:focus-visible {
+  outline: 2.5px solid #0062FF;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TYPOGRAPHY UTILITIES
+   ═══════════════════════════════════════════════════════════ */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACCESSIBILITY - Respect prefers-reduced-motion
+   ═══════════════════════════════════════════════════════════ */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -402,10 +783,19 @@
   .animate-reveal-3,
   .animate-reveal-4,
   .animate-reveal-5,
+  .animate-reveal-6,
+  .animate-slide-left-1,
+  .animate-slide-left-2,
   .chat-bubble-enter,
   .modal-backdrop-animate,
   .modal-dialog-animate,
+  .sheet-animate,
+  .page-enter,
   .bio-pulse-soft,
+  .glow-pulse,
+  .skeleton,
+  .skeleton-round,
+  .dot-pulse span,
   .medical-card,
   .medical-card-sapphire,
   .dossier-card,
@@ -417,5 +807,6 @@
     animation: none !important;
     transform: none !important;
     transition: background-color 0.1s ease, color 0.1s ease, border-color 0.1s ease !important;
+    filter: none !important;
   }
 }

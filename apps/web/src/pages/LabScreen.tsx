@@ -367,7 +367,15 @@ export const LabScreen: React.FC<LabScreenProps> = ({
             </div>
 
             {loading && (
-              <p className="text-sm text-[#64748B]">Loading synthetic observations...</p>
+              <div className="space-y-3 py-2">
+                {[1, 2].map(i => (
+                  <div key={i} className="p-4 rounded-2xl border border-[#E2ECF8] bg-white space-y-2.5">
+                    <div className="skeleton h-3 w-1/3" />
+                    <div className="skeleton h-6 w-1/4" />
+                    <div className="skeleton h-2.5 w-1/2" />
+                  </div>
+                ))}
+              </div>
             )}
 
             {!loading && observations.length === 0 && (
