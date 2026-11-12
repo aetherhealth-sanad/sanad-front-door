@@ -1,4 +1,3 @@
-import { MockBadge } from './MockBadge';
 import { QuickExit } from './QuickExit';
 import { UrgentLink } from './UrgentLink';
 
@@ -33,7 +32,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           </a>
-          <MockBadge className="inline-flex" label="MOCK · SIMULATED DATA" />
         </div>
 
         {/* Role Switcher, Case Telemetry & Safety Controls */}

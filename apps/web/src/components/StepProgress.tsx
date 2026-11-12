@@ -5,15 +5,15 @@ interface StepProgressProps {
 }
 
 const STEPS = [
-  { id: '/', label: '01 Start' },
-  { id: '/consent', label: '02 Consent' },
-  { id: '/safety', label: '03 Safety' },
-  { id: '/lab', label: '04 Lab (J3)' },
-  { id: '/intake', label: '05 Intake' },
-  { id: '/review', label: '06 Review' },
-  { id: '/result', label: '07 Synthesis' },
-  { id: '/referral', label: '08 Gate' },
-  { id: '/tracking', label: '09 Tracking' },
+  { id: '/', label: 'Start' },
+  { id: '/consent', label: 'Privacy' },
+  { id: '/safety', label: 'Safety' },
+  { id: '/lab', label: 'Lab Tests' },
+  { id: '/intake', label: 'Questions' },
+  { id: '/review', label: 'Review' },
+  { id: '/result', label: 'Summary' },
+  { id: '/referral', label: 'Referral' },
+  { id: '/tracking', label: 'Status' },
 ];
 
 export const StepProgress: React.FC<StepProgressProps> = ({
@@ -25,9 +25,12 @@ export const StepProgress: React.FC<StepProgressProps> = ({
   if (currentIndex === -1) return null;
 
   return (
-    <div className="w-full bg-white/70 backdrop-blur-md border-b border-[#E2ECF8] py-2.5 px-4 sm:px-6">
+    <nav
+      aria-label="Assessment progress"
+      className="w-full bg-white/70 backdrop-blur-md border-b border-[#E2ECF8] py-2 px-4 sm:px-6"
+    >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        <div className="flex items-center gap-1.5 sm:gap-2.5 w-full overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 sm:gap-2 w-full overflow-x-auto no-scrollbar py-0.5">
           {STEPS.map((step, idx) => {
             const visitedLab =
               typeof window !== 'undefined' &&
@@ -44,43 +47,48 @@ export const StepProgress: React.FC<StepProgressProps> = ({
               ((step.id === '/lab' && (currentRoute === '/intake' || currentRoute === '/result') && canEnterObservations) ||
                 (step.id === '/intake' && currentRoute === '/lab'));
 
-            const badgeContent = (
+            const content = (
               <div
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-mono transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.98] ${
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.98] ${
                   isCurrent
-                    ? 'bg-[#0066EE] text-white border-[#0066EE] font-bold shadow-xs'
+                    ? 'bg-[#0066EE] text-white font-bold shadow-xs'
                     : isCompleted
-                    ? 'bg-[#EBF3FF] text-[#0066EE] border-[#BCD8FE] font-semibold'
+                    ? 'bg-[#EBF3FF] text-[#0066EE] font-semibold hover:bg-[#D9E9FE]'
                     : isSkippedLab
-                    ? 'bg-[#F8FAFD] text-[#829AB8] border-[#E2ECF8]'
+                    ? 'text-[#829AB8] bg-transparent'
                     : isInteractive
-                    ? 'bg-white text-[#072254] border-[#BCD8FE] hover:bg-[#EBF3FF] font-semibold'
-                    : 'bg-[#F8FAFD] text-[#829AB8] border-[#E2ECF8]'
+                    ? 'text-[#072254] hover:bg-[#EBF3FF] font-medium'
+                    : 'text-[#829AB8] bg-transparent'
                 }`}
               >
-                <span>{isCompleted ? '✓' : isSkippedLab ? '-' : step.label}</span>
-                {isCompleted && <span>{step.label.slice(3)}</span>}
-                {isSkippedLab && <span>Lab (Optional)</span>}
+                {isCompleted ? (
+                  <span className="w-4 h-4 rounded-full bg-[#0066EE] text-white flex items-center justify-center text-[10px] font-bold">✓</span>
+                ) : (
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono ${isCurrent ? 'bg-white text-[#0066EE] font-bold' : 'bg-[#E2ECF8] text-[#4A6588]'}`}>
+                    {idx + 1}
+                  </span>
+                )}
+                <span>{step.label}</span>
               </div>
             );
 
             return (
-              <div key={step.id} className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+              <div key={step.id} className="flex items-center gap-1 sm:gap-2 shrink-0">
                 {isInteractive ? (
                   <button
                     type="button"
                     onClick={() => onNavigate(step.id)}
-                    className="cursor-pointer btn-press"
+                    className="cursor-pointer"
                   >
-                    {badgeContent}
+                    {content}
                   </button>
                 ) : (
-                  badgeContent
+                  content
                 )}
                 {idx < STEPS.length - 1 && (
                   <div
-                    className={`w-2 sm:w-4 h-px ${
-                      idx < currentIndex ? 'bg-[#0F523E]' : 'bg-[#C5CEC9]'
+                    className={`w-3 sm:w-5 h-0.5 rounded-full ${
+                      idx < currentIndex ? 'bg-[#0066EE]' : 'bg-[#E2ECF8]'
                     }`}
                   />
                 )}
@@ -89,10 +97,10 @@ export const StepProgress: React.FC<StepProgressProps> = ({
           })}
         </div>
 
-        <div className="hidden md:flex items-center gap-2 pl-4 border-l border-[#C5CEC9] text-[11px] font-mono text-[#3F4E48] whitespace-nowrap">
-          <span>STAGE {currentIndex + 1}/{STEPS.length}</span>
+        <div className="hidden md:flex items-center pl-4 border-l border-[#E2ECF8] text-xs font-medium text-[#4A6588] whitespace-nowrap">
+          <span>Step {currentIndex + 1} of {STEPS.length}</span>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };
