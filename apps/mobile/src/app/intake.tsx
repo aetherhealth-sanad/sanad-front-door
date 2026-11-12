@@ -7,6 +7,7 @@ import {
   Pressable,
   useColorScheme,
   Alert,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -21,6 +22,16 @@ import {
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { ApiService, Question } from '@/services/api';
 
+// Map categories to visual contextual imagery from web assets
+const CATEGORY_IMAGES: Record<string, any> = {
+  'General Demographics': require('@/assets/images/real_patient_peace_of_mind.jpg'),
+  'Conception Timeline': require('@/assets/images/real_doctor_consultation.jpg'),
+  'Clinical History': require('@/assets/images/medical_lab_3d.jpg'),
+  'Physical Symptoms': require('@/assets/images/medical_shield_3d.jpg'),
+  'Thermal & Lifestyle Exposures': require('@/assets/images/medical_hero_3d.jpg'),
+  'Tobacco & Stress': require('@/assets/images/real_clinical_lab.jpg'),
+};
+
 export default function IntakeScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
@@ -33,6 +44,7 @@ export default function IntakeScreen() {
   const currentQuestion = questions[currentIndex];
   const progressPercent = ((currentIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
+  const categoryImage = CATEGORY_IMAGES[currentQuestion.category] || CATEGORY_IMAGES['Clinical History'];
 
   const handleSelectOption = (value: string) => {
     setSelectedAnswers((prev) => ({
@@ -95,11 +107,16 @@ export default function IntakeScreen() {
         </View>
       </View>
 
-      {/* Main Question Card */}
+      {/* Main Question Card with Visual Context */}
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Text style={[styles.questionText, { color: theme.text }]}>
-          {currentQuestion.text}
-        </Text>
+        <View style={styles.questionHeaderRow}>
+          <Image source={categoryImage} style={styles.categoryThumbnail} resizeMode="cover" />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.questionText, { color: theme.text }]}>
+              {currentQuestion.text}
+            </Text>
+          </View>
+        </View>
 
         {/* Explanation / Why we ask */}
         <View style={[styles.explanationBox, { backgroundColor: theme.backgroundElement }]}>
@@ -248,11 +265,21 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  questionText: {
-    fontSize: 20,
-    fontWeight: '800',
-    lineHeight: 28,
+  questionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
     marginBottom: Spacing.md,
+  },
+  categoryThumbnail: {
+    width: 52,
+    height: 52,
+    borderRadius: Radius.md,
+  },
+  questionText: {
+    fontSize: 19,
+    fontWeight: '800',
+    lineHeight: 26,
   },
   explanationBox: {
     flexDirection: 'row',

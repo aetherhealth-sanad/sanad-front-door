@@ -7,6 +7,7 @@ import {
   Pressable,
   useColorScheme,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -49,6 +50,7 @@ export default function ResultsScreen() {
           badgeColor: theme.emergency,
           badgeBg: theme.emergencyLight,
           label: 'PROMPT MEDICAL ATTENTION ADVISED',
+          image: require('@/assets/images/medical_urgent_care_3d.jpg'),
         };
       case 'RECOMMENDED_EVALUATION':
         return {
@@ -56,6 +58,7 @@ export default function ResultsScreen() {
           badgeColor: theme.warning,
           badgeBg: theme.warningLight,
           label: 'SPECIALIST CONSULTATION RECOMMENDED',
+          image: require('@/assets/images/real_doctor_consultation.jpg'),
         };
       default:
         return {
@@ -63,6 +66,7 @@ export default function ResultsScreen() {
           badgeColor: theme.success,
           badgeBg: theme.successLight,
           label: 'ROUTINE — LIFESTYLE OPTIMIZATION',
+          image: require('@/assets/images/real_patient_peace_of_mind.jpg'),
         };
     }
   };
@@ -95,26 +99,30 @@ export default function ResultsScreen() {
         </Text>
       </View>
 
-      {/* Triage Status Card */}
+      {/* Visual Triage Status Card */}
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <View style={[styles.triageBadge, { backgroundColor: triageMeta.badgeBg }]}>
-          <TriageIcon size={16} color={triageMeta.badgeColor} />
-          <Text style={[styles.triageBadgeText, { color: triageMeta.badgeColor }]}>
-            {triageMeta.label}
+        <Image source={triageMeta.image} style={styles.resultBannerImage} resizeMode="cover" />
+
+        <View style={styles.cardContent}>
+          <View style={[styles.triageBadge, { backgroundColor: triageMeta.badgeBg }]}>
+            <TriageIcon size={16} color={triageMeta.badgeColor} />
+            <Text style={[styles.triageBadgeText, { color: triageMeta.badgeColor }]}>
+              {triageMeta.label}
+            </Text>
+          </View>
+
+          <Text style={[styles.resultTitle, { color: theme.text }]}>
+            {result.summary_title}
+          </Text>
+
+          <Text style={[styles.resultDesc, { color: theme.textSecondary }]}>
+            {result.summary_description}
+          </Text>
+
+          <Text style={[styles.dateText, { color: theme.textMuted }]}>
+            Generated: {result.generated_at}
           </Text>
         </View>
-
-        <Text style={[styles.resultTitle, { color: theme.text }]}>
-          {result.summary_title}
-        </Text>
-
-        <Text style={[styles.resultDesc, { color: theme.textSecondary }]}>
-          {result.summary_description}
-        </Text>
-
-        <Text style={[styles.dateText, { color: theme.textMuted }]}>
-          Generated: {result.generated_at}
-        </Text>
       </View>
 
       {/* Key Findings */}
@@ -123,12 +131,14 @@ export default function ResultsScreen() {
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        {result.key_findings.map((item, index) => (
-          <View key={index} style={[styles.listItem, index > 0 && { borderTopWidth: 1, borderTopColor: theme.border }]}>
-            <View style={[styles.bulletPoint, { backgroundColor: theme.primary }]} />
-            <Text style={[styles.listText, { color: theme.text }]}>{item}</Text>
-          </View>
-        ))}
+        <View style={styles.cardContent}>
+          {result.key_findings.map((item, index) => (
+            <View key={index} style={[styles.listItem, index > 0 && { borderTopWidth: 1, borderTopColor: theme.border }]}>
+              <View style={[styles.bulletPoint, { backgroundColor: theme.primary }]} />
+              <Text style={[styles.listText, { color: theme.text }]}>{item}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* Recommended Actions */}
@@ -137,12 +147,14 @@ export default function ResultsScreen() {
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        {result.recommended_actions.map((item, index) => (
-          <View key={index} style={[styles.listItem, index > 0 && { borderTopWidth: 1, borderTopColor: theme.border }]}>
-            <Stethoscope size={18} color={theme.primary} style={{ marginTop: 2 }} />
-            <Text style={[styles.listText, { color: theme.text }]}>{item}</Text>
-          </View>
-        ))}
+        <View style={styles.cardContent}>
+          {result.recommended_actions.map((item, index) => (
+            <View key={index} style={[styles.listItem, index > 0 && { borderTopWidth: 1, borderTopColor: theme.border }]}>
+              <Stethoscope size={18} color={theme.primary} style={{ marginTop: 2 }} />
+              <Text style={[styles.listText, { color: theme.text }]}>{item}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* Lifestyle Tips */}
@@ -151,12 +163,14 @@ export default function ResultsScreen() {
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        {result.lifestyle_tips.map((tip, index) => (
-          <View key={index} style={[styles.listItem, index > 0 && { borderTopWidth: 1, borderTopColor: theme.border }]}>
-            <Sparkles size={16} color={theme.accent} style={{ marginTop: 2 }} />
-            <Text style={[styles.listText, { color: theme.textSecondary }]}>{tip}</Text>
-          </View>
-        ))}
+        <View style={styles.cardContent}>
+          {result.lifestyle_tips.map((tip, index) => (
+            <View key={index} style={[styles.listItem, index > 0 && { borderTopWidth: 1, borderTopColor: theme.border }]}>
+              <Sparkles size={16} color={theme.accent} style={{ marginTop: 2 }} />
+              <Text style={[styles.listText, { color: theme.textSecondary }]}>{tip}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* Actions */}
@@ -222,7 +236,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: Radius.xl,
-    padding: Spacing.xl,
+    overflow: 'hidden',
     borderWidth: 1,
     marginBottom: Spacing.xl,
     shadowColor: '#000',
@@ -230,6 +244,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
+  },
+  resultBannerImage: {
+    width: '100%',
+    height: 148,
+  },
+  cardContent: {
+    padding: Spacing.xl,
   },
   triageBadge: {
     flexDirection: 'row',

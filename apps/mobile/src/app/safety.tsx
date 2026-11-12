@@ -8,6 +8,7 @@ import {
   useColorScheme,
   Alert,
   Linking,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -60,15 +61,22 @@ export default function SafetyScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Urgent Warning Header */}
+      {/* Urgent Warning Header with Visual Banner */}
       <View style={[styles.alertBanner, { backgroundColor: theme.emergencyLight, borderColor: theme.emergency }]}>
-        <AlertTriangle size={24} color={theme.emergency} />
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.alertTitle, { color: theme.emergency }]}>
-            Medical Emergency Red Flags
-          </Text>
+        <Image
+          source={require('@/assets/images/medical_urgent_care_3d.jpg')}
+          style={styles.alertBannerImage}
+          resizeMode="cover"
+        />
+        <View style={styles.alertBannerBody}>
+          <View style={styles.alertTitleRow}>
+            <AlertTriangle size={20} color={theme.emergency} />
+            <Text style={[styles.alertTitle, { color: theme.emergency }]}>
+              Medical Emergency Red Flags
+            </Text>
+          </View>
           <Text style={[styles.alertSubtitle, { color: theme.text }]}>
-            If you experience any of the symptoms below, proceed to the nearest emergency department immediately (critical window &lt; 6 hours):
+            If you experience any of the symptoms below, proceed to the nearest emergency department immediately (critical surgical window &lt; 6 hours):
           </Text>
         </View>
       </View>
@@ -156,21 +164,30 @@ export default function SafetyScreen() {
         </Pressable>
       </View>
 
-      {/* Privacy & Ghost Mode Card */}
+      {/* Privacy & Ghost Mode Card with Visual Shield */}
       <Text style={[styles.sectionHeading, { color: theme.text }]}>
         Patient Privacy & Data Protection
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <View style={styles.privacyHeader}>
-          <Shield size={20} color={theme.primary} />
-          <Text style={[styles.privacyTitle, { color: theme.text }]}>
-            Ghost Mode (Instant Session Purge)
-          </Text>
+        <View style={styles.privacyRow}>
+          <Image
+            source={require('@/assets/images/medical_shield_3d.jpg')}
+            style={styles.shieldThumbnail}
+            resizeMode="cover"
+          />
+          <View style={{ flex: 1 }}>
+            <View style={styles.privacyHeader}>
+              <Shield size={18} color={theme.primary} />
+              <Text style={[styles.privacyTitle, { color: theme.text }]}>
+                Ghost Mode (Instant Session Purge)
+              </Text>
+            </View>
+            <Text style={[styles.privacyDesc, { color: theme.textSecondary }]}>
+              If you are on a shared device, tap below to permanently purge answers and cache from memory.
+            </Text>
+          </View>
         </View>
-        <Text style={[styles.privacyDesc, { color: theme.textSecondary }]}>
-          If you are on a shared device or wish to ensure zero trace of your questionnaire answers or risk stratification report remains, tap below.
-        </Text>
 
         <Pressable
           style={({ pressed }) => [
@@ -202,17 +219,27 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxl + 20,
   },
   alertBanner: {
-    flexDirection: 'row',
-    padding: Spacing.lg,
     borderRadius: Radius.xl,
+    overflow: 'hidden',
     borderWidth: 1.5,
-    gap: 12,
     marginBottom: Spacing.xl,
+  },
+  alertBannerImage: {
+    width: '100%',
+    height: 120,
+  },
+  alertBannerBody: {
+    padding: Spacing.lg,
+  },
+  alertTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
   },
   alertTitle: {
     fontSize: 16,
     fontWeight: '800',
-    marginBottom: 4,
   },
   alertSubtitle: {
     fontSize: 13,
@@ -298,11 +325,22 @@ const styles = StyleSheet.create({
   facilityDesc: {
     fontSize: 12,
   },
+  privacyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: Spacing.md,
+  },
+  shieldThumbnail: {
+    width: 56,
+    height: 56,
+    borderRadius: Radius.md,
+  },
   privacyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
+    gap: 6,
+    marginBottom: 4,
   },
   privacyTitle: {
     fontSize: 15,
@@ -311,7 +349,6 @@ const styles = StyleSheet.create({
   privacyDesc: {
     fontSize: 13,
     lineHeight: 19,
-    marginBottom: Spacing.lg,
   },
   purgeButton: {
     height: 48,

@@ -7,6 +7,8 @@ import {
   Pressable,
   useColorScheme,
   Alert,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -18,10 +20,14 @@ import {
   HeartPulse,
   Sparkles,
   RotateCcw,
+  Compass,
 } from 'lucide-react-native';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { ApiService } from '@/services/api';
+import { IntroModal } from '@/components/intro-modal';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -30,6 +36,7 @@ export default function HomeScreen() {
 
   const [session, setSession] = useState(ApiService.getCurrentSession());
   const [loading, setLoading] = useState(false);
+  const [introVisible, setIntroVisible] = useState(false);
 
   const handleStartAssessment = async () => {
     setLoading(true);
@@ -69,93 +76,124 @@ export default function HomeScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Research Prototype Pill */}
-      <View style={[styles.mockBadge, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-        <View style={styles.mockDot} />
-        <Text style={[styles.mockBadgeText, { color: theme.textSecondary }]}>
-          RESEARCH PROTOTYPE (MOCK DATA)
-        </Text>
-      </View>
+      {/* Onboarding Introduction Modal */}
+      <IntroModal visible={introVisible} onClose={() => setIntroVisible(false)} />
 
-      {/* Main Hero Card */}
-      <View style={[styles.heroCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <View style={[styles.heroIconBox, { backgroundColor: theme.primaryLight }]}>
-          <HeartPulse size={30} color={theme.primary} />
+      {/* Top Header Row with Mock Badge & Intro Tour Trigger */}
+      <View style={styles.topHeaderRow}>
+        <View style={[styles.mockBadge, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+          <View style={styles.mockDot} />
+          <Text style={[styles.mockBadgeText, { color: theme.textSecondary }]}>
+            RESEARCH PROTOTYPE (MOCK DATA)
+          </Text>
         </View>
 
-        <Text style={[styles.heroTitle, { color: theme.text }]}>
-          Men's Reproductive Health Screening
-        </Text>
-
-        <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-          A private, evidence-grounded assessment to help you understand personal health signals, thermal exposures, and guided clinical recommendations.
-        </Text>
-
-        {/* Feature Pills */}
-        <View style={styles.pillsContainer}>
-          <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
-            <ShieldCheck size={14} color={theme.primary} />
-            <Text style={[styles.pillText, { color: theme.textSecondary }]}>100% Anonymous</Text>
-          </View>
-          <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
-            <Clock size={14} color={theme.primary} />
-            <Text style={[styles.pillText, { color: theme.textSecondary }]}>3-Minute Flow</Text>
-          </View>
-          <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
-            <Lock size={14} color={theme.primary} />
-            <Text style={[styles.pillText, { color: theme.textSecondary }]}>Ephemeral Session</Text>
-          </View>
-        </View>
-
-        {/* Action Button */}
         <Pressable
           style={({ pressed }) => [
-            styles.primaryButton,
-            { backgroundColor: theme.primary, opacity: pressed ? 0.9 : 1 },
+            styles.tourButton,
+            { backgroundColor: theme.primaryLight, opacity: pressed ? 0.8 : 1 },
           ]}
-          onPress={handleStartAssessment}
-          disabled={loading}
+          onPress={() => setIntroVisible(true)}
         >
-          <Text style={styles.primaryButtonText}>
-            {loading ? 'Starting...' : session ? 'Continue Assessment' : 'Start Assessment'}
-          </Text>
-          <ArrowRight size={18} color="#FFFFFF" style={styles.buttonIcon} />
+          <Compass size={14} color={theme.primary} />
+          <Text style={[styles.tourButtonText, { color: theme.primaryDark }]}>Intro Tour</Text>
         </Pressable>
-
-        {session && (
-          <Pressable style={styles.resetButton} onPress={handleResetSession}>
-            <RotateCcw size={14} color={theme.textMuted} />
-            <Text style={[styles.resetButtonText, { color: theme.textMuted }]}>
-              Session: {session.case_id} • Tap to purge
-            </Text>
-          </Pressable>
-        )}
       </View>
 
-      {/* Quick Flow Overview */}
+      {/* Main Hero Card with Visual Header */}
+      <View style={[styles.heroCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        {/* Visual Banner from Web Assets */}
+        <View style={styles.heroImageWrapper}>
+          <Image
+            source={require('@/assets/images/medical_hero_3d.jpg')}
+            style={styles.heroBannerImage}
+            resizeMode="cover"
+          />
+          <View style={styles.heroOverlayBadge}>
+            <HeartPulse size={16} color="#FFFFFF" />
+            <Text style={styles.heroOverlayBadgeText}>Confidential Front Door</Text>
+          </View>
+        </View>
+
+        <View style={styles.heroBody}>
+          <Text style={[styles.heroTitle, { color: theme.text }]}>
+            Men's Reproductive Health Screening
+          </Text>
+
+          <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
+            A discreet, evidence-grounded assessment to help you understand personal health signals, thermal exposures, and guided clinical recommendations.
+          </Text>
+
+          {/* Feature Pills */}
+          <View style={styles.pillsContainer}>
+            <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
+              <ShieldCheck size={14} color={theme.primary} />
+              <Text style={[styles.pillText, { color: theme.textSecondary }]}>100% Anonymous</Text>
+            </View>
+            <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
+              <Clock size={14} color={theme.primary} />
+              <Text style={[styles.pillText, { color: theme.textSecondary }]}>3-Minute Flow</Text>
+            </View>
+            <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
+              <Lock size={14} color={theme.primary} />
+              <Text style={[styles.pillText, { color: theme.textSecondary }]}>Ephemeral Session</Text>
+            </View>
+          </View>
+
+          {/* Action Button */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              { backgroundColor: theme.primary, opacity: pressed ? 0.9 : 1 },
+            ]}
+            onPress={handleStartAssessment}
+            disabled={loading}
+          >
+            <Text style={styles.primaryButtonText}>
+              {loading ? 'Starting...' : session ? 'Continue Assessment' : 'Start Assessment'}
+            </Text>
+            <ArrowRight size={18} color="#FFFFFF" style={styles.buttonIcon} />
+          </Pressable>
+
+          {session && (
+            <Pressable style={styles.resetButton} onPress={handleResetSession}>
+              <RotateCcw size={14} color={theme.textMuted} />
+              <Text style={[styles.resetButtonText, { color: theme.textMuted }]}>
+                Session: {session.case_id} • Tap to purge
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
+
+      {/* 3-Step Screening Pathway */}
       <Text style={[styles.sectionHeading, { color: theme.text }]}>
         3-Step Screening Pathway
       </Text>
 
       <View style={styles.stepsList}>
         <View style={[styles.stepItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <View style={[styles.stepNumberBadge, { backgroundColor: theme.primaryLight }]}>
-            <Text style={[styles.stepNumberText, { color: theme.primary }]}>1</Text>
-          </View>
+          <Image
+            source={require('@/assets/images/medical_lab_3d.jpg')}
+            style={styles.stepThumbnail}
+            resizeMode="cover"
+          />
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: theme.text }]}>6 Discreet Questions</Text>
+            <Text style={[styles.stepTitle, { color: theme.text }]}>1. Discreet Screening Questions</Text>
             <Text style={[styles.stepDesc, { color: theme.textSecondary }]}>
-              Covering demographics, conception timeline, thermal exposures, and symptoms.
+              6 questions covering timeline, thermal habits, lifestyle, and symptoms.
             </Text>
           </View>
         </View>
 
         <View style={[styles.stepItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <View style={[styles.stepNumberBadge, { backgroundColor: theme.primaryLight }]}>
-            <Text style={[styles.stepNumberText, { color: theme.primary }]}>2</Text>
-          </View>
+          <Image
+            source={require('@/assets/images/real_patient_peace_of_mind.jpg')}
+            style={styles.stepThumbnail}
+            resizeMode="cover"
+          />
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: theme.text }]}>Stratification & Report</Text>
+            <Text style={[styles.stepTitle, { color: theme.text }]}>2. Stratification & Report</Text>
             <Text style={[styles.stepDesc, { color: theme.textSecondary }]}>
               Transparent risk stratification mapped against WHO 2021 manual standards.
             </Text>
@@ -163,11 +201,13 @@ export default function HomeScreen() {
         </View>
 
         <View style={[styles.stepItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <View style={[styles.stepNumberBadge, { backgroundColor: theme.primaryLight }]}>
-            <Text style={[styles.stepNumberText, { color: theme.primary }]}>3</Text>
-          </View>
+          <Image
+            source={require('@/assets/images/real_doctor_consultation.jpg')}
+            style={styles.stepThumbnail}
+            resizeMode="cover"
+          />
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: theme.text }]}>Next Steps & Consultation</Text>
+            <Text style={[styles.stepTitle, { color: theme.text }]}>3. Next Steps & Consultation</Text>
             <Text style={[styles.stepDesc, { color: theme.textSecondary }]}>
               Practical lifestyle measures and guided specialist referral navigation.
             </Text>
@@ -175,7 +215,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Emergency Notice Card */}
+      {/* Emergency Notice Card with Urgent Visual */}
       <Pressable
         style={({ pressed }) => [
           styles.emergencyCard,
@@ -187,20 +227,29 @@ export default function HomeScreen() {
         ]}
         onPress={() => router.push('/safety')}
       >
-        <View style={styles.emergencyHeader}>
-          <AlertTriangle size={20} color={theme.emergency} />
-          <Text style={[styles.emergencyTitle, { color: theme.emergency }]}>
-            Experiencing Acute Pain or Swelling?
-          </Text>
-        </View>
-        <Text style={[styles.emergencyDesc, { color: theme.text }]}>
-          If you have severe sudden scrotal pain, suspected torsion, or direct trauma, access immediate 24/7 emergency medical guidance.
-        </Text>
-        <View style={styles.emergencyLinkRow}>
-          <Text style={[styles.emergencyLinkText, { color: theme.emergency }]}>
-            View Emergency Hotlines & Red Flags
-          </Text>
-          <ArrowRight size={14} color={theme.emergency} />
+        <View style={styles.emergencyRow}>
+          <Image
+            source={require('@/assets/images/medical_urgent_care_3d.jpg')}
+            style={styles.emergencyThumbnail}
+            resizeMode="cover"
+          />
+          <View style={{ flex: 1 }}>
+            <View style={styles.emergencyHeader}>
+              <AlertTriangle size={18} color={theme.emergency} />
+              <Text style={[styles.emergencyTitle, { color: theme.emergency }]}>
+                Experiencing Acute Pain?
+              </Text>
+            </View>
+            <Text style={[styles.emergencyDesc, { color: theme.text }]}>
+              Sudden severe testicular pain or trauma requires 24/7 immediate medical care.
+            </Text>
+            <View style={styles.emergencyLinkRow}>
+              <Text style={[styles.emergencyLinkText, { color: theme.emergency }]}>
+                View Emergency Hotlines & Red Flags
+              </Text>
+              <ArrowRight size={14} color={theme.emergency} />
+            </View>
+          </View>
         </View>
       </Pressable>
 
@@ -223,15 +272,19 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingBottom: Spacing.xxl + 20,
   },
+  topHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
   mockBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     paddingHorizontal: Spacing.md,
     paddingVertical: 5,
     borderRadius: Radius.full,
     borderWidth: 1,
-    marginBottom: Spacing.md,
   },
   mockDot: {
     width: 6,
@@ -245,9 +298,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
+  tourButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+    gap: 4,
+  },
+  tourButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   heroCard: {
     borderRadius: Radius.xl,
-    padding: Spacing.xl,
+    overflow: 'hidden',
     borderWidth: 1,
     marginBottom: Spacing.xl,
     shadowColor: '#000',
@@ -256,13 +321,34 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  heroIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: Radius.lg,
+  heroImageWrapper: {
+    width: '100%',
+    height: 160,
+    position: 'relative',
+  },
+  heroBannerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlayBadge: {
+    position: 'absolute',
+    bottom: 12,
+    left: 14,
+    backgroundColor: 'rgba(15, 23, 42, 0.82)',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.md,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    gap: 6,
+  },
+  heroOverlayBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  heroBody: {
+    padding: Spacing.xl,
   },
   heroTitle: {
     fontSize: 22,
@@ -331,34 +417,28 @@ const styles = StyleSheet.create({
   },
   stepItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: Spacing.lg,
+    alignItems: 'center',
+    padding: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1,
     gap: Spacing.md,
   },
-  stepNumberBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepNumberText: {
-    fontSize: 14,
-    fontWeight: '800',
+  stepThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: Radius.md,
   },
   stepContent: {
     flex: 1,
   },
   stepTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     marginBottom: 2,
   },
   stepDesc: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
   },
   emergencyCard: {
     padding: Spacing.lg,
@@ -366,20 +446,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: Spacing.xl,
   },
+  emergencyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  emergencyThumbnail: {
+    width: 68,
+    height: 68,
+    borderRadius: Radius.md,
+  },
   emergencyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
+    gap: 6,
+    marginBottom: 4,
   },
   emergencyTitle: {
     fontSize: 14,
     fontWeight: '700',
   },
   emergencyDesc: {
-    fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 8,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 6,
   },
   emergencyLinkRow: {
     flexDirection: 'row',
@@ -387,7 +477,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   emergencyLinkText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   footer: {
