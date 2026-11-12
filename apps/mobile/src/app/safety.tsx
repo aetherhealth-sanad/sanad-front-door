@@ -14,8 +14,6 @@ import {
   PhoneCall,
   AlertTriangle,
   Trash2,
-  MapPin,
-  Clock,
   Shield,
   ExternalLink,
 } from 'lucide-react-native';
@@ -30,25 +28,25 @@ export default function SafetyScreen() {
 
   const handleCallEmergency = (phone: string) => {
     Linking.openURL(`tel:${phone}`).catch(() => {
-      Alert.alert('Không thể thực hiện cuộc gọi', `Vui lòng tự quay số: ${phone}`);
+      Alert.alert('Unable to Place Call', `Please manually dial: ${phone}`);
     });
   };
 
   const handlePurgeSession = () => {
     Alert.alert(
-      'Xóa toàn bộ dữ liệu phiên?',
-      'Hành động này sẽ xóa ngay lập tức mọi câu trả lời, mã phiên và bộ nhớ tạm trên thiết bị của bạn.',
+      'Purge All Local Session Data?',
+      'This action immediately deletes your questionnaire responses, session tokens, and local cache from this device.',
       [
-        { text: 'Hủy', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Xóa ngay',
+          text: 'Purge Now',
           style: 'destructive',
           onPress: () => {
             ApiService.clearSession();
             Alert.alert(
-              'Đã xóa an toàn',
-              'Toàn bộ dữ liệu của bạn trên máy này đã biến mất hoàn toàn.',
-              [{ text: 'Về trang chủ', onPress: () => router.replace('/') }]
+              'Session Cleared',
+              'All personal answers and identifiers have been completely erased from this device.',
+              [{ text: 'Return Home', onPress: () => router.replace('/') }]
             );
           },
         },
@@ -67,10 +65,10 @@ export default function SafetyScreen() {
         <AlertTriangle size={24} color={theme.emergency} />
         <View style={{ flex: 1 }}>
           <Text style={[styles.alertTitle, { color: theme.emergency }]}>
-            Dấu hiệu Cấp cứu Y tế Khẩn cấp
+            Medical Emergency Red Flags
           </Text>
           <Text style={[styles.alertSubtitle, { color: theme.text }]}>
-            Nếu bạn gặp bất kỳ dấu hiệu nào dưới đây, hãy tới khoa Cấp cứu của bệnh viện gần nhất ngay lập tức (Thời gian vàng là dưới 6 giờ):
+            If you experience any of the symptoms below, proceed to the nearest emergency department immediately (critical window &lt; 6 hours):
           </Text>
         </View>
       </View>
@@ -81,10 +79,10 @@ export default function SafetyScreen() {
           <View style={[styles.flagDot, { backgroundColor: theme.emergency }]} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.flagTitle, { color: theme.text }]}>
-              Đau dữ dội tinh hoàn đột ngột (Kèm nôn ói)
+              Sudden Severe Testicular Pain (with or without nausea)
             </Text>
             <Text style={[styles.flagDesc, { color: theme.textSecondary }]}>
-              Dấu hiệu nghi ngờ Xoắn tinh hoàn (Testicular Torsion) — cần can thiệp phẫu thuật khẩn cấp để bảo tồn chức năng.
+              High index of suspicion for Testicular Torsion — requires prompt surgical evaluation to preserve testicular viability.
             </Text>
           </View>
         </View>
@@ -95,10 +93,10 @@ export default function SafetyScreen() {
           <View style={[styles.flagDot, { backgroundColor: theme.emergency }]} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.flagTitle, { color: theme.text }]}>
-              Chấn thương rách, tụ máu lớn vùng bìu
+              Penetrating Scrotal Trauma or Severe Hematoma
             </Text>
             <Text style={[styles.flagDesc, { color: theme.textSecondary }]}>
-              Sau va đập thể thao, tai nạn xe cộ hoặc ngoại lực mạnh.
+              Following sports impact, motor vehicular accident, or significant blunt force injury.
             </Text>
           </View>
         </View>
@@ -109,10 +107,10 @@ export default function SafetyScreen() {
           <View style={[styles.flagDot, { backgroundColor: theme.emergency }]} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.flagTitle, { color: theme.text }]}>
-              Sốt cao kèm sưng nóng đỏ bìu và tiểu buốt
+              High Fever with Rapid Scrotal Swelling, Erythema & Dysuria
             </Text>
             <Text style={[styles.flagDesc, { color: theme.textSecondary }]}>
-              Dấu hiệu của viêm mào tinh hoàn - tinh hoàn cấp tính do nhiễm trùng.
+              Indicates acute epididymo-orchitis or expanding urogenital infection requiring prompt antibiotics.
             </Text>
           </View>
         </View>
@@ -120,7 +118,7 @@ export default function SafetyScreen() {
 
       {/* Emergency Hotlines */}
       <Text style={[styles.sectionHeading, { color: theme.text }]}>
-        Đường dây nóng Hỗ trợ Y tế 24/7
+        24/7 Emergency Medical Contacts
       </Text>
 
       <View style={styles.hotlineList}>
@@ -133,8 +131,8 @@ export default function SafetyScreen() {
         >
           <PhoneCall size={22} color="#FFFFFF" />
           <View style={{ flex: 1 }}>
-            <Text style={styles.hotlineTitle}>Cấp cứu Y tế Toàn quốc: 115</Text>
-            <Text style={styles.hotlineSub}>Bấm để gọi cấp cứu xe cứu thương ngay</Text>
+            <Text style={styles.hotlineTitle}>Emergency Medical Dispatch: 115 / 911</Text>
+            <Text style={styles.hotlineSub}>Tap to connect with emergency ambulance services</Text>
           </View>
           <ExternalLink size={18} color="#FFFFFF" />
         </Pressable>
@@ -149,10 +147,10 @@ export default function SafetyScreen() {
           <PhoneCall size={20} color={theme.primary} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.facilityName, { color: theme.text }]}>
-              Đường dây nóng Bộ Y Tế (1900 9095)
+              National Health Helpline (1900 9095)
             </Text>
             <Text style={[styles.facilityDesc, { color: theme.textSecondary }]}>
-              Tư vấn y tế & hướng dẫn địa chỉ bệnh viện gần nhất
+              24/7 health guidance and facility directory assistance
             </Text>
           </View>
         </Pressable>
@@ -160,18 +158,18 @@ export default function SafetyScreen() {
 
       {/* Privacy & Ghost Mode Card */}
       <Text style={[styles.sectionHeading, { color: theme.text }]}>
-        Bảo vệ Quyền riêng tư Cá nhân
+        Patient Privacy & Data Protection
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <View style={styles.privacyHeader}>
           <Shield size={20} color={theme.primary} />
           <Text style={[styles.privacyTitle, { color: theme.text }]}>
-            Chế độ Xóa dấu vết (Ghost Mode)
+            Ghost Mode (Instant Session Purge)
           </Text>
         </View>
         <Text style={[styles.privacyDesc, { color: theme.textSecondary }]}>
-          Nếu bạn dùng chung thiết bị hoặc muốn đảm bảo không ai thấy được câu trả lời khảo sát và kết quả của mình, hãy nhấn nút xóa bên dưới.
+          If you are on a shared device or wish to ensure zero trace of your questionnaire answers or risk stratification report remains, tap below.
         </Text>
 
         <Pressable
@@ -187,7 +185,7 @@ export default function SafetyScreen() {
         >
           <Trash2 size={18} color={theme.emergency} />
           <Text style={[styles.purgeButtonText, { color: theme.emergency }]}>
-            Xóa sạch phiên và dữ liệu ngay
+            Purge Session & Answers Immediately
           </Text>
         </Pressable>
       </View>

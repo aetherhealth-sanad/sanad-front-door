@@ -1,8 +1,5 @@
 import { Platform } from 'react-native';
 
-// Default to local development server:
-// - Android Emulator uses 10.0.2.2 to access host machine localhost
-// - iOS Simulator and Web use localhost:8000
 const DEFAULT_API_URL = Platform.select({
   android: 'http://10.0.2.2:8000',
   default: 'http://localhost:8000',
@@ -33,7 +30,7 @@ export interface IntakeSubmission {
   trying_duration_months?: number;
   prior_sperm_test?: 'never' | 'normal' | 'abnormal' | 'not_sure';
   scrotal_discomfort?: 'never' | 'occasional' | 'frequent' | 'severe';
-  lifestyle_heat_exposure?: boolean; // Hot baths / tight wear
+  lifestyle_heat_exposure?: boolean;
   lifestyle_smoking?: 'none' | 'moderate' | 'heavy';
   stress_level?: 'low' | 'moderate' | 'high';
 }
@@ -49,7 +46,7 @@ export interface ScreeningResult {
   generated_at: string;
 }
 
-// In-memory session holder for privacy
+// In-memory session holder for patient privacy
 let currentSession: CaseSession | null = null;
 let currentAnswers: IntakeSubmission = {};
 
@@ -67,7 +64,6 @@ export const ApiService = {
     currentAnswers = {};
   },
 
-  // Start a new private session (Mock or Backend API)
   async startSession(): Promise<CaseSession> {
     try {
       const response = await fetch(`${DEFAULT_API_URL}/api/cases`, {
@@ -81,10 +77,9 @@ export const ApiService = {
         return data;
       }
     } catch {
-      // Graceful fallback to offline/synthetic mock session
+      // Graceful offline fallback
     }
 
-    // Synthetic session compliant with Sanad BRD & PRD
     currentSession = {
       case_id: `SANAD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       session_token: `mock-token-${Date.now()}`,
@@ -102,78 +97,78 @@ export const ApiService = {
     return [
       {
         id: 'q_age',
-        category: 'Thông tin chung',
-        text: 'Độ tuổi của bạn hiện tại?',
-        explanation: 'Độ tuổi là yếu tố sinh học tự nhiên ảnh hưởng đến chất lượng và số lượng tinh trùng.',
+        category: 'General Demographics',
+        text: 'What is your current age bracket?',
+        explanation: 'Age is a biological factor that naturally influences sperm motility, morphology, and seminal volume.',
         type: 'choice',
         options: [
-          { label: 'Dưới 25 tuổi', value: 'under_25' },
-          { label: '25 - 34 tuổi', value: '25_34' },
-          { label: '35 - 44 tuổi', value: '35_44' },
-          { label: '45 tuổi trở lên', value: '45_plus' },
+          { label: 'Under 25', value: 'under_25' },
+          { label: '25 – 34', value: '25_34' },
+          { label: '35 – 44', value: '35_44' },
+          { label: '45 and above', value: '45_plus' },
         ],
       },
       {
         id: 'q_duration',
-        category: 'Thời gian mong con',
-        text: 'Bạn và bạn đời đã mong con tự nhiên trong bao lâu?',
-        explanation: 'Khuyến cáo y khoa quốc tế: Nếu trên 12 tháng sinh hoạt đều đặn chưa có tin vui, nên kiểm tra cả 2 vợ chồng.',
+        category: 'Conception Timeline',
+        text: 'How long have you and your partner been trying to conceive naturally?',
+        explanation: 'WHO clinical guidelines recommend comprehensive fertility evaluation if regular unprotected intercourse has not resulted in pregnancy after 12 months.',
         type: 'choice',
         options: [
-          { label: 'Chưa cố gắng / Chỉ tìm hiểu trước', value: 'planning' },
-          { label: 'Dưới 6 tháng', value: 'under_6m' },
-          { label: '6 - 12 tháng', value: '6_12m' },
-          { label: 'Trên 1 năm', value: 'over_1y' },
+          { label: 'Not trying yet / Preconception planning', value: 'planning' },
+          { label: 'Less than 6 months', value: 'under_6m' },
+          { label: '6 – 12 months', value: '6_12m' },
+          { label: 'Over 12 months', value: 'over_1y' },
         ],
       },
       {
         id: 'q_prior_test',
-        category: 'Tiền sử kiểm tra',
-        text: 'Bạn đã từng làm xét nghiệm Tinh dịch đồ (Semen Analysis) chưa?',
-        explanation: 'Xét nghiệm tinh dịch đồ là tiêu chuẩn vàng đầu tiên để đánh giá sức khỏe sinh sản nam giới.',
+        category: 'Clinical History',
+        text: 'Have you ever had a Semen Analysis (Sperm Test)?',
+        explanation: 'A formal semen analysis is the primary first-line diagnostic investigation for male reproductive assessment.',
         type: 'choice',
         options: [
-          { label: 'Chưa bao giờ làm', value: 'never' },
-          { label: 'Đã làm (kết quả bình thường)', value: 'normal' },
-          { label: 'Đã làm (có chỉ số cần chú ý)', value: 'abnormal' },
-          { label: 'Không chắc chắn', value: 'not_sure' },
+          { label: 'Never tested', value: 'never' },
+          { label: 'Tested (results were normal)', value: 'normal' },
+          { label: 'Tested (some parameters flagged)', value: 'abnormal' },
+          { label: 'Not sure / Unknown', value: 'not_sure' },
         ],
       },
       {
         id: 'q_scrotal_discomfort',
-        category: 'Triệu chứng thực thể',
-        text: 'Bạn có cảm giác đau tức, sưng nề hoặc cảm giác nặng vùng bìu không?',
-        explanation: 'Có thể liên quan đến giãn tĩnh mạch thừng tinh (varicocele) hoặc viêm nhiễm nhẹ.',
+        category: 'Physical Symptoms',
+        text: 'Do you experience scrotal pain, swelling, or a feeling of heaviness?',
+        explanation: 'Chronic dull ache or swelling may be associated with varicocele (dilated veins) or subclinical inflammation.',
         type: 'choice',
         options: [
-          { label: 'Hoàn toàn không có', value: 'never' },
-          { label: 'Thỉnh thoảng, thoáng qua', value: 'occasional' },
-          { label: 'Thường xuyên khi đứng lâu hoặc mệt', value: 'frequent' },
-          { label: 'Đau buốt cấp tính (Cần hỗ trợ ngay)', value: 'severe' },
+          { label: 'None at all', value: 'never' },
+          { label: 'Occasional, mild heaviness', value: 'occasional' },
+          { label: 'Frequent dull ache when standing', value: 'frequent' },
+          { label: 'Severe / Acute pain (Immediate attention)', value: 'severe' },
         ],
       },
       {
         id: 'q_lifestyle',
-        category: 'Thói quen & Lối sống',
-        text: 'Bạn có thói quen tắm nước rất nóng, xông hơi thường xuyên hoặc để laptop trên đùi không?',
-        explanation: 'Nhiệt độ cao kéo dài gây ức chế quá trình sinh tinh ở tinh hoàn.',
+        category: 'Thermal & Lifestyle Exposures',
+        text: 'Do you regularly use hot saunas, hot tubs, or rest laptops directly on your lap?',
+        explanation: 'Spermatogenesis requires scrotal temperatures 2–4°C below core body temperature. Sustained heat can temporarily suppress sperm production.',
         type: 'choice',
         options: [
-          { label: 'Không có thói quen này', value: 'no' },
-          { label: 'Thỉnh thoảng (1-2 lần/tháng)', value: 'occasional' },
-          { label: 'Thường xuyên (hàng tuần)', value: 'frequent' },
+          { label: 'No heat exposure habits', value: 'no' },
+          { label: 'Occasional (1–2 times a month)', value: 'occasional' },
+          { label: 'Frequent (weekly or prolonged)', value: 'frequent' },
         ],
       },
       {
         id: 'q_stress_habits',
-        category: 'Hút thuốc & Căng thẳng',
-        text: 'Mức độ hút thuốc lá hoặc căng thẳng (stress) công việc hiện tại?',
-        explanation: 'Nicotine và stress oxy hóa làm giảm độ di động và tăng phân mảnh DNA tinh trùng.',
+        category: 'Tobacco & Stress',
+        text: 'What is your current level of tobacco smoking and daily work stress?',
+        explanation: 'Nicotine and oxidative stress from severe fatigue elevate sperm DNA fragmentation indices.',
         type: 'choice',
         options: [
-          { label: 'Không hút thuốc, tinh thần thoải mái', value: 'good' },
-          { label: 'Hút ít / Stress vừa phải', value: 'moderate' },
-          { label: 'Hút thường xuyên hoặc áp lực cao', value: 'high' },
+          { label: 'Non-smoker, manageable stress', value: 'good' },
+          { label: 'Occasional smoking / Moderate stress', value: 'moderate' },
+          { label: 'Daily smoking or high chronic stress', value: 'high' },
         ],
       },
     ];
@@ -188,7 +183,6 @@ export const ApiService = {
   },
 
   async evaluateResults(): Promise<ScreeningResult> {
-    // Evaluation calculation based on inputs (Always transparently labeled as MOCK / RESEARCH PROTOTYPE)
     const answers = currentAnswers;
     const hasSeverePain = answers.scrotal_discomfort === 'severe';
     const isOver1Year = answers.trying_duration_months && answers.trying_duration_months >= 12;
@@ -197,22 +191,22 @@ export const ApiService = {
       return {
         is_mock: true,
         triage_level: 'URGENT_EVALUATION',
-        summary_title: 'Cần thăm khám trực tiếp sớm',
-        summary_description: 'Bạn có triệu chứng đau tức bìu đáng chú ý. Cần gặp bác sĩ chuyên khoa Nam học hoặc Ngoại niệu để loại trừ các bệnh lý cấp tính.',
+        summary_title: 'Prompt Medical Attention Recommended',
+        summary_description: 'Notable scrotal pain or acute discomfort was reported. A clinical evaluation by a urologist or emergency physician is advised to rule out acute conditions.',
         key_findings: [
-          'Ghi nhận triệu chứng đau tức vùng bìu mức độ cần can thiệp y tế.',
-          'Cần siêu âm Doppler mạch máu bìu để kiểm tra giãn tĩnh mạch thừng tinh hoặc xoắn tinh hoàn nhẹ.',
+          'Reported scrotal discomfort at a threshold warranting direct medical evaluation.',
+          'Scrotal Doppler ultrasound is typically indicated to evaluate vascular flow and exclude varicocele or torsion.',
         ],
         recommended_actions: [
-          'Đến cơ sở y tế chuyên khoa Nam học gần nhất trong vòng 24 - 48 giờ.',
-          'Hạn chế vận động mạnh, mang vác nặng trong lúc chờ thăm khám.',
-          'Nếu đau dữ dội đột ngột, đến phòng cấp cứu y tế ngay lập tức.',
+          'Visit a urology clinic or urgent medical care center within 24 to 48 hours.',
+          'Avoid heavy lifting or strenuous athletic activity while awaiting assessment.',
+          'If pain becomes sudden and severe, proceed to the nearest emergency department immediately.',
         ],
         lifestyle_tips: [
-          'Không tự ý dùng thuốc giảm đau mà không có chỉ định.',
-          'Mặc quần lót nâng đỡ vừa vặn, tránh cọ xát.',
+          'Do not take unprescribed painkillers without medical evaluation.',
+          'Wear supportive, comfortable briefs rather than loose or tight restrictive clothing.',
         ],
-        generated_at: new Date().toLocaleDateString('vi-VN'),
+        generated_at: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       };
     }
 
@@ -220,43 +214,43 @@ export const ApiService = {
       return {
         is_mock: true,
         triage_level: 'RECOMMENDED_EVALUATION',
-        summary_title: 'Khuyến nghị kiểm tra chuyên sâu',
-        summary_description: 'Khoảng thời gian mong con trên 12 tháng hoặc tiền sử chỉ số chưa tối ưu là thời điểm vàng để cả hai vợ chồng cùng kiểm tra toàn diện.',
+        summary_title: 'Specialist Consultation Recommended',
+        summary_description: 'With a conception timeline exceeding 12 months or previously flagged parameters, proactive evaluation of both partners is the gold standard approach.',
         key_findings: [
-          'Thời gian mong con trên 12 tháng sinh hoạt tự nhiên.',
-          'Sức khỏe sinh sản nam giới chiếm 50% nguyên nhân trong các cặp đôi chậm có con.',
+          'Trying timeline is at or above the 12-month standard diagnostic threshold.',
+          'Male factor accounts for approximately 50% of all infertility investigations.',
         ],
         recommended_actions: [
-          'Thực hiện xét nghiệm Tinh dịch đồ (Semen Analysis) chuẩn WHO 2021 tại phòng khám chuyên khoa.',
-          'Kiểm tra nồng độ hormone nam (Testosterone, LH, FSH, Prolactin).',
-          'Tư vấn trực tiếp với bác sĩ chuyên khoa Hỗ trợ sinh sản (IVF/Andrology).',
+          'Order a standard semen analysis per WHO 2021 6th Edition laboratory guidelines.',
+          'Check baseline male hormonal panel (Total Testosterone, LH, FSH, Prolactin).',
+          'Schedule an exploratory consultation with an andrologist or reproductive specialist.',
         ],
         lifestyle_tips: [
-          'Bổ sung kẽm (Zinc), Coenzyme Q10, Vitamin E, Vitamin C hỗ trợ chống oxy hóa tế bào sinh tinh.',
-          'Hạn chế rượu bia, dừng hút thuốc lá ít nhất 74 ngày (chu kỳ tạo tinh trùng mới).',
+          'Consider evidence-backed antioxidants (CoQ10, Zinc, Vitamin C, Vitamin E) to combat reactive oxygen species.',
+          'Spermatogenesis takes approximately 74 days; lifestyle modifications require 2–3 months to reflect in semen parameters.',
         ],
-        generated_at: new Date().toLocaleDateString('vi-VN'),
+        generated_at: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       };
     }
 
     return {
       is_mock: true,
       triage_level: 'ROUTINE',
-      summary_title: 'Sức khỏe cơ bản tốt - Tối ưu hóa lối sống',
-      summary_description: 'Hiện chưa ghi nhận tín hiệu rủi ro cao. Bạn có thể tập trung duy trì thói quen sống lành mạnh để chuẩn bị cho kế hoạch tương lai.',
+      summary_title: 'Low Clinical Risk — Proactive Optimization',
+      summary_description: 'No significant acute or historical risk flags detected. Focus on lifestyle optimization and proactive preconception wellness.',
       key_findings: [
-        'Chưa ghi nhận triệu chứng bất thường tại cơ quan sinh dục.',
-        'Lối sống và thói quen sinh hoạt ở mức kiểm soát tốt.',
+        'No acute scrotal pain or abnormal symptoms reported.',
+        'Current timeline and self-reported exposures are within routine parameters.',
       ],
       recommended_actions: [
-        'Nếu có kế hoạch sinh con trong 3-6 tháng tới, nên làm một xét nghiệm Tinh dịch đồ tổng quát để yên tâm.',
-        'Duy trì chế độ vận động nhẹ nhàng (đi bộ, gym vừa sức, bơi lội).',
+        'If planning to conceive within 3 to 6 months, consider a baseline semen analysis for reassurance.',
+        'Maintain regular moderate aerobic exercise (walking, swimming, moderate strength training).',
       ],
       lifestyle_tips: [
-        'Tránh để vùng bìu bị nóng: không ngâm bồn nước nóng thường xuyên, không để máy tính lên đùi.',
-        'Ngủ đủ 7-8 tiếng mỗi đêm; nồng độ testosterone được tái tạo chủ yếu trong giấc ngủ sâu.',
+        'Avoid testicular overheating: minimize hot tub sessions and avoid keeping laptops on laps.',
+        'Prioritize 7–8 hours of quality sleep; peak testosterone synthesis occurs during REM sleep cycles.',
       ],
-      generated_at: new Date().toLocaleDateString('vi-VN'),
+      generated_at: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     };
   },
 };

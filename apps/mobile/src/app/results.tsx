@@ -48,21 +48,21 @@ export default function ResultsScreen() {
           icon: AlertTriangle,
           badgeColor: theme.emergency,
           badgeBg: theme.emergencyLight,
-          label: 'CẦN THĂM KHÁM SỚM',
+          label: 'PROMPT MEDICAL ATTENTION ADVISED',
         };
       case 'RECOMMENDED_EVALUATION':
         return {
           icon: AlertCircle,
           badgeColor: theme.warning,
           badgeBg: theme.warningLight,
-          label: 'KHUYẾN NGHỊ KIỂM TRA CHUYÊN KHOA',
+          label: 'SPECIALIST CONSULTATION RECOMMENDED',
         };
       default:
         return {
           icon: CheckCircle,
           badgeColor: theme.success,
           badgeBg: theme.successLight,
-          label: 'NGUY CƠ THẤP - TỐI ƯU LỐI SỐNG',
+          label: 'ROUTINE — LIFESTYLE OPTIMIZATION',
         };
     }
   };
@@ -72,7 +72,7 @@ export default function ResultsScreen() {
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.primary} />
         <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
-          Đang phân tích các chỉ số sàng lọc...
+          Analyzing screening indicators against WHO benchmarks...
         </Text>
       </View>
     );
@@ -91,7 +91,7 @@ export default function ResultsScreen() {
       <View style={[styles.mockNotice, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
         <Info size={16} color={theme.textSecondary} style={{ marginTop: 2 }} />
         <Text style={[styles.mockNoticeText, { color: theme.textSecondary }]}>
-          Bản ghi này là <Text style={{ fontWeight: '700' }}>mô phỏng nghiên cứu (Mock Data)</Text>. Không có giá trị thay thế chẩn đoán hoặc kê đơn y khoa trực tiếp từ bác sĩ.
+          This assessment is a <Text style={{ fontWeight: '700' }}>Research Prototype Simulation (Mock Data)</Text>. It does not constitute a clinical diagnosis or medical prescription.
         </Text>
       </View>
 
@@ -113,13 +113,13 @@ export default function ResultsScreen() {
         </Text>
 
         <Text style={[styles.dateText, { color: theme.textMuted }]}>
-          Đánh giá ngày: {result.generated_at}
+          Generated: {result.generated_at}
         </Text>
       </View>
 
       {/* Key Findings */}
       <Text style={[styles.sectionHeading, { color: theme.text }]}>
-        Các điểm ghi nhận chính
+        Key Observations
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -133,7 +133,7 @@ export default function ResultsScreen() {
 
       {/* Recommended Actions */}
       <Text style={[styles.sectionHeading, { color: theme.text }]}>
-        Khuyến nghị bước tiếp theo
+        Recommended Next Steps
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -147,7 +147,7 @@ export default function ResultsScreen() {
 
       {/* Lifestyle Tips */}
       <Text style={[styles.sectionHeading, { color: theme.text }]}>
-        Lời khuyên cải thiện lối sống
+        Evidence-Based Lifestyle Optimization
       </Text>
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -168,7 +168,7 @@ export default function ResultsScreen() {
           ]}
           onPress={() => router.push('/safety')}
         >
-          <Text style={styles.primaryButtonText}>Xem thông tin hỗ trợ y tế</Text>
+          <Text style={styles.primaryButtonText}>View Emergency & Safety Support</Text>
           <ArrowRight size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
         </Pressable>
 
@@ -181,7 +181,7 @@ export default function ResultsScreen() {
         >
           <RotateCcw size={16} color={theme.text} />
           <Text style={[styles.secondaryButtonText, { color: theme.text }]}>
-            Làm lại bài đánh giá
+            Retake Screening Assessment
           </Text>
         </Pressable>
       </View>

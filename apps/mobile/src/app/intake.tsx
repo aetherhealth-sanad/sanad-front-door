@@ -43,12 +43,11 @@ export default function IntakeScreen() {
 
   const handleNext = () => {
     if (!selectedAnswers[currentQuestion.id]) {
-      Alert.alert('Vui lòng chọn một câu trả lời', 'Hoặc chọn câu trả lời phù hợp nhất để tiếp tục.');
+      Alert.alert('Selection Required', 'Please choose the option that most accurately describes your situation.');
       return;
     }
 
     if (isLastQuestion) {
-      // Save all answers and proceed to results
       const submission: Record<string, any> = {};
       if (selectedAnswers['q_prior_test']) submission.prior_sperm_test = selectedAnswers['q_prior_test'];
       if (selectedAnswers['q_scrotal_discomfort']) submission.scrotal_discomfort = selectedAnswers['q_scrotal_discomfort'];
@@ -82,7 +81,7 @@ export default function IntakeScreen() {
             {currentQuestion.category}
           </Text>
           <Text style={[styles.counterText, { color: theme.textSecondary }]}>
-            Câu {currentIndex + 1} / {questions.length}
+            Question {currentIndex + 1} of {questions.length}
           </Text>
         </View>
 
@@ -107,7 +106,7 @@ export default function IntakeScreen() {
           <HelpCircle size={16} color={theme.textSecondary} style={{ marginTop: 2 }} />
           <View style={{ flex: 1 }}>
             <Text style={[styles.explanationLabel, { color: theme.textSecondary }]}>
-              Vì sao chúng tôi hỏi điều này?
+              Why do we ask this?
             </Text>
             <Text style={[styles.explanationText, { color: theme.textSecondary }]}>
               {currentQuestion.explanation}
@@ -171,7 +170,7 @@ export default function IntakeScreen() {
         >
           <ArrowLeft size={18} color={theme.text} />
           <Text style={[styles.secondaryButtonText, { color: theme.text }]}>
-            {currentIndex === 0 ? 'Thoát' : 'Quay lại'}
+            {currentIndex === 0 ? 'Exit' : 'Back'}
           </Text>
         </Pressable>
 
@@ -186,7 +185,7 @@ export default function IntakeScreen() {
           onPress={handleNext}
         >
           <Text style={styles.nextButtonText}>
-            {isLastQuestion ? 'Xem kết quả' : 'Tiếp theo'}
+            {isLastQuestion ? 'View Results' : 'Continue'}
           </Text>
           {isLastQuestion ? (
             <Sparkles size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />

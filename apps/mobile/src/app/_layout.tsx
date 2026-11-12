@@ -13,7 +13,6 @@ export default function RootLayout() {
   const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
 
   useEffect(() => {
-    // Hide splash screen after initialization
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
@@ -49,36 +48,36 @@ export default function RootLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Trang chủ',
-          tabBarLabel: 'Trang chủ',
-          headerTitle: 'Sanad - Sức khỏe Nam giới',
+          title: 'Home',
+          tabBarLabel: 'Home',
+          headerTitle: "Sanad — Men's Health",
           tabBarIcon: ({ color, size }) => <Home size={size || 22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="intake"
         options={{
-          title: 'Đánh giá',
-          tabBarLabel: 'Đánh giá',
-          headerTitle: 'Khảo sát Sàng lọc',
+          title: 'Assessment',
+          tabBarLabel: 'Assessment',
+          headerTitle: 'Screening Intake',
           tabBarIcon: ({ color, size }) => <ClipboardList size={size || 22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="results"
         options={{
-          title: 'Kết quả',
-          tabBarLabel: 'Kết quả',
-          headerTitle: 'Báo cáo & Hướng dẫn',
+          title: 'Results',
+          tabBarLabel: 'Results',
+          headerTitle: 'Report & Guidance',
           tabBarIcon: ({ color, size }) => <FileText size={size || 22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="safety"
         options={{
-          title: 'Khẩn cấp',
-          tabBarLabel: 'Khẩn cấp',
-          headerTitle: 'Hỗ trợ Y tế 24/7',
+          title: 'Emergency',
+          tabBarLabel: 'Emergency',
+          headerTitle: '24/7 Medical Safety',
           tabBarIcon: ({ color, size }) => <ShieldAlert size={size || 22} color={color} />,
         }}
       />

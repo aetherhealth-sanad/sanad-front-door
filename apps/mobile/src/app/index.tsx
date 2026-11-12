@@ -38,7 +38,7 @@ export default function HomeScreen() {
       setSession(newSession);
       router.push('/intake');
     } catch {
-      Alert.alert('Lỗi', 'Không thể khởi tạo phiên. Vui lòng thử lại.');
+      Alert.alert('Error', 'Unable to initialize a new session. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -46,17 +46,17 @@ export default function HomeScreen() {
 
   const handleResetSession = () => {
     Alert.alert(
-      'Xóa phiên riêng tư',
-      'Bạn có muốn xóa toàn bộ câu trả lời và làm lại từ đầu không?',
+      'Purge Session Data',
+      'Are you sure you want to delete all local answers and start over fresh?',
       [
-        { text: 'Hủy', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Xóa ngay',
+          text: 'Purge Now',
           style: 'destructive',
           onPress: () => {
             ApiService.clearSession();
             setSession(null);
-            Alert.alert('Đã xóa', 'Toàn bộ dữ liệu phiên trên máy đã được xóa sạch.');
+            Alert.alert('Purged', 'All local session answers have been erased.');
           },
         },
       ]
@@ -73,7 +73,7 @@ export default function HomeScreen() {
       <View style={[styles.mockBadge, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
         <View style={styles.mockDot} />
         <Text style={[styles.mockBadgeText, { color: theme.textSecondary }]}>
-          MẪU THỬ NGHIỆM NGHIÊN CỨU (MOCK DATA)
+          RESEARCH PROTOTYPE (MOCK DATA)
         </Text>
       </View>
 
@@ -84,26 +84,26 @@ export default function HomeScreen() {
         </View>
 
         <Text style={[styles.heroTitle, { color: theme.text }]}>
-          Đánh giá Sức khỏe Sinh sản Nam giới
+          Men's Reproductive Health Screening
         </Text>
 
         <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-          Không gian riêng tư, khoa học và thấu hiểu. Giúp bạn hiểu rõ các chỉ số sức khỏe, thói quen sinh hoạt và định hướng y khoa chuẩn xác.
+          A private, evidence-grounded assessment to help you understand personal health signals, thermal exposures, and guided clinical recommendations.
         </Text>
 
         {/* Feature Pills */}
         <View style={styles.pillsContainer}>
           <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
             <ShieldCheck size={14} color={theme.primary} />
-            <Text style={[styles.pillText, { color: theme.textSecondary }]}>100% Ẩn danh</Text>
+            <Text style={[styles.pillText, { color: theme.textSecondary }]}>100% Anonymous</Text>
           </View>
           <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
             <Clock size={14} color={theme.primary} />
-            <Text style={[styles.pillText, { color: theme.textSecondary }]}>3 phút hoàn thành</Text>
+            <Text style={[styles.pillText, { color: theme.textSecondary }]}>3-Minute Flow</Text>
           </View>
           <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
             <Lock size={14} color={theme.primary} />
-            <Text style={[styles.pillText, { color: theme.textSecondary }]}>Bảo mật phiên</Text>
+            <Text style={[styles.pillText, { color: theme.textSecondary }]}>Ephemeral Session</Text>
           </View>
         </View>
 
@@ -117,7 +117,7 @@ export default function HomeScreen() {
           disabled={loading}
         >
           <Text style={styles.primaryButtonText}>
-            {loading ? 'Đang chuẩn bị...' : session ? 'Tiếp tục đánh giá' : 'Bắt đầu đánh giá ngay'}
+            {loading ? 'Starting...' : session ? 'Continue Assessment' : 'Start Assessment'}
           </Text>
           <ArrowRight size={18} color="#FFFFFF" style={styles.buttonIcon} />
         </Pressable>
@@ -126,7 +126,7 @@ export default function HomeScreen() {
           <Pressable style={styles.resetButton} onPress={handleResetSession}>
             <RotateCcw size={14} color={theme.textMuted} />
             <Text style={[styles.resetButtonText, { color: theme.textMuted }]}>
-              Mã phiên: {session.case_id} • Bấm để xóa phiên
+              Session: {session.case_id} • Tap to purge
             </Text>
           </Pressable>
         )}
@@ -134,7 +134,7 @@ export default function HomeScreen() {
 
       {/* Quick Flow Overview */}
       <Text style={[styles.sectionHeading, { color: theme.text }]}>
-        Quy trình sàng lọc 3 bước
+        3-Step Screening Pathway
       </Text>
 
       <View style={styles.stepsList}>
@@ -143,9 +143,9 @@ export default function HomeScreen() {
             <Text style={[styles.stepNumberText, { color: theme.primary }]}>1</Text>
           </View>
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: theme.text }]}>Trả lời 6 câu hỏi kín đáo</Text>
+            <Text style={[styles.stepTitle, { color: theme.text }]}>6 Discreet Questions</Text>
             <Text style={[styles.stepDesc, { color: theme.textSecondary }]}>
-              Về độ tuổi, thời gian mong con, lối sống và triệu chứng (nếu có).
+              Covering demographics, conception timeline, thermal exposures, and symptoms.
             </Text>
           </View>
         </View>
@@ -155,9 +155,9 @@ export default function HomeScreen() {
             <Text style={[styles.stepNumberText, { color: theme.primary }]}>2</Text>
           </View>
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: theme.text }]}>Phân tích nguy cơ & hướng dẫn</Text>
+            <Text style={[styles.stepTitle, { color: theme.text }]}>Stratification & Report</Text>
             <Text style={[styles.stepDesc, { color: theme.textSecondary }]}>
-              Nhận báo cáo định hướng phân tầng nguy cơ dựa theo cẩm nang WHO 2021.
+              Transparent risk stratification mapped against WHO 2021 manual standards.
             </Text>
           </View>
         </View>
@@ -167,9 +167,9 @@ export default function HomeScreen() {
             <Text style={[styles.stepNumberText, { color: theme.primary }]}>3</Text>
           </View>
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: theme.text }]}>Lời khuyên & Bước tiếp theo</Text>
+            <Text style={[styles.stepTitle, { color: theme.text }]}>Next Steps & Consultation</Text>
             <Text style={[styles.stepDesc, { color: theme.textSecondary }]}>
-              Lối sống tăng cường sinh tinh và địa chỉ phòng khám chuyên khoa phù hợp.
+              Practical lifestyle measures and guided specialist referral navigation.
             </Text>
           </View>
         </View>
@@ -190,15 +190,15 @@ export default function HomeScreen() {
         <View style={styles.emergencyHeader}>
           <AlertTriangle size={20} color={theme.emergency} />
           <Text style={[styles.emergencyTitle, { color: theme.emergency }]}>
-            Bạn có triệu chứng đau tức cấp tính?
+            Experiencing Acute Pain or Swelling?
           </Text>
         </View>
         <Text style={[styles.emergencyDesc, { color: theme.text }]}>
-          Nếu bạn bị đau dữ dội tinh hoàn đột ngột hoặc chấn thương bìu, hãy xem hướng dẫn y tế khẩn cấp 24/7 ngay.
+          If you have severe sudden scrotal pain, suspected torsion, or direct trauma, access immediate 24/7 emergency medical guidance.
         </Text>
         <View style={styles.emergencyLinkRow}>
           <Text style={[styles.emergencyLinkText, { color: theme.emergency }]}>
-            Xem hotline & Hướng dẫn cấp cứu
+            View Emergency Hotlines & Red Flags
           </Text>
           <ArrowRight size={14} color={theme.emergency} />
         </View>
@@ -208,7 +208,7 @@ export default function HomeScreen() {
       <View style={styles.footer}>
         <Sparkles size={14} color={theme.textMuted} />
         <Text style={[styles.footerText, { color: theme.textMuted }]}>
-          Sanad AetherHealth • Nghiên cứu Future Health 2026. Ứng dụng không thay thế chẩn đoán của bác sĩ chuyên khoa.
+          Sanad by AetherHealth • Future Health Challenge 2026. This prototype does not provide medical diagnoses or prescriptions.
         </Text>
       </View>
     </ScrollView>
