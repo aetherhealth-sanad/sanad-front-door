@@ -70,19 +70,23 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 | RF-15 | *Implied by* "hoàn thiện J2, J3" | J3 manual lab entry | M3 |
 | RF-16 | *Implied by* "hoàn thiện J2, J3" | J2 selective evidence (exploratory) | M3 |
 | RF-17 | Mọi chỗ giả lập phải ghi rõ là "Mock" để không nhầm với dữ liệu thật. | Mock labelling across the app | M2, M3 |
+| RF-21 | *Added 2026-11-08 by change request* (chat intake using Azure OpenAI, UX flow v0.3 step 4). Parent contracts: PRD-FR-04, PRD-FR-37, PRD 4.7.1–4.7.2. `PROPOSED`, CC-011 and CC-012. | Chat intake with a bounded model adapter | v0.4 additions |
+
+RF-18 to RF-20 are not used, because `TC-18.*` to `TC-20.*` already name the PRD v0.4 psychosocial, navigation and FHIR tests in the test plan.
 
 ## 3. Scope
 
 ### 3.1 In scope
 
 - Everything in §2, in English, mobile-first for patients and desktop-first for reviewer and mock facility pages.
-- Deterministic rules and template-built drafts, with no LLM in the flow.
+- Deterministic rules and template-built drafts. No model decides anything in the flow.
+- One bounded model task, off by default: matching a typed chat message to an answer from the question catalogue, for the user to confirm (RF-21, `PROPOSED`).
 - Synthetic fixtures for J1, J2, J3, J4, J5 and consent-negative cases.
 
 ### 3.2 Out of scope
 
-- Real referrals, real clinics, booking, payments, FHIR or EHR links, and any outbound message.
-- LLM or SLM tasks, RAG, knowledge registry and OCR. PDF or image upload is excluded with them.
+- Real referrals, real clinics, booking, payments, FHIR or EHR links, and any outbound message other than RF-21's optional model request.
+- LLM or SLM tasks other than RF-21's answer matching, RAG, knowledge registry and OCR. PDF or image upload is excluded with them.
 - Arabic and RTL, reminders and notifications, spouse sharing features, and care plans.
 - J6, J7 and J8.
 
@@ -125,7 +129,7 @@ Tokens are per browser tab, so a presenter can run all three roles side by side 
 | `/education` | General education | M1 | PRD-AC-02 |
 | `/urgent.html` | Emergency guidance, static and offline | M1 | PRD Screen 3 |
 | `/safety` | Safety check | M2 | PRD Screen 3 |
-| `/intake` | Answers and follow-up form | M2 | PRD Screen 4 |
+| `/intake` | Answers and follow-up form. Opens in the chat view (RF-21), with the form one tap away. | M2 | PRD Screen 4 |
 | `/result` | Draft result and send button | M2 | PRD Screen 6 |
 | `/clinician`, `/clinician/cases/:id` | Review queue and case detail | M2 | PRD Screen 7 |
 | `/lab` | Manual lab entry | M3 | PRD Screen 5 |
@@ -439,13 +443,34 @@ PRD mapping: PRD §11.3, NFR-17. BRD mapping: BR-11, BR-14.
 | AC-17.3 | An automated check visits every screen listing simulated data and fails CI if the word Mock is not visible. |
 | AC-17.4 | Enum values such as `SIMULATED` or `MOCK_ACCEPTED` are shown to users through plain labels that include Mock, never as raw codes alone. |
 
+### RF-21 Chat intake with a bounded model adapter (v0.4 addition, `PROPOSED`)
+
+The `/intake` step opens as a chat that asks the catalogue questions one at a time ([UX flow v0.3](../UX-flow.md) step 4, on branch `spec/ux-flow`). Answers use buttons and number fields, exactly as the form does. When an operator enables a model provider, the user may also type an answer. A model then suggests which catalogue answer the text means, and the user confirms it before it is saved. The model decides nothing, writes nothing and writes no text the user reads. PRD mapping: PRD-FR-03, PRD-FR-04, PRD-FR-17, PRD-FR-35, PRD-FR-37, PRD-FR-38, PRD-FR-40, PRD 4.7.1–4.7.2, NFR-09, NFR-19, NFR-21, NFR-22. BRD mapping: BR-06, BR-09, BR-20. Change control: [CC-011](change-log.md#cc-011-optional-model-call-for-typed-chat-text), [CC-012](change-log.md#cc-012-draft-emergency-word-patterns-for-typed-text).
+
+This requirement covers the chat at `/intake` only. The full session dashboard in UX flow §3 changes the route model in §5 and is not part of RF-21.
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-21.1 | A typed message that matches a draft emergency word pattern moves the case to `EMERGENCY_GUIDANCE_ISSUED` and returns the emergency outcome with no model call, whether or not a provider is enabled. The audit entry holds rule IDs, catalogue version and origin `CHAT_TEXT`, never the text. |
+| AC-21.2 | The emergency word check runs before every other check on the same text. A message that would be rejected (contact details, an unsupported script, a safety or unknown question ID, a missing disclosure acknowledgement) still reaches emergency guidance if it matches. |
+| AC-21.3 | Empty text, text outside the supported script, and text holding an email address or a long number return `NEEDS_CORRECTION` with a reason code. Nothing is sent to a model, the case does not change, and the audit entry holds the reason code only. |
+| AC-21.4 | A valid model match returns a proposal for the current question, with a confirmation label built from catalogue labels and marked as AI-generated, unverified and needing confirmation. No fact is written and `case_version` does not change. Only the user's confirmation, through the normal answer endpoint, saves it as `PATIENT_REPORTED`. |
+| AC-21.5 | Model output outside the contract (not JSON, extra or missing fields, wrong type, an answer the question does not offer, a value outside the catalogue range, yes without current or past where the question asks it, an opt-out carrying a value) gives a fallback, never a guessed answer. Not sure and prefer not to answer are kept as they are and never become No. |
+| AC-21.6 | When the model is disabled, times out, is unavailable, is filtered, refuses, abstains or fails in any other way, the user gets a fixed message and the buttons. Every model call leaves a code-only trace: task, provider, model, prompt, schema and catalogue versions, status, error code, outcome, attempts and elapsed time. |
+| AC-21.7 | The server applies the same guard as for answers: patient token for this case (401, 404), active `assessment` consent (403) and an intake state (409). |
+| AC-21.8 | Only intake catalogue questions can be sent. Safety question IDs are refused (422) and never reach a model. Text is limited to 500 characters. When a provider is enabled, a request without the current disclosure version is refused (422). |
+| AC-21.9 | The request to the model holds the question and the typed text only, with no case ID, token or earlier answer. Typed text is not stored in any table, audit entry, response or log line. |
+| AC-21.10 | The assistant is labelled "Sanad assistant · Scripted questions from a draft catalogue". With no provider, typing is off and nothing says AI. With a provider, the user sees a disclosure naming it before typing, and every proposal names the provider and says it is matched by AI and not verified. |
+| AC-21.11 | The Azure OpenAI adapter uses the v1 API (`/openai/v1/`, no `api-version`), the deployment name as `model`, and strict structured output. It retries timeouts, connection errors, 429 and 5xx within one deadline and a maximum number of attempts, never retries a content-filter block or another 4xx, and treats a filtered, truncated or refused completion as no answer. A missing or invalid setting stops start-up with a message that repeats no secret. |
+| AC-21.12 | With default settings the API builds no model client and makes no model call (INV-01). |
+
 ## 8. Invariants
 
 These hold on every screen and API call. Each one has a test in the test plan.
 
 | ID | Invariant | Source |
 |---|---|---|
-| INV-01 | The flow makes no LLM or SLM call and runs with no model configured. | PRD-AC-04, PRD-AC-17 |
+| INV-01 | The flow runs with no model configured, and by default makes no LLM or SLM call. The only model call is RF-21's optional answer matching, made only when an operator enables a provider. Emergency rules, consent, case state, triage, review and the referral gate never call a model. Amended by CC-011, `PROPOSED`. | PRD-AC-04, PRD-AC-17, NFR-09 |
 | INV-02 | Only synthetic data enters the system. The fixture guard blocks anything else from the repo. | BR-15 |
 | INV-03 | Logs, audit entries and telemetry hold no answers, lab values or free text. | BR-17, NFR-01 |
 | INV-04 | Consent, role and state are enforced on the server. Each protected endpoint has a negative API test. | BR-10, NFR-02 |
@@ -554,6 +579,9 @@ The brief and the parent documents differ in these places. The right column is w
 | R12 | BR-11 and PRD-FR-08 require an `AI-generated draft` label. This flow has no AI. | Label reads "Draft, generated from draft rules", which is the truthful form of the rule. |
 | R13 | The brief offers sample or upload. PRD-FR-01 expects a private start. | A blank start is added (AC-02.2). All fields begin `NOT_ASKED`. |
 | R14 | The README proposes separate `apps/web` and `apps/clinician-console`. | One web app with separate route groups, because it is simpler to build and demo. See the implementation plan. |
+| R15 | §3.2 put every LLM task out of scope, and INV-01 forbade any model call. PRD-FR-37 (Must) and PRD-FR-04 call for a bounded model adapter for extraction and catalogue-bounded questions. | RF-21 adds one task, answer matching, off by default and confirmed by the user. INV-01 is amended. **CC** (CC-011) |
+| R16 | The `assessment` consent text says data is seen by "Only this session". RF-21's optional model call sends typed text to an outside service. | No consent scope or text is changed here. Typing stays off unless an operator enables it, and the user must read a just-in-time disclosure naming the provider before typing. Revising the consent text needs Product, Security and Legal approval. **CC** (CC-011) |
+| R17 | Typed text needs the stage 2a emergency check (PRD-FR-03, GOLD IG-01), but no approved word patterns exist. | Draft patterns that only restate the three existing draft triggers, labelled `CLINICAL_TBD` and simulated. **CC** (CC-012) |
 
 ## 11. Open decisions
 
@@ -573,3 +601,5 @@ Each has a working default, so work need not stop. A named owner must confirm it
 | OD-10 | What happens to a mock referral if consent is revoked in flight? | `MOCK_WITHDRAWN` with the snapshot hidden | Backend + Security | OQ-04 |
 | OD-11 | Where does Quick exit send the user? | Configurable neutral site, `about:blank` if offline | UX | PRD-FR-11 |
 | OD-12 | Who approves the **CC** items in §10? | Pending, marked `PROPOSED` | Tech Lead + Product | Change control |
+| OD-13 | Is the RF-21 model provider enabled in the demo, and which Azure region, deployment type and model? | Disabled. Typing is off until enabled, and the buttons work alone. If enabled: a Standard (regional) deployment in the resource's geography, a model that supports structured outputs, abuse-monitoring status recorded. | Tech Lead + Security | OQ-09, OQ-31, TBD-06 |
+| OD-14 | Who approves the emergency word patterns for typed text, and are they needed in Arabic? | Nobody yet. English only, shown as simulated, and text in other scripts is never sent on. | Clinical + Localization | OQ-30, OD-02 |

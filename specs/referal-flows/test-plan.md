@@ -283,6 +283,27 @@ See the truth table in §5.
 | TC-20.1 | C | — | Mapping manifest lists source, target, transform, null handling, provenance and gaps; status is design-only, not FHIR conformance. | S |
 | TC-20.2 | C | B | Fixture manifest covers every synthetic case file, has no stale path, and keeps clinical truth `NOT_EVALUATED` and unsupported reference ranges unverified. | S |
 
+### RF-21 Chat intake and bounded model adapter (`PROPOSED`)
+
+Automated tests are in `apps/api/tests/test_chat.py` and `apps/api/tests/test_model_adapter.py`. A fake adapter and a stub SDK client replace the model, so CI needs no key and makes no network call. These tests check the order of checks and the contract. They do not measure how well any real model matches answers: that needs a labelled synthetic set and stays `NOT_EVALUATED` (PRD-FR-18, NFR-14).
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-21.1 | A | B | Each draft word pattern, including a negated sentence, moves the case to `EMERGENCY_GUIDANCE_ISSUED` with no model call, with and without a provider; the audit entry holds rule IDs, version and `CHAT_TEXT` only. | D |
+| TC-21.2 | A | B | Contact details, another script, a safety or unknown question ID, or a missing disclosure do not stop an emergency sentence reaching guidance. | S |
+| TC-21.3 | A | B | Empty, other-script and contact-detail text return `NEEDS_CORRECTION` with a reason code; no model call; case unchanged; audit holds the code only. | S |
+| TC-21.4 | A | B | A valid match returns a proposal with the catalogue label and AI, unverified and confirmation flags; no fact and no version change until `/answers` confirms it as `PATIENT_REPORTED`. The request carries the PRD 4.7.2 envelope and a strict schema. | S |
+| TC-21.5 | A, U | B | Every listed contract break falls back as `MODEL_OUTPUT_INVALID`; not sure and prefer not to answer are kept; abstentions fall back with their reason. | S |
+| TC-21.6 | A | B | Disabled, timeout, unavailable, filtered, refused and adapter exceptions fall back with a fixed message; buttons still save; each call leaves a code-only trace. | S |
+| TC-21.7 | A | B | No token 401, another case 404, revoked consent 403, wrong state 409, with no model call. | S |
+| TC-21.8 | A | B | Safety question IDs, a missing or stale disclosure version and text over 500 characters are refused with no model call. | S |
+| TC-21.9 | A | B | A marker word in typed text appears in no table, audit entry, response or log line; the model request holds no case ID or token. | S |
+| TC-21.10 | A | B | `GET /chat/assistant` shows the scripted label with typing off by default, and names the provider and disclosure when on. | S |
+| TC-21.11 | U | B | Azure adapter: deployment as `model`, strict `json_schema`, retries only transient errors within attempts and deadline, no retry on content filter or 4xx, filtered, truncated and refused completions give no content, v1 base URL, bad settings stop start-up without echoing the key. | S |
+| TC-21.12 | U | B | With default settings the app holds the disabled adapter, which never reaches the network. | S |
+| TC-21.13 | E | — | Chat at `/intake`: buttons, opt-outs and skip; typed proposal confirm and reject; emergency sentence replaces the page with `/urgent.html`; works at 360 px; keyboard only. Not yet automated (no Playwright suite). | S |
+| TC-21.14 | M | — | Against a real Azure deployment with synthetic text: a smoke run of J1 by typing, plus a content-filter and timeout check. Record region, deployment type, model version and abuse-monitoring status. | S |
+
 ### Invariants
 
 | Test | Lvl | Block | Check | Oracle |
@@ -368,7 +389,13 @@ Access checks run before the gate. Another patient's token, a reviewer's token o
 | PRD-AC-13 stale review | TC-08.5 |
 | PRD-AC-14 pending blocks action | TC-08.9, TC-12.2 |
 | PRD-AC-15 mock referral only | TC-12.1, TC-17.2 |
-| PRD-AC-17 outage fallback | TC-INV-01 |
+| PRD-AC-17 outage fallback | TC-INV-01, TC-21.6 |
+| PRD-AC-50 typed emergency, provider off | TC-21.1 |
+| PRD-AC-54 correction logs reason code only | TC-21.3 |
+| PRD-AC-60 extraction must not flip time, negation or source | TC-21.5 (validator and user confirmation; a model's own flip rate is `NOT_EVALUATED`) |
+| PRD-AC-63 timeout, bad JSON, finite attempts | TC-21.5, TC-21.6, TC-21.11 |
+| PRD-AC-64 prompt injection cannot act | TC-21.4 (no write without confirmation) |
+| PRD-AC-70 model cannot reach tools, approval or consent | TC-21.4, TC-21.8 |
 | PRD-AC-21 spouse denied | TC-12.9 |
 | PRD-AC-22 missing shown | TC-06.5 |
 | PRD-AC-23 no booking needed | TC-02.1 |

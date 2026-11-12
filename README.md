@@ -93,7 +93,7 @@ Three themes from the challenge brief are **not MVP commitments**:
 
 ![Sanad patient flow: private entry and consent, deterministic safety checks (S0, S0b, input guardrail, S1), adaptive intake, Gatekeeper, draft rule floor and report, review and release, then optional closed-loop navigation. Emergency guidance wins at every safety check.](docs/images/sanad-patient-flow.svg)
 
-*The flow as specified in [BRD v0.4.2 §7](specs/Sanad_AetherHealth_BRD_v0.4.md#7-future-state-to-be) and [PRD v0.4.2](specs/Sanad_AetherHealth_PRD_v0.4.md) §1.3, §4.7 and §4.7.1. It shows the target design, not only what is built: the free-text emergency scan (S0b) and the input guardrail are `PROPOSED` and not implemented yet, and the steps marked "AI may draft" make no model calls in the current source. All clinical rules, triggers and wording are `CLINICAL_TBD`.*
+*The flow as specified in [BRD v0.4.2 §7](specs/Sanad_AetherHealth_BRD_v0.4.md#7-future-state-to-be) and [PRD v0.4.2](specs/Sanad_AetherHealth_PRD_v0.4.md) §1.3, §4.7 and §4.7.1. It shows the target design, not only what is built: the free-text emergency scan (S0b) and the input guardrail are `PROPOSED` and exist only for typed chat text at `/intake` (RF-21), and the only model call in the current source is that optional, off-by-default answer matching. The other steps marked "AI may draft" make no model calls. All clinical rules, triggers and wording are `CLINICAL_TBD`.*
 
 ```mermaid
 flowchart TD
@@ -588,7 +588,7 @@ Run the backend test suite from `apps/api`:
 
 GitHub Actions runs the backend pytest suite and Ruff for pushes and pull requests. Repository branch protection must separately mark the workflow check as required.
 
-Start with [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) for business scope, [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md) for product/data contracts, and the [E2E workflow v0.4](specs/Sanad_E2E_Workflow_v0.4.md) for the end-to-end flow. The backend has no model credentials or external service dependency.
+Start with [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) for business scope, [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md) for product/data contracts, and the [E2E workflow v0.4](specs/Sanad_E2E_Workflow_v0.4.md) for the end-to-end flow. By default the backend has no model credentials or external service dependency. The optional Azure OpenAI answer matching for the chat (RF-21, `PROPOSED`) needs credentials only when it is enabled; see [RUNBOOK.md](RUNBOOK.md#optional-azure-openai-answer-matching-in-the-chat).
 
 When contributing, never commit keys or real patient data.
 

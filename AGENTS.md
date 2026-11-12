@@ -6,7 +6,7 @@ Instructions for anyone changing this repository, human or AI coding agent. Read
 
 **Sanad** is a private front door for men's reproductive health, built by AetherHealth for the Future Health Digital Innovation Challenge 2026. It is a **research prototype and not a medical device**. It does not diagnose, prescribe, or estimate a personal probability of infertility.
 
-**Current state:** the repository has a Python/FastAPI backend, React/TypeScript patient and simulated staff UI under `apps/web`, synthetic fixtures, draft rule catalogues, a golden rule set and pytest API tests under `apps/api`. UI/API source integration exists but still needs acceptance and CI verification. Production FHIR export/validation and model integration are not present.
+**Current state:** the repository has a Python/FastAPI backend, React/TypeScript patient and simulated staff UI under `apps/web`, synthetic fixtures, draft rule catalogues, a golden rule set and pytest API tests under `apps/api`. UI/API source integration exists but still needs acceptance and CI verification. Production FHIR export/validation is not present. The only model integration is an optional Azure OpenAI adapter for chat answer matching (RF-21, T4.5), off by default and `PROPOSED` pending CC-011.
 
 ## Where the truth lives
 
@@ -79,7 +79,7 @@ Changes to clinical rules, triage levels, label taxonomy, consent scopes or data
 
 ## Scope of the current work
 
-Use the bounded P0 scope in [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) and [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md). J9/J10 and optional psychosocial API contracts are tracked in T4.2/T4.1, with patient UI source now present; tests and review remain pending. The current source makes **no LLM calls**. FHIR is a conceptual mapping only; export, validation, RAG, full evaluation reporting and provider integrations remain unimplemented.
+Use the bounded P0 scope in [BRD v0.4](specs/Sanad_AetherHealth_BRD_v0.4.md) and [PRD v0.4](specs/Sanad_AetherHealth_PRD_v0.4.md). J9/J10 and optional psychosocial API contracts are tracked in T4.2/T4.1, with patient UI source now present; tests and review remain pending. With default settings the current source makes **no LLM calls**. The one exception, RF-21's answer matching, runs only when an operator sets `SANAD_MODEL_PROVIDER`; it cannot write a fact, and emergency rules, consent, state, triage and the referral gate never call it. FHIR is a conceptual mapping only; export, validation, RAG, full evaluation reporting and provider integrations remain unimplemented.
 
 ## Repository layout
 
