@@ -6,7 +6,6 @@ import {
   type QuestionsResponse,
   type QuestionItem,
 } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
 import { ChatIntake } from './ChatIntake';
 
 interface IntakeScreenProps {
@@ -183,7 +182,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
         option => option.value === current?.value,
       );
       return (
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           <select
             value={
               current?.choice === 'ANSWERED' && selectedIndex >= 0
@@ -197,7 +196,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
                 option ? { choice: 'ANSWERED', value: option.value } : null,
               );
             }}
-            className="w-full px-3.5 py-2.5 rounded-[2px] border border-[#0B1310] bg-white text-sm text-[#0B1310]"
+            className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
           >
             <option value="">Choose an answer or leave not asked</option>
             {question.options.map((option, index) => (
@@ -218,7 +217,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
                     temporal_status: (event.target.value || undefined) as DraftAnswer['temporal_status'],
                   })
                 }
-                className="w-full px-3.5 py-2.5 rounded-[2px] border border-[#0B1310] bg-[#E6F2EE] text-sm font-medium text-[#0B1310]"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#BCD8FE] bg-[#EBF3FF] text-sm font-semibold text-[#0050CC] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
               >
                 <option value="">Choose current or past</option>
                 {question.temporal_options.map(option => (
@@ -251,7 +250,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
           )
         }
         placeholder={question.unit ? `Value (${question.unit})` : 'Enter a value'}
-        className="w-full px-3.5 py-2.5 rounded-[2px] border border-[#0B1310] bg-white text-sm text-[#0B1310]"
+        className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
       />
     );
   };
@@ -273,26 +272,28 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Banner & View Switcher */}
-      <div className="dossier-card bg-white p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#0B1310] pb-4">
+      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2ECF8] pb-5">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <MockBadge label="INTAKE QUESTIONNAIRE" />
-              <span className="font-mono text-xs text-[#3F4E48]">Screening, not diagnosis</span>
+              <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+                CLINICAL QUESTIONNAIRE
+              </span>
+              <span className="text-xs text-[#64748B]">Screening, not diagnosis</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
               Intake Questions
             </h1>
-            <p className="text-sm text-[#3F4E48] mt-1 leading-relaxed">
+            <p className="text-sm text-[#475467] mt-1 leading-relaxed">
               Approved clinical questions. Not sure and Prefer not to say are always valid answers and never mean low risk.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => setView('chat')}
-              className="px-3.5 py-2 rounded-[2px] border border-[#0B1310] bg-[#E6F2EE] font-mono text-xs font-bold text-[#0F523E] hover:bg-[#D5EAE2] cursor-pointer btn-press"
+              className="btn-pill-primary px-4 py-2 rounded-full text-xs font-semibold cursor-pointer shadow-xs"
             >
               Switch to assistant chat
             </button>
@@ -300,7 +301,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
               <button
                 type="button"
                 onClick={onOpenLab}
-                className="px-3.5 py-2 rounded-[2px] border border-[#0B1310] bg-white font-mono text-xs font-bold text-[#0B1310] hover:bg-[#E6EAE4] cursor-pointer btn-press"
+                className="px-4 py-2 rounded-full text-xs font-semibold text-[#0050CC] bg-[#EBF3FF] hover:bg-[#D9E9FF] border border-[#BCD8FE] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
               >
                 + Add lab values
               </button>
@@ -309,20 +310,21 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
         </div>
 
         {error && (
-          <div role="alert" className="p-4 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-xs font-semibold">
+          <div role="alert" className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-xs font-semibold">
             {error}
           </div>
         )}
       </div>
 
       {loadingCatalogue ? (
-        <div className="dossier-card bg-white p-8 text-center font-mono text-sm text-[#3F4E48]">
-          Loading catalogue…
+        <div className="medical-card bg-white p-12 text-center text-sm text-[#64748B] rounded-2xl shadow-sm">
+          <div className="inline-block w-6 h-6 border-2 border-[#0066EE] border-t-transparent rounded-full animate-spin mb-3" />
+          <p>Loading catalogue...</p>
         </div>
       ) : (
         <form onSubmit={handleProceedToReview} className="space-y-6">
-          <div className="dossier-card bg-white p-6 space-y-6">
-            <h2 className="text-base font-extrabold text-[#0B1310] border-b border-[#0B1310] pb-2">
+          <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-6">
+            <h2 className="text-base font-bold text-[#0F172A] border-b border-[#E2ECF8] pb-3">
               Clinical Questions
             </h2>
 
@@ -334,21 +336,21 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
                 return (
                   <div
                     key={question.question_id}
-                    className={`p-4 rounded-[2px] border ${
-                      isConflict ? 'border-[#B45309] bg-[#FFFBEB]' : 'border-[#C5CEC9] bg-white'
-                    } space-y-3`}
+                    className={`p-5 rounded-2xl border transition-[background-color,border-color,box-shadow] duration-160 ease-[var(--ease-out)] ${
+                      isConflict ? 'border-[#FEDF89] bg-[#FFFAEB]' : 'border-[#E2ECF8] bg-[#FBFDFF] hover:border-[#BCD8FE]'
+                    } space-y-3.5`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <span className="font-mono text-xs text-[#63736C]">
+                        <span className="text-xs text-[#64748B] font-medium">
                           Question {index + 1} of {catalogue.questions.length}
                           {question.blocking && ' · Core required'}
                         </span>
-                        <p className="text-sm font-bold text-[#0B1310] leading-snug">
+                        <p className="text-sm font-bold text-[#0F172A] leading-snug">
                           {question.text}
                         </p>
                         {question.reason && (
-                          <p className="text-xs text-[#3F4E48] leading-relaxed">
+                          <p className="text-xs text-[#475467] leading-relaxed">
                             {question.reason}
                           </p>
                         )}
@@ -356,23 +358,23 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
                     </div>
 
                     {isConflict && (
-                      <p className="text-xs font-mono text-[#78350F]">
+                      <p className="text-xs font-medium text-[#B54708]">
                         Conflicting values recorded. Your selection will update this record.
                       </p>
                     )}
 
                     {renderQuestionInput(question)}
 
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#E6EAE4]">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#F1F5F9]">
                       <button
                         type="button"
                         onClick={() =>
                           setAnswer(question.question_id, { choice: 'NOT_SURE' })
                         }
-                        className={`px-3 py-1.5 rounded-[2px] font-mono text-xs border cursor-pointer btn-press ${
+                        className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                           current?.choice === 'NOT_SURE'
-                            ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
-                            : 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4]'
+                            ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
+                            : 'bg-white text-[#475467] border-[#CBD5E1] hover:bg-[#F8FAFC]'
                         }`}
                       >
                         Not sure
@@ -383,10 +385,10 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
                         onClick={() =>
                           setAnswer(question.question_id, { choice: 'PREFER_NOT_TO_ANSWER' })
                         }
-                        className={`px-3 py-1.5 rounded-[2px] font-mono text-xs border cursor-pointer btn-press ${
+                        className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                           current?.choice === 'PREFER_NOT_TO_ANSWER'
-                            ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
-                            : 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4]'
+                            ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
+                            : 'bg-white text-[#475467] border-[#CBD5E1] hover:bg-[#F8FAFC]'
                         }`}
                       >
                         Prefer not to answer
@@ -396,7 +398,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
                         <button
                           type="button"
                           onClick={() => setAnswer(question.question_id, null)}
-                          className="px-3 py-1.5 rounded-[2px] font-mono text-xs text-[#63736C] hover:text-[#0B1310] underline cursor-pointer"
+                          className="text-xs font-semibold text-[#94A3B8] hover:text-[#0F172A] underline cursor-pointer ml-1"
                         >
                           Clear
                         </button>
@@ -410,20 +412,20 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
 
           {/* Optional Psychosocial Questions */}
           {psychQuestions.length > 0 && (
-            <div className="dossier-card bg-white p-6 space-y-4">
+            <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-5">
               <div>
-                <h2 className="text-base font-extrabold text-[#0B1310]">
+                <h2 className="text-base font-bold text-[#0F172A]">
                   Wellbeing Context (Optional)
                 </h2>
-                <p className="font-mono text-xs text-[#63736C] mt-1">
+                <p className="text-xs text-[#64748B] mt-1">
                   Up to three optional questions about how you have been. Self-reported context only, never used for triage.
                 </p>
               </div>
 
               <div className="space-y-4">
                 {psychQuestions.map(question => (
-                  <div key={question.question_id} className="p-4 rounded-[2px] border border-[#C5CEC9] space-y-2">
-                    <p className="text-sm font-semibold text-[#0B1310]">
+                  <div key={question.question_id} className="p-5 rounded-2xl border border-[#E2ECF8] bg-[#FBFDFF] space-y-3">
+                    <p className="text-sm font-semibold text-[#0F172A]">
                       {question.draft_text}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -435,10 +437,10 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
                             onClick={() =>
                               setPsychAnswers(prev => ({ ...prev, [question.question_id]: stateKey }))
                             }
-                            className={`px-3 py-1.5 rounded-[2px] font-mono text-xs border cursor-pointer btn-press ${
+                            className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                               psychAnswers[question.question_id] === stateKey
-                                ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
-                                : 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4]'
+                                ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
+                                : 'bg-white text-[#475467] border-[#CBD5E1] hover:bg-[#F8FAFC]'
                             }`}
                           >
                             {stateKey === 'KNOWN_POSITIVE'
@@ -459,17 +461,20 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
           )}
 
           {/* Submit / Proceed to Review CTA */}
-          <div className="dossier-card bg-white p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-[#3F4E48] leading-relaxed">
+          <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-[#475467] leading-relaxed">
               When ready, proceed to review what Sanad has recorded before submitting.
             </p>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full sm:w-auto px-6 py-3 rounded-[2px] font-mono font-bold text-sm text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer text-center"
+              className="btn-pill-primary w-full sm:w-auto px-7 py-3.5 rounded-full font-bold text-sm text-white shadow-md cursor-pointer flex items-center justify-center gap-2"
             >
-              {loading ? 'Saving answers…' : 'Proceed to Review Profile →'}
+              <span>{loading ? 'Saving answers...' : 'Proceed to Review Profile'}</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </button>
           </div>
         </form>

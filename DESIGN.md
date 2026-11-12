@@ -1,48 +1,47 @@
 ---
-version: 2.0
-name: Sanad Editorial Clinical Brutalism
-description: Design tokens and visual language specification for Sanad (سند) Front Door. Editorial Clinical Brutalism — sharp architectural grid, Forest-Obsidian & Mineral Stone palette, zero purple, zero AI-slop.
+version: 3.0
+name: Sanad Luxe Clinical Medical Design System
+description: Visual design specification for Sanad (سند) Front Door based on Luxe Clinical Medical / Bio-Medical Glass style. Luminous ocean/sapphire atmosphere, floating 32px rounded master canvas, crisp clinical white & deep royal cards, glowing sapphire pills, zero purple slop.
 colors:
-  background: "#F3F4F1"
-  surface: "#FFFFFF"
-  surfaceAlt: "#E6EAE4"
-  ink: "#0B1310"
-  inkMuted: "#3F4E48"
-  inkSubtle: "#63736C"
-  primary: "#0F523E"
-  primaryHover: "#093B2C"
-  primarySurface: "#E6F2EE"
-  signal: "#C84B31"
-  signalSurface: "#FDF2EF"
-  border: "#0B1310"
-  borderMuted: "#C5CEC9"
-  emergency: "#B91C1C"
-  emergencySurface: "#FEF2F2"
-  emergencyBorder: "#F87171"
-  warning: "#B45309"
-  warningSurface: "#FFFBEB"
-  mockText: "#0B1310"
-  mockBackground: "#E6EAE4"
-  mockBorder: "#0B1310"
+  atmosphereGradient: "linear-gradient(155deg, #09479E 0%, #105AC2 45%, #1872E6 100%)"
+  canvasBackground: "#FFFFFF"
+  canvasBorder: "rgba(255, 255, 255, 0.65)"
+  cardSurface: "#FFFFFF"
+  cardBorder: "#E2ECF8"
+  cardSapphireBackground: "linear-gradient(140deg, #13468D 0%, #0D336A 100%)"
+  ink: "#072254"
+  inkNavy: "#0F3D7C"
+  inkSlate: "#4A6588"
+  inkMuted: "#829AB8"
+  sapphirePrimary: "#0066EE"
+  sapphireHover: "#0050D0"
+  sapphireSurface: "#EBF3FF"
+  sapphireBorder: "#BCD8FE"
+  emergencyRuby: "#D92D20"
+  emergencySurface: "#FEF3F2"
+  emergencyBorder: "#FECDCA"
+  mockText: "#072254"
+  mockBackground: "#EBF3FF"
+  mockBorder: "#BCD8FE"
 typography:
   display:
     fontFamily: Plus Jakarta Sans
     fontSize: 48px
     fontWeight: 800
-    lineHeight: 1.06
-    letterSpacing: -0.035em
+    lineHeight: 1.1
+    letterSpacing: -0.03em
   h1:
     fontFamily: Plus Jakarta Sans
     fontSize: 32px
     fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: -0.025em
+    lineHeight: 1.2
+    letterSpacing: -0.02em
   h2:
     fontFamily: Plus Jakarta Sans
     fontSize: 20px
     fontWeight: 700
-    lineHeight: 1.25
-    letterSpacing: -0.015em
+    lineHeight: 1.3
+    letterSpacing: -0.01em
   body:
     fontFamily: Plus Jakarta Sans
     fontSize: 16px
@@ -58,11 +57,12 @@ typography:
     fontSize: 12px
     fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: 0.06em
+    letterSpacing: 0.04em
 rounded:
-  none: 0px
-  xs: 2px
-  full: 9999px
+  canvas: 28px
+  card: 20px
+  subcard: 14px
+  pill: 9999px
 spacing:
   s1: 4px
   s2: 8px
@@ -73,65 +73,62 @@ spacing:
   s7: 48px
   s8: 64px
 components:
+  canvas:
+    backgroundColor: "#FFFFFF"
+    borderRadius: "28px"
+    boxShadow: "0 25px 70px -15px rgba(2, 28, 80, 0.35)"
   card:
-    backgroundColor: "{colors.surface}"
-    borderColor: "{colors.border}"
-    rounded: "{rounded.xs}"
-    padding: "{spacing.s5}"
+    backgroundColor: "#FFFFFF"
+    borderColor: "#E2ECF8"
+    borderRadius: "20px"
+    boxShadow: "0 4px 18px -2px rgba(10, 42, 95, 0.05)"
   buttonPrimary:
-    backgroundColor: "{colors.primary}"
+    background: "linear-gradient(135deg, #0066EE 0%, #0044B8 100%)"
     textColor: "#FFFFFF"
-    rounded: "{rounded.xs}"
-    padding: "12px 24px"
+    borderRadius: "9999px"
+    boxShadow: "0 4px 16px -2px rgba(0, 102, 238, 0.4)"
   buttonSecondary:
-    backgroundColor: "{colors.surface}"
-    borderColor: "{colors.border}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.xs}"
-    padding: "12px 24px"
+    backgroundColor: "#FFFFFF"
+    borderColor: "#0066EE"
+    textColor: "#0066EE"
+    borderRadius: "9999px"
   mockBadge:
-    backgroundColor: "{colors.mockBackground}"
-    borderColor: "{colors.mockBorder}"
-    textColor: "{colors.mockText}"
-    rounded: "{rounded.xs}"
+    backgroundColor: "#EBF3FF"
+    borderColor: "#BCD8FE"
+    textColor: "#0050CC"
+    borderRadius: "9999px"
 ---
 
-# Sanad Design Specification (DESIGN.md)
+# Sanad Design Specification (DESIGN.md v3.0)
 
 ## Overview
-Sanad (سند) is a confidential digital front door for men's health research. Its visual language uses **Editorial Clinical Brutalism**: an architectural dossier layout with exposed structural hairlines, crisp `2px` geometry, mineral stone surfaces (`#F3F4F1`), deep forest-obsidian ink (`#0B1310`), and locked forest-emerald interactive accents (`#0F523E`).
+Sanad (سند) is a confidential digital front door for men's reproductive health research. Its visual language uses **Luxe Clinical Medical**: a radiant sapphire bio-atmosphere, floating 28px master white canvases, crisp clinical white surfaces paired with deep royal sapphire cards, and glowing pill controls.
 
-- **Design Read:** Research-grade men's health front door and clinical simulation console with an Editorial Clinical Brutalist language, leaning toward Swiss architectural grids, tactile press physics, and strict anti-slop discipline.
-- **Three Dials:** `DESIGN_VARIANCE: 8` · `MOTION_INTENSITY: 6` · `VISUAL_DENSITY: 5`
+- **Design Read:** High-end clinical front door inspired by modern bio-medical glass aesthetics. Pure, calm, ultra-clear typography with high trust factors.
+- **Three Dials:** `DESIGN_VARIANCE: 7` · `MOTION_INTENSITY: 5` · `VISUAL_DENSITY: 5`
 
-## Colors
-- **Mineral Stone (`#F3F4F1`):** Calm, non-clinical-white paper base that avoids sterile hospital clichés and banned beige/brass tropes.
-- **Obsidian Forest (`#0B1310`):** High-contrast ink ($\ge 14:1$) and structural grid border color.
-- **Deep Forest Emerald (`#0F523E`):** Locked primary interactive accent across the entire experience.
-- **Clinical Crimson (`#B91C1C`):** Reserved strictly for always-reachable Emergency Guidance and Quick Exit controls.
-- **Zero Purple:** Complete ban on indigo, violet, lavender, or gradient mesh glows.
+## Color Palette
+- **Bio-Medical Atmosphere:** Luminous ambient ocean gradient (`#09479E` to `#1872E6`) with subtle cyan radial blooms.
+- **Master Canvas (`#FFFFFF`):** Pure white inner ground floating with soft deep-sea shadow (`0 25px 70px -15px rgba(2, 28, 80, 0.35)`).
+- **Clinical Ink (`#072254`):** High contrast navy ink for headings and key clinical data.
+- **Clinical Slate (`#4A6588`):** Readable, calm supporting body text.
+- **Glowing Sapphire (`#0066EE` / `#0044B8`):** Primary action pills and focus accents.
+- **Deep Royal Sapphire (`#14468C` / `#0D336A`):** Premium contrasting cards for telemetry, session rails, and treatment meters.
+- **Emergency Ruby (`#D92D20`):** Reserved for emergency guidance, warnings, and Quick Exit.
+- **Zero Purple:** No generic AI purple gradients.
 
 ## Typography
-- **Display & UI:** `Plus Jakarta Sans` (`700`/`800` for architectural headers, `400`/`500` for body copy at $\ge 16\text{px}$).
-- **Telemetry & Audit Metadata:** `JetBrains Mono` for case versions, rule IDs (`[DRAFT-STEROID-01]`), and verification provenance.
+- **Primary Font:** `Plus Jakarta Sans` (`700`/`800` for bold medical headings, `400`/`500` for body copy).
+- **Code & Metadata:** `JetBrains Mono` for question IDs (`Q-BODY-FAT`), observation codes, and session timestamps.
 
-## Layout
-- **Asymmetric Architectural Ledger:** Breaks the standard 50/50 split and 3-equal-card clichés. Uses exposed 12-column Swiss dossier grids with numbered clinical stages, photography panels, and interactive case launchpads.
-- **Viewport Stability:** Uses `min-h-[100dvh]`, never `h-screen`. Top hero padding capped at `pt-12` on desktop.
+## Shapes & Radii
+- Master Canvas: `28px` rounded corners.
+- Interactive Cards: `20px` rounded corners.
+- Inputs & Chips: `12px - 14px` rounded corners.
+- Buttons & Tags: `9999px` full pill shapes.
 
-## Elevation & Depth
-- **Tactile Brutalist Planes:** Crisp `1px` and `2px` solid structural borders (`#0B1310`) with hard offset shadows (`4px 4px 0px #0B1310`) on primary interactive modules and physical `:active` translation (`translate(1px, 1px)`).
-
-## Shapes
-- **Shape Consistency Lock:** All cards, buttons, inputs, and badges use sharp `2px` corners (`rounded-[2px]`). Zero mixed pill-and-rounded-2xl collisions.
-
-## Components
-- **MockBadge:** Prominent architectural stamp (`MOCK · SIMULATED DATA`) on every simulated view, review item, and referral record.
-- **UrgentLink:** Plain HTML `<a href="/urgent.html">` banner and nav control, reachable without consent and cached for offline use.
-- **QuickExit:** Instant synchronous DOM wipe, `sessionStorage`/`localStorage` purge, `/api/session/end` beacon, and `about:blank` redirect.
-
-## Do's and Don'ts
-- **Do** keep `UNKNOWN`, `NOT_ASKED`, and `DECLINED` visually and semantically distinct.
-- **Do** maintain neutral language ("men's health", never "infertility").
-- **Don't** use em-dashes, AI-purple gradients, fake div screenshots, or >1 eyebrow per 3 sections.
-- **Don't** claim clinical validation, `PROVIDER_VERIFIED`, or `CARE_COMPLETED`.
+## Clinical Safety & Invariants
+- **Mock Markers:** Every simulated view, fixture, and referral carries a visible **Mock** label (`is_mock: true`).
+- **Emergency First:** Emergency path reachable from everywhere, offline, without consent.
+- **Zero Em-Dashes:** Zero `—` or `–` characters in user-facing UI copy.
+- **Neutral Terms:** Say "men's health", never "infertility".

@@ -8,7 +8,6 @@ import {
   type PsychosocialQuestion,
 } from './api/client';
 import { Navbar } from './components/Navbar';
-import { MockBadge } from './components/MockBadge';
 import { StartScreen } from './pages/StartScreen';
 import { ConsentScreen } from './pages/ConsentScreen';
 import { SafetyScreen } from './pages/SafetyScreen';
@@ -22,7 +21,6 @@ import { TrackingScreen } from './pages/TrackingScreen';
 import { EducationScreen } from './pages/EducationScreen';
 import { ClinicianPortal } from './pages/ClinicianPortal';
 import { MockFacilityPortal } from './pages/MockFacilityPortal';
-import { UrgentLink } from './components/UrgentLink';
 import { StepProgress } from './components/StepProgress';
 import {
   SessionDashboard,
@@ -325,9 +323,6 @@ export function App() {
 
   return (
     <div className="min-h-[100dvh] bg-[#F3F4F1] flex flex-col font-sans text-[#0B1310] selection:bg-[#0F523E] selection:text-white">
-      {/* Top Banner Alert for Emergency */}
-      <UrgentLink variant="banner" />
-
       {/* Main Navbar */}
       <Navbar
         currentRole={currentRole}
@@ -378,8 +373,10 @@ export function App() {
 
             {currentRoute === '/privacy' && (
               <section className="max-w-2xl mx-auto px-4 py-12">
-                <div className="dossier-card bg-white p-6 sm:p-8">
-                  <MockBadge label="MOCK SESSION CONSENT STATE" />
+                <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md">
+                  <span className="font-mono text-xs font-bold text-[#D92D20] bg-[#FEF3F2] px-2.5 py-0.5 rounded-full border border-[#FECDCA]">
+                    CONSENT INACTIVE
+                  </span>
                   <h1 className="text-2xl font-extrabold text-[#0B1310] mt-4">
                     Assessment consent is no longer active
                   </h1>

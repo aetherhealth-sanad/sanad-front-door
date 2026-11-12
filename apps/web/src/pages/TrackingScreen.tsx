@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { api, type TrackingTimeline } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
 
 interface TrackingScreenProps {
   caseId: string;
@@ -57,32 +56,40 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center text-sm font-mono text-[#3F4E48]">
-        Loading Mock tracking…
+      <div className="max-w-md mx-auto px-4 py-24 text-center text-sm text-[#64748B]">
+        <div className="inline-block w-8 h-8 border-3 border-[#0066EE] border-t-transparent rounded-full animate-spin mb-3" />
+        <p>Loading Mock tracking...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <div className="mb-8 pb-5 border-b border-[#0B1310] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <MockBadge label="MOCK CASE TRACKING · SIMULATED LIFECYCLE" />
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+      <div className="mb-6 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+              CASE JOURNEY
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
-            Case Journey Telemetry
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
+            Case Progress & Journey Timeline
           </h1>
-          <p className="text-sm sm:text-base text-[#3F4E48] mt-1.5 leading-relaxed">
-            The timeline contains prototype events only. User-reported progress is unverified and does not confirm care.
+          <p className="text-sm sm:text-base text-[#4A6588] mt-1 leading-relaxed max-w-xl">
+            Track each milestone of your simulated assessment and referral status. User-reported milestones are stored temporarily in this session.
           </p>
         </div>
+        <img
+          src="/assets/images/medical_shield_3d.jpg"
+          alt="Secure Case Timeline"
+          className="w-16 h-16 rounded-xl object-cover border border-[#BCD8FE] shadow-2xs hidden sm:block shrink-0"
+        />
 
         {onCloseCase && (
           <button
             type="button"
             onClick={onCloseCase}
-            className="px-4 py-2.5 rounded-[2px] font-mono font-bold text-xs text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] btn-press cursor-pointer whitespace-nowrap"
+            className="btn-pill-secondary px-5 py-2.5 rounded-full text-xs font-semibold cursor-pointer whitespace-nowrap"
           >
             Close Case Session
           </button>
@@ -92,13 +99,13 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
       {error && (
         <div
           role="alert"
-          className="mb-6 p-4 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-sm font-medium"
+          className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
         >
           {error}
           <button
             type="button"
             onClick={() => void refresh()}
-            className="ml-2 underline font-mono font-bold cursor-pointer"
+            className="ml-2 underline font-semibold cursor-pointer"
           >
             Retry
           </button>
@@ -106,55 +113,58 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
       )}
 
       {tracking?.flag && (
-        <div className="mb-6 p-4 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F]">
-          <MockBadge label="MOCK WORKFLOW TIMER" />
+        <div className="p-5 rounded-2xl bg-[#FFFAEB] border border-[#FEDF89] text-[#B54708]">
+          <span className="text-xs font-mono font-bold text-[#B54708] bg-white px-2 py-0.5 rounded-full border border-[#FEDF89]">
+            Simulated Workflow Flag
+          </span>
           <p className="text-sm mt-2">
-            A simulated workflow timer flagged this stage (<code className="font-mono">{tracking.flag.stage}</code>). It is not a clinical response-time measure.
+            A simulated workflow timer flagged this stage (<code>{tracking.flag.stage}</code>). It is not a clinical response-time measure.
           </p>
         </div>
       )}
 
       {tracking && (
-        <section className="dossier-card bg-white p-6 sm:p-8">
-          <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#0B1310] mb-6">
+        <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-6">
+          <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#E2ECF8]">
             <div>
-              <h2 className="text-base font-extrabold text-[#0B1310]">
+              <h2 className="text-base font-bold text-[#0F172A]">
                 Mock timeline
               </h2>
-              <span className="font-mono text-xs text-[#0F523E] font-bold">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EBF3FF] text-[#0050CC] mt-1 inline-block">
                 STATE: {tracking.case_state}
               </span>
             </div>
             <button
               type="button"
               onClick={() => void refresh()}
-              className="px-3 py-1.5 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] text-xs font-mono font-bold text-[#0B1310] hover:bg-[#E6EAE4] cursor-pointer"
+              className="btn-pill-secondary px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
             >
               Refresh status
             </button>
           </div>
 
           {tracking.timeline.length ? (
-            <ol className="space-y-4">
+            <ol className="space-y-0 pl-2">
               {tracking.timeline.map((event, index) => (
                 <li
                   key={`${event.kind}-${event.occurred_at}-${index}`}
-                  className="border-l-2 border-[#0F523E] pl-4 py-1"
+                  className="relative pl-6 pb-6 border-l-2 border-[#BCD8FE] last:border-l-0 last:pb-0"
                 >
+                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-white border-2 border-[#0066EE]" />
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-sm font-bold text-[#0B1310] font-mono">
+                    <h3 className="text-sm font-bold text-[#0F172A]">
                       {event.kind.replace(/_/g, ' ')}
                       {event.value ? ` · ${event.value.replace(/_/g, ' ')}` : ''}
                     </h3>
-                    <time className="text-xs font-mono text-[#3F4E48]">
+                    <time className="text-xs text-[#94A3B8]">
                       {new Date(event.occurred_at).toLocaleString()}
                     </time>
                   </div>
-                  <p className="text-xs font-mono text-[#3F4E48] mt-1">
+                  <p className="text-xs text-[#64748B] mt-1">
                     {event.verification_source} · Mock event
                   </p>
                   {event.mock_appointment && (
-                    <p className="text-xs font-mono font-semibold text-[#0F523E] mt-1">
+                    <p className="text-xs font-semibold text-[#0050CC] mt-1.5 bg-[#EBF3FF] px-2.5 py-1 rounded-lg inline-block border border-[#BCD8FE]">
                       Mock appointment: {event.mock_appointment.label}
                     </p>
                   )}
@@ -162,18 +172,18 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-[#3F4E48]">
+            <p className="text-sm text-[#64748B]">
               No timeline events were returned.
             </p>
           )}
 
           {tracking.referral && (
-            <div className="mt-6 pt-4 border-t border-[#C5CEC9] flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-[#0B1310]">
+            <div className="mt-6 pt-4 border-t border-[#E2ECF8] flex flex-wrap items-center justify-between gap-2 text-xs text-[#64748B] bg-[#F8FAFC] p-4 rounded-xl border border-[#E2ECF8]">
               <span>
-                Mock referral status: <strong>{tracking.referral.mock_status}</strong> ·{' '}
+                Mock referral status: <strong className="text-[#0F172A]">{tracking.referral.mock_status}</strong> ·{' '}
                 {tracking.referral.care_type}
               </span>
-              <span>TARGET: {tracking.referral.target_mock_facility_id}</span>
+              <span className="font-semibold text-[#0066EE]">TARGET: {tracking.referral.target_mock_facility_id}</span>
             </div>
           )}
         </section>

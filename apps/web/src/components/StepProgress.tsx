@@ -25,7 +25,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
   if (currentIndex === -1) return null;
 
   return (
-    <div className="w-full bg-white border-b border-[#0B1310] py-2.5 px-4 sm:px-6">
+    <div className="w-full bg-white/70 backdrop-blur-md border-b border-[#E2ECF8] py-2.5 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-1.5 sm:gap-2.5 w-full overflow-x-auto no-scrollbar">
           {STEPS.map((step, idx) => {
@@ -46,16 +46,16 @@ export const StepProgress: React.FC<StepProgressProps> = ({
 
             const badgeContent = (
               <div
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-[2px] border text-xs font-mono transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-mono transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.98] ${
                   isCurrent
-                    ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
+                    ? 'bg-[#0066EE] text-white border-[#0066EE] font-bold shadow-xs'
                     : isCompleted
-                    ? 'bg-[#E6F2EE] text-[#0F523E] border-[#0F523E] font-semibold'
+                    ? 'bg-[#EBF3FF] text-[#0066EE] border-[#BCD8FE] font-semibold'
                     : isSkippedLab
-                    ? 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
+                    ? 'bg-[#F8FAFD] text-[#829AB8] border-[#E2ECF8]'
                     : isInteractive
-                    ? 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4] font-semibold'
-                    : 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
+                    ? 'bg-white text-[#072254] border-[#BCD8FE] hover:bg-[#EBF3FF] font-semibold'
+                    : 'bg-[#F8FAFD] text-[#829AB8] border-[#E2ECF8]'
                 }`}
               >
                 <span>{isCompleted ? '✓' : isSkippedLab ? '-' : step.label}</span>

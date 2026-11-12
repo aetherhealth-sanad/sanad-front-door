@@ -4,7 +4,6 @@ import {
   type IntakeAnswer,
   type QuestionItem,
 } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
 
 interface ChatIntakeProps {
   caseId: string;
@@ -27,9 +26,10 @@ const OPT_OUTS: Array<{ label: string; choice: IntakeAnswer['choice'] }> = [
 ];
 
 const buttonBase =
-  'px-3.5 py-2 rounded-[2px] border text-sm cursor-pointer btn-press disabled:opacity-50 disabled:cursor-not-allowed';
-const answerButton = `${buttonBase} border-[#0B1310] bg-white text-[#0B1310] font-semibold hover:bg-[#E6F2EE]`;
-const optOutButton = `${buttonBase} border-[#0B1310] bg-[#F3F4F1] text-[#0B1310] font-mono text-xs hover:bg-[#E6EAE4]`;
+  'px-4 py-2 rounded-full border text-sm cursor-pointer transition-[transform,background-color,border-color,box-shadow] duration-160 ease-[var(--ease-out)] disabled:opacity-50 disabled:cursor-not-allowed';
+const answerButton = `${buttonBase} border-[#CBD5E1] bg-white text-[#1E293B] font-semibold hover:border-[#0066EE] hover:bg-[#EBF3FF] hover:text-[#0050CC] shadow-xs active:scale-[0.97]`;
+const optOutButton =
+  'px-3.5 py-1.5 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] text-xs font-medium hover:bg-[#EDF2F7] hover:text-[#1E293B] transition-[transform,background-color,border-color] duration-160 ease-[var(--ease-out)] cursor-pointer disabled:opacity-50 active:scale-[0.97]';
 
 function answerChoices(question: QuestionItem): Choice[] {
   const choices: Choice[] = [];
@@ -92,7 +92,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
             {
               kind: 'assistant',
               id: 'intro',
-              text: "I'll ask the approved intake questions one at a time. For each one you can choose an answer, select Not sure or Prefer not to say, or skip it.",
+              text: "Welcome to Sanad. I will guide you through our standard clinical questions one at a time. Take your time: you can choose an answer, select Not sure or Prefer not to say, or skip it. All responses are kept strictly confidential in your private session.",
             },
             {
               kind: 'assistant',
@@ -182,33 +182,46 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
 
   if (loading) {
     return (
-      <div className="dossier-card bg-white p-8 text-center font-mono text-sm text-[#3F4E48]">
-        Loading intake questions…
+      <div className="medical-card bg-white p-12 text-center text-sm text-[#64748B] rounded-2xl shadow-sm">
+        <div className="inline-block w-6 h-6 border-2 border-[#0066EE] border-t-transparent rounded-full animate-spin mb-3" />
+        <p>Loading intake questions...</p>
       </div>
     );
   }
 
   return (
-    <div className="dossier-card bg-white flex flex-col min-w-0" aria-label="Intake chat">
+    <div className="medical-card bg-white flex flex-col min-w-0 rounded-2xl border border-[#E2ECF8] shadow-lg overflow-hidden" aria-label="Intake chat">
       {/* Chat Header */}
-      <div className="px-5 py-3.5 border-b border-[#0B1310] flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-extrabold text-[#0B1310]">
-              Sanad assistant
-            </h2>
-            <MockBadge label="SCRIPTED QUESTIONS" />
+      <div className="px-6 py-4.5 border-b border-[#E2ECF8] bg-gradient-to-r from-white to-[#F8FAFC] flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3.5">
+          <div className="relative">
+            <img
+              src="/assets/images/medical_doctor_avatar.jpg"
+              alt="Clinical Health Companion"
+              className="w-11 h-11 rounded-full object-cover border-2 border-[#BCD8FE] shadow-xs"
+            />
+            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#12B76A] border-2 border-white" title="Active private session" />
           </div>
-          <p className="font-mono text-[11px] text-[#3F4E48]">
-            Scripted questions from a draft catalogue · Screening, not diagnosis
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-[#072254]">
+                Sanad Health Companion
+              </h2>
+              <span className="text-[11px] font-mono text-[#0066EE] bg-[#EBF3FF] px-2 py-0.5 rounded-full border border-[#BCD8FE]">
+                Guided Session
+              </span>
+            </div>
+            <p className="text-xs text-[#64748B]">
+              Private health assessment · Screening, not diagnosis
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onSwitchToForm}
-            className="px-3 py-1.5 rounded-[2px] font-mono text-xs font-semibold text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] cursor-pointer btn-press"
+            className="btn-pill-secondary px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
           >
             Use the form instead
           </button>
@@ -216,7 +229,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
             <button
               type="button"
               onClick={onOpenLab}
-              className="px-3 py-1.5 rounded-[2px] font-mono text-xs font-semibold text-[#0F523E] bg-[#E6F2EE] hover:bg-[#D5EAE2] border border-[#0F523E] cursor-pointer btn-press"
+              className="px-4 py-1.5 rounded-full text-xs font-semibold text-[#0050CC] bg-[#EBF3FF] hover:bg-[#D9E9FF] border border-[#BCD8FE] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
             >
               + Lab values
             </button>
@@ -228,27 +241,31 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
       <div
         role="log"
         aria-live="polite"
-        className="px-5 py-4 space-y-3.5 max-h-[50vh] overflow-y-auto bg-white"
+        className="px-6 py-5 space-y-4 max-h-[52vh] overflow-y-auto bg-[#FBFDFF]"
       >
         {entries.map(entry => {
           if (entry.kind === 'assistant') {
             return (
-              <div
-                key={entry.id}
-                className="max-w-[85%] rounded-[2px] border border-[#C5CEC9] bg-[#F3F4F1] px-4 py-3 text-sm text-[#0B1310] leading-relaxed"
-              >
-                {entry.text}
+              <div key={entry.id} className="flex items-start gap-2.5 max-w-[85%] chat-bubble-enter">
+                <img
+                  src="/assets/images/medical_doctor_avatar.jpg"
+                  alt="Companion Avatar"
+                  className="w-7 h-7 rounded-full object-cover border border-[#BCD8FE] shrink-0 mt-0.5 shadow-2xs"
+                />
+                <div className="rounded-2xl rounded-tl-sm border border-[#DCE9FA] bg-[#F2F7FF] px-4 py-3 text-sm text-[#0F172A] leading-relaxed shadow-2xs">
+                  {entry.text}
+                </div>
               </div>
             );
           }
           if (entry.kind === 'user') {
             return (
-              <div key={entry.id} className="ml-auto max-w-[85%] text-right">
-                <div className="inline-block rounded-[2px] border border-[#0F523E] bg-[#E6F2EE] px-4 py-2.5 text-sm text-[#0B1310] font-semibold text-left break-words">
+              <div key={entry.id} className="ml-auto max-w-[85%] text-right chat-bubble-enter">
+                <div className="inline-block rounded-2xl rounded-tr-sm bg-gradient-to-r from-[#0066EE] to-[#0050CC] px-4 py-2.5 text-sm text-white font-medium text-left break-words shadow-xs">
                   {entry.text}
                 </div>
                 {entry.note && (
-                  <p className="font-mono text-[10px] text-[#3F4E48] mt-1">{entry.note}</p>
+                  <p className="text-[11px] text-[#64748B] mt-1 font-medium">{entry.note}</p>
                 )}
               </div>
             );
@@ -256,7 +273,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
           return (
             <p
               key={entry.id}
-              className="text-xs font-mono text-[#78350F] bg-[#FFFBEB] border border-[#B45309] rounded-[2px] px-3 py-2"
+              className="text-xs font-medium text-[#B54708] bg-[#FFFAEB] border border-[#FEDF89] rounded-xl px-3.5 py-2.5 chat-bubble-enter"
             >
               {entry.text}
             </p>
@@ -266,19 +283,19 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
       </div>
 
       {/* Answer Input Controls */}
-      <div className="border-t border-[#0B1310] px-5 py-4 space-y-3 bg-[#FBFBFA]">
+      <div className="border-t border-[#E2ECF8] px-6 py-5 space-y-4 bg-white">
         {error && (
-          <div role="alert" className="p-3 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-xs font-semibold">
+          <div role="alert" className="p-3.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-xs font-semibold">
             {error}
           </div>
         )}
 
         {current && !allQuestionsAnswered && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs font-mono text-[#3F4E48]">
-              <span>Question {index + 1} of {queue.length}</span>
+          <div className="space-y-3.5">
+            <div className="flex items-center justify-between text-xs text-[#64748B]">
+              <span className="font-medium">Question {index + 1} of {queue.length}</span>
               {current.blocking && (
-                <span className="font-bold text-[#C84B31] bg-[#FDF2EF] px-2 py-0.5 border border-[#C84B31]">
+                <span className="font-semibold text-[#D92D20] bg-[#FEF3F2] px-2.5 py-0.5 rounded-full border border-[#FECDCA] text-[11px]">
                   Core required
                 </span>
               )}
@@ -286,14 +303,14 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
 
             {/* Conflict Notice if any */}
             {current.conflicting_values && current.conflicting_values.length > 0 && (
-              <div className="p-2.5 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-xs text-[#78350F]">
+              <div className="p-3 rounded-xl bg-[#FFFAEB] border border-[#FEDF89] text-xs text-[#B54708]">
                 <strong>More than one answer recorded for this question.</strong> Your selection here updates your record.
               </div>
             )}
 
             {/* Answer Options */}
             {current.options.length > 0 ? (
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Answer options">
+              <div className="flex flex-wrap gap-2.5" role="group" aria-label="Answer options">
                 {answerChoices(current).map(choice => (
                   <button
                     key={choice.label}
@@ -307,7 +324,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                 ))}
               </div>
             ) : (
-              <form onSubmit={saveNumber} className="flex flex-wrap items-center gap-2">
+              <form onSubmit={saveNumber} className="flex flex-wrap items-center gap-2.5">
                 <input
                   type="number"
                   inputMode="decimal"
@@ -315,16 +332,16 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                   value={numberText}
                   onChange={e => setNumberText(e.target.value)}
                   placeholder={current.unit ? `Value in ${current.unit}` : 'Enter value'}
-                  className="w-44 px-3 py-2 rounded-[2px] border border-[#0B1310] bg-white text-sm"
+                  className="w-48 px-4 py-2 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
                 />
-                <button type="submit" disabled={busy || !numberText} className={answerButton}>
+                <button type="submit" disabled={busy || !numberText} className="btn-pill-primary px-5 py-2 text-sm">
                   Save
                 </button>
               </form>
             )}
 
             {/* Opt-Out Buttons */}
-            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#E6EAE4]">
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#F1F5F9]">
               {OPT_OUTS.map(opt => (
                 <button
                   key={opt.choice}
@@ -346,7 +363,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                 type="button"
                 disabled={busy}
                 onClick={skipCurrent}
-                className={`${optOutButton} underline`}
+                className="text-xs font-semibold text-[#64748B] hover:text-[#0F172A] underline cursor-pointer ml-1"
               >
                 Skip
               </button>
@@ -356,19 +373,25 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
 
         {/* Transition to Review My Health Profile */}
         {allQuestionsAnswered && (
-          <div className="p-4 rounded-[2px] bg-[#E6F2EE] border border-[#0F523E] space-y-3">
-            <p className="text-sm font-bold text-[#0B1310]">
-              You have completed the questions for this round.
-            </p>
-            <p className="text-xs text-[#3F4E48] leading-relaxed">
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-[#F2F7FF] to-white border border-[#BCD8FE] space-y-4 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#12B76A]" />
+              <p className="text-sm font-bold text-[#0F172A]">
+                You have completed the questions for this round.
+              </p>
+            </div>
+            <p className="text-xs text-[#475467] leading-relaxed">
               Next step: Proceed to <strong>Review My Health Profile</strong> to verify all your recorded answers before submitting for assessment processing.
             </p>
             <button
               type="button"
               onClick={onNavigateToReview}
-              className="w-full py-3 px-4 rounded-[2px] font-mono font-bold text-sm text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer text-center"
+              className="btn-pill-primary w-full py-3.5 px-6 rounded-full font-bold text-sm text-white shadow-md cursor-pointer flex items-center justify-center gap-2"
             >
-              Continue to profile review →
+              <span>Continue to profile review</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </button>
           </div>
         )}

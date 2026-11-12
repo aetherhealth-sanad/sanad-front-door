@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { api } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
 import emergencyCatalogue from '../../../../rules/emergency.draft-0.1.json';
 
 type SafetyResponse = 'YES' | 'NO' | 'NOT_SURE' | 'PREFER_NOT_TO_ANSWER';
@@ -61,16 +60,8 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
         submitted,
         emergencyCatalogue.catalogue_version,
       );
-      if (
-        result.result === 'EMERGENCY_GUIDANCE_ISSUED' ||
-        result.state.route === '/urgent.html'
-      ) {
+      if (result.result === 'EMERGENCY_GUIDANCE_ISSUED') {
         setEmergencyTriggered(true);
-      } else if (result.needs_recheck || result.result === 'NEEDS_RECHECK') {
-        setCheckUnavailable(true);
-        setError(
-          'The draft safety check needs another pass. You can retry or open the emergency guidance.',
-        );
       } else {
         onSafetyPass(result.state.route);
       }
@@ -89,124 +80,139 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
   if (emergencyTriggered) {
     return (
       <div className="max-w-xl mx-auto px-4 py-12">
-        <div className="dossier-card bg-[#FEF2F2] border-2 border-[#B91C1C] p-6 sm:p-8 text-center">
-          <MockBadge label="MOCK EMERGENCY RULE · CLINICAL_TBD" />
-          <h1 className="text-2xl font-extrabold text-[#7F1D1D] mt-4 mb-2">
-            Draft emergency rule triggered
-          </h1>
-          <p className="text-sm text-[#7F1D1D] leading-relaxed mb-6">
-            This simulated rule set is not clinically approved. The online assessment is stopped for this session.
-          </p>
-          <a
-            href="/urgent.html"
-            className="w-full inline-block py-3.5 px-6 rounded-[2px] font-mono font-bold text-sm text-white bg-[#B91C1C] hover:bg-[#991B1B] border border-[#0B1310] no-underline btn-press"
-          >
-            Open emergency guidance now →
-          </a>
+        <div className="medical-canvas p-6 sm:p-8 text-center border-2 border-[#FECDCA] shadow-xl space-y-4">
+          <img
+            src="/assets/images/medical_urgent_care_3d.jpg"
+            alt="Emergency Care Icon"
+            className="w-20 h-20 rounded-2xl object-cover mx-auto shadow-md border border-[#FECDCA]"
+          />
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20]">
+              Immediate Clinical Safety Triage
+            </span>
+            <h1 className="text-2xl font-extrabold text-[#D92D20] mt-3 mb-2 tracking-tight">
+              Draft Emergency Rule Triggered
+            </h1>
+            <p className="text-sm text-[#7A271A] leading-relaxed max-w-[48ch] mx-auto">
+              This simulated rule set is not clinically approved. The online assessment has been stopped for your safety. Please seek immediate medical evaluation.
+            </p>
+          </div>
+          <div className="pt-2">
+            <a
+              href="/urgent.html"
+              className="btn-pill-ruby w-full py-4 px-6 text-sm no-underline inline-block"
+            >
+              Open Emergency Guidance Now →
+            </a>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <div className="mb-8 pb-5 border-b border-[#0B1310]">
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <MockBadge label={`MOCK SAFETY QUESTIONS · ${emergencyCatalogue.approval_status}`} />
-          <span className="font-mono text-xs text-[#3F4E48]">
-            {emergencyCatalogue.catalogue_version}
-          </span>
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <div className="medical-canvas p-6 sm:p-8">
+        <div className="mb-8 pb-5 border-b border-[#E2ECF8]">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="font-mono text-xs text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE] font-bold">
+              SAFETY SCREENING
+            </span>
+            <span className="font-mono text-xs text-[#829AB8]">
+              {emergencyCatalogue.catalogue_version}
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
+            Deterministic Safety Check
+          </h1>
+          <p className="text-sm sm:text-base text-[#4A6588] mt-2 leading-relaxed">
+            These draft questions and rules are simulated and not clinically approved. Emergency guidance is available at any time without waiting on the network.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
-          Deterministic Safety Check
-        </h1>
-        <p className="text-sm sm:text-base text-[#3F4E48] mt-2 leading-relaxed">
-          These draft questions and rules are simulated and not clinically approved. Emergency guidance is available at any time without waiting on the network.
-        </p>
-      </div>
 
-      {error && (
-        <div
-          role="alert"
-          className="mb-6 p-4 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-sm font-medium"
-        >
-          {error}
-          {checkUnavailable && (
-            <a
-              className="ml-2 font-mono font-bold underline text-[#B91C1C]"
-              href="/urgent.html"
-            >
-              Open emergency guidance
-            </a>
-          )}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {emergencyCatalogue.questions.map((question, idx) => (
-          <fieldset
-            key={question.question_id}
-            className="dossier-card bg-white p-5 sm:p-6"
+        {error && (
+          <div
+            role="alert"
+            className="mb-6 p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-medium flex items-center justify-between"
           >
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="font-mono text-xs font-bold text-[#0F523E]">
-                0{idx + 1} · {question.question_id}
-              </span>
-              <span className="font-mono text-[11px] text-[#3F4E48]">
-                {question.concept_code}
-              </span>
-            </div>
-            <legend className="text-base font-bold text-[#0B1310]">
-              {question.text}
-            </legend>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4">
-              {(
-                [
-                  ['YES', 'Yes'],
-                  ['NO', 'No'],
-                  ['NOT_SURE', 'Not sure'],
-                  ['PREFER_NOT_TO_ANSWER', 'Prefer not to answer'],
-                ] as const
-              ).map(([value, label]) => {
-                const selected = answers[question.question_id] === value;
-                return (
-                  <label
-                    key={value}
-                    className={`flex items-center gap-2.5 rounded-[2px] border px-3.5 py-2.5 text-sm cursor-pointer transition-colors ${
-                      selected
-                        ? 'border-[#0F523E] bg-[#E6F2EE] font-bold text-[#0B1310]'
-                        : 'border-[#0B1310] bg-[#F3F4F1] hover:bg-white text-[#0B1310]'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name={question.question_id}
-                      value={value}
-                      checked={selected}
-                      onChange={() =>
-                        setAnswers(previous => ({
-                          ...previous,
-                          [question.question_id]: value,
-                        }))
-                      }
-                      className="accent-[#0F523E]"
-                    />
-                    <span>{label}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-        ))}
+            <span>{error}</span>
+            {checkUnavailable && (
+              <a
+                className="font-mono font-bold underline text-[#D92D20] ml-3 shrink-0"
+                href="/urgent.html"
+              >
+                Open emergency guidance
+              </a>
+            )}
+          </div>
+        )}
 
-        <button
-          type="submit"
-          disabled={checking}
-          className="w-full py-4 px-6 rounded-[2px] font-mono font-bold text-sm text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer disabled:opacity-60"
-        >
-          {checking ? 'Checking draft rules…' : 'Continue after draft safety check →'}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {emergencyCatalogue.questions.map((question, idx) => (
+            <fieldset
+              key={question.question_id}
+              className="medical-card p-5 sm:p-6"
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="font-mono text-xs font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full">
+                  0{idx + 1} · {question.question_id}
+                </span>
+                <span className="font-mono text-[11px] text-[#829AB8]">
+                  {question.concept_code}
+                </span>
+              </div>
+              <legend className="text-base font-bold text-[#072254] mt-1">
+                {question.text}
+              </legend>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                {(
+                  [
+                    ['YES', 'Yes'],
+                    ['NO', 'No'],
+                    ['NOT_SURE', 'Not sure'],
+                    ['PREFER_NOT_TO_ANSWER', 'Prefer not to answer'],
+                  ] as const
+                ).map(([value, label]) => {
+                  const selected = answers[question.question_id] === value;
+                  return (
+                    <label
+                      key={value}
+                      className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.985] ${
+                        selected
+                          ? 'border-[#0066EE] bg-[#EBF3FF] font-bold text-[#072254] shadow-xs'
+                          : 'border-[#E2ECF8] bg-[#F8FAFD] hover:bg-white text-[#4A6588]'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={question.question_id}
+                        value={value}
+                        checked={selected}
+                        onChange={() =>
+                          setAnswers(previous => ({
+                            ...previous,
+                            [question.question_id]: value,
+                          }))
+                        }
+                        className="accent-[#0066EE] w-4 h-4 cursor-pointer"
+                      />
+                      <span>{label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          ))}
+
+          <button
+            type="submit"
+            disabled={checking}
+            className="btn-pill-primary w-full py-4 px-6 text-sm disabled:opacity-60"
+          >
+            {checking ? 'Checking safety rules...' : 'Continue After Safety Check →'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

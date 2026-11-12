@@ -1,5 +1,4 @@
 import React from 'react';
-import { MockBadge } from '../components/MockBadge';
 
 interface SubmitReceiptScreenProps {
   caseId: string;
@@ -12,44 +11,48 @@ interface SubmitReceiptScreenProps {
 export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
   caseId,
   revision = 1,
-  statusText = 'Checking your answers with draft rules…',
+  statusText = 'Checking your answers with draft rules...',
   onViewSummary,
   isReady = false,
 }) => {
   return (
-    <div className="max-w-xl mx-auto py-10 px-4 space-y-6">
-      <div className="dossier-card bg-white p-6 sm:p-8 space-y-5 border-2 border-[#0B1310] shadow-[4px_4px_0px_#0B1310]">
+    <div className="max-w-xl mx-auto py-12 px-4 space-y-6">
+      <div className="medical-card bg-white p-8 sm:p-10 space-y-6 rounded-3xl border border-[#E2ECF8] shadow-xl">
         <div className="flex flex-wrap items-center gap-2">
-          <MockBadge label="ASSESSMENT RECEIPT" />
-          <span className="font-mono text-xs text-[#3F4E48]">Screening, not diagnosis</span>
+          <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+            SUBMISSION RECEIPT
+          </span>
+          <span className="text-xs text-[#64748B]">Screening, not diagnosis</span>
         </div>
 
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
+        <div className="space-y-1.5">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
             {isReady ? 'Assessment Ready' : 'Processing Assessment'}
           </h1>
-          <p className="font-mono text-xs text-[#63736C]">
-            Session Ref: {caseId.slice(0, 18)}… · Revision {revision}
+          <p className="text-xs text-[#94A3B8] font-medium">
+            Session Ref: {caseId.slice(0, 18)}... · Revision {revision}
           </p>
         </div>
 
-        <div className="p-4 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] space-y-3">
-          <div className="flex items-center gap-3">
+        <div className="p-6 rounded-2xl bg-gradient-to-br from-[#F2F7FF] to-white border border-[#BCD8FE] space-y-3.5">
+          <div className="flex items-center gap-3.5">
             {!isReady ? (
-              <div className="w-4 h-4 rounded-full border-2 border-[#0F523E] border-t-transparent animate-spin shrink-0" />
+              <div className="w-6 h-6 rounded-full border-2 border-[#0066EE] border-t-transparent animate-spin shrink-0" />
             ) : (
-              <span className="text-[#0F523E] font-bold text-lg">✓</span>
+              <span className="w-6 h-6 rounded-full bg-[#EBF3FF] border border-[#BCD8FE] flex items-center justify-center text-[#0066EE] font-bold text-sm shrink-0">
+                ✓
+              </span>
             )}
-            <p className="text-sm font-semibold text-[#0B1310]">
+            <p className="text-sm font-bold text-[#0F172A]">
               {statusText}
             </p>
           </div>
-          <p className="font-mono text-[11px] text-[#3F4E48] leading-relaxed">
+          <p className="text-xs text-[#475467] leading-relaxed">
             Sanad is evaluating your confirmed facts against the versioned clinical rules catalogue. No medical conclusions are estimated.
           </p>
         </div>
 
-        <div className="space-y-2 border-t border-[#E6EAE4] pt-4 text-xs text-[#3F4E48] leading-relaxed">
+        <div className="space-y-2.5 border-t border-[#E2ECF8] pt-5 text-xs text-[#64748B] leading-relaxed">
           <p>
             • <strong>Safety first:</strong> Emergency thresholds are checked before any recommendation.
           </p>
@@ -66,9 +69,12 @@ export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
             <button
               type="button"
               onClick={onViewSummary}
-              className="w-full py-3.5 px-6 rounded-[2px] bg-[#0F523E] hover:bg-[#093B2C] text-white font-mono font-bold text-sm border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer text-center"
+              className="btn-pill-primary w-full py-4 px-8 rounded-full font-bold text-sm text-white shadow-lg cursor-pointer flex items-center justify-center gap-2"
             >
-              View Assessment Summary →
+              <span>View Assessment Summary</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </button>
           </div>
         )}

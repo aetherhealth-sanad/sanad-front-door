@@ -3,48 +3,58 @@
 @layer base {
   :root {
     color-scheme: light;
-    /* Editorial Clinical Brutalism Tokens (DESIGN.md v2.0) */
-    --ink: #0B1310;
-    --muted: #3F4E48;
-    --muted-light: #63736C;
+    
+    /* Luxe Clinical Medical Tokens (Bio-Medical Glass & Sapphire Atmosphere) */
+    --medical-ink: #072254;
+    --medical-navy: #0F3D7C;
+    --medical-slate: #4A6588;
+    --medical-muted: #829AB8;
 
-    --g-main: #F3F4F1;
-    --g-alt: #E6EAE4;
+    /* Primary Sapphire & Bio-Blue */
+    --sapphire-primary: #0066EE;
+    --sapphire-hover: #0050D0;
+    --sapphire-gradient: linear-gradient(135deg, #0066EE 0%, #0044B8 100%);
+    --sapphire-surface: #EBF3FF;
+    --sapphire-border: #BCD8FE;
+    --sapphire-card-bg: #14468C;
+
+    /* Emergency Alert Ruby */
+    --emergency-ruby: #D92D20;
+    --emergency-hover: #B42318;
+    --emergency-surface: #FEF3F2;
+    --emergency-border: #FECDCA;
+
+    /* Legacy Token Aliases for backward compatibility */
+    --ink: #072254;
+    --muted: #4A6588;
+    --muted-light: #829AB8;
+    --g-main: #EBF3FF;
+    --g-alt: #F0F6FF;
     --g-card: #FFFFFF;
-    --g-border: #0B1310;
-    --g-border-muted: #C5CEC9;
+    --g-border: #D0E1F9;
+    --g-border-muted: #E2ECF8;
+    --action: #0066EE;
+    --action-hover: #004EB8;
+    --action-surface: #EBF3FF;
+    --signal: #0F3D7C;
+    --signal-surface: #F0F6FF;
+    --emergency: #D92D20;
+    --emergency-surface: #FEF3F2;
+    --emergency-border: #FECDCA;
+    --mock-border: #829AB8;
+    --mock-text: #072254;
+    --mock-bg: #EBF3FF;
 
-    /* Locked Primary Accent: Deep Forest Emerald */
-    --action: #0F523E;
-    --action-hover: #093B2C;
-    --action-surface: #E6F2EE;
+    /* Geometry */
+    --radius-canvas: 28px;
+    --radius-card: 20px;
+    --radius-subcard: 14px;
+    --radius-pill: 9999px;
 
-    /* Secondary Signal Accent: Terracotta Telemetry */
-    --signal: #C84B31;
-    --signal-surface: #FDF2EF;
-
-    /* Emergency Alert */
-    --emergency: #B91C1C;
-    --emergency-surface: #FEF2F2;
-    --emergency-border: #F87171;
-
-    /* Mock State Badge */
-    --mock-border: #0B1310;
-    --mock-text: #0B1310;
-    --mock-bg: #E6EAE4;
-
-    /* Spacing Rhythm Scale */
-    --s-1: 4px;
-    --s-2: 8px;
-    --s-3: 12px;
-    --s-4: 16px;
-    --s-5: 24px;
-    --s-6: 32px;
-    --s-7: 48px;
-    --s-8: 64px;
-
-    /* Locked Shape Scale: Crisp 2px Architectural Geometry */
-    --r-xs: 2px;
+    /* Emil Kowalski Animation Easing Curves */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
@@ -55,10 +65,13 @@
 
   body {
     margin: 0;
-    background-color: var(--g-main);
-    color: var(--ink);
+    background: radial-gradient(circle at 50% -10%, rgba(120, 195, 255, 0.45) 0%, rgba(20, 95, 215, 0.2) 45%, transparent 80%),
+                linear-gradient(155deg, #09479E 0%, #105AC2 45%, #1872E6 100%);
+    background-attachment: fixed;
+    color: var(--medical-ink);
     font-size: 16px;
     line-height: 1.6;
+    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -66,103 +79,343 @@
   .font-mono {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
+}
 
-  .font-editorial {
-    font-family: 'Newsreader', Georgia, serif;
-    font-style: italic;
+/* Master Floating Medical Canvas */
+.medical-canvas {
+  background-color: #FFFFFF;
+  border-radius: 28px;
+  box-shadow: 0 25px 70px -15px rgba(2, 28, 80, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+/* Elegant Medical Cards */
+.medical-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2ECF8;
+  border-radius: 20px;
+  box-shadow: 0 4px 18px -2px rgba(10, 42, 95, 0.05);
+  transition: transform 200ms var(--ease-out),
+              box-shadow 200ms var(--ease-out),
+              border-color 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .medical-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px -4px rgba(10, 42, 95, 0.1);
+    border-color: #BCD8FE;
   }
 }
 
-/* Architectural Surface & Brutalist Shadow Utilities */
+/* Deep Sapphire Feature Card */
+.medical-card-sapphire {
+  background: linear-gradient(140deg, #13468D 0%, #0D336A 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  color: #FFFFFF;
+  box-shadow: 0 12px 36px -6px rgba(5, 25, 60, 0.35);
+  transition: transform 200ms var(--ease-out),
+              box-shadow 200ms var(--ease-out),
+              border-color 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .medical-card-sapphire:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 42px -6px rgba(5, 25, 60, 0.45);
+  }
+}
+
+/* Backward-compatible dossier-card mapped to luxury medical styling */
 .dossier-card {
-  background-color: var(--g-card);
-  border: 1px solid var(--ink);
-  border-radius: 2px;
-  box-shadow: 4px 4px 0px rgba(11, 19, 16, 0.9);
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: #FFFFFF;
+  border: 1px solid #E2ECF8;
+  border-radius: 20px;
+  box-shadow: 0 4px 18px -2px rgba(10, 42, 95, 0.05);
+  transition: transform 200ms var(--ease-out),
+              box-shadow 200ms var(--ease-out),
+              border-color 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dossier-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px -4px rgba(10, 42, 95, 0.1);
+    border-color: #BCD8FE;
+  }
 }
 
 .dossier-panel {
-  background-color: var(--g-card);
-  border: 1px solid var(--g-border-muted);
-  border-radius: 2px;
+  background-color: #F8FAFD;
+  border: 1px solid #E2ECF8;
+  border-radius: 14px;
 }
 
-.card-hover {
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.22s ease,
-              background-color 0.22s ease;
+/* Emil Kowalski Button Physics & Micro-Interactions */
+.btn-pill-primary {
+  background: linear-gradient(135deg, #0066EE 0%, #0044B8 100%);
+  color: #FFFFFF;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px -2px rgba(0, 102, 238, 0.4);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 160ms var(--ease-out),
+              box-shadow 160ms var(--ease-out),
+              background 160ms ease,
+              border-color 160ms ease;
 }
 
-.card-hover:hover {
-  transform: translate(-2px, -2px);
-  border-color: var(--ink);
-  box-shadow: 4px 4px 0px var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  .btn-pill-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(0, 102, 238, 0.55);
+    background: linear-gradient(135deg, #1075FF 0%, #0050CC 100%);
+  }
+}
+
+.btn-pill-primary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-pill-secondary {
+  background: #FFFFFF;
+  color: #0066EE;
+  border-radius: 9999px;
+  border: 1.5px solid #0066EE;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 160ms var(--ease-out),
+              background-color 160ms ease,
+              border-color 160ms ease,
+              box-shadow 160ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-pill-secondary:hover:not(:disabled) {
+    background: #EBF3FF;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px -2px rgba(0, 102, 238, 0.15);
+  }
+}
+
+.btn-pill-secondary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-pill-ruby {
+  background: linear-gradient(135deg, #D92D20 0%, #B42318 100%);
+  color: #FFFFFF;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px -2px rgba(217, 45, 32, 0.4);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 160ms var(--ease-out),
+              box-shadow 160ms var(--ease-out),
+              background 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-pill-ruby:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(217, 45, 32, 0.5);
+    background: linear-gradient(135deg, #E5392B 0%, #C4261B 100%);
+  }
+}
+
+.btn-pill-ruby:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn-press {
-  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 0.16s ease,
-              border-color 0.16s ease;
+  transition: transform 160ms var(--ease-out),
+              box-shadow 160ms var(--ease-out),
+              background-color 160ms ease,
+              border-color 160ms ease;
 }
 
-.btn-press:hover:not(:disabled) {
-  transform: translate(-1px, -1px);
+@media (hover: hover) and (pointer: fine) {
+  .btn-press:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
 }
 
 .btn-press:active:not(:disabled) {
-  transform: translate(1px, 1px) scale(0.99);
+  transform: scale(0.97);
 }
 
-/* Subtle Architectural Grid Texture */
-.bg-architectural-grid {
-  background-image:
-    linear-gradient(to right, rgba(11, 19, 16, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(11, 19, 16, 0.05) 1px, transparent 1px);
-  background-size: 32px 32px;
+/* Micro-interaction Option Card */
+.interactive-option {
+  transition: transform 160ms var(--ease-out),
+              box-shadow 160ms var(--ease-out),
+              border-color 160ms ease,
+              background-color 160ms ease;
 }
 
-/* Spring Staggered Entrance Animations */
+@media (hover: hover) and (pointer: fine) {
+  .interactive-option:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px -3px rgba(10, 42, 95, 0.08);
+  }
+}
+
+.interactive-option:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* Frosted Glass Pill Tag */
+.frosted-pill {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  border-radius: 9999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.frosted-pill-dark {
+  background: #EBF3FF;
+  border: 1px solid #BCD8FE;
+  color: #0050CC;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Staggered Entrance Animations (Emil Kowalski Philosophy: under 300ms, subtle 8-10px translate) */
 @keyframes springRevealUp {
   0% {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(10px) scale(0.985);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .animate-reveal-1 {
-  animation: springRevealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both;
+  animation: springRevealUp 260ms var(--ease-out) 30ms both;
 }
 
 .animate-reveal-2 {
-  animation: springRevealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+  animation: springRevealUp 260ms var(--ease-out) 70ms both;
 }
 
 .animate-reveal-3 {
-  animation: springRevealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.20s both;
+  animation: springRevealUp 260ms var(--ease-out) 110ms both;
 }
 
 .animate-reveal-4 {
-  animation: springRevealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
+  animation: springRevealUp 260ms var(--ease-out) 150ms both;
 }
 
+.animate-reveal-5 {
+  animation: springRevealUp 260ms var(--ease-out) 190ms both;
+}
+
+/* Chat bubble entry transition */
+@keyframes chatBubbleEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat-bubble-enter {
+  animation: chatBubbleEnter 220ms var(--ease-out) both;
+}
+
+/* Modal and Dialog physics */
+@keyframes modalBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-backdrop-animate {
+  animation: modalBackdropFade 200ms var(--ease-out) both;
+}
+
+.modal-dialog-animate {
+  animation: modalScaleEnter 220ms var(--ease-out) both;
+}
+
+/* Soft bio-pulse for medical badges and hero accents */
+@keyframes bioPulseSoft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.bio-pulse-soft {
+  animation: bioPulseSoft 3.5s var(--ease-in-out) infinite;
+}
+
+/* Accessibility: Respect prefers-reduced-motion across the entire application */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
   .animate-reveal-1,
   .animate-reveal-2,
   .animate-reveal-3,
   .animate-reveal-4,
-  .card-hover,
+  .animate-reveal-5,
+  .chat-bubble-enter,
+  .modal-backdrop-animate,
+  .modal-dialog-animate,
+  .bio-pulse-soft,
+  .medical-card,
+  .medical-card-sapphire,
+  .dossier-card,
+  .btn-pill-primary,
+  .btn-pill-secondary,
+  .btn-pill-ruby,
   .btn-press,
-  .dossier-card {
+  .interactive-option {
     animation: none !important;
-    transition: none !important;
     transform: none !important;
+    transition: background-color 0.1s ease, color 0.1s ease, border-color 0.1s ease !important;
   }
 }

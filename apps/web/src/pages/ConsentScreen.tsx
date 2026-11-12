@@ -7,7 +7,6 @@ import {
   type ConsentCatalogue,
   type ConsentScope,
 } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
 
 interface ConsentScreenProps {
   caseId: string;
@@ -99,9 +98,14 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
           route = profileState.route;
         }
       }
+
       onConsentComplete(route);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to record consent');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to record consent. Please retry.',
+      );
     } finally {
       setLoading(false);
     }
@@ -111,182 +115,192 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
     setLoading(true);
     setError(null);
     try {
-      if (!consentCatalogue) {
-        throw new Error(
-          'Consent information is unavailable. Reload this page after the API is available.',
-        );
-      }
-      await api.updateCaseConsent(caseId, consentCatalogue.consent_version, {
-        assessment: false,
-      });
-      onConsentComplete('/education');
+      if (!consentCatalogue) throw new Error('Consent information is unavailable.');
+      const allDeclined: Record<string, boolean> = {};
+      for (const s of scopesConfig) allDeclined[s.scope] = false;
+      const result = await api.updateCaseConsent(
+        caseId,
+        consentCatalogue.consent_version,
+        allDeclined,
+      );
+      onConsentComplete(result.state?.route || '/education');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to record refusal');
+      setError(err instanceof Error ? err.message : 'Could not decline consent.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <div className="mb-8 pb-5 border-b border-[#0B1310]">
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <MockBadge label={`MOCK CONSENT LEDGER · ${consentCatalogue?.copy_status ?? 'DRAFT'}`} />
-          {consentCatalogue && (
-            <span className="font-mono text-xs text-[#3F4E48]">
-              VERSION: {consentCatalogue.consent_version}
-            </span>
-          )}
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
-          How Your Health Information is Handled
-        </h1>
-        <p className="text-[#3F4E48] text-sm sm:text-base mt-2 leading-relaxed">
-          Choose which parts of this research prototype you agree to use. Optional permissions start off and can be left disabled at any time.
-        </p>
-      </div>
-
-      {loadingCopy && (
-        <p className="mb-6 text-sm font-mono text-[#3F4E48]">Loading consent ledger…</p>
-      )}
-
-      {error && (
-        <div
-          role="alert"
-          className="mb-6 p-4 rounded-[2px] bg-[#FEF2F2] border border-[#B91C1C] text-[#7F1D1D] text-sm font-medium"
-        >
-          {error}
-        </div>
-      )}
-
-      {isUploadMode && (
-        <div className="mb-6 p-4 rounded-[2px] bg-white border border-[#0B1310] space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-xs font-bold text-[#0F523E]">
-              SYNTHETIC PROFILE UPLOAD QUEUED (RF-02)
-            </span>
-            <MockBadge label="MOCK UPLOAD" />
-          </div>
-          {uploadFile ? (
-            <p className="text-xs font-mono text-[#0B1310]">
-              Ready to apply after assessment consent: <strong>{uploadFile.name}</strong> (
-              {uploadFile.size} bytes)
-            </p>
-          ) : (
-            <div className="space-y-2">
-              <label
-                htmlFor="consent-upload-input"
-                className="block text-xs font-mono font-bold text-[#0B1310]"
-              >
-                Select synthetic JSON profile to apply after consent:
-              </label>
-              <input
-                id="consent-upload-input"
-                type="file"
-                accept=".json,application/json"
-                onChange={e => {
-                  const file = e.target.files?.[0] ?? null;
-                  setUploadFile(file);
-                  setPendingUploadFile(file);
-                }}
-                className="w-full text-xs font-mono border border-[#0B1310] p-2 bg-[#F3F4F1] rounded-[2px]"
-              />
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <div className="medical-canvas p-6 sm:p-10">
+        <div className="mb-8 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="font-mono text-xs text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE] font-bold">
+                PURPOSE CONSENT
+              </span>
+              {consentCatalogue && (
+                <span className="font-mono text-xs text-[#829AB8] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+                  VERSION: {consentCatalogue.consent_version}
+                </span>
+              )}
             </div>
-          )}
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
+              Your Privacy & Information Boundaries
+            </h1>
+            <p className="text-[#4A6588] text-sm sm:text-base leading-relaxed max-w-xl">
+              Choose exactly how your health data is processed. You remain in full control: optional permissions start disabled, and no real identifying details are ever recorded.
+            </p>
+          </div>
+          <img
+            src="/assets/images/medical_shield_3d.jpg"
+            alt="Medical Privacy Shield"
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-[#BCD8FE] shadow-sm shrink-0 hidden sm:block"
+          />
         </div>
-      )}
 
-      {/* Scopes Ledger Cards */}
-      <div className="space-y-4 mb-8">
-        {scopesConfig.map(scopeItem => {
-          const isEnabled = !!selectedScopes[scopeItem.scope];
-          const isUsable = scopeItem.used_in_this_flow !== false;
+        {loadingCopy && (
+          <p className="mb-6 text-sm font-mono text-[#0066EE] animate-pulse">Loading consent ledger...</p>
+        )}
 
-          return (
-            <div
-              key={scopeItem.scope}
-              className={`p-5 rounded-[2px] border transition-all duration-150 ${
-                !isUsable
-                  ? 'bg-[#E6EAE4]/60 border-[#C5CEC9] opacity-75'
-                  : isEnabled
-                  ? 'bg-white border-[#0F523E] shadow-[4px_4px_0px_#0F523E]'
-                  : 'bg-white border-[#0B1310]'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <h2 className="text-base font-extrabold text-[#0B1310] capitalize">
-                      {scopeItem.scope.replace(/_/g, ' ')}
-                    </h2>
-                    <span className="font-mono text-[10px] px-2 py-0.5 rounded-[2px] bg-[#F3F4F1] border border-[#C5CEC9] text-[#3F4E48]">
-                      {scopeItem.who_sees_it}
-                    </span>
-                    {!isUsable && (
-                      <span className="text-[10px] font-mono font-bold text-[#3F4E48] bg-[#E6EAE4] px-2 py-0.5 rounded-[2px] border border-[#0B1310]">
-                        Not in this version
+        {error && (
+          <div
+            role="alert"
+            className="mb-6 p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-medium"
+          >
+            {error}
+          </div>
+        )}
+
+        {isUploadMode && (
+          <div className="mb-6 p-5 rounded-2xl bg-[#F8FAFD] border border-[#E2ECF8] space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs font-bold text-[#0066EE]">
+                SYNTHETIC PROFILE UPLOAD QUEUED (RF-02)
+              </span>
+            </div>
+            {uploadFile ? (
+              <p className="text-xs font-mono text-[#072254]">
+                Ready to apply after assessment consent: <strong>{uploadFile.name}</strong> (
+                {uploadFile.size} bytes)
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <label
+                  htmlFor="consent-upload-input"
+                  className="block text-xs font-mono font-bold text-[#072254]"
+                >
+                  Select synthetic JSON profile to apply after consent:
+                </label>
+                <input
+                  id="consent-upload-input"
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={e => {
+                    const file = e.target.files?.[0] ?? null;
+                    setUploadFile(file);
+                    setPendingUploadFile(file);
+                  }}
+                  className="w-full text-xs font-mono border border-[#E2ECF8] p-2 bg-white rounded-xl"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Scopes Ledger Cards */}
+        <div className="space-y-4 mb-8">
+          {scopesConfig.map(scopeItem => {
+            const isEnabled = !!selectedScopes[scopeItem.scope];
+            const isUsable = scopeItem.used_in_this_flow !== false;
+
+            return (
+              <div
+                key={scopeItem.scope}
+                className={`p-5 rounded-2xl border transition-[background-color,border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] ${
+                  !isUsable
+                    ? 'bg-[#F8FAFD] border-[#E2ECF8] opacity-75'
+                    : isEnabled
+                    ? 'bg-[#EBF3FF] border-[#0066EE] shadow-xs'
+                    : 'bg-white border-[#E2ECF8] hover:border-[#BCD8FE]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <h2 className="text-base font-extrabold text-[#072254] capitalize">
+                        {scopeItem.scope.replace(/_/g, ' ')}
+                      </h2>
+                      <span className="font-mono text-[10px] px-2.5 py-0.5 rounded-full bg-white border border-[#BCD8FE] text-[#0066EE] font-semibold">
+                        {scopeItem.who_sees_it}
                       </span>
+                      {!isUsable && (
+                        <span className="text-[10px] font-mono font-bold text-[#829AB8] bg-white px-2 py-0.5 rounded-full border border-[#E2ECF8]">
+                          Not in this version
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#072254] mb-1.5 leading-relaxed">
+                      <strong>Covers:</strong> {scopeItem.data_covered}
+                    </p>
+                    <p className="text-xs text-[#4A6588] leading-relaxed">
+                      <strong>Used for:</strong> {scopeItem.used_for}
+                    </p>
+                    {!isEnabled && isUsable && (
+                      <p className="text-xs text-[#B54708] bg-[#FFFBEB] border border-[#FEDF89] p-2.5 rounded-xl mt-3 font-medium">
+                        <strong>If disabled:</strong> {scopeItem.if_off}
+                      </p>
                     )}
                   </div>
-                  <p className="text-xs text-[#0B1310] mb-1.5 leading-relaxed">
-                    <strong>Covers:</strong> {scopeItem.data_covered}
-                  </p>
-                  <p className="text-xs text-[#3F4E48] leading-relaxed">
-                    <strong>Used for:</strong> {scopeItem.used_for}
-                  </p>
-                  {!isEnabled && isUsable && (
-                    <p className="text-xs text-[#78350F] bg-[#FFFBEB] border border-[#B45309] p-2.5 rounded-[2px] mt-3 font-medium">
-                      <strong>If disabled:</strong> {scopeItem.if_off}
-                    </p>
+
+                  {isUsable && (
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isEnabled}
+                      aria-label={`${isEnabled ? 'Disable' : 'Enable'} ${scopeItem.scope.replace(
+                        /_/g,
+                        ' ',
+                      )} consent`}
+                      onClick={() => handleToggle(scopeItem.scope)}
+                      className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full transition-colors duration-160 ease-[var(--ease-out)] p-0.5 active:scale-[0.96] ${
+                        isEnabled ? 'bg-[#0066EE]' : 'bg-[#CBD5E1]'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-xs transition-transform duration-160 ease-[var(--ease-out)] ${
+                          isEnabled ? 'translate-x-6' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
                   )}
                 </div>
-
-                {isUsable && (
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={isEnabled}
-                    aria-label={`${isEnabled ? 'Disable' : 'Enable'} ${scopeItem.scope.replace(
-                      /_/g,
-                      ' ',
-                    )} consent`}
-                    onClick={() => handleToggle(scopeItem.scope)}
-                    className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-[2px] border border-[#0B1310] transition-colors duration-200 ease-in-out ${
-                      isEnabled ? 'bg-[#0F523E]' : 'bg-[#E6EAE4]'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 m-0.5 transform rounded-[2px] bg-white border border-[#0B1310] transition duration-200 ease-in-out ${
-                        isEnabled ? 'translate-x-6' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                )}
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Decisions Action Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 pt-5 border-t border-[#0B1310]">
-        <button
-          type="button"
-          disabled={loading || loadingCopy || !consentCatalogue}
-          onClick={() => void handleAgree()}
-          className="w-full sm:flex-1 py-3.5 px-6 rounded-[2px] font-mono font-bold text-sm text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {loading ? 'Recording Consent...' : 'Save Preferences & Continue →'}
-        </button>
+        {/* Decisions Action Bar */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 pt-6 border-t border-[#E2ECF8]">
+          <button
+            type="button"
+            disabled={loading || loadingCopy || !consentCatalogue}
+            onClick={() => void handleAgree()}
+            className="btn-pill-primary w-full sm:flex-1 py-4 px-6 text-sm disabled:opacity-50"
+          >
+            {loading ? 'Recording Consent...' : 'Save Preferences & Continue →'}
+          </button>
 
-        <button
-          type="button"
-          disabled={loading || loadingCopy || !consentCatalogue}
-          onClick={() => void handleDecline()}
-          className="w-full sm:w-auto py-3.5 px-5 rounded-[2px] font-mono font-semibold text-xs text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] btn-press cursor-pointer"
-        >
-          Decline (Education Only)
-        </button>
+          <button
+            type="button"
+            disabled={loading || loadingCopy || !consentCatalogue}
+            onClick={() => void handleDecline()}
+            className="btn-pill-secondary w-full sm:w-auto py-4 px-6 text-xs"
+          >
+            Decline (Education Only)
+          </button>
+        </div>
       </div>
     </div>
   );

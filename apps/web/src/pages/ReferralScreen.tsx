@@ -6,7 +6,6 @@ import {
   type NavigationEpisode,
   type ReportData,
 } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
 
 interface ReferralScreenProps {
   caseId: string;
@@ -206,22 +205,25 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center text-sm font-mono text-[#3F4E48]">
-        Loading Mock directory and gate status…
+      <div className="max-w-md mx-auto px-4 py-24 text-center text-sm text-[#64748B]">
+        <div className="inline-block w-8 h-8 border-3 border-[#0066EE] border-t-transparent rounded-full animate-spin mb-3" />
+        <p>Loading Mock directory and gate status...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <div className="mb-8 pb-5 border-b border-[#0B1310]">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+      <div className="mb-6 pb-6 border-b border-[#E2ECF8]">
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <MockBadge label="MOCK REFERRAL GATE · EVALUATE_GATE" />
+          <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+            CARE NAVIGATION
+          </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
-          Mock Care Navigation & Gate Evaluation
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
+          Care Navigation & Referral Evaluation
         </h1>
-        <p className="text-sm sm:text-base text-[#3F4E48] mt-1.5 leading-relaxed">
+        <p className="text-sm sm:text-base text-[#475467] mt-1.5 leading-relaxed">
           The backend evaluates active provider consent, a current simulated review approval, and the policy check for the selected Mock destination.
         </p>
       </div>
@@ -229,24 +231,24 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
       {error && (
         <div
           role="alert"
-          className="mb-6 p-4 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-sm font-medium"
+          className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
         >
           {error}
         </div>
       )}
 
-      <section className="dossier-card bg-white p-6 sm:p-8 mb-6 space-y-4">
-        <div className="pb-3 border-b border-[#0B1310] flex items-center justify-between">
-          <h2 className="text-base font-extrabold text-[#0B1310]">
+      <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
+        <div className="pb-3 border-b border-[#E2ECF8] flex items-center justify-between">
+          <h2 className="text-base font-bold text-[#0F172A]">
             Select a Mock destination
           </h2>
-          <span className="font-mono text-xs text-[#3F4E48]">
+          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EBF3FF] text-[#0050CC]">
             {facilities.length} ELIGIBLE
           </span>
         </div>
 
         {facilities.length === 0 && (
-          <p className="text-sm text-[#3F4E48]">
+          <p className="text-sm text-[#64748B]">
             No eligible Mock destinations were returned by the directory.
           </p>
         )}
@@ -257,10 +259,10 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
             return (
               <label
                 key={facility.mock_facility_id}
-                className={`flex items-start gap-3 rounded-[2px] border p-4 cursor-pointer transition-colors ${
+                className={`flex items-start gap-3.5 rounded-2xl border p-4 sm:p-5 cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.985] ${
                   selected
-                    ? 'border-[#0F523E] bg-[#E6F2EE]'
-                    : 'border-[#0B1310] bg-[#F3F4F1] hover:bg-white'
+                    ? 'border-[#BCD8FE] bg-[#F2F7FF] shadow-xs'
+                    : 'border-[#E2ECF8] bg-[#F8FAFC] hover:border-[#CBD5E1]'
                 }`}
               >
                 <input
@@ -268,13 +270,13 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
                   name="mock-facility"
                   checked={selected}
                   onChange={() => void handleSelectFacility(facility.mock_facility_id)}
-                  className="mt-1 accent-[#0F523E]"
+                  className="mt-1 accent-[#0066EE] h-4 w-4"
                 />
                 <span>
-                  <span className="block text-sm font-bold text-[#0B1310]">
+                  <span className="block text-sm font-bold text-[#0F172A]">
                     {facility.name} · Mock
                   </span>
-                  <span className="block text-xs font-mono text-[#3F4E48] mt-1">
+                  <span className="block text-xs text-[#64748B] mt-1">
                     {facility.care_type} · {facility.mock_facility_id}
                   </span>
                 </span>
@@ -285,16 +287,16 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
       </section>
 
       {gate && (
-        <section className="dossier-card bg-white p-6 sm:p-8 mb-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#0B1310]">
-            <h2 className="text-base font-extrabold text-[#0B1310]">
+        <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E2ECF8]">
+            <h2 className="text-base font-bold text-[#0F172A]">
               Backend gate result: {gate.decision}
             </h2>
             <span
-              className={`font-mono text-xs font-bold px-2.5 py-0.5 rounded-[2px] border ${
+              className={`text-xs font-bold px-3 py-1 rounded-full border ${
                 gate.decision === 'ALLOW'
-                  ? 'bg-[#0F523E] text-white border-[#0B1310]'
-                  : 'bg-[#FFFBEB] text-[#78350F] border-[#B45309]'
+                  ? 'bg-[#EBF3FF] text-[#0050CC] border-[#BCD8FE]'
+                  : 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]'
               }`}
             >
               {gate.decision}
@@ -317,26 +319,26 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
             ).map(([label, passed]) => (
               <div
                 key={label}
-                className="flex items-center justify-between gap-3 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] p-3 text-sm"
+                className="flex items-center justify-between gap-3 rounded-xl bg-[#F8FAFC] border border-[#E2ECF8] p-3.5 text-sm"
               >
-                <span className="font-semibold text-[#0B1310]">{label}</span>
+                <span className="font-semibold text-[#0F172A]">{label}</span>
                 <span
-                  className={`font-mono text-xs font-bold ${
-                    passed ? 'text-[#0F523E]' : 'text-[#C84B31]'
+                  className={`text-xs font-bold ${
+                    passed ? 'text-[#0050CC]' : 'text-[#D92D20]'
                   }`}
                 >
-                  {passed ? 'Passed' : 'Not passed'}
+                  {passed ? '✓ Passed' : '✕ Not passed'}
                 </span>
               </div>
             ))}
           </div>
 
           {gate.reason_codes.length > 0 && (
-            <p className="text-xs font-mono text-[#C84B31] font-semibold">
+            <p className="text-xs text-[#D92D20] font-semibold">
               Gate reasons: {gate.reason_codes.join(', ')}
             </p>
           )}
-          <p className="text-xs font-mono text-[#3F4E48]">
+          <p className="text-xs text-[#64748B]">
             Policy version {gate.policy_version} · evaluated{' '}
             {new Date(gate.evaluated_at).toLocaleString()}
           </p>
@@ -347,30 +349,29 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
         <button
           type="button"
           onClick={onConsentSettings}
-          className="mb-6 px-4 py-2.5 rounded-[2px] bg-white border border-[#0B1310] text-xs font-mono font-bold text-[#0F523E] underline cursor-pointer btn-press"
+          className="btn-pill-secondary px-5 py-2.5 rounded-full text-xs font-semibold text-[#0066EE] cursor-pointer"
         >
           Review provider sharing consent →
         </button>
       )}
 
       {navigation && (
-        <section className="dossier-card bg-white p-6 sm:p-8 mb-6 space-y-5">
+        <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-5">
           <div>
-            <MockBadge label="MOCK CARE NAVIGATION · SESSION SCOPED" />
-            <h2 className="text-base font-extrabold text-[#0B1310] mt-3">
+            <h2 className="text-base font-bold text-[#0F172A]">
               Optional journey feedback (J9 / J10)
             </h2>
-            <p className="text-xs text-[#3F4E48] mt-1 leading-relaxed">
+            <p className="text-xs text-[#475467] mt-1 leading-relaxed">
               Acknowledgement is separate from booking or a visit. Progress is self-reported and unverified. Session data is deleted when this session ends or expires.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] p-5">
             <div>
-              <span className="text-sm font-bold text-[#0B1310]">
+              <span className="text-sm font-bold text-[#0F172A]">
                 Acknowledge the displayed guidance
               </span>
-              <p className="text-xs text-[#3F4E48]">
+              <p className="text-xs text-[#64748B]">
                 This action records acknowledgement only.
               </p>
             </div>
@@ -378,17 +379,17 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
               type="button"
               disabled={savingNavigation || navigation.acknowledged}
               onClick={() => void handleAcknowledge()}
-              className="px-4 py-2 rounded-[2px] bg-[#0F523E] text-white font-mono text-xs font-bold border border-[#0B1310] cursor-pointer disabled:bg-[#E6EAE4] disabled:text-[#3F4E48]"
+              className="btn-pill-primary px-5 py-2 rounded-full text-xs font-semibold cursor-pointer disabled:opacity-50"
             >
-              {navigation.acknowledged ? 'Acknowledged' : 'Acknowledge'}
+              {navigation.acknowledged ? '✓ Acknowledged' : 'Acknowledge'}
             </button>
           </div>
 
           <div>
-            <h3 className="text-xs font-mono font-bold text-[#0B1310] uppercase mb-2.5">
+            <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-3">
               Optional self-reported status
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(
                 [
                   ['BOOKING_SELF_REPORTED', 'I booked an appointment'],
@@ -404,13 +405,13 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
                   type="button"
                   disabled={savingNavigation}
                   onClick={() => void handleProgress(status)}
-                  className="p-3 rounded-[2px] border border-[#0B1310] bg-[#F3F4F1] text-sm font-medium text-left hover:bg-[#E6F2EE] cursor-pointer disabled:opacity-60"
+                  className="p-3.5 rounded-xl border border-[#E2ECF8] bg-[#F8FAFC] text-sm font-medium text-left hover:border-[#0066EE] hover:bg-[#EBF3FF] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] disabled:opacity-60"
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <ul className="mt-3 space-y-1 text-xs font-mono text-[#3F4E48]">
+            <ul className="mt-3 space-y-1 text-xs text-[#64748B]">
               {navigation.progress_events.map((event, index) => (
                 <li key={`${event.status}-${index}`}>
                   {event.status.replace(/_/g, ' ')} · {event.verification_source} ·{' '}
@@ -420,12 +421,12 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
             </ul>
           </div>
 
-          <div className="pt-4 border-t border-[#C5CEC9] space-y-3">
+          <div className="pt-4 border-t border-[#E2ECF8] space-y-3">
             <div>
-              <h3 className="text-xs font-mono font-bold text-[#0B1310] uppercase">
+              <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide">
                 Optional barriers
               </h3>
-              <p className="text-xs text-[#3F4E48] mt-1">
+              <p className="text-xs text-[#64748B] mt-1">
                 Choose any that apply, or leave unanswered.
               </p>
             </div>
@@ -453,10 +454,10 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
                     aria-pressed={active}
                     disabled={savingNavigation}
                     onClick={() => toggleBarrier(code)}
-                    className={`px-3 py-1.5 rounded-[2px] border font-mono text-xs cursor-pointer ${
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                       active
-                        ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
-                        : 'bg-[#F3F4F1] text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4]'
+                        ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
+                        : 'bg-white text-[#475467] border-[#CBD5E1] hover:bg-[#F8FAFC]'
                     }`}
                   >
                     {label}
@@ -468,12 +469,12 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
               type="button"
               disabled={savingNavigation || (!selectedBarriers.length && !preferNotToSay)}
               onClick={() => void handleSaveBarriers()}
-              className="text-xs font-mono font-bold text-[#0F523E] underline cursor-pointer disabled:opacity-50"
+              className="btn-pill-secondary px-5 py-2 rounded-full text-xs font-semibold cursor-pointer disabled:opacity-50 mt-2"
             >
               Save optional barrier feedback
             </button>
             {navigation.barrier_reports.map((item, index) => (
-              <p key={index} className="text-xs font-mono text-[#3F4E48]">
+              <p key={index} className="text-xs text-[#64748B]">
                 Mock barrier response:{' '}
                 {item.prefer_not_to_say
                   ? 'PREFER_NOT_TO_SAY'
@@ -488,11 +489,14 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
         type="button"
         disabled={gate?.decision !== 'ALLOW' || dispatching || !selectedFacilityId}
         onClick={() => void handleDispatchReferral()}
-        className="w-full py-4 px-6 rounded-[2px] font-mono font-bold text-sm bg-[#0F523E] hover:bg-[#093B2C] text-white border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer disabled:bg-[#E6EAE4] disabled:text-[#63736C] disabled:shadow-none disabled:cursor-not-allowed"
+        className="btn-pill-primary w-full py-4 px-8 rounded-full font-bold text-sm text-white shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {dispatching ? 'Creating Mock referral…' : 'Create Mock referral →'}
+        <span>{dispatching ? 'Creating Mock referral...' : 'Create Mock referral'}</span>
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
       </button>
-      <p className="text-xs font-mono text-center text-[#3F4E48] mt-3">
+      <p className="text-xs text-center text-[#64748B] mt-3">
         This creates a synthetic record inside this prototype. It sends nothing to a real clinic.
       </p>
     </div>
