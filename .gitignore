@@ -9,6 +9,12 @@ apps/api/.venv/
 *.sqlite
 *.sqlite3
 
+# Dependencies & Build artifacts
+node_modules/
+.expo/
+dist/
+web-build/
+
 # Antigravity Kit & Skills
 .agents/
 .agents-backup*/
