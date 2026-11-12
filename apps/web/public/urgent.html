@@ -486,7 +486,8 @@
       if (token && navigator.sendBeacon) {
         try { navigator.sendBeacon('/api/session/end', JSON.stringify({ session_token: token })); } catch (e) {}
       }
-      window.location.replace('about:blank');
+      const target = navigator.onLine ? 'https://www.google.com' : 'about:blank';
+      window.location.replace(target);
     }
   </script>
 </body>

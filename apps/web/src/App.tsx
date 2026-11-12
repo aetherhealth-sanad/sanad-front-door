@@ -150,7 +150,8 @@ export function App() {
           /* Redirect remains available offline. */
         }
       }
-      window.location.replace('about:blank');
+      const target = navigator.onLine ? 'https://www.google.com' : 'about:blank';
+      window.location.replace(target);
     };
     window.addEventListener('pageshow', handlePageShow);
     return () => window.removeEventListener('pageshow', handlePageShow);
@@ -497,7 +498,7 @@ export function App() {
             </span>
             <span className="hidden sm:inline text-[#C5CEC9]">|</span>
             <span className="font-mono text-[11px] text-[#3F4E48]">
-              Research Prototype · Synthetic Data Only · Zero Outbound Transport
+              Research Prototype · Mock / Simulated Data Only · Zero Outbound Transport · Not a Medical Device
             </span>
           </div>
 

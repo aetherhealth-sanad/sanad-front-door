@@ -48,8 +48,9 @@ export const QuickExit: React.FC<QuickExitProps> = ({
       }
     }
 
-    // A blank local document is neutral and works without a network connection.
-    window.location.replace(neutralUrl);
+    // A neutral URL when online; blank local document fallback when offline.
+    const target = typeof navigator !== 'undefined' && navigator.onLine ? neutralUrl : 'about:blank';
+    window.location.replace(target);
   };
 
   return (

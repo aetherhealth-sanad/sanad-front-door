@@ -107,18 +107,14 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         // Toggling assessment off: automatically turn off all dependent scopes
         const next: Record<string, boolean> = {};
         for (const k of Object.keys(prev)) next[k] = false;
-        setStatusNotice('Turned off specialist review and referral because health assessment is disabled.');
+        setStatusNotice('Turned off optional review and referral because health assessment was disabled.');
         return next;
       }
 
       if (scopeName !== 'assessment' && willEnable && !prev.assessment) {
-        // Enabling a child scope while assessment is off: auto-enable assessment as well
-        setStatusNotice('Health assessment enabled automatically as it is required for this service.');
-        return {
-          ...prev,
-          assessment: true,
-          [scopeName]: true,
-        };
+        // Explicit consent: do NOT auto-enable assessment without user's explicit action
+        setStatusNotice('Please enable Health Assessment first before selecting this optional service.');
+        return prev;
       }
 
       return {
@@ -128,29 +124,22 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
     });
   };
 
-  const applyPreset = (preset: 'recommended' | 'essential' | 'education') => {
+  const applyPreset = (preset: 'assessment_only' | 'education') => {
     setError(null);
-    if (preset === 'recommended') {
-      setSelectedScopes({
-        assessment: true,
-        clinician_review: true,
-        provider_share: true,
-      });
-      setStatusNotice('Enabled recommended settings: full health check, review, and care navigation.');
-    } else if (preset === 'essential') {
+    if (preset === 'assessment_only') {
       setSelectedScopes({
         assessment: true,
         clinician_review: false,
         provider_share: false,
       });
-      setStatusNotice('Enabled essential settings: private health check only, without external review.');
+      setStatusNotice('Enabled private health assessment. Optional sharing permissions remain disabled by default.');
     } else {
       setSelectedScopes({
         assessment: false,
         clinician_review: false,
         provider_share: false,
       });
-      setStatusNotice('All permissions disabled. You will view general education guides only.');
+      setStatusNotice('All permissions disabled. You will proceed to general health guides only.');
     }
   };
 
@@ -238,10 +227,10 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         <div className="mb-8 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
-              Privacy & Consent Choices
+              Privacy & Information Boundaries
             </h1>
             <p className="text-[#4A6588] text-sm sm:text-base leading-relaxed max-w-xl">
-              Choose how your session information is used. Everything is private, anonymous, and stored only on this device. You can adjust permissions at any time.
+              Choose exactly how your session information is used. You remain in full control: all optional permissions start disabled, no real personal identifiers (name, phone, or national ID) are ever recorded, and data is only processed for this private session.
             </p>
           </div>
           <img
@@ -286,24 +275,17 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => applyPreset('recommended')}
-                className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[#0066EE] text-white hover:bg-[#0055CC] transition-colors shadow-xs cursor-pointer active:scale-[0.98]"
+                onClick={() => applyPreset('assessment_only')}
+                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#0066EE] text-white hover:bg-[#0055CC] transition-colors shadow-xs cursor-pointer active:scale-[0.98]"
               >
-                Recommended (Full Check)
-              </button>
-              <button
-                type="button"
-                onClick={() => applyPreset('essential')}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-white text-[#072254] border border-[#BCD8FE] hover:bg-[#EBF3FF] transition-colors cursor-pointer active:scale-[0.98]"
-              >
-                Essential Only
+                Health Assessment (Essential)
               </button>
               <button
                 type="button"
                 onClick={() => applyPreset('education')}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-white text-[#4A6588] border border-[#E2ECF8] hover:bg-[#F8FAFD] transition-colors cursor-pointer active:scale-[0.98]"
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-[#4A6588] border border-[#E2ECF8] hover:bg-[#F8FAFD] transition-colors cursor-pointer active:scale-[0.98]"
               >
-                Education Only
+                Education Only (All Off)
               </button>
             </div>
           </div>
@@ -349,6 +331,8 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         <div className="space-y-3.5 mb-8">
           {activeScopes.map(scopeItem => {
             const isEnabled = !!selectedScopes[scopeItem.scope];
+            const isChildScope = scopeItem.scope !== 'assessment';
+            const isLocked = isChildScope && !isAssessmentEnabled;
             const meta = SCOPE_DISPLAY_CONFIG[scopeItem.scope] || {
               title: scopeItem.scope.replace(/_/g, ' '),
               subtitle: scopeItem.used_for,
@@ -364,7 +348,9 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
               <div
                 key={scopeItem.scope}
                 className={`p-4 sm:p-5 rounded-2xl border transition-[background-color,border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] ${
-                  isEnabled
+                  isLocked
+                    ? 'bg-[#FAFBFD] border-[#E2ECF8] opacity-75'
+                    : isEnabled
                     ? 'bg-[#F0F7FF] border-[#0066EE] shadow-xs'
                     : 'bg-white border-[#E2ECF8] hover:border-[#BCD8FE]'
                 }`}
@@ -382,6 +368,11 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
                         {meta.required && (
                           <span className="text-[11px] font-semibold text-[#0066EE] bg-[#EBF3FF] px-2 py-0.5 rounded-full">
                             Core
+                          </span>
+                        )}
+                        {isLocked && (
+                          <span className="text-[10px] font-medium text-[#829AB8] bg-[#F1F5F9] px-2 py-0.5 rounded-full border border-[#E2ECF8]">
+                            Requires Health Assessment
                           </span>
                         )}
                       </div>
@@ -420,7 +411,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
                       onClick={() => handleToggle(scopeItem.scope)}
                       className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors duration-160 ease-[var(--ease-out)] p-0.5 active:scale-[0.96] ${
                         isEnabled ? 'bg-[#0066EE]' : 'bg-[#CBD5E1]'
-                      }`}
+                      } ${isLocked ? 'cursor-not-allowed opacity-60' : ''}`}
                     >
                       <span
                         className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-xs transition-transform duration-160 ease-[var(--ease-out)] ${
