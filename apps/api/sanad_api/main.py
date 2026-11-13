@@ -1,6 +1,8 @@
 """App factory. Run with `uvicorn sanad_api.main:create_app --factory`.
 
-The API makes no model call and needs no model key, cloud service or network to run (INV-01).
+By default the API makes no model call and needs no model key, cloud service or network to run
+(INV-01). An operator can turn on the optional Azure OpenAI adapter for typed chat text
+(T4.5, CC-011); the emergency rules, consent, case state and triage never depend on it.
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ from sanad_api.auth.routes import router as auth_router
 from sanad_api.cases import models as _case_models  # noqa: F401
 from sanad_api.cases.routes import router as cases_router
 from sanad_api.catalogues import load_catalogues
+from sanad_api.chat.routes import router as chat_router
 from sanad_api.clock import Clock, SystemClock
 from sanad_api.config import Settings
 from sanad_api.consent import models as _consent_models  # noqa: F401
@@ -32,6 +35,8 @@ from sanad_api.facts import models as _fact_models  # noqa: F401
 from sanad_api.intake.routes import router as intake_router
 from sanad_api.middleware import RequestContextMiddleware
 from sanad_api.mock_facility.routes import router as mock_facility_router
+from sanad_api.model_adapter.factory import build_model_adapter
+from sanad_api.model_adapter.port import ModelAdapter
 from sanad_api.navigation import models as _navigation_models  # noqa: F401
 from sanad_api.navigation.routes import router as navigation_router
 from sanad_api.navigation.service import purge_expired_navigation
@@ -91,10 +96,18 @@ def _configure_logging() -> None:
         logger.setLevel(logging.INFO)
 
 
-def create_app(settings: Settings | None = None, clock: Clock | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    clock: Clock | None = None,
+    model_adapter: ModelAdapter | None = None,
+) -> FastAPI:
     settings = settings or Settings.from_env()
     _configure_logging()
     catalogues = load_catalogues(settings.repo_root)
+    model_adapter = model_adapter or build_model_adapter(settings)
+    logging.getLogger("sanad.model").info(
+        "model adapter: %s (%s)", model_adapter.provider, model_adapter.model_id
+    )
     engine = make_engine(settings.database_url)
     Base.metadata.create_all(engine)
 
@@ -110,6 +123,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     app.state.settings = settings
     app.state.clock = clock or SystemClock()
     app.state.catalogues = catalogues
+    app.state.model_adapter = model_adapter
     app.state.engine = engine
     app.state.session_factory = make_session_factory(engine)
     app.state.rate_limiters = {
@@ -137,6 +151,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
         auth_router,
         consent_router,
         intake_router,
+        chat_router,
         navigation_router,
         observations_router,
         psychosocial_router,

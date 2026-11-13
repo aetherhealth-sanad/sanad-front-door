@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict
 from sanad_api.vocab import ConsentScope, FieldState, TriageAction
 
 EMERGENCY_FILE = "rules/emergency.draft-0.1.json"
+EMERGENCY_TEXT_FILE = "rules/emergency-text.draft-0.1.json"
 TRIAGE_FILE = "rules/triage.draft-0.1.json"
 QUESTIONS_FILE = "catalogue/questions.draft-0.1.json"
 LAB_TESTS_FILE = "catalogue/lab-tests.draft-0.1.json"
@@ -68,6 +69,26 @@ class EmergencyCatalogue(_Frozen):
     response_values: dict[str, ResponseValue]
     questions: tuple[EmergencyQuestion, ...]
     rules: tuple[EmergencyRule, ...]
+
+
+class EmergencyTextRule(_Frozen):
+    rule_id: str
+    version: str
+    approval_status: str
+    restates_rule_id: str
+    # The text fires when it holds at least one word from every group.
+    all_of: tuple[tuple[str, ...], ...]
+    source: str
+
+
+class EmergencyTextCatalogue(_Frozen):
+    catalogue_id: Literal["emergency-text"]
+    catalogue_version: str
+    approval_status: str
+    is_simulated: bool
+    status_note: str
+    languages: tuple[str, ...]
+    rules: tuple[EmergencyTextRule, ...]
 
 
 class EvidenceRef(_Frozen):
@@ -260,6 +281,7 @@ class Sample:
 @dataclass(frozen=True)
 class Catalogues:
     emergency: EmergencyCatalogue
+    emergency_text: EmergencyTextCatalogue
     triage: TriageCatalogue
     questions: QuestionCatalogue
     lab_tests: LabCatalogue
@@ -285,7 +307,10 @@ class Catalogues:
 
 def load_catalogues(repo_root: Path) -> Catalogues:
     emergency = EmergencyCatalogue.model_validate(read_json(repo_root / EMERGENCY_FILE))
-    triage = TriageCatalogue.model_validate(read_json(repo_root / TRIAGE_FILE))
+    emergency_text = EmergencyTextCatalogue.model_validate(
+        read_json(repo_root / EMERGENCY_TEXT_FILE)
+    )
+    triage =TriageCatalogue.model_validate(read_json(repo_root / TRIAGE_FILE))
     questions = QuestionCatalogue.model_validate(read_json(repo_root / QUESTIONS_FILE))
     lab_tests = LabCatalogue.model_validate(read_json(repo_root / LAB_TESTS_FILE))
     consent = ConsentCatalogue.model_validate(read_json(repo_root / CONSENT_FILE))
@@ -318,6 +343,7 @@ def load_catalogues(repo_root: Path) -> Catalogues:
 
     catalogues = Catalogues(
         emergency=emergency,
+        emergency_text=emergency_text,
         triage=triage,
         questions=questions,
         lab_tests=lab_tests,
@@ -368,6 +394,21 @@ def _check_consistency(c: Catalogues) -> None:
     _require(not emergency_concepts & set(q.concepts), "emergency and intake concepts overlap")
     for rule in e.rules:
         _require(rule.concept_code in emergency_concepts, f"{rule.rule_id}: unknown concept")
+
+    # Each text rule restates an existing draft trigger and never adds one (CC-012).
+    emergency_rule_ids = {rule.rule_id for rule in e.rules}
+    for text_rule in c.emergency_text.rules:
+        _require(
+            text_rule.restates_rule_id in emergency_rule_ids,
+            f"{text_rule.rule_id}: restates an unknown emergency rule",
+        )
+        _require(len(text_rule.all_of) >= 2, f"{text_rule.rule_id}: needs two or more groups")
+        for group in text_rule.all_of:
+            _require(bool(group), f"{text_rule.rule_id}: empty word group")
+            _require(
+                all(word.isascii() and word.isalpha() and word.islower() for word in group),
+                f"{text_rule.rule_id}: words must be lowercase ASCII letters",
+            )
 
     t = c.triage
     _require(set(t.action_rank) == set(TriageAction), "action_rank must rank every action")

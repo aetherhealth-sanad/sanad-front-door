@@ -9,8 +9,13 @@ Requires-Dist: sqlalchemy>=2.0.30
 Requires-Dist: pydantic>=2.7
 Requires-Dist: jsonschema>=4.22
 Requires-Dist: python-multipart>=0.0.9
+Requires-Dist: python-dotenv>=1.0
+Provides-Extra: azure
+Requires-Dist: openai<4,>=3.40; extra == "azure"
+Requires-Dist: azure-identity>=1.17; extra == "azure"
 Provides-Extra: dev
 Requires-Dist: pytest>=8; extra == "dev"
 Requires-Dist: httpx>=0.27; extra == "dev"
 Requires-Dist: ruff>=0.6; extra == "dev"
 Requires-Dist: mypy>=1.11; extra == "dev"
+Requires-Dist: openai<4,>=3.40; extra == "dev"

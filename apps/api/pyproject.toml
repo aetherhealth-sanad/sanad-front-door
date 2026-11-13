@@ -10,14 +10,24 @@ dependencies = [
     "pydantic>=2.7",
     "jsonschema>=4.22",
     "python-multipart>=0.0.9",
+    # Reads apps/api/.env for local settings. Real environment variables still win.
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
+# T4.5, CC-011: only needed when SANAD_MODEL_PROVIDER=azure_openai. The default install makes
+# no model call. The adapter was written against openai 3.x (v1 API, no api_version).
+azure = [
+    "openai>=3.40,<4",
+    "azure-identity>=1.17",
+]
 dev = [
     "pytest>=8",
     "httpx>=0.27",
     "ruff>=0.6",
     "mypy>=1.11",
+    # Adapter tests use the SDK's own error and response types. They make no network call.
+    "openai>=3.40,<4",
 ]
 
 [build-system]

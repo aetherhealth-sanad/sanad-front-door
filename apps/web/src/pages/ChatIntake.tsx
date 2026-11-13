@@ -1,40 +1,81 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   api,
+  type AssistantInfo,
   type IntakeAnswer,
+  type InterpretResponse,
+  type PsychosocialAnswer,
+  type PsychosocialQuestion,
   type QuestionItem,
 } from '../api/client';
+import { MockBadge } from '../components/MockBadge';
+
+/**
+ * RF-21 chat intake (UX flow v0.3, step 4). The chat presents the approved question catalogue
+ * one question at a time. It is not a free diagnostic conversation.
+ *
+ * - Every answer is saved through POST /answers at once, so the server's emergency gate runs
+ *   after each one. Any route to /urgent.html replaces the page.
+ * - Typing appears only when the server reports a model and the user has read the disclosure.
+ *   The server runs the emergency text check before anything else; a model match is a
+ *   proposal the user must confirm, and its wording comes from catalogue labels.
+ * - Nothing here is written to browser storage. Quick exit clears it with the page.
+ */
 
 interface ChatIntakeProps {
   caseId: string;
-  onNavigateToReview: () => void;
+  onAssessmentComplete: (route: string) => void;
   onSwitchToForm: () => void;
   onOpenLab?: () => void;
+  onNavigateToReview?: () => void;
   onAnswerSaved?: (question: QuestionItem, answer: IntakeAnswer, label: string) => void;
 }
 
-type Choice = { label: string; answer: IntakeAnswer };
+type Status = 'Answered' | 'Not sure' | 'Prefer not to say' | 'Skipped';
+
+type Recorded = {
+  questionId: string;
+  question: string;
+  label: string;
+  status: Status;
+  core: boolean;
+  matchedByAi: boolean;
+};
 
 type Entry =
   | { kind: 'assistant'; id: string; text: string }
   | { kind: 'user'; id: string; text: string; note?: string }
   | { kind: 'notice'; id: string; text: string };
 
+type Phase = 'loading' | 'questions' | 'wellbeing' | 'ready' | 'processing' | 'unavailable';
+
+type Choice = { label: string; answer: IntakeAnswer };
+
 const OPT_OUTS: Array<{ label: string; choice: IntakeAnswer['choice'] }> = [
   { label: 'Not sure', choice: 'NOT_SURE' },
-  { label: 'Prefer not to say', choice: 'PREFER_NOT_TO_ANSWER' },
+  { label: 'Prefer not to answer', choice: 'PREFER_NOT_TO_ANSWER' },
 ];
 
-const buttonBase =
-  'px-4 py-2 rounded-full border text-sm cursor-pointer transition-[transform,background-color,border-color,box-shadow] duration-160 ease-[var(--ease-out)] disabled:opacity-50 disabled:cursor-not-allowed';
-const answerButton = `${buttonBase} border-[#CBD5E1] bg-white text-[#1E293B] font-semibold hover:border-[#0066EE] hover:bg-[#EBF3FF] hover:text-[#0050CC] shadow-xs active:scale-[0.97]`;
-const optOutButton =
-  'px-3.5 py-1.5 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] text-xs font-medium hover:bg-[#EDF2F7] hover:text-[#1E293B] transition-[transform,background-color,border-color] duration-160 ease-[var(--ease-out)] cursor-pointer disabled:opacity-50 active:scale-[0.97]';
+const WELLBEING_CHOICES: Array<{ label: string; answer: Omit<PsychosocialAnswer, 'question_id'> | null }> = [
+  { label: 'Yes', answer: { response_state: 'KNOWN_POSITIVE', response_code: 'YES' } },
+  { label: 'No', answer: { response_state: 'KNOWN_NEGATIVE', response_code: 'NO' } },
+  { label: 'Not sure', answer: { response_state: 'UNKNOWN', response_code: 'NOT_SURE' } },
+  { label: 'Prefer not to say', answer: { response_state: 'DECLINED', response_code: null } },
+  { label: 'Skip', answer: null },
+];
+
+const SOURCE_LABELS: Record<string, string> = {
+  PATIENT_REPORTED: 'You',
+  SAMPLE_FIXTURE: 'Sample profile',
+  USER_UPLOADED: 'Uploaded file, unverified',
+  USER_ENTERED: 'You',
+};
 
 function answerChoices(question: QuestionItem): Choice[] {
   const choices: Choice[] = [];
   for (const option of question.options) {
-    if (option.value === true && question.temporal_options && question.temporal_options.length > 0) {
+    if (option.value === true && question.temporal_options.length > 0) {
+      // "Yes, now" and "Yes, in the past" are separate answers and never merged (PRD-FR-17).
       for (const temporal of question.temporal_options) {
         choices.push({
           label: temporal.label,
@@ -56,85 +97,170 @@ function answerChoices(question: QuestionItem): Choice[] {
   return choices;
 }
 
+const WELLBEING_INTRO =
+  'Up to three optional questions about how you have been. They are self-reported context only and are not used to choose a next step. You can skip each one.';
+const READY_TEXT =
+  "That's all the questions for now. When you're ready, I'll check your answers with the draft rules.";
+
+/** The assistant's opening lines for a round of questions, and the phase it starts in. Pass
+ * an empty wellbeing list once the optional questions have been asked. */
+function roundOpening(
+  questions: QuestionItem[],
+  wellbeingQuestions: PsychosocialQuestion[],
+  first: boolean,
+): { phase: Phase; texts: string[] } {
+  const intro = first
+    ? "I'll ask the questions one at a time. For each one you can answer, choose Not sure or Prefer not to answer, or skip it."
+    : 'A few answers are still needed before a draft summary can be prepared.';
+  if (questions.length > 0) return { phase: 'questions', texts: [intro, questions[0].text] };
+  if (wellbeingQuestions.length > 0) {
+    return { phase: 'wellbeing', texts: [intro, WELLBEING_INTRO, wellbeingQuestions[0].draft_text] };
+  }
+  return { phase: 'ready', texts: [intro, READY_TEXT] };
+}
+
+function statusOf(answer: IntakeAnswer): Status {
+  if (answer.choice === 'NOT_SURE') return 'Not sure';
+  if (answer.choice === 'PREFER_NOT_TO_ANSWER') return 'Prefer not to say';
+  return 'Answered';
+}
+
+function friendlyError(err: unknown): string {
+  const message = err instanceof Error ? err.message : '';
+  if (message.includes('VALUE_OUT_OF_RANGE')) return 'That number looks out of range. Can you check it?';
+  if (message.includes('VALUE_TYPE')) return 'Enter the number in the unit shown.';
+  if (err instanceof TypeError || message.startsWith('HTTP 5')) {
+    return "Can't reach the server. Try again. The emergency link above still works.";
+  }
+  return message || 'That could not be saved. Try again, or choose another option.';
+}
+
+const buttonBase =
+  'px-3.5 py-2 rounded-[2px] border text-sm cursor-pointer btn-press disabled:opacity-50 disabled:cursor-not-allowed';
+const answerButton = `${buttonBase} border-[#0B1310] bg-white text-[#0B1310] font-semibold hover:bg-[#E6F2EE]`;
+const optOutButton = `${buttonBase} border-[#0B1310] bg-[#F3F4F1] text-[#0B1310] font-mono text-xs hover:bg-[#E6EAE4]`;
+
 export const ChatIntake: React.FC<ChatIntakeProps> = ({
   caseId,
-  onNavigateToReview,
+  onAssessmentComplete,
   onSwitchToForm,
   onOpenLab,
+  onNavigateToReview,
   onAnswerSaved,
 }) => {
+  const [assistant, setAssistant] = useState<AssistantInfo | null>(null);
+  const [approvalStatus, setApprovalStatus] = useState('CLINICAL_TBD');
   const [queue, setQueue] = useState<QuestionItem[]>([]);
   const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState<Phase>('loading');
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [recorded, setRecorded] = useState<Recorded[]>([]);
+  const [coreIds, setCoreIds] = useState<string[]>([]);
+  const [wellbeing, setWellbeing] = useState<PsychosocialQuestion[]>([]);
+  const [wellbeingIndex, setWellbeingIndex] = useState(0);
+  const [wellbeingAnswers, setWellbeingAnswers] = useState<PsychosocialAnswer[]>([]);
+  const [wellbeingDone, setWellbeingDone] = useState(false);
+  const [typingAcknowledged, setTypingAcknowledged] = useState(false);
+  const [typed, setTyped] = useState('');
   const [numberText, setNumberText] = useState('');
+  const [proposal, setProposal] = useState<InterpretResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
   const nextId = useRef(0);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const push = (entry: { kind: 'assistant' | 'notice'; text: string } | { kind: 'user'; text: string; note?: string }) => {
-    setEntries(prev => [...prev, { ...entry, id: `entry-${nextId.current++}` } as Entry]);
+  const push = (entry: { kind: 'assistant' | 'notice'; text: string } | { kind: 'user'; text: string; note?: string }) =>
+    setEntries(previous => [...previous, { ...entry, id: `entry-${nextId.current++}` } as Entry]);
+
+  const current = phase === 'questions' ? queue[index] : undefined;
+  const currentWellbeing = phase === 'wellbeing' ? wellbeing[wellbeingIndex] : undefined;
+
+  const pendingWellbeing = wellbeingDone ? [] : wellbeing;
+
+  const showReady = () => {
+    setPhase('ready');
+    push({ kind: 'assistant', text: READY_TEXT });
   };
 
-  const current = queue[index];
+  const afterQuestions = () => {
+    if (pendingWellbeing.length > 0) {
+      setPhase('wellbeing');
+      setWellbeingIndex(0);
+      push({ kind: 'assistant', text: WELLBEING_INTRO });
+      push({ kind: 'assistant', text: pendingWellbeing[0].draft_text });
+      return;
+    }
+    showReady();
+  };
+
+  const startNextRound = (questions: QuestionItem[]) => {
+    const opening = roundOpening(questions, pendingWellbeing, false);
+    setQueue(questions);
+    setIndex(0);
+    setWellbeingIndex(0);
+    setPhase(opening.phase);
+    for (const text of opening.texts) push({ kind: 'assistant', text });
+  };
 
   useEffect(() => {
-    let mounted = true;
-    api.getQuestions(caseId)
-      .then(res => {
-        if (!mounted) return;
-        setQueue(res.questions);
+    const request = { active: true };
+    Promise.all([
+      api.getQuestions(caseId),
+      api.getAssistant().catch(() => null),
+      api.getPsychosocialQuestions().catch(() => null),
+    ])
+      .then(([questions, assistantInfo, psychosocial]) => {
+        if (!request.active) return;
+        const optional = psychosocial?.questions ?? [];
+        const opening = roundOpening(questions.questions, optional, true);
+        setAssistant(assistantInfo);
+        setApprovalStatus(questions.approval_status);
+        setWellbeing(optional);
+        setQueue(questions.questions);
         setIndex(0);
-        if (res.questions.length > 0) {
-          setEntries([
-            {
-              kind: 'assistant',
-              id: 'intro',
-              text: "Welcome to Sanad. I will guide you through our standard clinical questions one at a time. Take your time: you can choose an answer, select Not sure or Prefer not to say, or skip it. All responses are kept strictly confidential in your private session.",
-            },
-            {
-              kind: 'assistant',
-              id: 'q0',
-              text: res.questions[0].text,
-            },
-          ]);
-        } else {
-          setAllQuestionsAnswered(true);
-        }
+        setCoreIds(questions.questions.filter(q => q.blocking).map(q => q.question_id));
+        setEntries(opening.texts.map((text, i) => ({ kind: 'assistant', id: `opening-${i}`, text })));
+        setPhase(opening.phase);
       })
-      .catch(err => {
-        if (mounted) setError(err instanceof Error ? err.message : 'Could not load questions.');
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
+      .catch(() => {
+        if (request.active) setPhase('unavailable');
       });
-
     return () => {
-      mounted = false;
+      request.active = false;
     };
   }, [caseId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'nearest' });
-  }, [entries]);
+  }, [entries, proposal]);
 
-  const moveOn = (nextIdx: number) => {
+  const record = (question: QuestionItem, label: string, status: Status, matchedByAi: boolean) =>
+    setRecorded(previous => [
+      ...previous.filter(item => item.questionId !== question.question_id),
+      {
+        questionId: question.question_id,
+        question: question.text,
+        label,
+        status,
+        core: coreIds.includes(question.question_id),
+        matchedByAi,
+      },
+    ]);
+
+  const moveOn = () => {
+    setProposal(null);
+    setTyped('');
     setNumberText('');
-    if (nextIdx < queue.length) {
-      setIndex(nextIdx);
-      push({ kind: 'assistant', text: queue[nextIdx].text });
+    const next = index + 1;
+    if (next < queue.length) {
+      setIndex(next);
+      push({ kind: 'assistant', text: queue[next].text });
     } else {
-      setAllQuestionsAnswered(true);
-      push({
-        kind: 'assistant',
-        text: "That is all the intake questions for now. When you are ready, continue to review your recorded profile before submitting.",
-      });
+      afterQuestions();
     }
   };
 
-  const saveAnswer = async (choice: Choice) => {
+  const saveAnswer = async (choice: Choice, matchedByAi = false) => {
     if (!current) return;
     setBusy(true);
     setError(null);
@@ -144,102 +270,176 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
         window.location.replace('/urgent.html');
         return;
       }
-      push({ kind: 'user', text: choice.label });
-      if (onAnswerSaved) {
+      push({
+        kind: 'user',
+        text: choice.label,
+        note: matchedByAi ? 'Matched by AI from your typed text, confirmed by you' : undefined,
+      });
+      record(current, choice.label, statusOf(choice.answer), matchedByAi);
+      if (onAnswerSaved && current) {
         onAnswerSaved(current, choice.answer, choice.label);
       }
-      moveOn(index + 1);
+      moveOn();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save answer. Try again.');
+      setError(friendlyError(err));
     } finally {
       setBusy(false);
     }
   };
 
-  const skipCurrent = () => {
+  const skip = () => {
     if (!current) return;
     push({ kind: 'user', text: 'Skip' });
-    if (onAnswerSaved) {
-      onAnswerSaved(current, { question_id: current.question_id, choice: 'NOT_SURE' }, 'Skipped');
-    }
-    moveOn(index + 1);
+    record(current, 'Skipped', 'Skipped', false);
+    moveOn();
   };
 
-  const saveNumber = (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveNumber = (event: React.FormEvent) => {
+    event.preventDefault();
     if (!current) return;
-    const val = Number(numberText);
-    if (numberText.trim() === '' || !Number.isFinite(val)) {
-      setError('Please enter a valid number.');
+    const value = Number(numberText);
+    if (numberText.trim() === '' || !Number.isFinite(value)) {
+      setError('Enter a number.');
       return;
     }
-    const label = current.unit ? `${val} ${current.unit}` : String(val);
-    void saveAnswer({
-      label,
-      answer: { question_id: current.question_id, choice: 'ANSWERED', value: val },
-    });
+    if (current.answer_type === 'INTEGER' && !Number.isInteger(value)) {
+      setError('Enter a whole number.');
+      return;
+    }
+    const label = current.unit ? `${value} ${current.unit}` : String(value);
+    void saveAnswer({ label, answer: { question_id: current.question_id, choice: 'ANSWERED', value } });
   };
 
-  if (loading) {
-    return (
-      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4 max-w-xl mx-auto animate-reveal-1">
-        <div className="flex items-center gap-3 pb-3 border-b border-[#E2ECF8]">
-          <div className="w-10 h-10 rounded-full skeleton shrink-0" />
-          <div className="space-y-1.5 flex-1">
-            <div className="skeleton h-4 w-1/3" />
-            <div className="skeleton h-3 w-1/2" />
-          </div>
-        </div>
-        <div className="space-y-3 py-3">
-          <div className="flex gap-2.5">
-            <div className="w-7 h-7 rounded-full skeleton shrink-0" />
-            <div className="skeleton h-14 w-3/4 rounded-2xl" />
-          </div>
-          <div className="flex justify-end">
-            <div className="skeleton h-10 w-2/5 rounded-2xl" />
-          </div>
-        </div>
-        <p className="text-center text-xs text-[#0062FF] font-medium flex items-center justify-center gap-2 pt-2">
-          <span className="spinner spinner-sm" />
-          <span>Starting your private guided conversation…</span>
-        </p>
-      </div>
+  const sendTyped = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const text = typed.trim();
+    if (!current || !text) return;
+    setBusy(true);
+    setError(null);
+    push({ kind: 'user', text, note: 'Typed' });
+    setTyped('');
+    try {
+      const result = await api.interpretText(
+        caseId,
+        current.question_id,
+        text,
+        assistant?.disclosure_version ?? null,
+      );
+      if (result.outcome === 'EMERGENCY_GUIDANCE' || result.state.route === '/urgent.html') {
+        window.location.replace('/urgent.html');
+        return;
+      }
+      if (result.outcome === 'PROPOSAL' && result.proposal) {
+        setProposal(result);
+        return;
+      }
+      push({ kind: 'notice', text: result.message });
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmProposal = () => {
+    const match = proposal?.proposal;
+    if (!match) return;
+    void saveAnswer(
+      {
+        label: match.echo_label,
+        answer: {
+          question_id: match.question_id,
+          choice: match.choice,
+          value: match.value,
+          temporal_status: match.temporal_status,
+        },
+      },
+      true,
     );
-  }
+  };
+
+  const rejectProposal = () => {
+    setProposal(null);
+    push({ kind: 'notice', text: 'Not saved. Please choose an answer with the buttons.' });
+  };
+
+  const answerWellbeing = async (choice: (typeof WELLBEING_CHOICES)[number]) => {
+    if (!currentWellbeing) return;
+    push({ kind: 'user', text: choice.label });
+    const answers = choice.answer
+      ? [...wellbeingAnswers, { question_id: currentWellbeing.question_id, ...choice.answer }]
+      : wellbeingAnswers;
+    setWellbeingAnswers(answers);
+    const next = wellbeingIndex + 1;
+    if (next < wellbeing.length) {
+      setWellbeingIndex(next);
+      push({ kind: 'assistant', text: wellbeing[next].draft_text });
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await api.savePsychosocial(caseId, answers);
+      setWellbeingDone(true);
+      showReady();
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runAssessment = async () => {
+    setPhase('processing');
+    setError(null);
+    push({ kind: 'notice', text: 'Checking your answers with the draft rules…' });
+    try {
+      const result = await api.assessCase(caseId, 'FULL_INTAKE');
+      sessionStorage.setItem('sanad_case_entry_path', 'FULL_INTAKE');
+      if (result.state.route === '/urgent.html') {
+        window.location.replace('/urgent.html');
+        return;
+      }
+      if (result.draft_ready) {
+        onAssessmentComplete(result.state.route);
+        return;
+      }
+      const refreshed = await api.getQuestions(caseId);
+      if (refreshed.questions.length > 0) {
+        startNextRound(refreshed.questions);
+      } else {
+        push({ kind: 'notice', text: 'The draft summary is not ready yet. The case stays where it is.' });
+        setPhase('ready');
+      }
+    } catch (err) {
+      setError(friendlyError(err));
+      setPhase('ready');
+    }
+  };
+
+  const coreDone = recorded.filter(item => item.core && item.status !== 'Skipped').length;
+  const typingOn = Boolean(assistant?.typing_enabled && assistant.model);
 
   return (
-    <div className="medical-card bg-white flex flex-col min-w-0 rounded-2xl border border-[#E2ECF8] shadow-lg overflow-hidden" aria-label="Intake chat">
-      {/* Chat Header */}
-      <div className="px-6 py-4.5 border-b border-[#E2ECF8] bg-gradient-to-r from-white to-[#F8FAFC] flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3.5">
-          <div className="relative">
-            <img
-              src="/assets/images/medical_doctor_avatar.jpg"
-              alt="Clinical Health Companion"
-              className="w-11 h-11 rounded-full object-cover border-2 border-[#BCD8FE] shadow-xs"
-            />
-            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#12B76A] border-2 border-white" title="Active private session" />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <div className="mb-6 pb-5 border-b border-[#0B1310] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <MockBadge label={`MOCK INTAKE QUESTIONS · ${approvalStatus}`} />
+            <span className="font-mono text-xs text-[#3F4E48]">Screening, not diagnosis</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-[#072254]">
-                Sanad Health Companion
-              </h2>
-              <span className="text-[11px] font-mono text-[#0066EE] bg-[#EBF3FF] px-2 py-0.5 rounded-full border border-[#BCD8FE]">
-                Guided Session
-              </span>
-            </div>
-            <p className="text-xs text-[#64748B]">
-              Private health assessment · Screening, not diagnosis
-            </p>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
+            Questions
+          </h1>
+          <p className="text-sm text-[#3F4E48] mt-1.5 leading-relaxed">
+            Draft questions and rules for a research prototype. Not sure, Prefer not to answer and Skip are always kept as they are.
+          </p>
         </div>
-
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={onSwitchToForm}
-            className="btn-pill-secondary px-4 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
+            className="px-4 py-2.5 rounded-[2px] font-mono font-bold text-xs text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] btn-press cursor-pointer whitespace-nowrap"
           >
             Use the form instead
           </button>
@@ -247,187 +447,270 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
             <button
               type="button"
               onClick={onOpenLab}
-              className="px-4 py-1.5 rounded-full text-xs font-semibold text-[#0050CC] bg-[#EBF3FF] hover:bg-[#D9E9FF] border border-[#BCD8FE] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
+              className="px-4 py-2.5 rounded-[2px] font-mono font-bold text-xs text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] btn-press cursor-pointer whitespace-nowrap"
             >
-              + Lab values
+              Add lab values
             </button>
           )}
         </div>
       </div>
 
-      {/* Chat Conversation Thread */}
-      <div
-        role="log"
-        aria-live="polite"
-        className="px-6 py-5 space-y-4 max-h-[52vh] overflow-y-auto bg-[#FBFDFF]"
-      >
-        {entries.map(entry => {
-          if (entry.kind === 'assistant') {
-            return (
-              <div key={entry.id} className="flex items-start gap-2.5 max-w-[85%] chat-bubble-enter">
-                <img
-                  src="/assets/images/medical_doctor_avatar.jpg"
-                  alt="Companion Avatar"
-                  className="w-7 h-7 rounded-full object-cover border border-[#BCD8FE] shrink-0 mt-0.5 shadow-2xs"
-                />
-                <div className="rounded-2xl rounded-tl-sm border border-[#DCE9FA] bg-[#F2F7FF] px-4 py-3 text-sm text-[#0F172A] leading-relaxed shadow-2xs">
-                  {entry.text}
-                </div>
-              </div>
-            );
-          }
-          if (entry.kind === 'user') {
-            return (
-              <div key={entry.id} className="ml-auto max-w-[85%] text-right chat-bubble-enter">
-                <div className="inline-block rounded-2xl rounded-tr-sm bg-gradient-to-r from-[#0066EE] to-[#0050CC] px-4 py-2.5 text-sm text-white font-medium text-left break-words shadow-xs">
-                  {entry.text}
-                </div>
-                {entry.note && (
-                  <p className="text-[11px] text-[#64748B] mt-1 font-medium">{entry.note}</p>
-                )}
-              </div>
-            );
-          }
-          return (
-            <p
-              key={entry.id}
-              className="text-xs font-medium text-[#B54708] bg-[#FFFAEB] border border-[#FEDF89] rounded-xl px-3.5 py-2.5 chat-bubble-enter"
-            >
-              {entry.text}
-            </p>
-          );
-        })}
-        {busy && (
-          <div className="flex items-center gap-2.5 max-w-[85%] chat-bubble-enter">
-            <img
-              src="/assets/images/medical_doctor_avatar.jpg"
-              alt="Companion Avatar"
-              className="w-7 h-7 rounded-full object-cover border border-[#BCD8FE] shrink-0 shadow-2xs"
-            />
-            <div className="rounded-2xl rounded-tl-sm border border-[#DCE9FA] bg-[#F2F7FF] px-4 py-3 text-xs text-[#0062FF] flex items-center gap-1.5 shadow-2xs">
-              <span className="dot-pulse flex gap-1">
-                <span /><span /><span />
-              </span>
-            </div>
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
+      {phase === 'unavailable' && (
+        <div role="alert" className="p-4 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-sm">
+          The questions could not be loaded. Try again later, or{' '}
+          <button type="button" onClick={onSwitchToForm} className="underline font-semibold cursor-pointer">
+            use the form
+          </button>
+          . The emergency link above still works.
+        </div>
+      )}
 
-      {/* Answer Input Controls */}
-      <div className="border-t border-[#E2ECF8] px-6 py-5 space-y-4 bg-white">
-        {error && (
-          <div role="alert" className="p-3.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-xs font-semibold">
-            {error}
-          </div>
-        )}
-
-        {current && !allQuestionsAnswered && (
-          <div className="space-y-3.5">
-            <div className="flex items-center justify-between text-xs text-[#64748B]">
-              <span className="font-medium">Question {index + 1} of {queue.length}</span>
-              {current.blocking && (
-                <span className="font-semibold text-[#D92D20] bg-[#FEF3F2] px-2.5 py-0.5 rounded-full border border-[#FECDCA] text-[11px]">
-                  Core required
+      {phase !== 'unavailable' && (
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+          <section className="dossier-card bg-white flex flex-col min-w-0" aria-label="Chat">
+            <div className="px-5 py-3 border-b border-[#0B1310] flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-extrabold text-[#0B1310]">
+                  {assistant?.assistant_label ?? 'Sanad assistant'}
+                </p>
+                <p className="font-mono text-[11px] text-[#3F4E48]">
+                  {assistant?.assistant_note ?? 'Scripted questions from a draft catalogue'}
+                </p>
+              </div>
+              {phase === 'questions' && queue.length > 0 && (
+                <span className="font-mono text-[11px] text-[#3F4E48]">
+                  Question {index + 1} of {queue.length}
                 </span>
               )}
             </div>
 
-            {/* Conflict Notice if any */}
-            {current.conflicting_values && current.conflicting_values.length > 0 && (
-              <div className="p-3 rounded-xl bg-[#FFFAEB] border border-[#FEDF89] text-xs text-[#B54708]">
-                <strong>More than one answer recorded for this question.</strong> Your selection here updates your record.
-              </div>
-            )}
+            <div role="log" aria-live="polite" aria-label="Conversation" className="px-5 py-4 space-y-3 max-h-[52vh] overflow-y-auto">
+              {phase === 'loading' && (
+                <p className="text-sm font-mono text-[#3F4E48]">Loading draft questions…</p>
+              )}
+              {entries.map(entry => {
+                if (entry.kind === 'assistant') {
+                  return (
+                    <div key={entry.id} className="max-w-[85%] rounded-[2px] border border-[#C5CEC9] bg-[#F3F4F1] px-3.5 py-2.5 text-sm text-[#0B1310]">
+                      {entry.text}
+                    </div>
+                  );
+                }
+                if (entry.kind === 'user') {
+                  return (
+                    <div key={entry.id} className="ml-auto max-w-[85%] text-right">
+                      <div className="inline-block rounded-[2px] border border-[#0F523E] bg-[#E6F2EE] px-3.5 py-2.5 text-sm text-[#0B1310] text-left break-words">
+                        {entry.text}
+                      </div>
+                      {entry.note && (
+                        <p className="font-mono text-[10px] text-[#3F4E48] mt-1">{entry.note}</p>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <p key={entry.id} className="text-xs font-mono text-[#78350F] bg-[#FFFBEB] border border-[#B45309] rounded-[2px] px-3 py-2">
+                    {entry.text}
+                  </p>
+                );
+              })}
 
-            {/* Answer Options */}
-            {current.options.length > 0 ? (
-              <div className="flex flex-wrap gap-2.5" role="group" aria-label="Answer options">
-                {answerChoices(current).map(choice => (
-                  <button
-                    key={choice.label}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void saveAnswer(choice)}
-                    className={answerButton}
-                  >
-                    {choice.label}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <form onSubmit={saveNumber} className="flex flex-wrap items-center gap-2.5">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step={current.answer_type === 'INTEGER' ? '1' : 'any'}
-                  value={numberText}
-                  onChange={e => setNumberText(e.target.value)}
-                  placeholder={current.unit ? `Value in ${current.unit}` : 'Enter value'}
-                  className="w-48 px-4 py-2 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
-                />
-                <button type="submit" disabled={busy || !numberText} className="btn-pill-primary px-5 py-2 text-sm">
-                  Save
-                </button>
-              </form>
-            )}
+              {proposal?.proposal && proposal.produced_by && (
+                <div className="rounded-[2px] border border-[#0B1310] bg-white p-4 space-y-3">
+                  <p className="font-mono text-[11px] font-bold text-[#0B1310]">
+                    {assistant?.model?.match_label ?? 'Matched by AI, not verified'} · {proposal.produced_by.label}
+                  </p>
+                  <p className="text-sm text-[#0B1310]">
+                    I noted: <strong>{proposal.proposal.echo_label}</strong>. Is that right?
+                  </p>
+                  <p className="text-xs text-[#3F4E48]">{proposal.message}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" disabled={busy} onClick={confirmProposal} className={`${buttonBase} border-[#0B1310] bg-[#0F523E] text-white font-bold hover:bg-[#093B2C]`}>
+                      Yes, save this answer
+                    </button>
+                    <button type="button" disabled={busy} onClick={rejectProposal} className={optOutButton}>
+                      No, I'll choose
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div ref={endRef} />
+            </div>
 
-            {/* Opt-Out Buttons */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#F1F5F9]">
-              {OPT_OUTS.map(opt => (
+            <div className="border-t border-[#0B1310] px-5 py-4 space-y-3 bg-[#FBFBFA]">
+              {error && (
+                <div role="alert" className="p-3 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-sm">
+                  {error}
+                </div>
+              )}
+
+              {current && !proposal && (
+                <>
+                  {current.blocking && (
+                    <span className="inline-block font-mono text-[10px] font-bold px-2 py-0.5 bg-[#FFFBEB] border border-[#B45309] text-[#78350F]">
+                      Needed for your draft summary
+                    </span>
+                  )}
+                  {current.conflicting_values.length > 0 && (
+                    <div className="rounded-[2px] bg-[#FFFBEB] border border-[#B45309] p-3 text-xs text-[#78350F]">
+                      <strong>More than one answer is recorded for this.</strong> Your answer here replaces them.
+                      <ul className="mt-1 font-mono">
+                        {current.conflicting_values.map((item, i) => (
+                          <li key={`${item.source_type}-${i}`}>
+                            {String(item.value ?? 'Unknown')}
+                            {item.unit ? ` ${item.unit}` : ''}
+                            {item.temporal_status ? ` · ${item.temporal_status === 'PAST' ? 'past' : 'now'}` : ''}
+                            {' · '}
+                            {SOURCE_LABELS[item.source_type] ?? item.source_type}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {current.options.length > 0 ? (
+                    <div className="flex flex-wrap gap-2" role="group" aria-label="Answers">
+                      {answerChoices(current).map(choice => (
+                        <button key={choice.label} type="button" disabled={busy} onClick={() => void saveAnswer(choice)} className={answerButton}>
+                          {choice.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <form onSubmit={saveNumber} className="flex flex-wrap items-center gap-2">
+                      <label className="sr-only" htmlFor="chat-number">
+                        {current.text}
+                      </label>
+                      <input
+                        id="chat-number"
+                        type="number"
+                        inputMode="decimal"
+                        step={current.answer_type === 'INTEGER' ? '1' : 'any'}
+                        value={numberText}
+                        onChange={event => setNumberText(event.target.value)}
+                        placeholder={current.unit ? `Value in ${current.unit}` : 'Value'}
+                        className="w-44 px-3 py-2 rounded-[2px] border border-[#0B1310] bg-white text-sm"
+                      />
+                      <button type="submit" disabled={busy} className={answerButton}>
+                        Save
+                      </button>
+                    </form>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    {OPT_OUTS.map(optOut => (
+                      <button
+                        key={optOut.choice}
+                        type="button"
+                        disabled={busy}
+                        onClick={() =>
+                          void saveAnswer({
+                            label: optOut.label,
+                            answer: { question_id: current.question_id, choice: optOut.choice },
+                          })
+                        }
+                        className={optOutButton}
+                      >
+                        {optOut.label}
+                      </button>
+                    ))}
+                    <button type="button" disabled={busy} onClick={skip} className={`${optOutButton} underline`}>
+                      Skip
+                    </button>
+                  </div>
+
+                  {typingOn && assistant?.model && !typingAcknowledged && (
+                    <div className="rounded-[2px] border border-[#C5CEC9] bg-white p-3 text-xs text-[#3F4E48] space-y-2">
+                      <p>{assistant.disclosure}</p>
+                      <button type="button" onClick={() => setTypingAcknowledged(true)} className={optOutButton}>
+                        Use typing for this session
+                      </button>
+                    </div>
+                  )}
+
+                  {typingOn && assistant?.model && typingAcknowledged && (
+                    <form onSubmit={sendTyped} className="space-y-1.5">
+                      <label htmlFor="chat-text" className="block text-xs font-semibold text-[#0B1310]">
+                        Or type your answer
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          id="chat-text"
+                          type="text"
+                          autoComplete="off"
+                          maxLength={assistant.max_text_chars}
+                          value={typed}
+                          onChange={event => setTyped(event.target.value)}
+                          className="flex-1 min-w-0 px-3 py-2 rounded-[2px] border border-[#0B1310] bg-white text-sm"
+                        />
+                        <button type="submit" disabled={busy || !typed.trim()} className={answerButton}>
+                          Send
+                        </button>
+                      </div>
+                      <p className="font-mono text-[10px] text-[#3F4E48]">
+                        Sent to {assistant.model.label} to suggest a match. You confirm before anything is saved. English only. {typed.length}/{assistant.max_text_chars}
+                      </p>
+                    </form>
+                  )}
+                </>
+              )}
+
+              {currentWellbeing && (
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Optional answers">
+                  {WELLBEING_CHOICES.map(choice => (
+                    <button key={choice.label} type="button" disabled={busy} onClick={() => void answerWellbeing(choice)} className={choice.answer ? answerButton : `${optOutButton} underline`}>
+                      {choice.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {phase === 'ready' && (
                 <button
-                  key={opt.choice}
                   type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    void saveAnswer({
-                      label: opt.label,
-                      answer: { question_id: current.question_id, choice: opt.choice },
-                    })
-                  }
-                  className={optOutButton}
+                  onClick={() => void runAssessment()}
+                  className="w-full py-3.5 px-6 rounded-[2px] font-mono font-bold text-sm text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer"
                 >
-                  {opt.label}
+                  Check my answers →
                 </button>
-              ))}
-
-              <button
-                type="button"
-                disabled={busy}
-                onClick={skipCurrent}
-                className="text-xs font-semibold text-[#64748B] hover:text-[#0F172A] underline cursor-pointer ml-1"
-              >
-                Skip
-              </button>
+              )}
+              {phase === 'processing' && (
+                <p className="text-sm font-mono text-[#3F4E48]">Checking your answers…</p>
+              )}
             </div>
-          </div>
-        )}
+          </section>
 
-        {/* Transition to Review My Health Profile */}
-        {allQuestionsAnswered && (
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-[#F2F7FF] to-white border border-[#BCD8FE] space-y-4 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#12B76A]" />
-              <p className="text-sm font-bold text-[#0F172A]">
-                You have completed the questions for this round.
-              </p>
+          <aside className="dossier-panel bg-white p-5 space-y-4" aria-label="What you've told us">
+            <div>
+              <h2 className="text-base font-extrabold text-[#0B1310]">What you've told us</h2>
+              {coreIds.length > 0 && (
+                <p className="font-mono text-xs text-[#3F4E48] mt-1">
+                  Needed questions: {coreDone} of {coreIds.length} done
+                </p>
+              )}
             </div>
-            <p className="text-xs text-[#475467] leading-relaxed">
-              Next step: Proceed to <strong>Review My Health Profile</strong> to verify all your recorded answers before submitting for assessment processing.
+            {recorded.length === 0 ? (
+              <p className="text-sm text-[#3F4E48]">Your answers in this chat appear here.</p>
+            ) : (
+              <ul className="space-y-3">
+                {recorded.map(item => (
+                  <li key={item.questionId} className="border-b border-[#C5CEC9] pb-2 last:border-0">
+                    <p className="text-xs text-[#3F4E48]">{item.question}</p>
+                    <p className="text-sm font-semibold text-[#0B1310]">{item.label}</p>
+                    <p className="font-mono text-[10px] text-[#3F4E48]">
+                      {item.status}
+                      {item.matchedByAi ? ' · matched by AI, confirmed by you' : ' · from you'}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="text-[11px] text-[#63736C] leading-relaxed border-t border-[#C5CEC9] pt-3">
+              Shown for this session only and not saved in your browser. Answers from a sample profile or file are listed on your result page.
             </p>
-            <button
-              type="button"
-              onClick={onNavigateToReview}
-              className="btn-pill-primary w-full py-3.5 px-6 rounded-full font-bold text-sm text-white shadow-md cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>Continue to profile review</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </button>
-          </div>
-        )}
-      </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 };

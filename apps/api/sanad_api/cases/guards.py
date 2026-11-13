@@ -32,6 +32,7 @@ class Action(StrEnum):
     LOAD_PROFILE = "LOAD_PROFILE"
     RUN_SAFETY_CHECK = "RUN_SAFETY_CHECK"
     SUBMIT_ANSWERS = "SUBMIT_ANSWERS"
+    INTERPRET_TEXT = "INTERPRET_TEXT"
     ENTER_OBSERVATION = "ENTER_OBSERVATION"
     SAVE_PSYCHOSOCIAL = "SAVE_PSYCHOSOCIAL"
     SELECT_EVIDENCE = "SELECT_EVIDENCE"
@@ -62,6 +63,8 @@ ACTION_RULES: dict[Action, ActionRule] = {
     Action.LOAD_PROFILE: ActionRule((A.ASSESSMENT,), frozenset({S.CONSENTED})),
     Action.RUN_SAFETY_CHECK: ActionRule((A.ASSESSMENT,), frozenset({S.CONSENTED})),
     Action.SUBMIT_ANSWERS: ActionRule((A.ASSESSMENT,), INTAKE_STATES),
+    # T4.5: typed chat text is only ever matched to an intake question, so the same states.
+    Action.INTERPRET_TEXT: ActionRule((A.ASSESSMENT,), INTAKE_STATES),
     Action.ENTER_OBSERVATION: ActionRule((A.ASSESSMENT,), INTAKE_STATES),
     Action.SAVE_PSYCHOSOCIAL: ActionRule((A.ASSESSMENT,), INTAKE_STATES),
     Action.SELECT_EVIDENCE: ActionRule((A.ASSESSMENT,), INTAKE_STATES),

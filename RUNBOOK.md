@@ -21,16 +21,24 @@ npm ci
 cd ../..
 ```
 
-The API loads rules, consent/question catalogues, and synthetic fixtures from this repository when it starts. It makes no model calls and needs no cloud credentials.
+The API loads rules, consent/question catalogues, and synthetic fixtures from this repository when it starts. By default it makes no model calls and needs no cloud credentials. The optional Azure OpenAI answer matching for the chat is described [below](#optional-azure-openai-answer-matching-in-the-chat).
 
 ## Start the API
 
-In terminal 1, from the repository root, set local-only passwords first if you need the simulated staff consoles:
+In terminal 1, from the repository root, create your local settings file once:
 
 ```bash
-export SANAD_DEMO_REVIEWER_PASSWORD='choose-a-local-only-password'
-export SANAD_DEMO_MOCK_FACILITY_PASSWORD='choose-another-local-only-password'
+cp apps/api/.env.example apps/api/.env
 ```
+
+`apps/api/.env` is ignored by Git. If you need the simulated staff consoles, set local-only passwords in it:
+
+```dotenv
+SANAD_DEMO_REVIEWER_PASSWORD=choose-a-local-only-password
+SANAD_DEMO_MOCK_FACILITY_PASSWORD=choose-another-local-only-password
+```
+
+Shell variables still work and win over the file, for example `export SANAD_DEMO_REVIEWER_PASSWORD=...`.
 
 Then start Uvicorn from `apps/api`:
 
@@ -45,7 +53,58 @@ The SQLite database is created at `apps/api/sanad-dev.db`; it is ignored by Git.
 - OpenAPI JSON: <http://127.0.0.1:8000/api/openapi.json>
 - Version endpoint: <http://127.0.0.1:8000/version>
 
-The seeded usernames are `demo-reviewer` and `demo-mock-facility`. Without the password environment variables, staff sign-in is disabled. Do not put passwords in source files or commit them. In the web app, choose **Mock Reviewer** or **Mock Facility** in the top navigation and sign in with the corresponding account.
+The seeded usernames are `demo-reviewer` and `demo-mock-facility`. Without the password settings, staff sign-in is disabled. Keep passwords in `apps/api/.env` or the shell only; never put them in `.env.example`, source files or commits. In the web app, choose **Mock Reviewer** or **Mock Facility** in the top navigation and sign in with the corresponding account.
+
+## Optional: Azure OpenAI answer matching in the chat
+
+The `/intake` chat works with buttons and number fields and needs no model. With a provider enabled, users can also type an answer, and Azure OpenAI suggests which catalogue answer it means; the user confirms before anything is saved (RF-21). **This sends typed text to Microsoft and is not approved yet (CC-011).** Use it only with synthetic text, and never type real health information.
+
+Install the optional extra once:
+
+```bash
+cd apps/api
+.venv/bin/python -m pip install -e '.[azure]'   # or: uv pip install --python .venv/bin/python -e '.[azure]'
+```
+
+Put the settings in `apps/api/.env`, which Git ignores. Start from the committed template:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+# then edit apps/api/.env: set SANAD_MODEL_PROVIDER=azure_openai and fill in the Azure values
+```
+
+The API reads `apps/api/.env` at start-up wherever Uvicorn is started from. A variable set in your shell wins over the file, `SANAD_ENV_FILE=/path/to/file` points to a different file, and empty values count as unset. Never put a real key in `.env.example`, and never commit `.env`. A test fails if the example ever holds a key or password.
+
+| Variable | Value |
+|---|---|
+| `SANAD_MODEL_PROVIDER` | `azure_openai` (default `disabled`, which makes no model call) |
+| `SANAD_AZURE_OPENAI_ENDPOINT` | `https://<resource>.openai.azure.com`. `/openai/v1/` is added for you, and no `api-version` is used. |
+| `SANAD_AZURE_OPENAI_DEPLOYMENT` | Your deployment name, not the model name. Choose a model that supports structured outputs. |
+| `SANAD_AZURE_OPENAI_AUTH` | `api_key` (default) or `entra_id` |
+| `SANAD_AZURE_OPENAI_API_KEY` | The key from the Azure portal (resource → Keys and Endpoint). Leave it unset with `entra_id`. |
+| `SANAD_MODEL_TIMEOUT_MS`, `SANAD_MODEL_MAX_ATTEMPTS`, `SANAD_MODEL_MAX_COMPLETION_TOKENS` | Optional. Defaults 12000, 2 and 800 (`TECH_TBD`). |
+
+A filled-in `apps/api/.env` looks like this:
+
+```dotenv
+SANAD_MODEL_PROVIDER=azure_openai
+SANAD_AZURE_OPENAI_ENDPOINT=https://<resource>.openai.azure.com
+SANAD_AZURE_OPENAI_DEPLOYMENT=<deployment-name>
+SANAD_AZURE_OPENAI_AUTH=api_key
+SANAD_AZURE_OPENAI_API_KEY=<key>
+```
+
+Then start the API as usual from `apps/api`:
+
+```bash
+.venv/bin/uvicorn sanad_api.main:create_app --factory --reload --host 127.0.0.1 --port 8000
+```
+
+The start-up log then shows `model adapter: azure_openai (<deployment>)`. A missing or invalid setting stops start-up and names the setting without printing the key.
+
+With `SANAD_AZURE_OPENAI_AUTH=entra_id`, the API uses `DefaultAzureCredential` (for example `az login` locally, or a managed identity when hosted). The identity needs the `Cognitive Services OpenAI User` role on the resource. Hosted deployments should keep the key in Key Vault or protected app settings ([Azure service guide](specs/azure-service-guide.md)).
+
+To turn typing off again, set `SANAD_MODEL_PROVIDER=disabled` in `apps/api/.env` (or remove the line). Emergency handling, consent and the rules never depend on this setting.
 
 ## Start the web app
 
@@ -98,7 +157,7 @@ The web source under `apps/web/src` includes patient, Mock Reviewer, Mock Facili
 - The reviewer console shows the API's closed-loop funnel. A full evaluation dashboard with rule-conformance runs, failure-case inspection and report export is not present.
 - Emergency-page content is marked `CLINICAL_TBD`; it is not clinically approved guidance.
 
-There is no LLM/model integration, real clinic connection, FHIR export or production validation. Use synthetic fixtures only.
+The only model integration is the optional, off-by-default chat answer matching above (RF-21, `PROPOSED`). There is no real clinic connection, FHIR export or production validation. Use synthetic fixtures only.
 
 Use this setup for local software development with synthetic data only. A server starting successfully does not mean the user journeys pass, the mock screens represent events stored by the API, or any clinical content has been approved. Check the BRD and PRD acceptance criteria before using the app in a demo.
 

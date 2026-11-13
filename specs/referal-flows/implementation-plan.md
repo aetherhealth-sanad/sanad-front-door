@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft for team review. Python API and React/TypeScript UI source exist; UI/API acceptance, browser coverage and CI verification remain partial or pending. |
 | **Version / date** | 0.2, 2026-11-03 |
-| **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17` |
+| **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17` and `RF-21` |
 | **Verified by** | [Test plan](test-plan.md) |
 
 Everything here is `PROPOSED` until the Tech Lead accepts it. Requirements live in the product spec, and this document only says how to build them.
@@ -44,8 +44,9 @@ The specs leave the stack open. This choice follows what they mention and favour
 | Tests | pytest, Vitest, Playwright | Playwright can switch the network off and test mobile viewports. |
 | CI/CD | GitHub Actions | The repository is on GitHub. |
 | Local run | Docker Compose | Meets the BRD's one-command requirement (AC-01.5). |
+| Model adapter (RF-21) | `openai` Python SDK 3.x against Azure OpenAI's v1 API, as an optional `azure` extra | Microsoft's current Python guidance uses the standard `OpenAI` client with `base_url=.../openai/v1/`. Optional, so the default install has no model dependency (INV-01). |
 
-Azure stays a deployment candidate only (`TECH_TBD`). Nothing in application code depends on it.
+Azure hosting stays a deployment candidate only (`TECH_TBD`). The only Azure-specific code is the optional, off-by-default model adapter (T4.5, CC-011), and nothing else depends on it.
 
 ## 3. Repository layout
 
@@ -165,6 +166,39 @@ HTML responses set `Cache-Control: no-store`. A `pageshow` handler treats `event
 
 Computed on read in `tracking/delay.py` from the last event time, the current time and the configured threshold. There is no background job and no notification path. The clock is injected, so tests can check both sides of the boundary (AC-14.2).
 
+### 4.9 Model adapter (RF-21, ports and adapters)
+
+```mermaid
+flowchart LR
+    UI[Chat at /intake] -->|buttons| ANS[POST /answers]
+    UI -->|typed text| INT[POST /chat/interpret]
+    INT --> G[Order guard]
+    G --> P0[Decode]
+    P0 --> S0B{S0b word check}
+    S0B -->|hit| EM[EMERGENCY_GUIDANCE_ISSUED, no model]
+    S0B -->|clear| IG{Input checks}
+    IG -->|reject| FIX[NEEDS_CORRECTION, nothing sent]
+    IG -->|accept| TASK[intake.extract.v1: prompt, schema]
+    TASK --> PORT[[ModelAdapter port]]
+    PORT --> AZ[AzureOpenAIAdapter]
+    PORT --> OFF[DisabledAdapter, default]
+    PORT -.tests.-> FAKE[Fake adapter]
+    AZ --> V1[V1 validator against the catalogue]
+    OFF --> V1
+    V1 -->|valid| PR[Proposal, user confirms]
+    V1 -->|invalid or failure| FB[Fallback to buttons]
+    PR -->|confirm| ANS
+    ANS --> S1[Emergency gate S1 on new facts]
+```
+
+- **Port.** `model_adapter/port.py` defines `ModelAdapter`: `provider`, `model_id`, `label`, `enabled` and `complete_json(ModelRequest) -> ModelResult`. The request carries the PRD 4.7.2 envelope (task, purpose, schema and prompt versions, catalogue version, one deadline, maximum attempts) and no case ID.
+- **Adapters.** `DisabledAdapter` is the default and never touches the network. `AzureOpenAIAdapter` holds only transport: it calls `chat.completions.create` with strict `json_schema` output, maps SDK errors to statuses, and retries within the deadline with SDK retries off. `factory.build_model_adapter` chooses from settings at start-up and fails fast on a bad configuration. Another provider, such as a local SLM, is one new class.
+- **Task.** `model_adapter/intake_extract.py` owns the prompt, the per-question schema, the V1 validator and the confirmation label. It is the same for every provider.
+- **Precedence.** `chat/routes.py` runs the guard, decoding, S0b (`rules_engine/emergency_text.py`), input checks (`chat/guardrail.py`), then the task. A proposal is never written; the client saves it through `POST /answers`, which runs the existing emergency gate.
+- **Trace.** `MODEL_TASK_RUN` and `INPUT_CHECKED` audit events hold codes and counts only.
+- **Settings.** `SANAD_MODEL_PROVIDER` (`disabled` or `azure_openai`), `SANAD_AZURE_OPENAI_ENDPOINT`, `SANAD_AZURE_OPENAI_DEPLOYMENT`, `SANAD_AZURE_OPENAI_AUTH` (`api_key` or `entra_id`), `SANAD_AZURE_OPENAI_API_KEY`, `SANAD_MODEL_TIMEOUT_MS` (12000), `SANAD_MODEL_MAX_ATTEMPTS` (2), `SANAD_MODEL_MAX_COMPLETION_TOKENS` (800). The defaults are the PRD's engineering defaults and stay `TECH_TBD` (OQ-32).
+- **Where settings live.** `config.Settings.from_env` reads `apps/api/.env` (Git-ignored, located from the package, or `SANAD_ENV_FILE`) through `python-dotenv`, overlaid by the real environment, which wins. `os.environ` is not changed, values are literal, and empty values count as unset. `apps/api/.env.example` is the committed template with placeholders only; a test fails if it holds a key or password or turns the model on. Hosted deployments use protected app settings or Key Vault instead of a file.
+
 ## 5. API
 
 The full contract, including endpoints, access checks, action rules and error codes, is in the [API design](api-design.md). Each endpoint there names the task that builds it.
@@ -227,6 +261,7 @@ These are additive P0 backend/design tasks from PRD v0.4; they do not activate c
 | T4.2 | Session-bound guidance acknowledgement, idempotent progress/barrier writes, retention deletion and funnel | PRD-FR-24 to 28, PRD-AC-35 to 41 | T3.2 | Backend, Security, QA | In progress; API and `/referral` J9/J10 UI source present, TC-19.6 added, frontend acceptance/CI and review pending |
 | T4.3 | Versioned conceptual FHIR R4 mapping manifest; no export or conformance claim | PRD-FR-31, PRD-AC-46/48 | T1.10, T3.7 | Backend, Architect | In progress; manifest present, review pending |
 | T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader present, review pending |
+| T4.5 | Chat intake at `/intake`, model adapter port, disabled and Azure OpenAI adapters, `intake.extract.v1` task and validator, stage 2a word check, input checks, chat endpoints, trace events | RF-21, AC-21.1 to AC-21.12; PRD-FR-04/37/38/40 | T2.1, T2.2, T4.1 | Backend, Frontend, Security | In progress; API, adapters, chat UI and TC-21.1 to TC-21.12 (pytest) present. Spec review, CC-011 and CC-012 approval, browser E2E and a run against a real Azure deployment pending. Provider off by default. |
 
 ### Critical path
 

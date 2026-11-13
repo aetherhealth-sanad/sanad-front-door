@@ -4,13 +4,13 @@
 |---|---|
 | **Status** | Draft for team review. Backend routes are implemented in `apps/api`; v0.4 additions below remain subject to review. |
 | **Version / date** | 0.2, 2026-11-03 |
-| **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17`; PRD v0.4 `PRD-FR-24` to `PRD-FR-30` |
+| **Implements** | [Product spec](product-spec.md) `RF-01` to `RF-17` and `RF-21`; PRD v0.4 `PRD-FR-24` to `PRD-FR-30` |
 | **Built by** | [Implementation plan](implementation-plan.md) `T*` tasks |
 | **Verified by** | [Test plan](test-plan.md) `TC-*` |
 
 This document defines the HTTP contract between the web app and the API. BRD/PRD v0.4 decide scope and behavior; the product spec supplies M1–M3 detail where it is not superseded. The generated OpenAPI file is the source of truth for field shapes, and this document stays the source of truth for access, state and error rules.
 
-Every response here is synthetic. Nothing in this API sends data outside the app.
+Every response here is synthetic. Nothing in this API sends data outside the app, with one exception that is off by default: when an operator enables a model provider, `POST /cases/{id}/chat/interpret` sends typed text and one catalogue question to it (§6.13, CC-011).
 
 ## 1. Conventions
 
@@ -28,7 +28,7 @@ Every response here is synthetic. Nothing in this API sends data outside the app
 
 - Tokens never appear in URLs.
 - Request logs record the method, path template, status, duration and `request_id`. They never record bodies (INV-03).
-- Answers use fixed choices and numbers. The only free text in this API is the reviewer's optional `note` and edited summary, and neither is copied into audit entries.
+- Answers use fixed choices and numbers. The only free text in this API is the reviewer's optional `note` and edited summary, and the patient's typed chat text (§6.13), which is never stored. None of it is copied into audit entries.
 - `error.message` is fixed text chosen by `error.code` and never contains submitted values.
 - Replace FastAPI's default 422 handler. It echoes the submitted `input`, which would break AC-02.5 and INV-03.
 
@@ -74,6 +74,8 @@ The gate (§6.7) runs after checks 1 to 3, so a caller without access never sees
 | `GET /cases/{id}/questions` | Questions still needed | Patient | T2.2 | AC-06.1, AC-06.3, AC-06.4 |
 | `POST /cases/{id}/answers` | Save answers and field states | Patient | T2.2 | AC-06.2, AC-06.3, AC-06.6 |
 | `POST /cases/{id}/assess` | Gatekeeper, signals, floor, draft | Patient | T2.3 to T2.5 | AC-06.5, AC-11.1, AC-11.5, AC-11.6 |
+| `GET /chat/assistant` | Assistant labels, whether typing is on, provider and disclosure | Public | T4.5 | AC-21.10 |
+| `POST /cases/{id}/chat/interpret` | Typed text for one intake question: emergency, correction, proposal or fallback. Writes no fact. | Patient | T4.5 | AC-21.1 to AC-21.9 |
 | `GET /cases/{id}/report` | Patient view of the draft or released result | Patient | T2.5 | AC-11.2 to AC-11.4, AC-08.9 |
 | `POST /cases/{id}/review-requests` | The send button | Patient | T2.6 | AC-07.2 to AC-07.6 |
 | `GET /psychosocial/questions` | Draft optional question catalogue; clearly marked pending review | Public | T4.1 | PRD-FR-29 |
@@ -137,6 +139,7 @@ This is the contract for the order guard (RF-04). An action outside its allowed 
 | Load sample or upload | `assessment` | `CONSENTED` | Same, or `EMERGENCY_GUIDANCE_ISSUED` on a trigger |
 | Safety check | `assessment` | `CONSENTED` | `ASSESSING` or `EMERGENCY_GUIDANCE_ISSUED` |
 | Answers, observations, evidence selection | `assessment` | `ASSESSING`, `NEEDS_INFORMATION`, `REVISION_REQUIRED` | Same, or `EMERGENCY_GUIDANCE_ISSUED` on a trigger |
+| Interpret typed text (`INTERPRET_TEXT`) | `assessment` | `ASSESSING`, `NEEDS_INFORMATION`, `REVISION_REQUIRED` | Same, or `EMERGENCY_GUIDANCE_ISSUED` on a typed-text trigger. Not listed in `allowed_actions`; the client reads `GET /chat/assistant`. |
 | Assess | `assessment` | `ASSESSING`, `NEEDS_INFORMATION`, `REVISION_REQUIRED` | `ASSESSING` with a draft, or `NEEDS_INFORMATION` |
 | Send for review | `assessment`, `clinician_review` | `ASSESSING` with a current draft | `PENDING_CLINICIAN_REVIEW` |
 | Decision `APPROVE` | `clinician_review` | `PENDING_CLINICIAN_REVIEW` | `APPROVED`, then automatically `REPORT_RELEASED` and `GUIDANCE_AVAILABLE` |
@@ -774,6 +777,42 @@ These endpoints implement bounded synthetic-prototype contracts from [PRD v0.4](
 
 **Conceptual FHIR boundary.** `catalogue/fhir-r4-mapping-0.1.json` is a design manifest only. No FHIR export, validator, profile selection or conformance claim exists. Internal consent checks remain authoritative.
 
+### 6.13 Chat intake and typed-text matching (RF-21, `PROPOSED`)
+
+**`GET /chat/assistant`** (public) returns `assistant_label` ("Sanad assistant"), `assistant_note` ("Scripted questions from a draft catalogue"), `copy_status`, `typing_enabled`, `max_text_chars` (500), and, only when a provider is enabled, `model` (`provider`, `label`, `match_label`), `disclosure` and `disclosure_version` (`MODEL-DISCLOSURE-0.1`).
+
+**`POST /cases/{id}/chat/interpret`**
+
+```json
+{"question_id": "Q-STEROID-USE", "text": "used them years ago, not now", "disclosure_version": "MODEL-DISCLOSURE-0.1"}
+```
+
+Order of work, each step only if the previous one did not answer:
+
+1. Order guard as for answers: 401, 404, 403 `CONSENT_REQUIRED`, 409 `INVALID_TRANSITION`. The body is limited to 500 characters (422).
+2. Decoding (NFKC, control characters removed), then the stage 2a word check against `rules/emergency-text.draft-0.1.json`. A hit applies `EMERGENCY_TRIGGER` and returns `EMERGENCY_GUIDANCE` with `emergency.rule_ids`, version, `CLINICAL_TBD` and `is_simulated: true`.
+3. `question_id` must be an intake catalogue question, otherwise 422 `VALIDATION_FAILED` `UNKNOWN_QUESTION`. Safety questions are never accepted.
+4. Input checks: `TEXT_EMPTY`, `TEXT_LANGUAGE_NOT_SUPPORTED` (anything outside ASCII, because the word check covers English only) and `TEXT_CONTAINS_CONTACT_DETAILS` return `NEEDS_CORRECTION`.
+5. No provider enabled: `FALLBACK` with `MODEL_DISABLED`.
+6. `disclosure_version` must match, otherwise 422 `VALIDATION_FAILED` `DISCLOSURE_NOT_ACKNOWLEDGED`.
+7. The `intake.extract.v1` task runs through the adapter, then the validator. The result is `PROPOSAL` or `FALLBACK` with one of `ABSTAIN_OUT_OF_SCOPE`, `ABSTAIN_UNCLEAR`, `MODEL_UNAVAILABLE`, `MODEL_CONTENT_FILTERED`, `MODEL_REFUSED` or `MODEL_OUTPUT_INVALID`.
+
+```json
+{
+  "outcome": "PROPOSAL",
+  "reason_code": null,
+  "message": "Check this answer. Nothing is saved until you confirm it.",
+  "proposal": {"question_id": "Q-STEROID-USE", "choice": "ANSWERED", "value": true, "temporal_status": "PAST", "echo_label": "Yes, in the past"},
+  "produced_by": {"provider": "azure_openai", "model_id": "<deployment>", "label": "Azure OpenAI", "is_ai_generated": true, "verification_status": "UNVERIFIED", "needs_user_confirmation": true},
+  "emergency": null,
+  "state": {"case_id": "SANAD-7f3c91", "state": "ASSESSING", "case_version": 4, "route": "/intake", "allowed_actions": ["SUBMIT_ANSWERS", "ENTER_OBSERVATION", "ASSESS"]}
+}
+```
+
+`message` is fixed text chosen by the outcome and reason code. `echo_label` comes from catalogue labels. Neither repeats the typed text. The endpoint writes no fact and does not change `case_version`. The client saves a confirmed proposal through `POST /cases/{id}/answers`, which runs the emergency gate.
+
+**What reaches the model.** A system prompt, the question's text, answer type, unit and options, and the typed text. No case ID, token, earlier answer or other identifier. Stored completions are never requested.
+
 ## 7. Audit events
 
 The API has no endpoint for reading the audit log in this flow. Tests read the table directly, and reviewers see `decision_history`. Each entry holds actor, time, event type, case ID and the relevant versions (INV-09), and never answers, lab values or notes (INV-03).
@@ -796,6 +835,9 @@ The API has no endpoint for reading the audit log in this flow. Tests read the t
 | `NAVIGATION_ACKNOWLEDGED` | Explicit acknowledgement | `guidance_version` |
 | `NAVIGATION_PROGRESS_RECORDED` | User progress or navigation opened | `status`, `verification_source` |
 | `NAVIGATION_BARRIER_RECORDED` | Barrier selection | `count`, `prefer_not_to_say` (never reason codes) |
+| `SAFETY_CHECKED` with `origin: CHAT_TEXT` | Typed text matched an emergency word pattern | `rule_ids`, `catalogue_version`, `result` |
+| `INPUT_CHECKED` | Typed text rejected by the input checks | `result`, `reason_code`, `origin`, `question_id` (never the text) |
+| `MODEL_TASK_RUN` | Every model task call | `request_id`, `task_id`, `provider`, `model_id`, `prompt_version`, `schema_version`, `question_catalogue_version`, `question_id`, `status`, `error_code`, `outcome`, `attempts`, `elapsed_ms` |
 
 Navigation write keys are unique per episode and operation. They are opaque retry tokens, not patient identifiers. The server stores a hash of the normalized request payload with each key so a retry can be distinguished from accidental key reuse.
 

@@ -15,6 +15,11 @@ node_modules/
 dist/
 web-build/
 
+# Local settings and secrets. Copy apps/api/.env.example to apps/api/.env.
+.env
+.env.*
+!.env.example
+
 # Antigravity Kit & Skills
 .agents/
 .agents-backup*/

@@ -6,6 +6,7 @@ import {
   type QuestionsResponse,
   type QuestionItem,
 } from '../api/client';
+import { MockBadge } from '../components/MockBadge';
 import { ChatIntake } from './ChatIntake';
 
 interface IntakeScreenProps {
@@ -15,6 +16,21 @@ interface IntakeScreenProps {
   onNavigateToReview?: () => void;
   onAnswerRecorded?: (question: QuestionItem, answer: IntakeAnswer, label: string) => void;
 }
+
+interface IntakeFormProps extends IntakeScreenProps {
+  onSwitchToChat: () => void;
+}
+
+/** `/intake`: the chat view (RF-21) by default, with the full form one tap away. Both use
+ * the same answer endpoint, so the server checks are identical. */
+export const IntakeScreen: React.FC<IntakeScreenProps> = props => {
+  const [view, setView] = useState<'chat' | 'form'>('chat');
+  return view === 'chat' ? (
+    <ChatIntake {...props} onSwitchToForm={() => setView('form')} />
+  ) : (
+    <IntakeForm {...props} onSwitchToChat={() => setView('chat')} />
+  );
+};
 
 type AnswerChoice = IntakeAnswer['choice'] | '';
 type DraftAnswer = {
@@ -39,12 +55,13 @@ const psychResponse: Record<
   DECLINED: null,
 };
 
-export const IntakeScreen: React.FC<IntakeScreenProps> = ({
+const IntakeForm: React.FC<IntakeFormProps> = ({
   caseId,
   onAssessmentComplete,
   onOpenLab,
   onNavigateToReview,
   onAnswerRecorded,
+  onSwitchToChat,
 }) => {
   const [view, setView] = useState<'chat' | 'form'>('chat');
   const [catalogue, setCatalogue] = useState<QuestionsResponse | null>(null);
