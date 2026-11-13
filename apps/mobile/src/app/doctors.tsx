@@ -21,9 +21,11 @@ import {
   ShieldCheck,
   X,
   MapPin,
+  Sparkles,
 } from 'lucide-react-native';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { ApiService } from '@/services/api';
 
 interface DoctorItem {
   id: string;
@@ -145,6 +147,31 @@ export default function DoctorListScreen() {
           <Text style={[styles.disclaimerText, { color: theme.primaryDark }]}>
             SIMULATED CARE DIRECTORY (MOCK SPECIALISTS)
           </Text>
+        </View>
+
+        {/* Direct Booking Notice */}
+        <View style={[styles.directBookingBanner, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.directBookingTitle, { color: theme.text }]}>
+              Direct Specialist Booking
+            </Text>
+            <Text style={[styles.directBookingDesc, { color: theme.textSecondary }]}>
+              {ApiService.hasAnswers()
+                ? 'Your completed intake report is ready to be securely linked to your consultation.'
+                : 'You can book any specialist directly below without taking the screening assessment. Intake is completely optional.'}
+            </Text>
+          </View>
+          {!ApiService.hasAnswers() && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.takeIntakeChip,
+                { backgroundColor: theme.primaryLight, opacity: pressed ? 0.8 : 1 },
+              ]}
+              onPress={() => router.push('/intake')}
+            >
+              <Text style={[styles.takeIntakeText, { color: theme.primaryDark }]}>Take Intake</Text>
+            </Pressable>
+          )}
         </View>
 
         {/* Filter Chips */}
@@ -350,6 +377,14 @@ export default function DoctorListScreen() {
                     Duration: 30-min confidential video review
                   </Text>
                 </View>
+                <View style={styles.slotRow}>
+                  <Sparkles size={16} color={ApiService.hasAnswers() ? theme.primary : theme.textMuted} />
+                  <Text style={[styles.slotText, { color: theme.text }]}>
+                    {ApiService.hasAnswers()
+                      ? 'Screening Context: Report Linked'
+                      : 'Screening Context: General Consultation (Direct Booking)'}
+                  </Text>
+                </View>
               </View>
 
               <Text style={[styles.mockNotice, { color: theme.textMuted }]}>
@@ -423,6 +458,33 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  directBookingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 12,
+  },
+  directBookingTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  directBookingDesc: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  takeIntakeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+  },
+  takeIntakeText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   filterRow: {
     flexDirection: 'row',
