@@ -182,6 +182,22 @@ export const ApiService = {
     return currentAnswers;
   },
 
+  hasAnswers(): boolean {
+    return Object.keys(currentAnswers).length > 0;
+  },
+
+  loadSampleAnswers(): void {
+    currentAnswers = {
+      age: '25_34',
+      trying_duration_months: 8,
+      prior_sperm_test: 'never',
+      scrotal_discomfort: 'occasional',
+      lifestyle_heat_exposure: false,
+      lifestyle_smoking: 'none',
+      stress_level: 'moderate',
+    };
+  },
+
   async evaluateResults(): Promise<ScreeningResult> {
     const answers = currentAnswers;
     const hasSeverePain = answers.scrotal_discomfort === 'severe';

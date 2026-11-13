@@ -66,19 +66,44 @@ export default function IntakeScreen() {
     }, 280);
   };
 
+  const handleSkipQuestion = () => {
+    if (isLastQuestion) {
+      if (!ApiService.hasAnswers()) {
+        ApiService.loadSampleAnswers();
+      }
+      router.push('/results');
+    } else {
+      setCurrentIndex((prev) => prev + 1);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }
+  };
+
+  const handleSkipToDemo = () => {
+    ApiService.loadSampleAnswers();
+    router.push('/results');
+  };
+
   const handleCustomSend = () => {
     if (!inputText.trim()) return;
 
-    // Treat text input as active user engagement
     const query = inputText.trim();
     setInputText('');
 
     if (query.toLowerCase().includes('doctor') || query.toLowerCase().includes('urologist')) {
       router.push('/doctors');
+    } else if (query.toLowerCase().includes('skip') || query.toLowerCase().includes('next')) {
+      handleSkipQuestion();
+    } else if (query.toLowerCase().includes('report') || query.toLowerCase().includes('result')) {
+      handleSkipToDemo();
     } else {
       Alert.alert(
-        'AI Assistant (Simulated)',
-        `Your prompt: "${query}" has been received in this mock session. Please choose the relevant clinical option above to finalize your stratification report.`,
+        'Vital AI Assistant',
+        `I noted: "${query}". You can continue the question above, skip it, or explore specialists freely.`,
+        [
+          { text: 'Skip Question', onPress: handleSkipQuestion },
+          { text: 'Browse Doctors', onPress: () => router.push('/doctors') },
+          { text: 'OK' },
+        ]
       );
     }
   };
@@ -211,6 +236,34 @@ export default function IntakeScreen() {
                     </Pressable>
                   );
                 })}
+              </View>
+
+              {/* Skip Controls (Freedom to skip without being trapped) */}
+              <View style={styles.skipActionsRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.skipButton,
+                    { opacity: pressed ? 0.7 : 1 },
+                  ]}
+                  onPress={handleSkipQuestion}
+                >
+                  <Text style={[styles.skipButtonText, { color: theme.textSecondary }]}>
+                    Skip this question
+                  </Text>
+                  <ArrowRight size={13} color={theme.textSecondary} />
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.skipDemoButton,
+                    { opacity: pressed ? 0.7 : 1 },
+                  ]}
+                  onPress={handleSkipToDemo}
+                >
+                  <Text style={[styles.skipDemoText, { color: theme.primary }]}>
+                    Skip all & view sample report
+                  </Text>
+                </Pressable>
               </View>
             </View>
           </View>
@@ -471,6 +524,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     flex: 1,
+  },
+  skipActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(226, 232, 240, 0.6)',
+  },
+  skipButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+  },
+  skipButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  skipDemoButton: {
+    paddingVertical: 6,
+  },
+  skipDemoText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   bottomInputBar: {
     position: 'absolute',

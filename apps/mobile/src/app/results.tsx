@@ -31,16 +31,28 @@ export default function ResultsScreen() {
 
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<ScreeningResult | null>(null);
+  const [hasAnswers, setHasAnswers] = useState(ApiService.hasAnswers());
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await ApiService.evaluateResults();
-      setResult(data);
+      if (ApiService.hasAnswers()) {
+        const data = await ApiService.evaluateResults();
+        setResult(data);
+      }
       setLoading(false);
     }
     loadData();
   }, []);
+
+  const handleLoadDemo = async () => {
+    setLoading(true);
+    ApiService.loadSampleAnswers();
+    setHasAnswers(true);
+    const data = await ApiService.evaluateResults();
+    setResult(data);
+    setLoading(false);
+  };
 
   const getTriageTheme = (level?: string) => {
     switch (level) {
@@ -71,7 +83,7 @@ export default function ResultsScreen() {
     }
   };
 
-  if (loading || !result) {
+  if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.primary} />
@@ -79,6 +91,67 @@ export default function ResultsScreen() {
           Analyzing screening indicators against WHO benchmarks...
         </Text>
       </View>
+    );
+  }
+
+  if (!hasAnswers || !result) {
+    return (
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.background }]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Image
+            source={require('@/assets/images/medical_hero_3d.jpg')}
+            style={styles.resultBannerImage}
+            resizeMode="cover"
+          />
+          <View style={styles.cardContent}>
+            <Text style={[styles.resultTitle, { color: theme.text }]}>
+              No Assessment Completed Yet
+            </Text>
+            <Text style={[styles.resultDesc, { color: theme.textSecondary }]}>
+              You navigated directly to this report without completing the screening intake. Missing answers never assume low risk. You can take the assessment or load a demonstration profile to preview the report.
+            </Text>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryButton,
+                { backgroundColor: theme.primary, opacity: pressed ? 0.9 : 1, marginBottom: 12 },
+              ]}
+              onPress={handleLoadDemo}
+            >
+              <Sparkles size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.primaryButtonText}>Load Sample Demonstration Report</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border, opacity: pressed ? 0.8 : 1, marginBottom: 12 },
+              ]}
+              onPress={() => router.push('/intake')}
+            >
+              <Text style={[styles.secondaryButtonText, { color: theme.text }]}>
+                Start 3-Minute Assessment
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border, opacity: pressed ? 0.8 : 1 },
+              ]}
+              onPress={() => router.push('/doctors')}
+            >
+              <Text style={[styles.secondaryButtonText, { color: theme.primary }]}>
+                Browse Doctor Directory
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
     );
   }
 
