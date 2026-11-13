@@ -918,6 +918,77 @@
   animation: orbFloat2 18s ease-in-out infinite;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   TECHNICAL BIOAUTOMATION & CAD BLUEPRINT UTILITIES
+   ═══════════════════════════════════════════════════════════ */
+
+.bg-tech-grid {
+  background-image: 
+    radial-gradient(rgba(0, 98, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(to right, rgba(226, 236, 248, 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 236, 248, 0.6) 1px, transparent 1px);
+  background-size: 24px 24px, 72px 72px, 72px 72px;
+}
+
+.bg-blueprint-pattern {
+  background-color: #0044C8;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.stat-slider-track {
+  position: relative;
+  height: 6px;
+  background: #E2ECF8;
+  border-radius: 9999px;
+  overflow: visible;
+}
+
+.stat-slider-fill-blue {
+  height: 100%;
+  border-radius: 9999px;
+  background: #0062FF;
+  position: relative;
+  transition: width 0.6s var(--ease-spring);
+}
+
+.stat-slider-fill-pink {
+  height: 100%;
+  border-radius: 9999px;
+  background: #FF3366;
+  position: relative;
+  transition: width 0.6s var(--ease-spring);
+}
+
+.stat-slider-fill-slate {
+  height: 100%;
+  border-radius: 9999px;
+  background: #64748B;
+  position: relative;
+  transition: width 0.6s var(--ease-spring);
+}
+
+.stat-slider-thumb {
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #FFFFFF;
+  border: 3px solid currentColor;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.stat-slider-thumb:hover {
+  transform: translateY(-50%) scale(1.25);
+}
+
 .timeline-step-indicator {
   transition: all var(--dur-base) var(--ease-spring);
 }
