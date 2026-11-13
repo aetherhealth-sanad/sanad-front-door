@@ -161,7 +161,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+    <div className="w-full space-y-6">
       <div className="mb-6 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">

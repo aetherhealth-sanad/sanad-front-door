@@ -221,22 +221,22 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
   const isAssessmentEnabled = !!selectedScopes.assessment;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-      <div className="medical-canvas p-6 sm:p-10">
+    <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-6 sm:py-10">
+      <div className="medical-canvas p-6 sm:p-10 lg:p-12">
         {/* Header */}
         <div className="mb-8 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
               Privacy & Information Boundaries
             </h1>
-            <p className="text-[#4A6588] text-sm sm:text-base leading-relaxed max-w-xl">
+            <p className="text-[#4A6588] text-sm sm:text-base leading-relaxed max-w-2xl">
               Choose exactly how your session information is used. You remain in full control: all optional permissions start disabled, no real personal identifiers (name, phone, or national ID) are ever recorded, and data is only processed for this private session.
             </p>
           </div>
           <img
-            src="/assets/images/medical_shield_3d.jpg"
-            alt="Medical Privacy Shield"
-            className="w-20 h-20 rounded-2xl object-cover border-2 border-[#BCD8FE] shadow-sm shrink-0 hidden sm:block"
+            src="/assets/images/real_patient_peace_of_mind.jpg"
+            alt="Confidential Patient Session"
+            className="w-24 h-24 rounded-2xl object-cover border-2 border-[#BCD8FE] shadow-sm shrink-0 hidden sm:block"
           />
         </div>
 

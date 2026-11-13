@@ -270,7 +270,7 @@ export const IntakeScreen: React.FC<IntakeScreenProps> = ({
 
   // Otherwise, render full Form view with toggle back to Chat
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Top Banner & View Switcher */}
       <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2ECF8] pb-5">

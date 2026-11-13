@@ -32,7 +32,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
       className="w-full bg-white/80 backdrop-blur-md border-b border-[#E2ECF8]/80"
       style={{ boxShadow: '0 1px 0 rgba(7,33,90,0.04)' }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-5">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
 
         {/* ── Thin progress track (always visible) ── */}
         <div className="step-track mt-0 relative">

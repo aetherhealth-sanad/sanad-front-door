@@ -68,7 +68,7 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+    <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-8 sm:py-12 space-y-8">
       <div className="mb-6 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -79,12 +79,12 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
             Case Progress & Journey Timeline
           </h1>
-          <p className="text-sm sm:text-base text-[#4A6588] mt-1 leading-relaxed max-w-xl">
+          <p className="text-sm sm:text-base text-[#4A6588] mt-1 leading-relaxed max-w-2xl">
             Track each milestone of your simulated assessment and referral status. User-reported milestones are stored temporarily in this session.
           </p>
         </div>
         <img
-          src="/assets/images/medical_shield_3d.jpg"
+          src="/assets/images/real_patient_peace_of_mind.jpg"
           alt="Secure Case Timeline"
           className="w-16 h-16 rounded-xl object-cover border border-[#BCD8FE] shadow-2xs hidden sm:block shrink-0"
         />

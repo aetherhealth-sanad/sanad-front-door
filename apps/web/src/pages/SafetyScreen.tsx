@@ -121,8 +121,8 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8 animate-reveal-1">
-      <div className="medical-canvas p-5 sm:p-8 space-y-6">
+    <div className="w-full space-y-6 animate-reveal-1">
+      <div className="medical-canvas p-6 sm:p-8 lg:p-10 space-y-6">
         {/* Header */}
         <div className="pb-5 border-b border-[#E2ECF8]">
           <div className="flex flex-wrap items-center gap-2 mb-2.5">

@@ -66,7 +66,7 @@ export const SessionDashboard: React.FC<SessionDashboardProps> = ({
     : Math.round(((currentStepIndex + 1) / STEP_DEFINITIONS.length) * 100);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+    <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-4 sm:py-6">
       {/* ── Session telemetry strip ── */}
       <div className="mb-5 pb-3 border-b border-[#E2ECF8] flex items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -95,7 +95,7 @@ export const SessionDashboard: React.FC<SessionDashboardProps> = ({
       </div>
 
       {/* ── Main 3-Panel Layout (Desktop) / Workspace (Mobile) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_280px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)_320px] xl:grid-cols-[260px_minmax(0,1fr)_360px] gap-6 xl:gap-8 items-start">
 
         {/* ── Left Rail: Step Navigator (Desktop) ── */}
         <aside className="medical-card p-4 space-y-4 hidden lg:block" aria-label="Session progress">

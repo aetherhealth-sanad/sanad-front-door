@@ -186,7 +186,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Title & Screen Header */}
       <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-3">
         <div className="flex flex-wrap items-center gap-2">

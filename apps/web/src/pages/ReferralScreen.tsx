@@ -217,7 +217,7 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+    <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-8 sm:py-12 space-y-8">
       <div className="mb-6 pb-6 border-b border-[#E2ECF8]">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
