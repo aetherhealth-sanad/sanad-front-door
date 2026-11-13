@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   atmosphericGlowOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(238, 242, 255, 0.45)',
     justifyContent: 'space-between',
     padding: 16,

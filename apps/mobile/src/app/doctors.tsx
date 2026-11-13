@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -92,6 +92,21 @@ export default function DoctorListScreen() {
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'urology' | 'lab'>('all');
   const [isFiltering, setIsFiltering] = useState(false);
+  const [backendFacilities, setBackendFacilities] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadDirectory() {
+      try {
+        const facs = await ApiService.getMockDirectory();
+        if (facs && facs.length > 0) {
+          setBackendFacilities(facs);
+        }
+      } catch {
+        // Non-blocking fallback
+      }
+    }
+    loadDirectory();
+  }, []);
 
   const handleFilterChange = (filter: 'all' | 'urology' | 'lab') => {
     setActiveFilter(filter);

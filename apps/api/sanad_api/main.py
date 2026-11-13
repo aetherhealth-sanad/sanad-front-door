@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager, suppress
 from typing import Any
 
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Every model module is imported so that create_all knows every table.
 from sanad_api.audit import models as _audit_models  # noqa: F401
@@ -117,6 +118,13 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     }
     register_error_handlers(app)
     app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.get("/version", tags=["meta"])
     def version() -> dict[str, Any]:
