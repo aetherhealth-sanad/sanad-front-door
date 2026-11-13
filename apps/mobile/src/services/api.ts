@@ -64,12 +64,16 @@ export const ApiService = {
     currentAnswers = {};
   },
 
-  async startSession(): Promise<CaseSession> {
+  async startSession(start_mode: 'BLANK' | 'SAMPLE' = 'BLANK', fixture_id?: string): Promise<CaseSession> {
     try {
       const response = await fetch(`${DEFAULT_API_URL}/api/cases`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: 'mobile_app', client: 'sanad_react_native' }),
+        body: JSON.stringify({
+          start_mode,
+          ...(fixture_id ? { fixture_id } : {}),
+          preferred_language: 'en',
+        }),
       });
       if (response.ok) {
         const data = await response.json();
