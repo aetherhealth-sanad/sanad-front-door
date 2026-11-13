@@ -44,40 +44,71 @@ const SAMPLE_UPLOAD_TEMPLATE = {
   ],
 };
 
-const HOW_IT_WORKS_STEPS = [
+const CLINICAL_BENCHMARKS = {
+  concentration: {
+    title: 'Sperm Concentration',
+    threshold: '16 Million / mL',
+    unit: 'M/mL',
+    whoStandard: 'WHO 6th Edition (5th centile reference threshold)',
+    clinicalContext: 'Evaluates the density of spermatozoa per millilitre of semen. Values below 16 M/mL warrant a repeat analysis after 2 to 3 weeks.',
+    fillPercent: 78,
+  },
+  motility: {
+    title: 'Total Motility (PR + NP)',
+    threshold: '42%',
+    unit: '%',
+    whoStandard: 'WHO 6th Edition progressive + non-progressive motion',
+    clinicalContext: 'Measures the proportion of active swimming cells. Progressive movement is critical for natural migration through cervical mucus.',
+    fillPercent: 84,
+  },
+  volume: {
+    title: 'Ejaculate Volume',
+    threshold: '1.4 mL',
+    unit: 'mL',
+    whoStandard: 'WHO 6th Edition lower reference limit',
+    clinicalContext: 'Secreted primarily by seminal vesicles (approx. 65%) and the prostate gland. Reflects patency of the ejaculatory ducts.',
+    fillPercent: 70,
+  },
+};
+
+const WORKFLOW_STEPS = [
   {
-    step: '01',
-    title: 'Safety Check First',
-    subtitle: 'Immediate medical triage',
-    description:
-      'We check for acute symptoms first. If any severe warning signs are detected, emergency guidance is provided instantly even when offline.',
+    id: 'safety',
+    title: 'Acute Safety Check',
+    subtitle: 'Red flag exclusion',
+    badge: 'Immediate triage',
+    description: 'We screen for acute symptoms first. If severe pain, trauma, or infection is reported, emergency guidance is delivered instantly without waiting for a questionnaire.',
+    clinicalFocus: 'Excludes testicular torsion, severe epididymo-orchitis, and acute scrotal trauma.',
     image: '/assets/images/medical_urgent_care_3d.jpg',
     alt: 'Immediate safety triage',
   },
   {
-    step: '02',
-    title: 'Private Questions',
-    subtitle: 'Lifestyle & health history',
-    description:
-      'Answer a few straightforward lifestyle and health questions at your own pace. You can skip any question or choose Not Sure anytime.',
+    id: 'intake',
+    title: 'Discreet Health History',
+    subtitle: 'Lifestyle & exposures',
+    badge: 'Private flow',
+    description: 'Answer simple questions regarding conception timeline, thermal exposure (hot saunas, laptop on lap), and previous health history at your own pace.',
+    clinicalFocus: 'Identifies reversible scrotal hyperthermia and timeline eligibility for formal investigation.',
     image: '/assets/images/real_patient_peace_of_mind.jpg',
     alt: 'Private confidential consultation',
   },
   {
-    step: '03',
-    title: 'Lab Insights',
-    subtitle: 'Standard semen analysis',
-    description:
-      'If you have semen analysis test results, enter your numbers to understand them against official clinical reference ranges without confusing medical jargon.',
+    id: 'labs',
+    title: 'WHO 2021 Benchmark',
+    subtitle: 'Standard lab metrics',
+    badge: 'Laboratory standards',
+    description: 'If you have a semen analysis, compare your parameters against official WHO 6th edition thresholds with clear explanations and no alarming jargon.',
+    clinicalFocus: 'Benchmarks volume, concentration, total count, progressive motility, and morphology.',
     image: '/assets/images/real_clinical_lab.jpg',
     alt: 'Modern clinical lab diagnostics',
   },
   {
-    step: '04',
+    id: 'sharing',
     title: 'You Control Sharing',
-    subtitle: 'Care navigation on your terms',
-    description:
-      'Receive an organized, confidential summary. No data is ever sent to a doctor or clinic unless you explicitly choose to connect.',
+    subtitle: 'Care navigation',
+    badge: 'Patient sovereignty',
+    description: 'Your report stays on your device. Nothing leaves your browser or transfers to any doctor unless you explicitly choose to connect.',
+    clinicalFocus: 'Local ephemeral session with zero commercial ad trackers or third-party tracking.',
     image: '/assets/images/real_doctor_consultation.jpg',
     alt: 'Compassionate doctor consultation',
   },
@@ -120,6 +151,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showTechAppendix, setShowTechAppendix] = useState<boolean>(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [activeBenchmark, setActiveBenchmark] = useState<'concentration' | 'motility' | 'volume'>('concentration');
+  const [activeWorkflowIndex, setActiveWorkflowIndex] = useState<number>(0);
 
   useEffect(() => {
     api
@@ -206,20 +239,23 @@ export const StartScreen: React.FC<StartScreenProps> = ({
     setError(null);
   };
 
+  const currentBenchmark = CLINICAL_BENCHMARKS[activeBenchmark];
+  const activeStep = WORKFLOW_STEPS[activeWorkflowIndex];
+
   return (
     <div className="w-full space-y-10 py-5 sm:py-8 pb-8">
-      {/* ══ HERO: Mobile-first, two-column on large screens ══ */}
+      {/* ══ HERO: Clean, authoritative, anti-AI-slop layout ══ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-5">
         <div className="medical-canvas p-5 sm:p-8 lg:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
 
-            {/* ── Left: Trust copy & CTAs ── */}
-            <div className="lg:col-span-7 space-y-5 animate-reveal-1">
-              {/* Status pills */}
+            {/* ── Left: Trust copy, CTAs, and Interactive Benchmark ── */}
+            <div className="lg:col-span-7 space-y-6 animate-reveal-1">
+              {/* Status badges (Refined sentence-case, zero generic uppercase slop) */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EBF4FF] border border-[#BAD6FE] text-[#0062FF]">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#0062FF] glow-pulse" />
-                  Private & Anonymous
+                  Private and anonymous front door
                 </span>
                 <span
                   role="status"
@@ -231,22 +267,22 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     }`}
                   />
                   {emergencyCacheReady
-                    ? 'Emergency guidance cached offline'
-                    : 'Preparing offline cache…'}
+                    ? 'Emergency safety guide cached offline'
+                    : 'Preparing offline cache...'}
                 </span>
               </div>
 
-              {/* Headline */}
-              <h1 className="text-[28px] sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-[#07215A] leading-[1.1] text-balance">
-                Clear, private answers for your men's health.
+              {/* Headline - Unified personality without artificial single-word accent */}
+              <h1 className="text-[28px] sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-[#07215A] leading-[1.12] text-balance">
+                Evidence-grounded, private front door for men's reproductive health.
               </h1>
 
               {/* Sub-copy */}
-              <p className="text-base sm:text-lg text-[#4A6588] max-w-[52ch] leading-relaxed text-pretty">
-                Check symptoms, understand semen analysis results, and find clear next steps - with zero judgment. No account, no phone number, full control.
+              <p className="text-base sm:text-lg text-[#4A6588] max-w-[54ch] leading-relaxed text-pretty">
+                Understand symptoms, evaluate semen analysis against WHO 2021 clinical manuals, and navigate specialist care with complete privacy and zero judgment.
               </p>
 
-              {/* Primary CTAs */}
+              {/* Primary Action Buttons (Clean, active voice, zero tacked-on arrows) */}
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
@@ -256,15 +292,15 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     else if (startMode === 'BLANK') void handleStartBlank();
                     else void handleLaunchSample();
                   }}
-                  className="btn-pill-primary px-7 py-3.5 text-sm"
+                  className="btn-pill-primary px-7 py-3.5 text-sm active:scale-[0.98] transition-transform"
                 >
                   {loading ? (
                     <span className="flex items-center gap-2.5">
                       <span className="spinner spinner-sm spinner-white" />
-                      Starting…
+                      Starting session...
                     </span>
                   ) : (
-                    'Start Private Assessment →'
+                    <span>Start Confidential Assessment</span>
                   )}
                 </button>
 
@@ -272,47 +308,82 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                   type="button"
                   disabled={loading}
                   onClick={() => void handleStartBlank()}
-                  className="btn-pill-secondary px-6 py-3.5 text-sm"
+                  className="btn-pill-secondary px-6 py-3.5 text-sm active:scale-[0.98] transition-transform"
                 >
                   Start Fresh
                 </button>
               </div>
 
-              {/* Trust card - private by design */}
-              <div className="medical-card overflow-hidden">
-                <div className="grid grid-cols-1 sm:grid-cols-2 items-stretch">
-                  {/* Photo side */}
-                  <div className="relative h-40 sm:h-full overflow-hidden" style={{ background: '#0A3882', minHeight: 160 }}>
-                    <img
-                      src="/assets/images/real_doctor_consultation.jpg"
-                      alt="Compassionate doctor in a private consultation"
-                      className="w-full h-full object-cover"
-                      style={{ transition: 'transform 0.6s var(--ease-out)' }}
-                      onMouseEnter={e => { (e.target as HTMLImageElement).style.transform = 'scale(1.04)'; }}
-                      onMouseLeave={e => { (e.target as HTMLImageElement).style.transform = 'scale(1)'; }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#07215A]/55 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute bottom-3 left-3">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/95 text-[#07215A]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#0062FF]" />
-                        Confidential
-                      </span>
-                    </div>
+              {/* ── Standout Feature: Interactive WHO 2021 Reference Benchmark Explorer ── */}
+              <div className="medical-card p-5 sm:p-6 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E2ECF8]">
+                  <div>
+                    <span className="text-xs font-semibold text-[#0062FF]">Interactive Diagnostic Standard</span>
+                    <h2 className="text-sm sm:text-base font-bold text-[#07215A] mt-0.5">
+                      WHO 2021 Clinical Reference Manual
+                    </h2>
                   </div>
-                  {/* Text side */}
-                  <div className="p-5 flex flex-col justify-between">
+                  {/* Parameter Switcher */}
+                  <div className="flex items-center bg-[#EBF4FF] p-1 rounded-full border border-[#BAD6FE] text-xs">
+                    {(['concentration', 'motility', 'volume'] as const).map(param => (
+                      <button
+                        key={param}
+                        type="button"
+                        onClick={() => setActiveBenchmark(param)}
+                        className={`px-3 py-1 rounded-full font-semibold transition-all duration-150 cursor-pointer ${
+                          activeBenchmark === param
+                            ? 'bg-[#0062FF] text-white shadow-sm'
+                            : 'text-[#4A6588] hover:text-[#07215A]'
+                        }`}
+                      >
+                        {param === 'concentration' ? 'Concentration' : param === 'motility' ? 'Motility' : 'Volume'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Benchmark Detail Box */}
+                <div className="bg-[#F8FAFC] rounded-2xl p-4 border border-[#E2ECF8] space-y-3">
+                  <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-xs font-bold text-[#0062FF] uppercase tracking-wide">No identity required</span>
-                      <h2 className="text-sm font-bold text-[#07215A] mt-1.5">Private by Design</h2>
-                      <p className="text-xs text-[#4A6588] mt-1.5 leading-relaxed">
-                        No real name, phone number, or ID ever asked. Your session runs privately on your device and is erased when you leave.
-                      </p>
+                      <span className="text-xs text-[#829AB8] font-medium">Standard Lower Reference Threshold</span>
+                      <div className="flex items-baseline gap-2 mt-0.5">
+                        <span className="text-2xl font-extrabold text-[#07215A] tracking-tight">
+                          {currentBenchmark.threshold}
+                        </span>
+                        <span className="text-xs text-[#0062FF] font-semibold bg-[#EBF4FF] px-2 py-0.5 rounded-full border border-[#BAD6FE]">
+                          Optimal standard
+                        </span>
+                      </div>
                     </div>
-                    <div className="pt-3 mt-3 border-t border-[#E2ECF8] flex items-center justify-between text-xs text-[#829AB8]">
-                      <span>Zero commercial tracking</span>
-                      <span className="font-bold text-[#0062FF]">Session-only</span>
+                    <span className="text-xs text-[#4A6588] font-mono">{currentBenchmark.whoStandard}</span>
+                  </div>
+
+                  {/* Visual Benchmark Gauge Bar */}
+                  <div className="space-y-1.5">
+                    <div className="clinical-benchmark-bar">
+                      <div
+                        className="clinical-benchmark-fill"
+                        style={{ width: `${currentBenchmark.fillPercent}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[11px] text-[#829AB8]">
+                      <span>Below 5th centile (flagged)</span>
+                      <span>Verified reference range (normal)</span>
                     </div>
                   </div>
+
+                  <p className="text-xs text-[#4A6588] leading-relaxed pt-1">
+                    {currentBenchmark.clinicalContext}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-[#829AB8] pt-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                    Zero personal identifiers required
+                  </span>
+                  <span className="font-semibold text-[#0062FF]">Browser-only storage</span>
                 </div>
               </div>
             </div>
@@ -389,7 +460,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               {/* Tab Panel: SAMPLE */}
               {startMode === 'SAMPLE' && (
                 <div className="space-y-3 max-h-[300px] overflow-y-auto pr-0.5 no-scrollbar">
-                  <p className="text-xs text-[#4A6588]">Select a demonstration profile:</p>
+                  <p className="text-xs text-[#4A6588]">Select a clinical demonstration scenario:</p>
 
                   {/* Skeleton while loading */}
                   {samples.length === 0 && !samplesUnavailable && (
@@ -412,7 +483,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => setSelectedFixture(s.fixture_id)}
-                        className={`w-full p-3.5 rounded-xl border text-left cursor-pointer interactive-option ${
+                        className={`w-full p-3.5 rounded-xl border text-left cursor-pointer interactive-option transition-all ${
                           isSelected
                             ? 'bg-[#EBF4FF] border-[#0062FF] ring-1 ring-[#0062FF]'
                             : 'bg-white border-[#E2ECF8] hover:border-[#BAD6FE]'
@@ -445,9 +516,9 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     {loading ? (
                       <span className="flex items-center gap-2 justify-center">
                         <span className="spinner spinner-sm spinner-white" />
-                        Loading…
+                        Loading...
                       </span>
-                    ) : 'Explore Selected Example →'}
+                    ) : 'Explore Clinical Scenario'}
                   </button>
                 </div>
               )}
@@ -458,7 +529,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                   <div className="p-4 rounded-xl space-y-1.5" style={{ background: '#F4F8FF', border: '1px solid #E2ECF8' }}>
                     <span className="text-xs font-bold text-[#0062FF]">Fresh, Blank Assessment</span>
                     <p className="text-xs text-[#4A6588] leading-relaxed">
-                      Starts clean with zero pre-filled data. You'll consent, complete a safety check, and answer questions at your pace.
+                      Starts clean with zero pre-filled data. You will consent, complete a safety check, and answer questions at your pace.
                     </p>
                   </div>
                   <button
@@ -470,9 +541,9 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     {loading ? (
                       <span className="flex items-center gap-2 justify-center">
                         <span className="spinner spinner-sm spinner-white" />
-                        Creating…
+                        Creating...
                       </span>
-                    ) : 'Begin Blank Assessment →'}
+                    ) : 'Begin Clean Session'}
                   </button>
                 </div>
               )}
@@ -519,9 +590,9 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                       {loading ? (
                         <span className="flex items-center gap-2 justify-center">
                           <span className="spinner spinner-sm spinner-white" />
-                          Starting…
+                          Starting...
                         </span>
-                      ) : 'Continue with File →'}
+                      ) : 'Continue with File'}
                     </button>
                   </div>
                 </div>
@@ -531,63 +602,108 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         </div>
       </section>
 
-      {/* ══ HOW IT WORKS: 4 steps with photos ══ */}
+      {/* ══ INTERACTIVE CLINICAL WORKFLOW STEPPER ══ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-5 animate-reveal-3">
-        <div className="text-center max-w-xl mx-auto mb-7">
-          <span className="text-[11px] font-bold text-[#0062FF] uppercase tracking-wider bg-[#EBF4FF] px-3 py-1 rounded-full border border-[#BAD6FE]">
-            How Sanad Works
+        <div className="text-center max-w-xl mx-auto mb-8">
+          <span className="text-xs font-semibold text-[#0062FF] bg-[#EBF4FF] px-3.5 py-1 rounded-full border border-[#BAD6FE]">
+            Clinical workflow
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A] tracking-tight mt-3">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A] tracking-tight mt-2.5">
             Four steps to clear, confidential guidance.
           </h2>
           <p className="text-sm text-[#4A6588] mt-2">
-            Straightforward, respectful, and done in under 5 minutes.
+            Click any step to inspect clinical safeguards and how your facts are evaluated.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {HOW_IT_WORKS_STEPS.map((item, idx) => (
-            <div
-              key={item.step}
-              className="medical-card overflow-hidden flex flex-col"
-              style={{ animationDelay: `${idx * 60}ms` }}
-            >
-              {/* Photo */}
-              <div className="relative h-36 w-full overflow-hidden" style={{ background: '#0A3882' }}>
-                <img
-                  src={item.image}
-                  alt={item.alt}
-                  className="w-full h-full object-cover"
-                  style={{ transition: 'transform 0.5s var(--ease-out)' }}
-                  onMouseEnter={e => { (e.target as HTMLImageElement).style.transform = 'scale(1.06)'; }}
-                  onMouseLeave={e => { (e.target as HTMLImageElement).style.transform = 'scale(1)'; }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-                {/* Step badge */}
-                <div className="absolute top-3 left-3">
+        {/* Step navigation pills */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {WORKFLOW_STEPS.map((step, idx) => {
+            const isActive = activeWorkflowIndex === idx;
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => setActiveWorkflowIndex(idx)}
+                className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all duration-200 ${
+                  isActive
+                    ? 'bg-white border-[#0062FF] shadow-md ring-1 ring-[#0062FF]'
+                    : 'bg-white/80 border-[#E2ECF8] hover:border-[#BAD6FE] hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
                   <span
-                    className="w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center"
-                    style={{
-                      background: 'linear-gradient(145deg, #1A7AFF, #0048C8)',
-                      boxShadow: '0 2px 8px rgba(0,98,255,0.4)',
-                    }}
+                    className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-colors ${
+                      isActive ? 'bg-[#0062FF] text-white' : 'bg-[#EBF4FF] text-[#0062FF]'
+                    }`}
                   >
-                    {item.step}
+                    {idx + 1}
                   </span>
+                  <span className="text-[10px] font-semibold text-[#829AB8]">{step.badge}</span>
                 </div>
-              </div>
-              {/* Content */}
-              <div className="p-4 flex-1">
-                <span className="text-[10px] font-bold text-[#0062FF] uppercase tracking-wider">{item.subtitle}</span>
-                <h3 className="text-sm font-bold text-[#07215A] mt-1">{item.title}</h3>
-                <p className="text-xs text-[#4A6588] mt-1.5 leading-relaxed">{item.description}</p>
+                <h3 className="text-xs font-bold text-[#07215A] truncate">{step.title}</h3>
+                <p className="text-[11px] text-[#4A6588] truncate mt-0.5">{step.subtitle}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active Step Detailed Showcase */}
+        <div className="medical-card overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+            {/* Visual media side */}
+            <div className="lg:col-span-5 h-56 sm:h-72 overflow-hidden relative" style={{ background: '#0A3882' }}>
+              <img
+                src={activeStep.image}
+                alt={activeStep.alt}
+                className="w-full h-full object-cover transition-transform duration-500 ease-out hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#07215A]/60 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-4 left-4">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-white text-[#07215A] shadow-sm">
+                  Step {activeWorkflowIndex + 1}: {activeStep.subtitle}
+                </span>
               </div>
             </div>
-          ))}
+
+            {/* Context & Clinical Insight side */}
+            <div className="lg:col-span-7 p-6 sm:p-8 space-y-4">
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-[#0062FF]">{activeStep.badge}</span>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-[#07215A] tracking-tight">
+                  {activeStep.title}
+                </h3>
+              </div>
+
+              <p className="text-sm text-[#4A6588] leading-relaxed">
+                {activeStep.description}
+              </p>
+
+              <div className="p-3.5 bg-[#F6F9FF] rounded-xl border border-[#E2ECF8]">
+                <span className="text-xs font-bold text-[#07215A]">Clinical Rationale:</span>
+                <p className="text-xs text-[#4A6588] mt-0.5 leading-relaxed">
+                  {activeStep.clinicalFocus}
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveWorkflowIndex((activeWorkflowIndex + 1) % WORKFLOW_STEPS.length)}
+                  className="text-xs font-bold text-[#0062FF] hover:text-[#004ED9] cursor-pointer"
+                >
+                  Next: {WORKFLOW_STEPS[(activeWorkflowIndex + 1) % WORKFLOW_STEPS.length].title}
+                </button>
+                <span className="text-xs text-[#829AB8] font-mono">
+                  {activeWorkflowIndex + 1} of {WORKFLOW_STEPS.length}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ══ PEACE OF MIND BANNER ══ */}
+      {/* ══ PEACE OF MIND & COMFORT BANNER ══ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-5 animate-reveal-4">
         <div
           className="rounded-3xl overflow-hidden relative"
@@ -596,7 +712,6 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             boxShadow: '0 20px 60px -12px rgba(5,20,60,0.5)',
           }}
         >
-          {/* Subtle pattern overlay */}
           <div
             className="absolute inset-0 opacity-10"
             style={{
@@ -606,8 +721,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center p-7 sm:p-10 relative z-10">
             <div className="lg:col-span-7 space-y-4">
-              <span className="text-xs font-semibold text-[#9EC8FF] uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full border border-white/20 inline-block">
-                Peace of Mind
+              <span className="text-xs font-semibold text-[#9EC8FF] bg-white/10 px-3 py-1 rounded-full border border-white/20 inline-block">
+                Comfort and dignity
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug text-balance">
                 Take the first step in the comfort and privacy of your own home.
@@ -618,14 +733,14 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               <button
                 type="button"
                 onClick={() => void handleStartBlank()}
-                className="btn-pill-primary px-6 py-3 text-sm"
+                className="btn-pill-primary px-6 py-3 text-sm active:scale-[0.98] transition-transform"
                 style={{
                   background: 'rgba(255,255,255,0.95)',
                   color: '#0062FF',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
                 }}
               >
-                Start Your Private Check →
+                Start Your Private Check
               </button>
             </div>
 
@@ -643,15 +758,15 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       {/* ══ FAQ ══ */}
       <section className="max-w-3xl mx-auto px-4 sm:px-5">
         <div className="text-center mb-7">
-          <span className="text-[11px] font-bold text-[#0062FF] uppercase tracking-wider bg-[#EBF4FF] px-3 py-1 rounded-full border border-[#BAD6FE]">
-            Common Questions
+          <span className="text-xs font-semibold text-[#0062FF] bg-[#EBF4FF] px-3.5 py-1 rounded-full border border-[#BAD6FE]">
+            Frequently asked questions
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A] tracking-tight mt-3">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A] tracking-tight mt-2.5">
             Everything about your privacy.
           </h2>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {FAQS.map((faq, idx) => {
             const isOpen = openFaqIndex === idx;
             return (
@@ -705,7 +820,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             >
               <path d="M6 8L2 4h8L6 8z" />
             </svg>
-            {showTechAppendix ? 'Hide' : 'View'} Technical Specifications & FHIR R4 Conceptual Ledger
+            {showTechAppendix ? 'Hide' : 'View'} Technical Specifications and Conceptual Mapping
           </button>
         </div>
 
@@ -716,7 +831,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                 Technical Architecture & Conceptual FHIR R4 Mapping
               </h3>
               <p className="text-xs text-[#829AB8] font-mono mt-1">
-                sanad-fhir-r4-conceptual v0.1 · Status: Research Specification · NOT_EVALUATED
+                sanad-fhir-r4-conceptual v0.1: Status: Research Specification: NOT_EVALUATED
               </p>
             </div>
 
@@ -729,7 +844,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                 <div key={item.label} className="p-4 rounded-xl space-y-1.5" style={{ background: '#F4F8FF', border: '1px solid #E2ECF8' }}>
                   <div className="flex items-center justify-between font-mono text-xs">
                     <span className="font-bold text-[#0062FF]">{item.label}</span>
-                    <span className="text-[#829AB8]">→ {item.maps}</span>
+                    <span className="text-[#829AB8]">to {item.maps}</span>
                   </div>
                   <p className="text-xs text-[#4A6588] leading-relaxed">{item.desc}</p>
                 </div>

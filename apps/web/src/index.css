@@ -765,6 +765,51 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   ANTI-AI SLOP: BESPOKE CLINICAL INTERACTION ENHANCEMENTS
+   ═══════════════════════════════════════════════════════════ */
+
+.clinical-benchmark-bar {
+  position: relative;
+  height: 8px;
+  background: #EBF3FF;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.clinical-benchmark-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #1A7AFF 0%, #0050D0 100%);
+  transition: width 0.4s var(--ease-spring);
+}
+
+.timeline-step-indicator {
+  transition: all var(--dur-base) var(--ease-spring);
+}
+
+.timeline-step-indicator.active {
+  background: #0062FF;
+  color: #FFFFFF;
+  box-shadow: 0 0 0 4px #BAD6FE;
+}
+
+.shimmer-subtle {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════
    ACCESSIBILITY - Respect prefers-reduced-motion
    ═══════════════════════════════════════════════════════════ */
 
