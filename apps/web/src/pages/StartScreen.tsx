@@ -243,10 +243,16 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   const activeStep = WORKFLOW_STEPS[activeWorkflowIndex];
 
   return (
-    <div className="w-full space-y-10 py-5 sm:py-8 pb-8">
+    <div className="w-full space-y-10 py-5 sm:py-8 pb-8 relative">
+      {/* Ambient Floating Aurora Orbs for living atmospheric depth */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 opacity-35">
+        <div className="absolute -top-12 left-1/4 w-96 h-96 rounded-full bg-[#1A7AFF]/20 blur-3xl aurora-orb-1" />
+        <div className="absolute top-1/3 right-8 w-[420px] h-[420px] rounded-full bg-[#0048C8]/25 blur-3xl aurora-orb-2" />
+      </div>
+
       {/* ══ HERO: Clean, authoritative, anti-AI-slop layout ══ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-5">
-        <div className="medical-canvas p-5 sm:p-8 lg:p-10">
+        <div className="medical-canvas card-sheen p-5 sm:p-8 lg:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
 
             {/* ── Left: Trust copy, CTAs, and Interactive Benchmark ── */}
@@ -365,7 +371,10 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                       <div
                         className="clinical-benchmark-fill"
                         style={{ width: `${currentBenchmark.fillPercent}%` }}
-                      />
+                      >
+                        {/* Glowing pinpoint head indicator */}
+                        <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-[#0062FF] shadow-sm" />
+                      </div>
                     </div>
                     <div className="flex justify-between text-[11px] text-[#829AB8]">
                       <span>Below 5th centile (flagged)</span>
@@ -648,8 +657,8 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           })}
         </div>
 
-        {/* Active Step Detailed Showcase */}
-        <div className="medical-card overflow-hidden">
+        {/* Active Step Detailed Showcase with Animated Transition */}
+        <div key={activeWorkflowIndex} className="medical-card card-sheen overflow-hidden workflow-step-enter">
           <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
             {/* Visual media side */}
             <div className="lg:col-span-5 h-56 sm:h-72 overflow-hidden relative" style={{ background: '#0A3882' }}>
@@ -783,7 +792,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                 >
                   <h3 className="text-sm font-bold text-[#07215A] text-pretty">{faq.question}</h3>
                   <span
-                    className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all duration-200"
+                    className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all duration-300 ease-out"
                     style={{
                       background: isOpen ? '#0062FF' : '#EBF4FF',
                       color: isOpen ? 'white' : '#0062FF',
@@ -793,13 +802,15 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                     +
                   </span>
                 </button>
-                {isOpen && (
-                  <div className="px-5 pb-5 animate-reveal-1">
-                    <p className="text-xs sm:text-sm text-[#4A6588] border-t border-[#E2ECF8] pt-4 leading-relaxed">
-                      {faq.answer}
-                    </p>
+                <div className={`accordion-grid ${isOpen ? 'is-open' : ''}`}>
+                  <div className="accordion-grid-inner">
+                    <div className="px-5 pb-5">
+                      <p className="text-xs sm:text-sm text-[#4A6588] border-t border-[#E2ECF8] pt-4 leading-relaxed">
+                        {faq.answer}
+                      </p>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
