@@ -326,7 +326,7 @@ export function App() {
     ['/safety', '/intake', '/lab', '/review', '/receipt'].includes(currentRoute);
 
   return (
-    <div className="min-h-[100dvh] bg-[#F3F4F1] flex flex-col font-sans text-[#0B1310] selection:bg-[#0062FF]/20">
+    <div className={`min-h-[100dvh] ${currentRoute === '/' ? 'bg-white' : 'bg-[#F3F4F1]'} flex flex-col font-sans text-[#0B1310] selection:bg-[#0062FF]/20`}>
       {/* Main Navbar */}
       <Navbar
         currentRole={currentRole}
@@ -514,7 +514,7 @@ export function App() {
 
       {/* Footer - minimal, mobile-friendly */}
       <footer className="border-t border-[#E2ECF8]/60 bg-white/80 backdrop-blur-sm py-5 text-xs text-[#4A6588]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-20 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-4 text-center sm:text-left">
             <span className="font-bold text-[#07215A] text-sm">Sanad (سند)</span>
             <span className="font-mono text-[10px] text-[#829AB8] leading-relaxed">

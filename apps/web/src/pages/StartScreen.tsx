@@ -77,8 +77,8 @@ const WORKFLOW_STEPS = [
     badge: 'Immediate triage',
     description: 'We screen for acute symptoms first. If severe pain, trauma, or infection is reported, emergency guidance is delivered instantly without waiting for a questionnaire.',
     clinicalFocus: 'Excludes testicular torsion, severe epididymo-orchitis, and acute scrotal trauma.',
-    image: '/assets/images/medical_urgent_care_3d.jpg',
-    alt: 'Immediate safety triage',
+    image: '/assets/images/real_emergency_triage.jpg',
+    alt: 'Immediate safety triage in modern emergency department',
   },
   {
     id: 'intake',
@@ -232,262 +232,271 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   const activeStep = WORKFLOW_STEPS[activeWorkflowIndex];
 
   return (
-    <div className="w-full space-y-12 py-4 sm:py-6 pb-12 relative font-sans">
+    <div className="w-full bg-white relative font-sans">
       {/* ── Ambient Floating Aurora Orbs ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 opacity-30">
         <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] rounded-full bg-[#1A7AFF]/20 blur-3xl aurora-orb-1" />
         <div className="absolute top-1/3 right-4 w-[540px] h-[540px] rounded-full bg-[#0048C8]/25 blur-3xl aurora-orb-2" />
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════
-          MASTER FLOATING CANVAS (High-Tech Bio-Automation Aesthetic)
-          ══════════════════════════════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-5">
-        <div className="medical-canvas bg-white card-sheen overflow-hidden border border-white/80 shadow-2xl rounded-3xl">
+      {/* ── Header Sub-Nav Bar (Full Width Edge-to-Edge) ── */}
+      <div className="w-full border-b border-[#E2ECF8] px-6 sm:px-12 lg:px-16 xl:px-24 py-3.5 flex flex-wrap items-center justify-between gap-4 bg-white/95 backdrop-blur-md sticky top-14 sm:top-16 z-30">
+        {/* Left Pill Tag */}
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase bg-[#FFF0F4] border border-[#FFCCD8] text-[#E11D48]">
+            <span className="w-2 h-2 rounded-full bg-[#E11D48] glow-pulse" />
+            CLINICAL / 001
+          </div>
+          <span className="hidden sm:inline-block text-xs font-mono text-[#829AB8]">
+            ISO 15189 LAB PROTOCOL
+          </span>
+        </div>
 
-          {/* ── Header Sub-Nav Bar matching Ordiva Image 1 ── */}
-          <div className="border-b border-[#E2ECF8] px-5 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 bg-white/90 backdrop-blur-md">
-            {/* Left Pill Tag */}
-            <div className="flex items-center gap-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase bg-[#FFF0F4] border border-[#FFCCD8] text-[#E11D48]">
-                <span className="w-2 h-2 rounded-full bg-[#E11D48] glow-pulse" />
-                CLINICAL / 001
-              </div>
-              <span className="hidden sm:inline-block text-xs font-mono text-[#829AB8]">
-                ISO 15189 LAB PROTOCOL
-              </span>
+        {/* Center Quick Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-[#4A6588]">
+          <a href="#who-standard" className="hover:text-[#0052FF] transition-colors">
+            Diagnostic Standard
+          </a>
+          <a href="#workflow-process" className="hover:text-[#0052FF] transition-colors">
+            Process
+          </a>
+          <a href="#clinical-statistics" className="hover:text-[#0052FF] transition-colors">
+            The Statistics
+          </a>
+          <a href="#clinical-laboratory" className="hover:text-[#0052FF] transition-colors">
+            Laboratory Science
+          </a>
+          <a href="#faq-section" className="hover:text-[#0052FF] transition-colors">
+            Privacy
+          </a>
+        </nav>
+
+        {/* Right Action Controls */}
+        <div className="flex items-center gap-2.5">
+          {/* Language Switcher */}
+          <div className="flex items-center bg-[#F1F5F9] rounded-full p-0.5 border border-[#CBD5E1] text-[11px] font-mono">
+            <button
+              type="button"
+              onClick={() => setPreferredLanguage('en')}
+              className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
+                preferredLanguage === 'en' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreferredLanguage('ar')}
+              className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
+                preferredLanguage === 'ar' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
+              }`}
+            >
+              العربية
+            </button>
+          </div>
+
+          <span
+            role="status"
+            className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#F6F9FF] border border-[#E2ECF8] text-[#4A6588]"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${emergencyCacheReady ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} />
+            {emergencyCacheReady ? 'Offline ready' : 'Caching...'}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => void handleStartBlank()}
+            disabled={loading}
+            className="px-4 py-1.5 text-xs font-bold rounded-full bg-[#0052FF] text-white hover:bg-[#0042D0] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
+          >
+            Start Assessment →
+          </button>
+        </div>
+      </div>
+
+      {/* ── HERO SECTION: Full-Bleed Royal Blue Typography + Real Medical Specialist ── */}
+      <section className="w-full bg-white bg-tech-grid relative px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 py-12 lg:py-20 border-b border-[#E2ECF8]">
+        {/* Technical corner crosshairs */}
+        <span className="absolute top-6 left-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
+        <span className="absolute top-6 right-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
+        <span className="absolute bottom-6 left-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
+        <span className="absolute bottom-6 right-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
+
+        <div className="w-full max-w-[1700px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+
+          {/* ── Left Column: Giant Blue Title & Controls ── */}
+          <div className="lg:col-span-7 space-y-7">
+            {/* Technical Category Pill */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0052FF]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0052FF]" />
+              ANDROLOGY INTELLIGENCE & EVALUATION
             </div>
 
-            {/* Center Quick Navigation Links */}
-            <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-[#4A6588]">
-              <a href="#who-standard" className="hover:text-[#0052FF] transition-colors">
-                Diagnostic Standard
-              </a>
-              <a href="#workflow-process" className="hover:text-[#0052FF] transition-colors">
-                Process
-              </a>
-              <a href="#clinical-statistics" className="hover:text-[#0052FF] transition-colors">
-                The Statistics
-              </a>
-              <a href="#cad-blueprint" className="hover:text-[#0052FF] transition-colors">
-                CAD Blueprint
-              </a>
-              <a href="#faq-section" className="hover:text-[#0052FF] transition-colors">
-                Privacy
-              </a>
-            </nav>
+            {/* Massive Blue Headline matching reference */}
+            <h1 className="text-4xl sm:text-5xl lg:text-[62px] font-black tracking-tight text-[#0052FF] leading-[1.04] text-balance">
+              THE FUTURE OF
+              <br />
+              MEN'S REPRODUCTIVE
+              <br />
+              HEALTH IS CONFIDENTIAL
+            </h1>
 
-            {/* Right Action Controls */}
-            <div className="flex items-center gap-2.5">
-              {/* Language Switcher */}
-              <div className="flex items-center bg-[#F1F5F9] rounded-full p-0.5 border border-[#CBD5E1] text-[11px] font-mono">
-                <button
-                  type="button"
-                  onClick={() => setPreferredLanguage('en')}
-                  className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
-                    preferredLanguage === 'en' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreferredLanguage('ar')}
-                  className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
-                    preferredLanguage === 'ar' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
-                  }`}
-                >
-                  العربية
-                </button>
+            {/* Sub-headline */}
+            <p className="text-base sm:text-lg text-[#4A6588] max-w-2xl leading-relaxed text-pretty">
+              Every mechanism, biomarker threshold, and clinical interaction is designed to support the flow of private male health without judgment. Grounded in the WHO 2021 Reference Manual.
+            </p>
+
+            {/* Error Banner */}
+            {error && (
+              <div className="p-3.5 bg-[#FEF3F2] border border-[#FECDCA] rounded-xl text-xs text-[#B42318] flex items-center justify-between gap-3">
+                <span>{error}</span>
+                <button type="button" onClick={() => setError(null)} className="font-bold underline cursor-pointer">Dismiss</button>
               </div>
+            )}
 
-              <span
-                role="status"
-                className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#F6F9FF] border border-[#E2ECF8] text-[#4A6588]"
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${emergencyCacheReady ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} />
-                {emergencyCacheReady ? 'Offline ready' : 'Caching...'}
-              </span>
-
+            {/* Action Buttons matching reference style */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => void handleStartBlank()}
                 disabled={loading}
-                className="px-4 py-1.5 text-xs font-bold rounded-full bg-[#0052FF] text-white hover:bg-[#0042D0] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
+                onClick={() => void handleStartBlank()}
+                className="px-7 py-3.5 rounded-full text-sm font-bold bg-[#0052FF] text-white hover:bg-[#0042D0] active:scale-[0.97] transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
-                Start Assessment →
-              </button>
-            </div>
-          </div>
-
-          {/* ── HERO SECTION: Massive Royal Blue Typography + 3D Health Scanner ── */}
-          <div className="p-6 sm:p-10 lg:p-14 bg-tech-grid relative">
-            {/* Technical corner crosshairs */}
-            <span className="absolute top-4 left-4 font-mono text-xs text-[#829AB8] select-none pointer-events-none">+</span>
-            <span className="absolute top-4 right-4 font-mono text-xs text-[#829AB8] select-none pointer-events-none">+</span>
-            <span className="absolute bottom-4 left-4 font-mono text-xs text-[#829AB8] select-none pointer-events-none">+</span>
-            <span className="absolute bottom-4 right-4 font-mono text-xs text-[#829AB8] select-none pointer-events-none">+</span>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-
-              {/* ── Left Column: Giant Blue Title & Controls ── */}
-              <div className="lg:col-span-7 space-y-6">
-                {/* Technical Category Pill */}
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0052FF]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0052FF]" />
-                  ANDROLOGY INTELLIGENCE & EVALUATION
-                </div>
-
-                {/* Massive Blue Headline matching "THE AGE OF BIOAUTOMATION IS HERE" */}
-                <h1 className="text-4xl sm:text-5xl lg:text-[58px] font-black tracking-tight text-[#0052FF] leading-[1.04] text-balance">
-                  THE FUTURE OF
-                  <br />
-                  MEN'S REPRODUCTIVE
-                  <br />
-                  HEALTH IS CONFIDENTIAL
-                </h1>
-
-                {/* Sub-headline */}
-                <p className="text-base sm:text-lg text-[#4A6588] max-w-xl leading-relaxed text-pretty">
-                  Every mechanism, biomarker threshold, and clinical interaction is designed to support the flow of private male health without judgment. Grounded in the WHO 2021 Reference Manual.
-                </p>
-
-                {/* Error Banner */}
-                {error && (
-                  <div className="p-3.5 bg-[#FEF3F2] border border-[#FECDCA] rounded-xl text-xs text-[#B42318] flex items-center justify-between gap-3">
-                    <span>{error}</span>
-                    <button type="button" onClick={() => setError(null)} className="font-bold underline cursor-pointer">Dismiss</button>
-                  </div>
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="spinner spinner-sm spinner-white" />
+                    Initializing...
+                  </span>
+                ) : (
+                  <>
+                    <span>Start Assessment</span>
+                    <span className="text-base">→</span>
+                  </>
                 )}
+              </button>
 
-                {/* Action Buttons matching reference style */}
-                <div className="flex flex-wrap items-center gap-3 pt-2">
+              <a
+                href="#who-standard"
+                className="px-6 py-3.5 rounded-full text-sm font-bold bg-white text-[#07215A] border border-[#CBD5E1] hover:border-[#0052FF] hover:text-[#0052FF] active:scale-[0.97] transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                <span>Explore WHO Standard</span>
+                <span className="text-xs text-[#0052FF]">▷</span>
+              </a>
+            </div>
+
+            {/* Sample Case Fast Switcher Pill */}
+            <div className="p-4 rounded-2xl bg-[#F6F9FF] border border-[#E2ECF8] max-w-xl space-y-2.5">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="font-semibold text-[#07215A]">Instant Test With Synthetic Cases:</span>
+                <span className="text-[#829AB8]">
+                  {samplesUnavailable ? 'Client fallback' : `${samples.length} cases available`}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {samples.slice(0, 4).map(s => (
                   <button
+                    key={s.fixture_id}
                     type="button"
-                    disabled={loading}
-                    onClick={() => void handleStartBlank()}
-                    className="px-7 py-3.5 rounded-full text-sm font-bold bg-[#0052FF] text-white hover:bg-[#0042D0] active:scale-[0.97] transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                    onClick={() => void handleLaunchSample(s.fixture_id)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-white border border-[#CBD5E1] text-[#4A6588] hover:border-[#0052FF] hover:text-[#0052FF] cursor-pointer transition-colors"
                   >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="spinner spinner-sm spinner-white" />
-                        Initializing...
-                      </span>
-                    ) : (
-                      <>
-                        <span>Start Assessment</span>
-                        <span className="text-base">→</span>
-                      </>
-                    )}
+                    {s.fixture_id}: {s.title}
                   </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => void handleUploadTemplateAndLaunch()}
+                  className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0052FF] hover:bg-[#DCEBFE] cursor-pointer transition-colors"
+                >
+                  + Upload Profile JSON
+                </button>
+              </div>
+            </div>
 
-                  <a
-                    href="#who-standard"
-                    className="px-6 py-3.5 rounded-full text-sm font-bold bg-white text-[#07215A] border border-[#CBD5E1] hover:border-[#0052FF] hover:text-[#0052FF] active:scale-[0.97] transition-all shadow-sm flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>Explore WHO Standard</span>
-                    <span className="text-xs text-[#0052FF]">▷</span>
-                  </a>
-                </div>
-
-                {/* Sample Case Fast Switcher Pill */}
-                <div className="p-3.5 rounded-2xl bg-[#F6F9FF] border border-[#E2ECF8] max-w-lg space-y-2">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="font-semibold text-[#07215A]">Instant Test With Synthetic Cases:</span>
-                    <span className="text-[#829AB8]">
-                      {samplesUnavailable ? 'Client fallback' : `${samples.length} cases available`}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {samples.slice(0, 4).map(s => (
-                      <button
-                        key={s.fixture_id}
-                        type="button"
-                        onClick={() => void handleLaunchSample(s.fixture_id)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-white border border-[#CBD5E1] text-[#4A6588] hover:border-[#0052FF] hover:text-[#0052FF] cursor-pointer transition-colors"
-                      >
-                        {s.fixture_id}: {s.title}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => void handleUploadTemplateAndLaunch()}
-                      className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0052FF] hover:bg-[#DCEBFE] cursor-pointer transition-colors"
-                    >
-                      + Upload Profile JSON
-                    </button>
-                  </div>
-                </div>
-
-                {/* Bottom Left & Right Meta Row matching Image 1 */}
-                <div className="pt-8 border-t border-[#E2ECF8] flex items-end justify-between text-xs font-mono text-[#829AB8]">
-                  {/* Bottom-left: SCROLL DOWN with capsule icon */}
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold tracking-wider text-[#4A6588]">SCROLL DOWN</span>
-                    <div className="w-4 h-6 rounded-full border-2 border-[#829AB8] flex items-start justify-center p-0.5">
-                      <span className="w-1 h-1.5 rounded-full bg-[#0052FF] animate-bounce" />
-                    </div>
-                  </div>
-
-                  {/* Bottom-right: Vertical steps */}
-                  <div className="text-right space-y-0.5">
-                    <span className="text-[10px] text-[#07215A] font-bold block">
-                      DATA & TRACEABILITY <span className="text-[#E11D48]">●</span>
-                    </span>
-                    <span className="block text-[10px] text-[#4A6588]">PREPARE</span>
-                    <span className="block text-[10px] text-[#4A6588]">EVALUATE</span>
-                    <span className="block text-[10px] text-[#0052FF] font-bold">NAVIGATE</span>
-                  </div>
+            {/* Bottom Meta Row matching Image 1 */}
+            <div className="pt-8 border-t border-[#E2ECF8] flex items-end justify-between text-xs font-mono text-[#829AB8]">
+              {/* Bottom-left: SCROLL DOWN with capsule icon */}
+              <div className="flex items-center gap-2">
+                <span className="font-bold tracking-wider text-[#4A6588]">SCROLL DOWN</span>
+                <div className="w-4 h-6 rounded-full border-2 border-[#829AB8] flex items-start justify-center p-0.5">
+                  <span className="w-1 h-1.5 rounded-full bg-[#0052FF] animate-bounce" />
                 </div>
               </div>
 
-              {/* ── Right Column: 3D Health Diagnostic Apparatus Focal Point ── */}
-              <div className="lg:col-span-5 relative">
-                {/* 3D Medical Hero Visual Container with Smooth Hover Tilt */}
-                <div className="relative rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-2xl bg-white group transition-transform duration-500 ease-out hover:scale-[1.01]">
-                  <img
-                    src="/assets/images/medical_3d_lab_hero.jpg"
-                    alt="3D medical diagnostics apparatus evaluating reproductive cellular biomarkers"
-                    className="w-full h-auto object-cover block"
-                  />
-
-                  {/* Floating Hologram Pill 1: Top Right */}
-                  <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#BAD6FE] shadow-lg flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
-                    <span className="text-xs font-mono font-bold text-[#07215A]">WHO 2021 CALIBRATED</span>
-                  </div>
-
-                  {/* Floating Micro-Card 2: Bottom Overlay */}
-                  <div className="absolute bottom-4 left-4 right-4 bg-[#07215A]/90 backdrop-blur-md p-3.5 rounded-2xl border border-white/20 text-white shadow-xl flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-mono text-[#9EC8FF] uppercase tracking-wider block">
-                        Diagnostic Engine
-                      </span>
-                      <span className="text-xs font-bold text-white">
-                        Semen Motility & Density Evaluation
-                      </span>
-                    </div>
-                    <span className="text-xs font-mono font-bold text-[#10B981] bg-[#10B981]/20 px-2 py-0.5 rounded-full border border-[#10B981]/40">
-                      Active
-                    </span>
-                  </div>
-                </div>
-
-                {/* Subtitle Annotation beside image (matching reference layout) */}
-                <p className="text-xs text-[#829AB8] font-mono mt-3 text-right">
-                  FIG 01.3 / CELLULAR MOTILITY LASER ANALYZER
-                </p>
+              {/* Bottom-right: Vertical steps */}
+              <div className="text-right space-y-0.5">
+                <span className="text-[10px] text-[#07215A] font-bold block">
+                  DATA & TRACEABILITY <span className="text-[#E11D48]">●</span>
+                </span>
+                <span className="block text-[10px] text-[#4A6588]">PREPARE</span>
+                <span className="block text-[10px] text-[#4A6588]">EVALUATE</span>
+                <span className="block text-[10px] text-[#0052FF] font-bold">NAVIGATE</span>
               </div>
-
             </div>
           </div>
 
-          {/* ══════════════════════════════════════════════════════════
-              3-COLUMN FEATURE CARDS (Matching Ordiva Image 2 & 3)
-              ══════════════════════════════════════════════════════════ */}
-          <div className="border-t border-[#E2ECF8] grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#E2ECF8] bg-white">
+          {/* ── Right Column: Authentic Medical Doctor & Consultation Focal Point ── */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-2xl bg-white group transition-transform duration-500 ease-out hover:scale-[1.01]">
+              <img
+                src="/assets/images/real_doctor_consultation.jpg"
+                alt="Certified andrology specialist doctor consulting with patient in modern confidential clinic"
+                className="w-full h-[400px] sm:h-[480px] lg:h-[530px] object-cover block"
+              />
+
+              {/* Floating Badge: Top Right */}
+              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#BAD6FE] shadow-lg flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
+                <span className="text-xs font-mono font-bold text-[#07215A]">WHO 2021 CALIBRATED</span>
+              </div>
+
+              {/* Floating Specialty Badge: Top Left */}
+              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-lg flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#0052FF]" />
+                <span className="text-[11px] font-mono font-bold">ANDROLOGY SPECIALIST NETWORK</span>
+              </div>
+
+              {/* Floating Doctor Profile Card: Bottom */}
+              <div className="absolute bottom-4 left-4 right-4 bg-[#07215A]/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-white shadow-xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 shrink-0">
+                    <img
+                      src="/assets/images/medical_doctor_avatar.jpg"
+                      alt="Dr. Tariq Al-Mansoor"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">
+                      Dr. Tariq Al-Mansoor
+                    </span>
+                    <span className="text-[10px] font-mono text-[#9EC8FF] block">
+                      Consultant in Andrology & Male Reproductive Health
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[11px] font-mono font-bold text-[#10B981] bg-[#10B981]/20 px-2.5 py-1 rounded-full border border-[#10B981]/40 shrink-0">
+                  Verified Reviewer
+                </span>
+              </div>
+            </div>
+
+            {/* Subtitle Annotation beside image */}
+            <div className="flex items-center justify-between text-xs text-[#829AB8] font-mono mt-3 px-1">
+              <span>CONFIDENTIAL ANDROLOGY CONSULTATION</span>
+              <span>FIG 01.1 / CLINICAL INTERACTION</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── 3-COLUMN FEATURE CARDS (Full Width Edge-to-Edge) ── */}
+      <section className="w-full bg-white border-b border-[#E2ECF8]">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#E2ECF8]">
             {/* Card 1 */}
-            <div className="p-6 sm:p-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
+            <div className="py-8 md:py-10 md:pr-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
               <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
               <h3 className="text-base font-bold text-[#07215A]">
                 Precision Evaluation
@@ -498,7 +507,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             </div>
 
             {/* Card 2 */}
-            <div className="p-6 sm:p-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
+            <div className="py-8 md:py-10 md:px-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
               <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
               <h3 className="text-base font-bold text-[#07215A]">
                 Dual Privacy Gate
@@ -509,7 +518,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             </div>
 
             {/* Card 3 */}
-            <div className="p-6 sm:p-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
+            <div className="py-8 md:py-10 md:pl-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
               <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
               <h3 className="text-base font-bold text-[#07215A]">
                 Real-World Care Navigation
@@ -519,15 +528,12 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               </p>
             </div>
           </div>
-
         </div>
-      </div>
+      </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          "THE STATISTICS" SECTION (Matching Ordiva Image 2 & 3)
-          ══════════════════════════════════════════════════════════════ */}
-      <section id="clinical-statistics" className="max-w-7xl mx-auto px-3 sm:px-5">
-        <div className="medical-canvas bg-white p-6 sm:p-10 lg:p-12 border border-[#E2ECF8] rounded-3xl space-y-8">
+      {/* ── THE STATISTICS SECTION (Full Width Edge-to-Edge) ── */}
+      <section id="clinical-statistics" className="w-full bg-[#F8FAFC] border-b border-[#E2ECF8] py-16 sm:py-24">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-10">
           <div>
             <span className="text-xs font-mono font-bold text-[#E11D48] tracking-wider uppercase">
               ● THE NUMBERS
@@ -537,9 +543,9 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left Metrics (10x, 99.8%, 21.8M) */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-5 space-y-8">
               <div>
                 <span className="text-4xl sm:text-5xl font-black text-[#07215A] tracking-tight">10x</span>
                 <p className="text-xs sm:text-sm text-[#4A6588] font-medium mt-0.5">
@@ -562,10 +568,10 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               </div>
             </div>
 
-            {/* Right Interactive Progress Sliders matching reference layout */}
-            <div className="lg:col-span-7 space-y-6 p-6 bg-[#F8FAFC] rounded-2xl border border-[#E2ECF8]">
+            {/* Right Interactive Progress Sliders */}
+            <div className="lg:col-span-7 space-y-7 p-7 sm:p-9 bg-white rounded-3xl border border-[#E2ECF8] shadow-sm">
               {/* Slider 1: Blue */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div className="flex justify-between text-xs font-mono">
                   <span className="font-bold text-[#07215A]">Sperm Concentration (WHO Benchmark)</span>
                   <span className="font-bold text-[#0062FF]">{slider1}% Optimal</span>
@@ -582,7 +588,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               </div>
 
               {/* Slider 2: Pink/Coral */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div className="flex justify-between text-xs font-mono">
                   <span className="font-bold text-[#07215A]">Progressive Motility Index</span>
                   <span className="font-bold text-[#FF3366]">{slider2}% Standard</span>
@@ -599,7 +605,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               </div>
 
               {/* Slider 3: Slate */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div className="flex justify-between text-xs font-mono">
                   <span className="font-bold text-[#07215A]">Morphological Uniformity</span>
                   <span className="font-bold text-[#64748B]">{slider3}% Precision</span>
@@ -623,53 +629,107 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          CAD BLUEPRINT & PHILOSOPHY SECTION (Matching Image 2 & 3)
-          ══════════════════════════════════════════════════════════════ */}
-      <section id="cad-blueprint" className="max-w-7xl mx-auto px-3 sm:px-5">
-        <div className="medical-canvas bg-white p-6 sm:p-10 lg:p-12 border border-[#E2ECF8] rounded-3xl space-y-8">
-          {/* Quote Header matching "Discovery isn't one big moment. It's a thousand small ones." */}
-          <div className="max-w-2xl space-y-2">
+      {/* ── REAL CLINICAL LABORATORY & SCIENTIFIC PRECISION (Full Width Edge-to-Edge) ── */}
+      <section id="clinical-laboratory" className="w-full bg-white border-b border-[#E2ECF8] py-16 sm:py-24">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-12">
+          <div className="max-w-3xl space-y-2">
             <span className="text-xs font-mono font-bold text-[#E11D48] tracking-wider uppercase">
-              ● REAL IMPACT ACROSS SCIENCE
+              ● REAL CLINICAL SCIENCE & ACCREDITED LABORATORIES
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A] tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-[#07215A] tracking-tight">
               Discovery isn't one big moment.
               <br />
               <span className="text-[#0052FF]">It's a thousand small ones.</span>
             </h2>
-            <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
-              Behind every confident clinical diagnosis is rigorous scientific architecture, cleanroom microfluidics, and sealed patient confidentiality.
+            <p className="text-sm sm:text-base text-[#4A6588] leading-relaxed">
+              Behind every confident clinical diagnosis is rigorous scientific architecture, certified ISO 15189 semen analysis, and sealed patient confidentiality.
             </p>
           </div>
 
-          {/* 3D CAD Blueprint Schematic Display */}
-          <div className="rounded-2xl overflow-hidden border border-[#003B9E] shadow-xl relative group">
-            <img
-              src="/assets/images/medical_3d_blueprint_schematic.jpg"
-              alt="High-tech CAD blueprint schematic of clinical reproductive health lab and cellular microfluidic chip"
-              className="w-full h-auto object-cover block"
-            />
-            {/* Live Blueprint Overlay Badge */}
-            <div className="absolute bottom-4 right-4 bg-[#001D4A]/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 text-white font-mono text-xs flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-              <span>DWG NO: CRL-RH-901 / CLINICAL SPECIFICATION</span>
+          {/* Dual Realistic Clinical Imagery Showcase */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* Lab Microscopy Photo */}
+            <div className="rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-xl relative group bg-white">
+              <img
+                src="/assets/images/real_clinical_lab.jpg"
+                alt="Certified laboratory specialist conducting semen analysis with clinical microscope in ISO-accredited lab"
+                className="w-full h-[320px] sm:h-[400px] object-cover block group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+              />
+              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white font-mono text-xs flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
+                <span>ISO 15189 ACCREDITED LABORATORY</span>
+              </div>
+              <div className="p-6 bg-white border-t border-[#E2ECF8] space-y-1.5">
+                <h3 className="text-base font-bold text-[#07215A]">High-Power Optical Semen Microscopy</h3>
+                <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
+                  Standardized examination of motility grades, sperm concentration per milliliter, and morphological anomalies under calibrated phase-contrast optics.
+                </p>
+              </div>
+            </div>
+
+            {/* Doctor Analysis Photo */}
+            <div className="rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-xl relative group bg-white">
+              <img
+                src="/assets/images/real_andrology_specialist.jpg"
+                alt="Senior andrology specialist doctor reviewing patient diagnostic parameters on clinical workstation"
+                className="w-full h-[320px] sm:h-[400px] object-cover block group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+              />
+              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white font-mono text-xs flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+                <span>EXPERT CLINICAL REVIEW</span>
+              </div>
+              <div className="p-6 bg-white border-t border-[#E2ECF8] space-y-1.5">
+                <h3 className="text-base font-bold text-[#07215A]">Licensed Andrologist Multi-Factor Triage</h3>
+                <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
+                  Every evaluation synthesizes timeline history, thermal risk exposures, and laboratory observations into evidence-grounded care recommendations.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Scientific Checkpoints */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
+              <span className="text-xs font-mono font-bold text-[#0052FF]">01 / QUALITY</span>
+              <h4 className="text-sm font-bold text-[#07215A]">ISO 15189 Standards</h4>
+              <p className="text-xs text-[#4A6588] leading-relaxed">
+                Strict temperature control at 37°C with motility readings conducted promptly within 60 minutes of collection.
+              </p>
+            </div>
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
+              <span className="text-xs font-mono font-bold text-[#0052FF]">02 / CENTILES</span>
+              <h4 className="text-sm font-bold text-[#07215A]">WHO 2021 Reference</h4>
+              <p className="text-xs text-[#4A6588] leading-relaxed">
+                Calibrated strictly against the 5th centile lower reference limits from global multi-center fertile cohorts.
+              </p>
+            </div>
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
+              <span className="text-xs font-mono font-bold text-[#0052FF]">03 / PRIVACY</span>
+              <h4 className="text-sm font-bold text-[#07215A]">Double-Blind Pseudonyms</h4>
+              <p className="text-xs text-[#4A6588] leading-relaxed">
+                Synthetic random tokens shield your real identity. No doctor or lab sees your name or contact info without consent.
+              </p>
+            </div>
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
+              <span className="text-xs font-mono font-bold text-[#0052FF]">04 / PATHWAY</span>
+              <h4 className="text-sm font-bold text-[#07215A]">Physician Navigation</h4>
+              <p className="text-xs text-[#4A6588] leading-relaxed">
+                Direct referral bridging to verified andrology specialists, accredited fertility clinics, and hospital departments.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          INTERACTIVE WHO 2021 REFERENCE BENCHMARK SECTION
-          ══════════════════════════════════════════════════════════════ */}
-      <section id="who-standard" className="max-w-7xl mx-auto px-3 sm:px-5">
-        <div className="medical-canvas bg-white p-6 sm:p-10 border border-[#E2ECF8] rounded-3xl space-y-6">
+      {/* ── INTERACTIVE WHO 2021 REFERENCE BENCHMARK SECTION (Full Width Edge-to-Edge) ── */}
+      <section id="who-standard" className="w-full bg-[#F8FAFC] border-b border-[#E2ECF8] py-16 sm:py-24">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-8">
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E2ECF8]">
             <div>
               <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
                 DIAGNOSTIC REFERENCE
               </span>
-              <h2 className="text-xl sm:text-2xl font-bold text-[#07215A] mt-0.5">
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#07215A] mt-0.5">
                 WHO 2021 6th Edition Reference Manual
               </h2>
             </div>
@@ -681,7 +741,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                   key={param}
                   type="button"
                   onClick={() => setActiveBenchmark(param)}
-                  className={`px-3.5 py-1.5 rounded-full font-bold transition-all duration-150 cursor-pointer ${
+                  className={`px-4 py-2 rounded-full font-bold transition-all duration-150 cursor-pointer ${
                     activeBenchmark === param
                       ? 'bg-[#0052FF] text-white shadow-sm'
                       : 'text-[#4A6588] hover:text-[#07215A]'
@@ -693,15 +753,15 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             </div>
           </div>
 
-          <div className="bg-[#F8FAFC] rounded-2xl p-5 sm:p-6 border border-[#E2ECF8] space-y-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E2ECF8] shadow-sm space-y-5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div>
                 <span className="text-xs text-[#829AB8] font-mono">5th Centile Reference Lower Limit</span>
-                <div className="flex items-baseline gap-2.5 mt-0.5">
-                  <span className="text-3xl font-black text-[#07215A] tracking-tight">
+                <div className="flex items-baseline gap-3 mt-1">
+                  <span className="text-3xl sm:text-4xl font-black text-[#07215A] tracking-tight">
                     {currentBenchmark.threshold}
                   </span>
-                  <span className="text-xs text-[#0052FF] font-bold bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+                  <span className="text-xs text-[#0052FF] font-bold bg-[#EBF3FF] px-3 py-1 rounded-full border border-[#BCD8FE]">
                     Optimal Threshold
                   </span>
                 </div>
@@ -710,51 +770,49 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             </div>
 
             {/* Animated Gauge Bar */}
-            <div className="space-y-1.5">
-              <div className="clinical-benchmark-bar">
+            <div className="space-y-2">
+              <div className="clinical-benchmark-bar h-4">
                 <div
                   className="clinical-benchmark-fill"
                   style={{ width: `${currentBenchmark.fillPercent}%` }}
                 >
-                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white border-2 border-[#0052FF] shadow-sm" />
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-[#0052FF] shadow-sm" />
                 </div>
               </div>
-              <div className="flex justify-between text-[11px] text-[#829AB8] font-mono">
+              <div className="flex justify-between text-xs text-[#829AB8] font-mono">
                 <span>Below 5th centile (flagged for review)</span>
                 <span>Verified reference range (normal)</span>
               </div>
             </div>
 
-            <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed pt-1">
+            <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed pt-2">
               {currentBenchmark.clinicalContext}
             </p>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          4-STEP CLINICAL WORKFLOW SECTION
-          ══════════════════════════════════════════════════════════════ */}
-      <section id="workflow-process" className="max-w-7xl mx-auto px-3 sm:px-5">
-        <div className="medical-canvas bg-white p-6 sm:p-10 border border-[#E2ECF8] rounded-3xl space-y-6">
+      {/* ── 4-STEP CLINICAL WORKFLOW SECTION (Full Width Edge-to-Edge) ── */}
+      <section id="workflow-process" className="w-full bg-white border-b border-[#E2ECF8] py-16 sm:py-24">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
                 CLINICAL PROCESS
               </span>
-              <h2 className="text-xl sm:text-2xl font-bold text-[#07215A] mt-0.5">
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#07215A] mt-0.5">
                 How Sanad Operates
               </h2>
             </div>
 
             {/* Step Tabs */}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {WORKFLOW_STEPS.map((step, idx) => (
                 <button
                   key={step.id}
                   type="button"
                   onClick={() => setActiveWorkflowIndex(idx)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     activeWorkflowIndex === idx
                       ? 'bg-[#0052FF] text-white shadow-sm'
                       : 'bg-[#F1F5F9] text-[#4A6588] hover:bg-[#E2ECF8]'
@@ -767,37 +825,37 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           </div>
 
           {/* Active Step Showcase */}
-          <div key={activeWorkflowIndex} className="medical-card card-sheen overflow-hidden workflow-step-enter border border-[#E2ECF8] rounded-2xl">
+          <div key={activeWorkflowIndex} className="medical-card card-sheen overflow-hidden workflow-step-enter border border-[#E2ECF8] rounded-3xl">
             <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
-              <div className="lg:col-span-5 h-64 overflow-hidden relative" style={{ background: '#0A3882' }}>
+              <div className="lg:col-span-5 h-80 sm:h-96 overflow-hidden relative bg-[#07215A]">
                 <img
                   src={activeStep.image}
                   alt={activeStep.alt}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#07215A]/70 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-4 left-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-white text-[#07215A] shadow-sm">
+                <div className="absolute bottom-5 left-5">
+                  <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-[#07215A] shadow-md">
                     Step {activeWorkflowIndex + 1}: {activeStep.subtitle}
                   </span>
                 </div>
               </div>
 
-              <div className="lg:col-span-7 p-6 sm:p-8 space-y-4">
-                <div className="space-y-1">
+              <div className="lg:col-span-7 p-8 sm:p-12 space-y-5">
+                <div className="space-y-1.5">
                   <span className="text-xs font-mono font-bold text-[#0052FF]">{activeStep.badge}</span>
-                  <h3 className="text-xl font-bold text-[#07215A]">
+                  <h3 className="text-2xl font-bold text-[#07215A]">
                     {activeStep.title}
                   </h3>
                 </div>
 
-                <p className="text-sm text-[#4A6588] leading-relaxed">
+                <p className="text-sm sm:text-base text-[#4A6588] leading-relaxed">
                   {activeStep.description}
                 </p>
 
-                <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2ECF8]">
+                <div className="p-4 bg-[#F8FAFC] rounded-2xl border border-[#E2ECF8]">
                   <span className="text-xs font-bold text-[#07215A]">Clinical Rationale:</span>
-                  <p className="text-xs text-[#4A6588] mt-0.5 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#4A6588] mt-1 leading-relaxed">
                     {activeStep.clinicalFocus}
                   </p>
                 </div>
@@ -807,31 +865,29 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          BOTTOM PINK/CORAL & ROYAL BLUE CTA BANNER (Matching Image 3)
-          ══════════════════════════════════════════════════════════════ */}
-      <section className="max-w-7xl mx-auto px-3 sm:px-5">
+      {/* ── BOTTOM PINK/CORAL & ROYAL BLUE CTA BANNER (Full Width Edge-to-Edge) ── */}
+      <section className="w-full py-16 sm:py-24 px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 bg-[#F8FAFC]">
         <div
-          className="rounded-3xl overflow-hidden relative p-8 sm:p-12 text-white shadow-2xl"
+          className="w-full max-w-[1700px] mx-auto rounded-3xl overflow-hidden relative p-8 sm:p-14 lg:p-20 text-white shadow-2xl"
           style={{
             background: 'linear-gradient(135deg, #FF3366 0%, #E11D48 40%, #0052FF 100%)',
           }}
         >
-          <div className="max-w-2xl space-y-4 relative z-10">
+          <div className="max-w-3xl space-y-5 relative z-10">
             <span className="text-xs font-mono font-bold tracking-wider uppercase bg-white/20 px-3 py-1 rounded-full border border-white/30 inline-block">
               ● OUR VISION
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
               A healthier tomorrow, in motion.
             </h2>
-            <p className="text-sm text-white/90 leading-relaxed">
+            <p className="text-base sm:text-lg text-white/95 leading-relaxed">
               Every discovery starts somewhere. Let's build an environment where men can check their health with complete privacy, unhurried ease, and zero judgment.
             </p>
-            <div className="pt-2">
+            <div className="pt-3">
               <button
                 type="button"
                 onClick={() => void handleStartBlank()}
-                className="px-7 py-3.5 rounded-full text-sm font-bold bg-white text-[#0052FF] hover:bg-[#F8FAFC] active:scale-[0.98] transition-all shadow-lg flex items-center gap-2 cursor-pointer"
+                className="px-8 py-4 rounded-full text-sm font-bold bg-white text-[#0052FF] hover:bg-[#F8FAFC] active:scale-[0.98] transition-all shadow-xl flex items-center gap-2 cursor-pointer"
               >
                 <span>Start Confidential Assessment</span>
                 <span>→</span>
@@ -841,89 +897,89 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════
-          FAQ ACCORDION & TECHNICAL APPENDIX
-          ══════════════════════════════════════════════════════════════ */}
-      <section id="faq-section" className="max-w-3xl mx-auto px-3 sm:px-5 space-y-6">
-        <div className="text-center space-y-2">
-          <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
-            PRIVACY & PROTOCOLS
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A]">
-            Frequently Asked Questions
-          </h2>
-        </div>
+      {/* ── FAQ ACCORDION & TECHNICAL APPENDIX (Full Width Edge-to-Edge) ── */}
+      <section id="faq-section" className="w-full bg-white border-t border-[#E2ECF8] py-16 sm:py-24 px-6 sm:px-12 lg:px-16 xl:px-24">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
+              PRIVACY & PROTOCOLS
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A]">
+              Frequently Asked Questions
+            </h2>
+          </div>
 
-        <div className="space-y-3">
-          {FAQS.map((faq, idx) => {
-            const isOpen = openFaqIndex === idx;
-            return (
-              <div
-                key={faq.question}
-                className="medical-card overflow-hidden border border-[#E2ECF8] rounded-2xl bg-white"
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between gap-4 cursor-pointer p-5 text-left"
+          <div className="space-y-3.5">
+            {FAQS.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div
+                  key={faq.question}
+                  className="medical-card overflow-hidden border border-[#E2ECF8] rounded-2xl bg-white"
                 >
-                  <h3 className="text-sm font-bold text-[#07215A]">{faq.question}</h3>
-                  <span
-                    className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all duration-300 ease-out"
-                    style={{
-                      background: isOpen ? '#0052FF' : '#EBF3FF',
-                      color: isOpen ? 'white' : '#0052FF',
-                      transform: isOpen ? 'rotate(45deg)' : 'none',
-                    }}
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="w-full flex items-center justify-between gap-4 cursor-pointer p-5 sm:p-6 text-left"
                   >
-                    +
-                  </span>
-                </button>
-                <div className={`accordion-grid ${isOpen ? 'is-open' : ''}`}>
-                  <div className="accordion-grid-inner">
-                    <div className="px-5 pb-5">
-                      <p className="text-xs sm:text-sm text-[#4A6588] border-t border-[#E2ECF8] pt-3 leading-relaxed">
-                        {faq.answer}
-                      </p>
+                    <h3 className="text-sm sm:text-base font-bold text-[#07215A]">{faq.question}</h3>
+                    <span
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all duration-300 ease-out"
+                      style={{
+                        background: isOpen ? '#0052FF' : '#EBF3FF',
+                        color: isOpen ? 'white' : '#0052FF',
+                        transform: isOpen ? 'rotate(45deg)' : 'none',
+                      }}
+                    >
+                      +
+                    </span>
+                  </button>
+                  <div className={`accordion-grid ${isOpen ? 'is-open' : ''}`}>
+                    <div className="accordion-grid-inner">
+                      <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+                        <p className="text-xs sm:text-sm text-[#4A6588] border-t border-[#E2ECF8] pt-3 leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
 
-        {/* Technical Appendix Toggle */}
-        <div className="text-center pt-4">
-          <button
-            type="button"
-            onClick={() => setShowTechAppendix(!showTechAppendix)}
-            className="text-xs font-mono font-semibold text-[#829AB8] hover:text-[#0052FF] transition-colors cursor-pointer inline-flex items-center gap-1.5"
-          >
-            <span>{showTechAppendix ? 'Hide' : 'View'} FHIR R4 Conceptual Architecture</span>
-            <span className="text-xs">{showTechAppendix ? '▲' : '▼'}</span>
-          </button>
-        </div>
+          {/* Technical Appendix Toggle */}
+          <div className="text-center pt-4">
+            <button
+              type="button"
+              onClick={() => setShowTechAppendix(!showTechAppendix)}
+              className="text-xs font-mono font-semibold text-[#829AB8] hover:text-[#0052FF] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <span>{showTechAppendix ? 'Hide' : 'View'} FHIR R4 Conceptual Architecture</span>
+              <span className="text-xs">{showTechAppendix ? '▲' : '▼'}</span>
+            </button>
+          </div>
 
-        {showTechAppendix && (
-          <div className="medical-canvas p-6 rounded-2xl border border-[#E2ECF8] bg-white text-xs space-y-3 font-mono">
-            <span className="font-bold text-[#07215A]">Conceptual FHIR R4 Mapping Manifest:</span>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
-              <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2ECF8]">
-                <span className="font-bold text-[#0052FF]">AssessmentCase</span>
-                <p className="text-[11px] text-[#4A6588] mt-1">Maps to FHIR Patient with synthetic pseudonym identifiers.</p>
-              </div>
-              <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2ECF8]">
-                <span className="font-bold text-[#0052FF]">ClinicalObservation</span>
-                <p className="text-[11px] text-[#4A6588] mt-1">Maps to FHIR Observation with semen analysis test codes.</p>
-              </div>
-              <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2ECF8]">
-                <span className="font-bold text-[#0052FF]">ConsentLedger</span>
-                <p className="text-[11px] text-[#4A6588] mt-1">Dual gatekeeper verified on backend at every transaction.</p>
+          {showTechAppendix && (
+            <div className="medical-canvas p-6 rounded-2xl border border-[#E2ECF8] bg-[#F8FAFC] text-xs space-y-3 font-mono">
+              <span className="font-bold text-[#07215A]">Conceptual FHIR R4 Mapping Manifest:</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
+                  <span className="font-bold text-[#0052FF]">AssessmentCase</span>
+                  <p className="text-[11px] text-[#4A6588] mt-1">Maps to FHIR Patient with synthetic pseudonym identifiers.</p>
+                </div>
+                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
+                  <span className="font-bold text-[#0052FF]">ClinicalObservation</span>
+                  <p className="text-[11px] text-[#4A6588] mt-1">Maps to FHIR Observation with semen analysis test codes.</p>
+                </div>
+                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
+                  <span className="font-bold text-[#0052FF]">ConsentLedger</span>
+                  <p className="text-[11px] text-[#4A6588] mt-1">Dual gatekeeper verified on backend at every transaction.</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </section>
     </div>
   );

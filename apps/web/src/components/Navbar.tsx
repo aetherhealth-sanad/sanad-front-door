@@ -29,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         className="w-full bg-white/88 backdrop-blur-xl border-b border-white/60"
         style={{ boxShadow: '0 1px 0 rgba(7,33,90,0.07), 0 2px 12px -4px rgba(7,33,90,0.08)' }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 h-14 sm:h-16 flex items-center justify-between gap-3">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-20 h-14 sm:h-16 flex items-center justify-between gap-3">
 
           {/* ── Brand ── */}
           <a href="/" className="flex items-center gap-2.5 text-[#07215A] no-underline group shrink-0">
