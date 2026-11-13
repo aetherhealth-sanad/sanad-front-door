@@ -93,18 +93,40 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* User Portrait Avatar */}
-        <Pressable
-          style={styles.avatarWrapper}
-          onPress={() => setIntroVisible(true)}
-        >
-          <Image
-            source={require('@/assets/images/real_patient_peace_of_mind.jpg')}
-            style={styles.avatarImage}
-            resizeMode="cover"
-          />
-          <View style={styles.avatarStatusBadge} />
-        </Pressable>
+        {/* Actions & Avatar */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Pressable
+            style={({ pressed }) => [
+              {
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: Radius.full,
+                backgroundColor: '#E0EDFF',
+                borderWidth: 1,
+                borderColor: '#BFDBFE',
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+            onPress={() => router.push('/loading-demo')}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '700', color: '#0066EE' }}>
+              Loading UI
+            </Text>
+          </Pressable>
+
+          {/* User Portrait Avatar */}
+          <Pressable
+            style={styles.avatarWrapper}
+            onPress={() => setIntroVisible(true)}
+          >
+            <Image
+              source={require('@/assets/images/real_patient_peace_of_mind.jpg')}
+              style={styles.avatarImage}
+              resizeMode="cover"
+            />
+            <View style={styles.avatarStatusBadge} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Atmospheric AI Assistant Hero Card (Mesh Gradient Aesthetic) */}

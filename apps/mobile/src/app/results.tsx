@@ -23,6 +23,7 @@ import {
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { ApiService, ScreeningResult } from '@/services/api';
+import { LoadingView } from '@/components/loading-view';
 
 export default function ResultsScreen() {
   const router = useRouter();
@@ -85,12 +86,11 @@ export default function ResultsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
-        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
-          Analyzing screening indicators against WHO benchmarks...
-        </Text>
-      </View>
+      <LoadingView
+        mode="illustrated"
+        title="Analyzing Health Indicators..."
+        subtitle="Evaluated against WHO 2021 Reference Standards, Just for You"
+      />
     );
   }
 

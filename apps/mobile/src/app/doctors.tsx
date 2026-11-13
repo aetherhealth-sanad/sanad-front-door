@@ -26,6 +26,7 @@ import {
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { ApiService } from '@/services/api';
+import { LoadingView } from '@/components/loading-view';
 
 interface DoctorItem {
   id: string;
@@ -90,6 +91,15 @@ export default function DoctorListScreen() {
   const [selectedDoctor, setSelectedDoctor] = useState<DoctorItem | null>(null);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'urology' | 'lab'>('all');
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  const handleFilterChange = (filter: 'all' | 'urology' | 'lab') => {
+    setActiveFilter(filter);
+    setIsFiltering(true);
+    setTimeout(() => {
+      setIsFiltering(false);
+    }, 450);
+  };
 
   const filteredDoctors = DOCTORS.filter(doc => {
     if (activeFilter === 'urology') return doc.title.includes('Urologist');
@@ -183,7 +193,7 @@ export default function DoctorListScreen() {
                 ? { backgroundColor: theme.primary }
                 : { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 },
             ]}
-            onPress={() => setActiveFilter('all')}
+            onPress={() => handleFilterChange('all')}
           >
             <Text
               style={[
@@ -202,7 +212,7 @@ export default function DoctorListScreen() {
                 ? { backgroundColor: theme.primary }
                 : { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 },
             ]}
-            onPress={() => setActiveFilter('urology')}
+            onPress={() => handleFilterChange('urology')}
           >
             <Text
               style={[
@@ -221,7 +231,7 @@ export default function DoctorListScreen() {
                 ? { backgroundColor: theme.primary }
                 : { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 },
             ]}
-            onPress={() => setActiveFilter('lab')}
+            onPress={() => handleFilterChange('lab')}
           >
             <Text
               style={[
@@ -234,16 +244,21 @@ export default function DoctorListScreen() {
           </Pressable>
         </View>
 
-        {/* Doctor Cards */}
-        <View style={styles.listContainer}>
-          {filteredDoctors.map(doctor => (
-            <View
-              key={doctor.id}
-              style={[
-                styles.doctorCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-            >
+        {/* Doctor Cards or Skeleton Loading State */}
+        {isFiltering ? (
+          <View style={{ minHeight: 340 }}>
+            <LoadingView mode="skeleton" showBack={false} />
+          </View>
+        ) : (
+          <View style={styles.listContainer}>
+            {filteredDoctors.map(doctor => (
+              <View
+                key={doctor.id}
+                style={[
+                  styles.doctorCard,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+              >
               <View style={styles.cardHeader}>
                 <View style={styles.doctorInfo}>
                   <Text style={[styles.doctorSpecialty, { color: theme.textSecondary }]}>
@@ -317,6 +332,7 @@ export default function DoctorListScreen() {
             </View>
           ))}
         </View>
+      )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
