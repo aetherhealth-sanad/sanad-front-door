@@ -90,7 +90,7 @@ export default function SafetyScreen() {
               Sudden Severe Testicular Pain (with or without nausea)
             </Text>
             <Text style={[styles.flagDesc, { color: theme.textSecondary }]}>
-              High index of suspicion for Testicular Torsion — requires prompt surgical evaluation to preserve testicular viability.
+              High index of suspicion for Testicular Torsion: requires prompt surgical evaluation to preserve testicular viability.
             </Text>
           </View>
         </View>

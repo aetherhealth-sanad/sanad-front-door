@@ -65,7 +65,7 @@ export default function ResultsScreen() {
           icon: CheckCircle,
           badgeColor: theme.success,
           badgeBg: theme.successLight,
-          label: 'ROUTINE — LIFESTYLE OPTIMIZATION',
+          label: 'ROUTINE: LIFESTYLE OPTIMIZATION',
           image: require('@/assets/images/real_patient_peace_of_mind.jpg'),
         };
     }
@@ -180,10 +180,22 @@ export default function ResultsScreen() {
             styles.primaryButton,
             { backgroundColor: theme.primary, opacity: pressed ? 0.9 : 1 },
           ]}
+          onPress={() => router.push('/doctors')}
+        >
+          <Text style={styles.primaryButtonText}>Browse Specialist Care Directory</Text>
+          <ArrowRight size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.secondaryButton,
+            { backgroundColor: theme.backgroundElement, borderColor: theme.border, opacity: pressed ? 0.8 : 1 },
+          ]}
           onPress={() => router.push('/safety')}
         >
-          <Text style={styles.primaryButtonText}>View Emergency & Safety Support</Text>
-          <ArrowRight size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+          <Text style={[styles.secondaryButtonText, { color: theme.emergency }]}>
+            View 24/7 Safety & Red Flags
+          </Text>
         </Pressable>
 
         <Pressable

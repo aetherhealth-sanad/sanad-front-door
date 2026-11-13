@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme, Platform } from 'react-native';
-import { Home, ClipboardList, FileText, ShieldAlert } from 'lucide-react-native';
+import { Home, Sparkles, UserCheck, FileText, ShieldAlert } from 'lucide-react-native';
 
 import { Colors } from '@/constants/theme';
 
@@ -40,7 +40,7 @@ export default function RootLayout() {
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.textMuted,
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
         },
       }}
@@ -50,33 +50,42 @@ export default function RootLayout() {
         options={{
           title: 'Home',
           tabBarLabel: 'Home',
-          headerTitle: "Sanad — Men's Health",
+          headerShown: false,
           tabBarIcon: ({ color, size }) => <Home size={size || 22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="intake"
         options={{
-          title: 'Assessment',
-          tabBarLabel: 'Assessment',
-          headerTitle: 'Screening Intake',
-          tabBarIcon: ({ color, size }) => <ClipboardList size={size || 22} color={color} />,
+          title: 'AI Guide',
+          tabBarLabel: 'AI Guide',
+          headerTitle: 'Vital AI Assistant',
+          tabBarIcon: ({ color, size }) => <Sparkles size={size || 22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="doctors"
+        options={{
+          title: 'Doctors',
+          tabBarLabel: 'Doctors',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => <UserCheck size={size || 22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="results"
         options={{
-          title: 'Results',
-          tabBarLabel: 'Results',
-          headerTitle: 'Report & Guidance',
+          title: 'Report',
+          tabBarLabel: 'Report',
+          headerTitle: 'Health Guidance',
           tabBarIcon: ({ color, size }) => <FileText size={size || 22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="safety"
         options={{
-          title: 'Emergency',
-          tabBarLabel: 'Emergency',
+          title: 'Safety',
+          tabBarLabel: 'Safety',
           headerTitle: '24/7 Medical Safety',
           tabBarIcon: ({ color, size }) => <ShieldAlert size={size || 22} color={color} />,
         }}

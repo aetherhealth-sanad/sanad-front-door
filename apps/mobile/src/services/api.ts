@@ -103,8 +103,8 @@ export const ApiService = {
         type: 'choice',
         options: [
           { label: 'Under 25', value: 'under_25' },
-          { label: '25 – 34', value: '25_34' },
-          { label: '35 – 44', value: '35_44' },
+          { label: '25 to 34', value: '25_34' },
+          { label: '35 to 44', value: '35_44' },
           { label: '45 and above', value: '45_plus' },
         ],
       },
@@ -117,7 +117,7 @@ export const ApiService = {
         options: [
           { label: 'Not trying yet / Preconception planning', value: 'planning' },
           { label: 'Less than 6 months', value: 'under_6m' },
-          { label: '6 – 12 months', value: '6_12m' },
+          { label: '6 to 12 months', value: '6_12m' },
           { label: 'Over 12 months', value: 'over_1y' },
         ],
       },
@@ -151,11 +151,11 @@ export const ApiService = {
         id: 'q_lifestyle',
         category: 'Thermal & Lifestyle Exposures',
         text: 'Do you regularly use hot saunas, hot tubs, or rest laptops directly on your lap?',
-        explanation: 'Spermatogenesis requires scrotal temperatures 2–4°C below core body temperature. Sustained heat can temporarily suppress sperm production.',
+        explanation: 'Spermatogenesis requires scrotal temperatures 2-4°C below core body temperature. Sustained heat can temporarily suppress sperm production.',
         type: 'choice',
         options: [
           { label: 'No heat exposure habits', value: 'no' },
-          { label: 'Occasional (1–2 times a month)', value: 'occasional' },
+          { label: 'Occasional (1-2 times a month)', value: 'occasional' },
           { label: 'Frequent (weekly or prolonged)', value: 'frequent' },
         ],
       },
@@ -227,7 +227,7 @@ export const ApiService = {
         ],
         lifestyle_tips: [
           'Consider evidence-backed antioxidants (CoQ10, Zinc, Vitamin C, Vitamin E) to combat reactive oxygen species.',
-          'Spermatogenesis takes approximately 74 days; lifestyle modifications require 2–3 months to reflect in semen parameters.',
+          'Spermatogenesis takes approximately 74 days; lifestyle modifications require 2 to 3 months to reflect in semen parameters.',
         ],
         generated_at: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       };
@@ -236,7 +236,7 @@ export const ApiService = {
     return {
       is_mock: true,
       triage_level: 'ROUTINE',
-      summary_title: 'Low Clinical Risk — Proactive Optimization',
+      summary_title: 'Low Clinical Risk: Proactive Optimization',
       summary_description: 'No significant acute or historical risk flags detected. Focus on lifestyle optimization and proactive preconception wellness.',
       key_findings: [
         'No acute scrotal pain or abnormal symptoms reported.',
@@ -248,7 +248,7 @@ export const ApiService = {
       ],
       lifestyle_tips: [
         'Avoid testicular overheating: minimize hot tub sessions and avoid keeping laptops on laps.',
-        'Prioritize 7–8 hours of quality sleep; peak testosterone synthesis occurs during REM sleep cycles.',
+        'Prioritize 7 to 8 hours of quality sleep; peak testosterone synthesis occurs during REM sleep cycles.',
       ],
       generated_at: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     };
