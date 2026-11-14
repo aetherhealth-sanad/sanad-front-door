@@ -13,9 +13,11 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
-| 0.9 | 2026-11-14 | Added RF-25 local decision-model provider (AC-25.1 to AC-25.10, T4.9, TC-25.1 to TC-25.9, plan §4.10, API design §6.15 note). Laya, an open model with Jev-style typed decisions, runs on the API host through `laya` (PyTorch) or `laya-mlx` (Apple Silicon) for RF-21 yes/no and choice questions only. Moved the hosted Jev bake-off to T4.10 under CC-014. Opened CC-015; added OD-17 on the weight licence. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
-| 0.8 | 2026-11-14 | Added RF-23 model evaluation harness, per-case model budget and run metrics (AC-23.1 to AC-23.10, T4.7, TC-23.1 to TC-23.10) and RF-24 decision record for the reviewer (AC-24.1 to AC-24.4, T4.8, TC-24.1 to TC-24.4); API design §6.15; `GET /evaluation/model-runs`; reason code `MODEL_BUDGET_EXCEEDED`; token fields in `MODEL_TASK_RUN`; OD-15, OD-16. Opened CC-014 for an optional offline Jev bake-off (T4.9, blocked). Recorded as out of scope: runtime pgvector retrieval, runtime decision models, trained cross-field contradiction detection. No clinical rule, threshold, triage level, consent scope or data policy changed. **Order of work:** spec only; no code written for these items. Review before T4.7 and T4.8 start. | Drafted by Claude Code | Pending |
-| 0.7 | 2026-11-14 | Added RF-22 pinned citations and grounded explanation (AC-22.1 to AC-22.10, T4.6, TC-22.1 to TC-22.10, API design §6.14). Added the `TEAM_CURATED` evidence status, `knowledge/passages.v0.1.json` (shipped empty), the `report.explain.v1` task and `POST /cases/{id}/report/explanation`, and the error `REPORT_NOT_RELEASED`. Opened CC-013. No clinical rule, threshold or triage level changed. **Order of work:** code and tests were written in the same branch as these spec changes, so the spec must be reviewed before merge. | Drafted by Claude Code | Pending |
+| 0.11 | 2026-11-14 | Added RF-25 local decision-model provider (AC-25.1 to AC-25.10, T4.9, TC-25.1 to TC-25.9, plan §4.10, API design §6.15 note). Laya, an open model with Jev-style typed decisions, runs on the API host through `laya` (PyTorch) or `laya-mlx` (Apple Silicon) for RF-21 yes/no and choice questions only. Moved the hosted Jev bake-off to T4.10 under CC-014. Opened CC-015; added OD-17 on the weight licence. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
+| 0.10 | 2026-11-14 | Added RF-23 model evaluation harness, per-case model budget and run metrics (AC-23.1 to AC-23.10, T4.7, TC-23.1 to TC-23.10) and RF-24 decision record for the reviewer (AC-24.1 to AC-24.4, T4.8, TC-24.1 to TC-24.4); API design §6.15; `GET /evaluation/model-runs`; reason code `MODEL_BUDGET_EXCEEDED`; token fields in `MODEL_TASK_RUN`; OD-15, OD-16. Opened CC-014 for an optional offline Jev bake-off (T4.9, blocked). Recorded as out of scope: runtime pgvector retrieval, runtime decision models, trained cross-field contradiction detection. No clinical rule, threshold, triage level, consent scope or data policy changed. **Order of work:** spec only; no code written for these items. Review before T4.7 and T4.8 start. | Drafted by Claude Code | Pending |
+| 0.9 | 2026-11-14 | Added RF-22 pinned citations and grounded explanation (AC-22.1 to AC-22.10, T4.6, TC-22.1 to TC-22.10, API design §6.14). Added the `TEAM_CURATED` evidence status, `knowledge/passages.v0.1.json` (shipped empty), the `report.explain.v1` task and `POST /cases/{id}/report/explanation`, and the error `REPORT_NOT_RELEASED`. Opened CC-013. No clinical rule, threshold or triage level changed. **Order of work:** code and tests were written in the same branch as these spec changes, so the spec must be reviewed before merge. | Drafted by Claude Code | Pending |
+| 0.8 | 2026-11-12 | Implemented bounded harness code after the user directly requested implementation: shared structured profile guardrail, off-by-default redacted Langfuse telemetry, separate read-only authoring MCP server with strict hashed tools, and isolated knowledge database schema. No runtime model calls, new clinical rules or referral path were added. TC-HR acceptance, M3 exit and Tech Lead review remain pending. | Codex | Pending (Tech Lead and acceptance) |
+| 0.7 | 2026-11-12 | Opened CC-016 for deterministic harness hardening, opt-in redacted Langfuse telemetry and Mode A MCP only. Requester approved the Product/Security scope and selected self-hosted Langfuse; formal named approver entry, Tech Lead review and M3 exit remain pending. Runtime agents and new clinical rules remain out of scope. | Codex | Pending (Product/Security requester name and Tech Lead) |
 | 0.6 | 2026-11-08 | Added RF-21 chat intake with a bounded model adapter (AC-21.1 to AC-21.12, T4.5, TC-21.1 to TC-21.12, API design §6.13). Added an optional Azure OpenAI adapter, off by default, a stage 2a emergency word check for typed text, and the `INPUT_CHECKED` and `MODEL_TASK_RUN` audit events. Amended INV-01. Opened CC-011 and CC-012. Settings, including the Azure OpenAI key, can live in a Git-ignored `apps/api/.env` copied from the committed `apps/api/.env.example` (placeholders only); shell variables still win. **Order of work:** code and tests were written in the same branch as these spec changes, not after review, so the spec must be reviewed before merge and the code changed if review changes the spec. | Drafted by Claude Code for trung1234 | Pending |
 | 0.5 | 2026-11-05 | Synchronized implementation status with current patient/staff UI source; clarified J9/J10 client test gaps and parent-scope conflicts; removed unreviewed clinical claims from education; aligned Quick Exit with existing wipe/BFCache/neutral-title criteria. No BRD/PRD contract or clinical rule changed; verification and content review remain pending. | Codex | Pending |
 | 0.4 | 2026-11-03 | Specified idempotency for navigation progress/barrier retries; clarified current harness and CI scope. | Codex | Pending |
@@ -25,7 +27,20 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 ## Change-control records
 
-Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, and CC-009 with version 0.2.
+Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, and CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch).
+
+### CC-016 Deterministic harness, Langfuse and authoring-time MCP
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`; user directly requested code and identified themself as Product/Security approver, selecting self-hosted Langfuse. Formal named approver entry, Tech Lead review, acceptance and M3 exit criteria remain pending; code is not release approval. |
+| **Reason** | The product request asks for MCP, policy-engine, Langfuse observability and guardrails. Current code already has the deterministic Python `evaluate_gate`, emergency catalogue and closed-schema API checks, but no MCP server, Langfuse exporter or free-text/model runtime. |
+| **Evidence** | `harness.md` HR-01/02/10/19/28; PRD-FR-35/38/40/41 and NFR-03/08/19/21/24; `mcp-context-design.md` v0.2 is `PROPOSED`, `TECH_TBD` and requires change control before code. PRD-FR-37 defers runtime model agents. |
+| **Change** | Retain server-side default-deny checks and the single Python referral gate; preserve emergency ordering and add no clinical rules; constrain MCP to local authoring-time, read-only Mode A against approved manifest sources; make Langfuse opt-in and off by default, with an operational-field allowlist and no request bodies, health data, case IDs, prompts, passages or tokens. Bounded code is present. Langfuse deployment target is self-hosted; endpoint/operator configuration and formal review remain outstanding. MCP Mode B and all model calls remain out of scope. |
+| **Affected journeys** | J1–J5 safety/action paths; internal authoring workflow. MCP does not enter the patient or emergency journey. |
+| **Tests** | TC-HR-01 to TC-HR-08 (proposed; software checks only). Renumbered from RF-18/CC-011 on 2026-11-14 because those IDs were already in use. |
+| **Approver** | Product/Security: requester stated approval on 2026-11-12; formal named entry pending. Tech Lead: pending. Langfuse endpoint and operator configuration remain outstanding. |
+| **Version** | Product spec 0.2; harness proposal, implementation plan and test plan updates 2026-11-12. |
 
 ### CC-015 Local decision-model provider
 
@@ -41,7 +56,7 @@ Each proposal below changes or extends a parent document, so it needs an approve
 | **Affected journeys** | J1, J3, J5 at `/intake`, only when an operator enables the provider. J4 untouched (AC-25.10). |
 | **Tests** | TC-25.1 to TC-25.9; RF-23 scorecard comparison |
 | **Approver** | Pending (Tech Lead for the adapter and dependency; Security for supply chain; Legal for the weight licence) |
-| **Version** | Spec 0.9 |
+| **Version** | Spec 0.11 |
 
 ### CC-014 Offline Jev bake-off with synthetic evaluation cases
 
@@ -55,7 +70,7 @@ Each proposal below changes or extends a parent document, so it needs an approve
 | **Affected journeys** | None at runtime. |
 | **Tests** | TC-23.1 to TC-23.5 apply to the bake-off run. |
 | **Approver** | Pending (Tech Lead + Security) |
-| **Version** | Spec 0.8 |
+| **Version** | Spec 0.10 |
 
 ### CC-013 Team-curated citations and a report explanation task
 
@@ -69,7 +84,7 @@ Each proposal below changes or extends a parent document, so it needs an approve
 | **Affected journeys** | J1, J3, J5 result screen. J4 is untouched (AC-22.4). |
 | **Tests** | TC-22.1 to TC-22.10 |
 | **Approver** | Pending (Product for the taxonomy; Product + Security for the data policy; clinical input for passage selection; Tech Lead for the code) |
-| **Version** | Spec 0.7 |
+| **Version** | Spec 0.9 |
 
 ### CC-011 Optional model call for typed chat text
 

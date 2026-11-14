@@ -4,7 +4,7 @@ Nov 3, 2026 · @Nguyen Thanh Trung · v0.2 Nov 14, 2026: synced with the RF-21/R
 
 ## Goals and principles
 
-Sanad's harness is the deterministic rules, consent and state gates, audit logging, and automated checks around the backend. This is a research prototype. With default settings the API makes no model call and sends no data outside the app. When an operator enables a provider, two bounded tasks may call Azure OpenAI: `intake.extract.v1` (RF-21, answer matching the user confirms) and `report.explain.v1` (RF-22, rewording a released next step from pinned passages). Both are schema-constrained, validated in code, traced with codes only, and fall back to fixed text. The HR rules below mix implemented backend controls with future model-agent design; they are targets, not claims that every item is implemented. The current automated gate is the backend pytest suite and Ruff. Model timeouts and fallbacks are tested with a fake adapter. Model quality measurement (RF-23), a per-case model budget (RF-23) and browser/server parity are not executable yet. There is no agent or tool runtime, so agent-tool restrictions remain design targets.
+Sanad's harness is the deterministic rules, consent and state gates, audit logging, and automated checks around the backend. This is a research prototype. With default settings the API makes no model call and sends no data outside the app. When an operator enables a provider, two bounded tasks may call Azure OpenAI: `intake.extract.v1` (RF-21, answer matching the user confirms) and `report.explain.v1` (RF-22, rewording a released next step from pinned passages). Both are schema-constrained, validated in code, traced with codes only, and fall back to fixed text. Optional, self-hosted Langfuse telemetry can export only allowlisted operational metadata when explicitly enabled; an authoring-only MCP server is separate from the API. The HR rules below mix implemented backend controls with future model-agent design; they are targets, not claims that every item is implemented. The current automated gate is the backend pytest suite and Ruff. Model timeouts and fallbacks are tested with a fake adapter. Model quality measurement (RF-23), a per-case model budget (RF-23) and browser/server parity are not executable yet. There is no agent or tool runtime, so agent-tool restrictions remain design targets.
 
 1. **Rules first.** Emergency and draft triage rules run deterministically. No model output feeds the rule floor; the typed-text emergency word check runs before any model call.
 2. **Policy sits outside the model and defaults to deny.** Every action with a side effect (writing a record, sending a referral) passes through a code gate. No rule that allows it means it is blocked.
@@ -238,7 +238,7 @@ Every failure becomes a rule or a test. New failures found with a real model go 
 The source document was written for enterprise agents (quotes, CRM), so some parts do not apply directly to Sanad in three weeks.
 
 - **Cedar and OPA:** not used. The referral gate is a tested Python function; revisit only if the rule count grows.
-- **MCP, OAuth 2.1, tool-definition pinning:** Sanad calls tools through its own backend and API gateway, not third-party MCP servers. Pin the OpenAPI version instead (HR-19). If MCP is added later, add rules against tool poisoning and token passthrough.
+- **MCP and OAuth 2.1:** There is no patient-runtime MCP client or third-party MCP connection. The authoring-only knowledge server uses stdio, a strict pinned tool manifest and a separate read-only database login. The API continues to pin its OpenAPI contract (HR-19).
 - **Semantic cache at the gateway:** not used on any step that touches health data or has side effects.
 - **Trace naming:** use the OpenTelemetry names `invoke_agent` and `execute_tool`, plus a custom `policy.check` span. That convention is still in Development status, so pin its version.
 - **Harness² from Google:** not used to modify Sanad's guardrails automatically. It is research code, not an officially supported Google product.
@@ -251,5 +251,9 @@ SLM-specific notes:
 - Run a bake-off of the SLM against a larger model on the same golden set before locking the choice; Hoàng owns this (T-45, T-46).
 
 Source caveats: "harness engineering" is not a standard issued by a standards body. The performance figures in the source document are published by the vendors themselves. OWASP numbering may differ between the 2025 and 2026 editions, so cite the edition when quoting.
+
+### Bounded implementation (CC-016; formal review and acceptance pending)
+
+The bounded code is present following the user's direct implementation request and stated Product/Security approval. It adds optional, off-by-default Langfuse operational spans and a read-only authoring-time MCP server. It does not add runtime model calls, patient-context MCP, new clinical rules or a second referral gate. The current pure Python `evaluate_gate` remains the action policy. Formal Tech Lead review, M3 exit criteria, acceptance checks and release approval remain pending; see [the change log](referal-flows/change-log.md#cc-011-deterministic-harness-langfuse-and-authoring-time-mcp).
 
 Source: the attached document "Harness Know-how: a standard harness engineering framework for enterprise AI agents" (compared against FPT AI EOS).

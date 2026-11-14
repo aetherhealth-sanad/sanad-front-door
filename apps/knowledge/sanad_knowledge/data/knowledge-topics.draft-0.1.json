@@ -1,0 +1,22 @@
+{
+  "catalogue_version": "knowledge-topics-draft-0.1",
+  "status": "PROPOSED",
+  "topics": [
+    {
+      "topic_code": "BMI_BODY_COMPOSITION",
+      "draft_rule_id": "DRAFT-BMI-CONTEXT-01"
+    },
+    {
+      "topic_code": "ANABOLIC_STEROID_USE",
+      "draft_rule_id": "DRAFT-STEROID-01"
+    },
+    {
+      "topic_code": "SEMEN_ANALYSIS_REFERENCE_LIMITS",
+      "draft_rule_id": "DRAFT-LAB-BELOW-REF-01"
+    },
+    {
+      "topic_code": "SEMEN_ANALYSIS_NO_SPERM",
+      "draft_rule_id": "DRAFT-LAB-NO-SPERM-01"
+    }
+  ]
+}

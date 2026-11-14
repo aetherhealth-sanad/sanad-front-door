@@ -292,6 +292,16 @@ These are additive P0 backend/design tasks from PRD v0.4; they do not activate c
 | T4.9 | `LayaLocalAdapter` behind the model port, optional extra `apps/api[decision]`, settings and start-up checks, label mapping and abstain rules, `--provider laya_local` in the evaluation runner, RUNBOOK setup for Windows (torch, CPU) and macOS (laya-mlx) | RF-25, AC-25.1 to AC-25.10; OD-16, OD-17 | T4.7, CC-015 | Backend, QA, Security | Not started. Spec written first, awaiting review. Weight licence unconfirmed: local evaluation only. |
 | T4.10 | Optional offline bake-off of hosted Jev: an evaluation-only provider in `eval/`, never imported by `sanad_api`, using the same label mapping as T4.9 | RF-23 AC-23.2 extension, OD-16 | T4.9, CC-014 approval, API access | Backend, Security | Blocked on CC-014 approval and API access. Not a runtime provider. |
 
+### Harness implementation (CC-016; code present, acceptance pending)
+
+These tasks are outside the current M1–M3 exit path. The requester explicitly asked for the bounded code implementation and identified themself as Product/Security approver. Formal Tech Lead review, M3 exit criteria, acceptance checks and CC-016 closure remain pending. No task may add a clinical rule or runtime model call under this scope.
+
+| Task | Work | Delivers | Depends on | Suggested owner | Status |
+|---|---|---|---|---|---|
+| T5.11 | Preserve the existing emergency ordering, closed API schemas, reason-code errors and single Python `evaluate_gate` referral path; add structured input guardrail | RF-26, AC-26.1/2, HR-01/02/10/19/28 | M3 exit, CC-016 | Backend, Security, QA | Code present; TC-HR acceptance and formal review pending |
+| T5.12 | Optional Langfuse spans with explicit field allowlist, off-by-default config, no automatic body/prompt capture and non-blocking exporter failure | RF-26, AC-26.4/5, PRD NFR-03/08/21 | T5.11, Tech Lead review, self-hosted endpoint/operator configuration | Backend, Security | Code present; TC-HR acceptance and operator configuration pending |
+Mode A MCP code now covers the empty source manifest and topic catalogue, read-only database schema, pinned tool manifest, and stdio server. Offline ingestion, shared report citation verification and the CI checks remain open. Mode B case-context and calendar MCP remain dependent on PRD-FR-37 and separate change control. The existing Python referral gate is the policy engine for this scope; adopting OPA/Cedar is not proposed.
+
 ### Critical path
 
 ```mermaid

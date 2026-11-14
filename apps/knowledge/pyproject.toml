@@ -1,0 +1,30 @@
+[project]
+name = "sanad-knowledge-mcp"
+version = "0.1.0"
+description = "Read-only, authoring-time Sanad evidence MCP server."
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=2,<3",
+    "psycopg[binary]>=3.2,<4",
+    "jsonschema>=4.22",
+]
+
+[project.scripts]
+sanad-knowledge-mcp = "sanad_knowledge.mcp_server:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["sanad_knowledge*"]
+
+[tool.setuptools.package-data]
+sanad_knowledge = ["tools.manifest.json", "data/*.json"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]

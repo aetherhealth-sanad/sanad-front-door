@@ -29,6 +29,9 @@ dev = [
     # Adapter tests use the SDK's own error and response types. They make no network call.
     "openai>=3.40,<4",
 ]
+observability = [
+    "langfuse>=5,<6",
+]
 
 [build-system]
 requires = ["setuptools>=69"]
