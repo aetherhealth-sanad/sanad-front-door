@@ -38,6 +38,25 @@ interface ReviewDetail {
   decision_history: Array<Record<string, unknown>>;
   psychosocial_context: Array<Record<string, unknown>>;
   psychosocial_context_use: string;
+  decision_record?: DecisionRecord | null;
+}
+
+// RF-24: what the draft rests on, rebuilt from stored data on each read. No model writes it.
+interface DecisionRecord {
+  action: string;
+  floor: string | null;
+  rules: Array<{ rule_id: string; signal: string; sets_floor: boolean; rule_version: string; approval_status: string }>;
+  catalogue_versions: Record<string, string>;
+  facts_used: Array<{
+    concept_code: string;
+    state: string;
+    values: Array<{ state: string; value: unknown; temporal_status: string | null; source_type: string }>;
+  }>;
+  observations_used: Array<{ test_code?: string; value?: unknown; unit?: string }>;
+  evidence: Array<{ claim_id: string; rule_id: string; status: string }>;
+  model_runs: Array<{ task_id: string; status: string; outcome: string | null; at: string }>;
+  report_hash: string;
+  built_at: string;
 }
 
 type ReviewDecision = 'APPROVE' | 'EDIT' | 'REJECT' | 'REQUEST_CLARIFICATION';
@@ -664,6 +683,58 @@ export const ClinicianPortal: React.FC = () => {
                     ))}
                   </ul>
                 </div>
+              )}
+
+              {detail.decision_record && (
+                <details className="rounded-2xl border border-[#E2ECF8] p-5 text-xs text-[#475467]">
+                  <summary className="cursor-pointer font-bold text-[#0F172A] uppercase tracking-wide">
+                    Decision record · what this draft rests on
+                  </summary>
+                  <div className="mt-3 space-y-3">
+                    <p>
+                      Action <strong>{detail.decision_record.action}</strong> · floor{' '}
+                      {detail.decision_record.floor ?? 'none'} · built from stored data, no AI
+                    </p>
+                    <ul className="space-y-1">
+                      {detail.decision_record.rules.map(rule => (
+                        <li key={rule.rule_id}>
+                          {rule.rule_id} · {rule.signal} · {rule.sets_floor ? 'sets floor' : 'context'} ·{' '}
+                          {rule.rule_version} · {rule.approval_status}
+                        </li>
+                      ))}
+                    </ul>
+                    <ul className="space-y-1">
+                      {detail.decision_record.facts_used.map(fact => (
+                        <li key={fact.concept_code}>
+                          <strong>{fact.concept_code}</strong>: {fact.state}
+                          {fact.values.map((v, i) => (
+                            <span key={i}>
+                              {' '}· {String(v.value ?? v.state)}
+                              {v.temporal_status ? ` (${v.temporal_status})` : ''} from {v.source_type}
+                            </span>
+                          ))}
+                        </li>
+                      ))}
+                    </ul>
+                    <p>
+                      Evidence:{' '}
+                      {detail.decision_record.evidence.map(e => `${e.rule_id} ${e.status}`).join(' · ') || 'none'}
+                    </p>
+                    <p>
+                      Model runs:{' '}
+                      {detail.decision_record.model_runs
+                        .map(run => `${run.task_id} ${run.status}/${run.outcome ?? '-'}`)
+                        .join(' · ') || 'none'}
+                    </p>
+                    <p>
+                      Versions:{' '}
+                      {Object.entries(detail.decision_record.catalogue_versions)
+                        .map(([key, value]) => `${key} ${value}`)
+                        .join(' · ')}
+                    </p>
+                    <p className="break-all">Report hash {detail.decision_record.report_hash}</p>
+                  </div>
+                </details>
               )}
 
               {/* Reviewer Decision Controls (APPROVE / EDIT / REQUEST_CLARIFICATION / REJECT) */}

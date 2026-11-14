@@ -56,7 +56,7 @@ def test_tc_11_2_past_stays_past_and_negated_stays_negated(api: Api) -> None:
 def test_tc_11_4_claims_without_a_verified_source_are_labelled(catalogues: Catalogues) -> None:
     """TC-11.4: a pending source is labelled, and the placeholder never renders as a citation."""
     rule = catalogues.triage.rules[1]
-    assert _evidence(rule) == {
+    assert _evidence(rule, catalogues) == {
         "claim_id": f"CLAIM-{rule.rule_id}",
         "rule_id": rule.rule_id,
         "status": "INSUFFICIENT_EVIDENCE",
@@ -74,7 +74,7 @@ def test_tc_11_4_claims_without_a_verified_source_are_labelled(catalogues: Catal
         }
     )  # fmt: skip
     assert "GUIDELINE-TO-BE-REVIEWED" in PLACEHOLDER_SOURCES
-    assert _evidence(placeholder)["citation"] is None
+    assert _evidence(placeholder, catalogues)["citation"] is None
     verified = rule.model_copy(
         update={
             "evidence_refs": (
@@ -82,7 +82,8 @@ def test_tc_11_4_claims_without_a_verified_source_are_labelled(catalogues: Catal
             )
         }
     )
-    assert _evidence(verified)["citation"] == {"source_id": "TEST-SOURCE-1", "version": "1"}
+    citation = _evidence(verified, catalogues)["citation"]
+    assert citation == {"source_id": "TEST-SOURCE-1", "version": "1"}
 
 
 def test_tc_11_5_same_fixture_gives_byte_identical_drafts(api: Api) -> None:

@@ -74,11 +74,15 @@ ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
             "schema_version",
             "question_catalogue_version",
             "question_id",
+            "rule_version",
+            "passage_catalogue_version",
             "status",
             "error_code",
             "outcome",
             "attempts",
             "elapsed_ms",
+            "input_tokens",
+            "output_tokens",
         }
     ),
 }

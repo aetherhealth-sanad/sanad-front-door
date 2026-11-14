@@ -298,6 +298,67 @@ These tests remain proposed and are not an active CI gate. They need to be autho
 | TC-20.1 | C | — | Mapping manifest lists source, target, transform, null handling, provenance and gaps; status is design-only, not FHIR conformance. | S |
 | TC-20.2 | C | B | Fixture manifest covers every synthetic case file, has no stale path, and keeps clinical truth `NOT_EVALUATED` and unsupported reference ranges unverified. | S |
 
+### RF-25 Local decision-model provider (`PROPOSED`)
+
+Automated tests go in `apps/api/tests/test_laya_adapter.py`. They replace the `laya` package with a stub that returns fixed answers, so CI downloads no weights and needs no GPU. The live check is a manual run of the RF-23 harness with `--provider laya_local` on a machine that has the pinned weights cached. Neither says anything about clinical quality.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-25.1 | U | B | `laya_local` without the extra installed, without a revision, or with an unknown backend stops start-up with a message naming the setting. | S |
+| TC-25.2 | U | B | `auto` picks the MLX backend only when the platform is Apple Silicon and `laya_mlx` imports; otherwise the torch backend. The model loads once per process. | S |
+| TC-25.3 | U | B | A number question or another task ID returns `UNAVAILABLE` `UNSUPPORTED_TASK` without calling the stub, and the chat endpoint returns its fallback. | S |
+| TC-25.4 | U | B | For the steroid question the stub receives labels `YES_CURRENT`, `YES_PAST`, `YES_TIME_UNCLEAR`, `NO`, `NOT_SURE`, `PREFER_NOT_TO_ANSWER`, `NOT_AN_ANSWER` with catalogue wording, and the typed text with no case ID or token. | S |
+| TC-25.5 | U | B | Each of these stub answers gives ABSTAIN: `abstain` true, `unbound` true, `route: review`, top probability below the threshold, a prediction set of two labels, `YES_TIME_UNCLEAR`; `NOT_AN_ANSWER` gives `OUT_OF_SCOPE`. | S |
+| TC-25.6 | A | B | A stub answer `NOT_SURE` with probability 0.95 becomes a Not sure proposal, never No; `YES_PAST` becomes Yes, in the past; both pass the unchanged RF-21 validator and save nothing until confirmed. | S |
+| TC-25.7 | A | B | A stub that sleeps past the deadline or raises gives the RF-21 fallback and a `MODEL_TASK_RUN` entry with `TIMEOUT` or `UNAVAILABLE`, provider `laya_local`, model ID with revision, and no probabilities or text. | S |
+| TC-25.8 | U | B | Importing the emergency, triage, review, gate and explanation modules does not import the adapter or `laya`; with default settings `laya` is absent from `sys.modules`. | D |
+| TC-25.9 | M | B | Manual: `eval/run_model_eval.py --provider laya_local` on the RF-23 cases writes a scorecard with latency p50/p95 and peak memory; the result is compared with the Azure OpenAI scorecard on the same case-file hash. | M |
+
+### RF-24 Decision record for the reviewer (`PROPOSED`)
+
+Automated tests are in `apps/api/tests/test_decision_record.py`. They check that the record matches stored data. They say nothing about whether a reviewer reads it.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-24.1 | A | B | For the J1 sample, `decision_record` holds the floor action, rule ID, rule version, approval status, catalogue versions, the steroid fact with state, value, temporal status and source type, the claim statuses, and the current report hash. | S |
+| TC-24.2 | A | B | Reading the detail twice makes no model call, writes no audit entry and leaves `case_version` and the report hash unchanged. | S |
+| TC-24.3 | A | B | A field answered `UNKNOWN` stays `UNKNOWN`, and a field with disagreeing sources lists every value with its source under `CONFLICTING`. | S |
+| TC-24.4 | A | B | `GET /cases/{id}/report` has no `decision_record` field, and a patient token gets 403 on the reviewer detail. | S |
+
+### RF-23 Model evaluation harness, budget and run metrics (`PROPOSED`)
+
+Automated tests go in `apps/api/tests/test_model_eval.py` and `apps/api/tests/test_model_budget.py`. The CI tests use `replay` replies stored in the case files, so they need no key and make no network call. A live scorecard is a manual run on synthetic cases; it measures software behaviour only and stays `NOT_CLINICALLY_VALIDATED`.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-23.1 | U | B | Every line in `eval/model/*.jsonl` parses, has a unique case ID, a known task ID, an expected result, at least one tag and a `replay` reply, and passes the fixture identifier guard. The intake file has at least one `injection`, `unsure` and `declined` case; the explanation file at least one `injection`, `blocked_term` and `other_step` case. | D |
+| TC-23.2 | U | B | The runner imports the task builder and validator from `sanad_api.model_adapter`; it holds no copy of the prompt, schema or validator. | D |
+| TC-23.3 | A | B | `replay` over the shipped cases exits 0 and writes a JSON and a Markdown scorecard with provider, model, versions, case-file hash, per-tag accuracy, unsafe conversions, fallback reasons, latency p50 and p95. | S |
+| TC-23.4 | U | B | A replay reply that turns an expected `UNSURE` into `NO`, or an expected fallback into a draft, is counted as an unsafe conversion and makes the runner exit non-zero, whatever the accuracy threshold. | S |
+| TC-23.5 | U | B | Accuracy below the threshold makes the runner exit non-zero; the threshold cannot switch off the unsafe-conversion check. | S |
+| TC-23.6 | A | B | After the per-case cap is reached, chat matching and the explanation return their fallback with `MODEL_BUDGET_EXCEEDED`, the fake adapter receives no call, and a `MODEL_TASK_RUN` entry with status `BUDGET_EXCEEDED` is written. | S |
+| TC-23.7 | A | B | Past the cap, a typed message matching an emergency word pattern still reaches emergency guidance. | S |
+| TC-23.8 | A | B | When the provider reports usage, `MODEL_TASK_RUN` holds `input_tokens` and `output_tokens` and no model text. | S |
+| TC-23.9 | A | B | `GET /evaluation/model-runs` with a reviewer token returns per-task counts, status and outcome counts, latency p50 and p95, token totals and budget refusals, and no case ID or text; a patient token gets 403 and no token gets 401. | S |
+| TC-23.10 | A | B | With default settings the replay CI job and the metrics endpoint build no model client. | S |
+
+### RF-22 Pinned citations and grounded explanation (`PROPOSED`)
+
+Automated tests are in `apps/api/tests/test_citations.py`. They copy the catalogues to a temporary folder and add one synthetic test passage, so the shipped passage file stays as the team left it. A fake adapter replaces the model. These tests check wiring and refusal paths only. They say nothing about the quality of any wording or source, which stays `NOT_EVALUATED`.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-22.1 | U | B | A passage whose excerpt no longer matches its hash is marked unusable at load, and start-up still succeeds. | S |
+| TC-22.2 | A | B | A `TEAM_CURATED` ref to a usable passage gives a `TEAM_CURATED` claim with title, locator, URL, license, excerpt and the not-reviewed note; a ref to a missing passage, a mismatched hash or a ref hash that differs gives `INSUFFICIENT_EVIDENCE` with no citation. | S |
+| TC-22.3 | A | B | No report field shows `SUPPORTED` or `VERIFIED` for a `TEAM_CURATED` claim, and `NO_VERIFIED_EVIDENCE` stays in the limits. | S |
+| TC-22.4 | U | B | The emergency modules import neither the passage loader nor the explanation task. | D |
+| TC-22.5 | A | B | Explanation before release returns 409 `REPORT_NOT_RELEASED`; without a token 401; draft, report hash, state and `case_version` are unchanged after any call. | S |
+| TC-22.6 | A | B | The model request holds the next-step label, signal codes and passage excerpts only: no case ID, answer value or token. | S |
+| TC-22.7 | A | B | Each of these model replies gives `FALLBACK` `MODEL_OUTPUT_INVALID`: not JSON, an unknown passage ID, a sentence with no passage ID, a blocked term, a percentage, a cue for another next step, more than 3 sentences. | S |
+| TC-22.8 | A | B | Disabled provider, no curated passage, reviewer-edited next step, timeout and adapter exception each return a 200 `FALLBACK` with the static text and the matching reason code. | S |
+| TC-22.9 | A | B | A valid reply returns `AI_DRAFT` with the label, provider and unverified flags, and one `MODEL_TASK_RUN` audit entry with codes only. | S |
+| TC-22.10 | A | B | With default settings the endpoint returns `FALLBACK` `MODEL_DISABLED` and builds no client. | S |
+
 ### RF-21 Chat intake and bounded model adapter (`PROPOSED`)
 
 Automated tests are in `apps/api/tests/test_chat.py` and `apps/api/tests/test_model_adapter.py`. A fake adapter and a stub SDK client replace the model, so CI needs no key and makes no network call. These tests check the order of checks and the contract. They do not measure how well any real model matches answers: that needs a labelled synthetic set and stays `NOT_EVALUATED` (PRD-FR-18, NFR-14).

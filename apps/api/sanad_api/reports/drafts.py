@@ -4,7 +4,8 @@ Drafts come from fixed templates, so the same inputs and rule version always giv
 content (AC-11.5). Content holds no IDs or timestamps for the same reason. A draft states what is
 known, what is not, why this next step and who approves it, and holds no diagnosis or
 probability (AC-11.3, INV-06). A claim without a verified source is labelled insufficient
-evidence, and a placeholder source never shows as a citation (AC-11.4, HR-20).
+evidence, and a placeholder source never shows as a citation (AC-11.4, HR-20). A claim backed by
+a team-curated passage is labelled TEAM_CURATED, never as verified (RF-22, AC-22.2, AC-22.3).
 
 The clinician summary carries codes, rule IDs and field states, but no answers or lab values,
 because it becomes the reviewer summary in a mock referral snapshot (AC-13.4).
@@ -18,7 +19,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from sanad_api.catalogues import Catalogues, TriageRule
+from sanad_api.catalogues import Catalogues, Passage, TriageRule
 from sanad_api.facts.service import ConceptView, decode_value
 from sanad_api.observations.models import Observation
 from sanad_api.observations.service import Confirmation, issues_of
@@ -29,6 +30,8 @@ LAB_STATEMENT = "A result below a reference limit does not mean you cannot have 
 PLACEHOLDER_SOURCES = frozenset({"GUIDELINE-TO-BE-REVIEWED"})
 NO_RULE_REASON = "No draft rule sets a next step for the information given."
 INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
+TEAM_CURATED = "TEAM_CURATED"
+CURATED_NOTE = "Team-selected source, not reviewed by a clinician"
 
 LIMIT_TEXT: dict[str, str] = {
     "DRAFT_RULES": "These results come from draft rules that no clinician has approved.",
@@ -76,7 +79,7 @@ def build_content(inputs: DraftInputs, catalogues: Catalogues) -> dict[str, Any]
         _observation_entry(row, row.observation_id in inputs.used_observation_ids)
         for row in inputs.observations
     ]
-    evidence = [_evidence(rules[rule_id]) for rule_id in triage.hit_rule_ids]
+    evidence = [_evidence(rules[rule_id], catalogues) for rule_id in triage.hit_rule_ids]
     used_labs = any(entry["used_in_assessment"] for entry in observations)
     held_labs = any(
         entry["confirmation_status"] != Confirmation.CONFIRMED_BY_USER for entry in observations
@@ -88,7 +91,8 @@ def build_content(inputs: DraftInputs, catalogues: Catalogues) -> dict[str, Any]
     limit_codes += ["LAB_VALUES_UNVERIFIED"] if used_labs else []
     limit_codes += ["LAB_VALUES_HELD"] if held_labs else []
     limit_codes += list(triage.limit_codes)
-    if any(entry["status"] == INSUFFICIENT_EVIDENCE for entry in evidence):
+    # A team-curated source is not a verified one, so the limit stays (AC-22.3).
+    if any(entry["status"] != "SUPPORTED" for entry in evidence):
         limit_codes.append("NO_VERIFIED_EVIDENCE")
 
     explanations = [rules[rule_id].patient_explanation for rule_id in triage.hit_rule_ids]
@@ -229,7 +233,35 @@ def _observation_entry(row: Observation, used: bool) -> dict[str, Any]:
     }
 
 
-def _evidence(rule: TriageRule) -> dict[str, Any]:
+def curated_passages(rule: TriageRule, catalogues: Catalogues) -> list[Passage]:
+    """The rule's TEAM_CURATED passages that exist, still match their hash and match the hash
+    pinned in the rule (AC-22.2). Anything else is treated as no source."""
+    found: list[Passage] = []
+    for ref in rule.evidence_refs:
+        if ref.verification != TEAM_CURATED or ref.passage_id is None:
+            continue
+        passage = catalogues.passage(ref.passage_id)
+        if passage is not None and passage.content_sha256 == ref.content_sha256:
+            found.append(passage)
+    return found
+
+
+def citation_of(passage: Passage) -> dict[str, Any]:
+    return {
+        "source_id": passage.source_id,
+        "version": passage.source_version,
+        "passage_id": passage.passage_id,
+        "title": passage.title,
+        "locator": passage.locator,
+        "url": passage.url,
+        "license": passage.license,
+        "excerpt": passage.excerpt,
+        "review_status": TEAM_CURATED,
+        "review_note": CURATED_NOTE,
+    }
+
+
+def _evidence(rule: TriageRule, catalogues: Catalogues) -> dict[str, Any]:
     verified = [
         ref
         for ref in rule.evidence_refs
@@ -242,6 +274,15 @@ def _evidence(rule: TriageRule) -> dict[str, Any]:
             "rule_id": rule.rule_id,
             "status": "SUPPORTED",
             "citation": {"source_id": ref.source_id, "version": ref.version},
+        }
+    curated = curated_passages(rule, catalogues)
+    if curated:
+        # A team-chosen source is shown as such, never as SUPPORTED (AC-22.3).
+        return {
+            "claim_id": f"CLAIM-{rule.rule_id}",
+            "rule_id": rule.rule_id,
+            "status": TEAM_CURATED,
+            "citation": citation_of(curated[0]),
         }
     return {
         "claim_id": f"CLAIM-{rule.rule_id}",

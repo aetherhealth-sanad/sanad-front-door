@@ -88,6 +88,7 @@ class Settings:
     model_timeout_ms: int = 12_000
     model_max_attempts: int = 2
     model_max_completion_tokens: int = 800
+    model_max_calls_per_case: int = 20  # RF-23 AC-23.7, TECH_TBD
 
     @classmethod
     def from_env(cls, env_file: Path | None = None) -> Settings:
@@ -122,6 +123,9 @@ class Settings:
             model_max_attempts=_int(env, "SANAD_MODEL_MAX_ATTEMPTS", cls.model_max_attempts),
             model_max_completion_tokens=_int(
                 env, "SANAD_MODEL_MAX_COMPLETION_TOKENS", cls.model_max_completion_tokens
+            ),
+            model_max_calls_per_case=_int(
+                env, "SANAD_MODEL_MAX_CALLS_PER_CASE", cls.model_max_calls_per_case
             ),
             langfuse_enabled=_bool_env("SANAD_LANGFUSE_ENABLED"),
             langfuse_base_url=os.environ.get("LANGFUSE_BASE_URL") or None,

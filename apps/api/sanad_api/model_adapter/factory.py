@@ -35,6 +35,8 @@ def _check_budget(settings: Settings) -> None:
         raise ModelConfigError("SANAD_MODEL_MAX_ATTEMPTS must be between 1 and 3")
     if not 64 <= settings.model_max_completion_tokens <= 4_096:
         raise ModelConfigError("SANAD_MODEL_MAX_COMPLETION_TOKENS must be between 64 and 4096")
+    if not 1 <= settings.model_max_calls_per_case <= 100:
+        raise ModelConfigError("SANAD_MODEL_MAX_CALLS_PER_CASE must be between 1 and 100")
 
 
 def _azure_openai(settings: Settings) -> ModelAdapter:

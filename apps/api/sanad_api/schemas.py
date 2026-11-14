@@ -39,6 +39,15 @@ class TriageProposalOut(BaseModel):
 class CitationOut(BaseModel):
     source_id: str
     version: str
+    # RF-22: present only for a TEAM_CURATED claim.
+    passage_id: str | None = None
+    title: str | None = None
+    locator: str | None = None
+    url: str | None = None
+    license: str | None = None
+    excerpt: str | None = None
+    review_status: str | None = None
+    review_note: str | None = None
 
 
 class EvidenceOut(BaseModel):
