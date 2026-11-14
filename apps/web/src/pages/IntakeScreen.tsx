@@ -26,7 +26,11 @@ interface IntakeFormProps extends IntakeScreenProps {
 export const IntakeScreen: React.FC<IntakeScreenProps> = props => {
   const [view, setView] = useState<'chat' | 'form'>('chat');
   return view === 'chat' ? (
-    <ChatIntake {...props} onSwitchToForm={() => setView('form')} />
+    <ChatIntake
+      {...props}
+      onAnswerSaved={props.onAnswerRecorded}
+      onSwitchToForm={() => setView('form')}
+    />
   ) : (
     <IntakeForm {...props} onSwitchToChat={() => setView('chat')} />
   );
@@ -60,10 +64,8 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   onAssessmentComplete,
   onOpenLab,
   onNavigateToReview,
-  onAnswerRecorded,
   onSwitchToChat,
 }) => {
-  const [view, setView] = useState<'chat' | 'form'>('chat');
   const [catalogue, setCatalogue] = useState<QuestionsResponse | null>(null);
   const [psychQuestions, setPsychQuestions] = useState<PsychosocialQuestion[]>([]);
   const [draftAnswers, setDraftAnswers] = useState<Record<string, DraftAnswer>>({});
@@ -272,20 +274,6 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
     );
   };
 
-  // If in Chat view, render ChatIntake with toggle to Form
-  if (view === 'chat') {
-    return (
-      <ChatIntake
-        caseId={caseId}
-        onNavigateToReview={onNavigateToReview || (() => handleProceedToReview({ preventDefault: () => {} } as React.FormEvent))}
-        onSwitchToForm={() => setView('form')}
-        onOpenLab={onOpenLab}
-        onAnswerSaved={onAnswerRecorded}
-      />
-    );
-  }
-
-  // Otherwise, render full Form view with toggle back to Chat
   return (
     <div className="w-full space-y-6">
       {/* Top Banner & View Switcher */}
@@ -293,23 +281,21 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2ECF8] pb-5">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
-                CLINICAL QUESTIONNAIRE
-              </span>
+              <MockBadge label={`MOCK INTAKE QUESTIONS · ${catalogue?.approval_status ?? 'CLINICAL_TBD'}`} />
               <span className="text-xs text-[#64748B]">Screening, not diagnosis</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
               Intake Questions
             </h1>
             <p className="text-sm text-[#475467] mt-1 leading-relaxed">
-              Approved clinical questions. Not sure and Prefer not to say are always valid answers and never mean low risk.
+              Draft questions, not approved by a clinician. Not sure and Prefer not to say are always valid answers and never mean low risk.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={() => setView('chat')}
+              onClick={onSwitchToChat}
               className="btn-pill-primary px-4 py-2 rounded-full text-xs font-semibold cursor-pointer shadow-xs"
             >
               Switch to assistant chat

@@ -248,14 +248,14 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             CLINICAL / 001
           </div>
           <span className="hidden sm:inline-block text-xs font-mono text-[#829AB8]">
-            ISO 15189 LAB PROTOCOL
+            WHO 2021 REFERENCE · DRAFT
           </span>
         </div>
 
         {/* Center Quick Navigation Links */}
         <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-[#4A6588]">
           <a href="#who-standard" className="hover:text-[#0052FF] transition-colors">
-            Diagnostic Standard
+            Reference Values
           </a>
           <a href="#workflow-process" className="hover:text-[#0052FF] transition-colors">
             Process
@@ -343,7 +343,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
             {/* Sub-headline */}
             <p className="text-base sm:text-lg text-[#4A6588] max-w-2xl leading-relaxed text-pretty">
-              Every mechanism, biomarker threshold, and clinical interaction is designed to support the flow of private male health without judgment. Grounded in the WHO 2021 Reference Manual.
+              Every mechanism, biomarker threshold, and clinical interaction is designed to support the flow of private male health without judgment. Draft rules reference the WHO 2021 manual and are not yet approved by a clinician.
             </p>
 
             {/* Error Banner */}
@@ -440,20 +440,20 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             <div className="relative rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-2xl bg-white group transition-transform duration-500 ease-out hover:scale-[1.01]">
               <img
                 src="/assets/images/real_doctor_consultation.jpg"
-                alt="Certified andrology specialist doctor consulting with patient in modern confidential clinic"
+                alt="Stock photo: a doctor talking with a patient (illustration only)"
                 className="w-full h-[400px] sm:h-[480px] lg:h-[530px] object-cover block"
               />
 
               {/* Floating Badge: Top Right */}
               <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#BAD6FE] shadow-lg flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
-                <span className="text-xs font-mono font-bold text-[#07215A]">WHO 2021 CALIBRATED</span>
+                <span className="text-xs font-mono font-bold text-[#07215A]">MOCK · DRAFT RULES, CLINICAL_TBD</span>
               </div>
 
               {/* Floating Specialty Badge: Top Left */}
               <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-lg flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#0052FF]" />
-                <span className="text-[11px] font-mono font-bold">ANDROLOGY SPECIALIST NETWORK</span>
+                <span className="text-[11px] font-mono font-bold">ILLUSTRATION · NOT A REAL NETWORK</span>
               </div>
 
               {/* Floating Doctor Profile Card: Bottom */}
@@ -462,21 +462,21 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 shrink-0">
                     <img
                       src="/assets/images/medical_doctor_avatar.jpg"
-                      alt="Dr. Tariq Al-Mansoor"
+                      alt="Simulated reviewer avatar"
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">
-                      Dr. Tariq Al-Mansoor
+                      Simulated reviewer (Mock)
                     </span>
                     <span className="text-[10px] font-mono text-[#9EC8FF] block">
-                      Consultant in Andrology & Male Reproductive Health
+                      Demo staff role, not a real clinician
                     </span>
                   </div>
                 </div>
                 <span className="text-[11px] font-mono font-bold text-[#10B981] bg-[#10B981]/20 px-2.5 py-1 rounded-full border border-[#10B981]/40 shrink-0">
-                  Verified Reviewer
+                  Mock
                 </span>
               </div>
             </div>
@@ -524,7 +524,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
                 Real-World Care Navigation
               </h3>
               <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
-                Seamless closed-loop navigation to verified andrology specialists, certified semen analysis laboratories, and private reproductive health clinics.
+                Simulated (Mock) referral flow with invented facilities. No real clinic, laboratory or specialist is connected.
               </p>
             </div>
           </div>
@@ -563,7 +563,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               <div>
                 <span className="text-4xl sm:text-5xl font-black text-[#07215A] tracking-tight">21.8M</span>
                 <p className="text-xs sm:text-sm text-[#4A6588] font-medium mt-0.5">
-                  Verified WHO 6th Edition Standard Range Thresholds
+                  WHO 6th Edition reference values used as draft thresholds (CLINICAL_TBD)
                 </p>
               </div>
             </div>
@@ -634,7 +634,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-12">
           <div className="max-w-3xl space-y-2">
             <span className="text-xs font-mono font-bold text-[#E11D48] tracking-wider uppercase">
-              ● REAL CLINICAL SCIENCE & ACCREDITED LABORATORIES
+              ● HOW SEMEN ANALYSIS WORKS (EDUCATION)
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-[#07215A] tracking-tight">
               Discovery isn't one big moment.
@@ -642,7 +642,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               <span className="text-[#0052FF]">It's a thousand small ones.</span>
             </h2>
             <p className="text-sm sm:text-base text-[#4A6588] leading-relaxed">
-              Behind every confident clinical diagnosis is rigorous scientific architecture, certified ISO 15189 semen analysis, and sealed patient confidentiality.
+              Background on how laboratories measure semen samples. Sanad does not diagnose, does not run a laboratory and connects to none.
             </p>
           </div>
 
@@ -652,12 +652,12 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             <div className="rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-xl relative group bg-white">
               <img
                 src="/assets/images/real_clinical_lab.jpg"
-                alt="Certified laboratory specialist conducting semen analysis with clinical microscope in ISO-accredited lab"
+                alt="Stock photo: a laboratory microscope (illustration only)"
                 className="w-full h-[320px] sm:h-[400px] object-cover block group-hover:scale-[1.02] transition-transform duration-500 ease-out"
               />
               <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white font-mono text-xs flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-                <span>ISO 15189 ACCREDITED LABORATORY</span>
+                <span>ILLUSTRATION · NOT A PARTNER LAB</span>
               </div>
               <div className="p-6 bg-white border-t border-[#E2ECF8] space-y-1.5">
                 <h3 className="text-base font-bold text-[#07215A]">High-Power Optical Semen Microscopy</h3>
@@ -671,7 +671,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
             <div className="rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-xl relative group bg-white">
               <img
                 src="/assets/images/real_andrology_specialist.jpg"
-                alt="Senior andrology specialist doctor reviewing patient diagnostic parameters on clinical workstation"
+                alt="Stock photo: a doctor at a workstation (illustration only)"
                 className="w-full h-[320px] sm:h-[400px] object-cover block group-hover:scale-[1.02] transition-transform duration-500 ease-out"
               />
               <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white font-mono text-xs flex items-center gap-2">
@@ -714,7 +714,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               <span className="text-xs font-mono font-bold text-[#0052FF]">04 / PATHWAY</span>
               <h4 className="text-sm font-bold text-[#07215A]">Physician Navigation</h4>
               <p className="text-xs text-[#4A6588] leading-relaxed">
-                Direct referral bridging to verified andrology specialists, accredited fertility clinics, and hospital departments.
+                Simulated (Mock) referral to invented men's health services. Nothing is sent to a real provider.
               </p>
             </div>
           </div>
@@ -727,7 +727,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E2ECF8]">
             <div>
               <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
-                DIAGNOSTIC REFERENCE
+                REFERENCE VALUES · CLINICAL_TBD
               </span>
               <h2 className="text-2xl sm:text-3xl font-bold text-[#07215A] mt-0.5">
                 WHO 2021 6th Edition Reference Manual
@@ -781,7 +781,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
               </div>
               <div className="flex justify-between text-xs text-[#829AB8] font-mono">
                 <span>Below 5th centile (flagged for review)</span>
-                <span>Verified reference range (normal)</span>
+                <span>Draft reference range (CLINICAL_TBD)</span>
               </div>
             </div>
 
