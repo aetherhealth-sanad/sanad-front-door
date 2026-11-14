@@ -16,6 +16,8 @@ cd "$REPO_ROOT"
 # Default Configuration & Credentials (Default password/key: 123456)
 # ------------------------------------------------------------------------------
 export DEFAULT_PASSWORD="${DEFAULT_PASSWORD:-123456}"
+# Langfuse requires an admin password of at least 8 characters
+export LANGFUSE_ADMIN_PASSWORD="${LANGFUSE_ADMIN_PASSWORD:-12345678}"
 
 # Simulated Staff Console Passwords (demo-reviewer / demo-mock-facility)
 export SANAD_DEMO_REVIEWER_PASSWORD="${SANAD_DEMO_REVIEWER_PASSWORD:-$DEFAULT_PASSWORD}"
@@ -125,6 +127,7 @@ start_langfuse() {
     sed -i.bak \
       -e "s|CHANGEME|${DEFAULT_PASSWORD}|g" \
       -e 's|"3000:3000"|"127.0.0.1:3100:3000"|g' \
+      -e 's|^\( *- \)3000:3000|\1127.0.0.1:3100:3000|' \
       -e 's|127.0.0.1:5432:5432|127.0.0.1:5433:5432|g' \
       -e 's|"5432:5432"|"127.0.0.1:5433:5432"|g' \
       -e 's|127.0.0.1:6379:6379|127.0.0.1:6380:6379|g' \
@@ -148,7 +151,7 @@ services:
       LANGFUSE_INIT_PROJECT_SECRET_KEY: "${LANGFUSE_SECRET_KEY}"
       LANGFUSE_INIT_USER_EMAIL: "admin@sanad.local"
       LANGFUSE_INIT_USER_NAME: "admin"
-      LANGFUSE_INIT_USER_PASSWORD: "${DEFAULT_PASSWORD}"
+      LANGFUSE_INIT_USER_PASSWORD: "${LANGFUSE_ADMIN_PASSWORD}"
 EOF
 
   (
@@ -156,7 +159,7 @@ EOF
     docker compose up -d
   )
   echo "[sanad] Langfuse containers started at ${LANGFUSE_BASE_URL}"
-  echo "        Login: admin@sanad.local / ${DEFAULT_PASSWORD}"
+  echo "        Login: admin@sanad.local / ${LANGFUSE_ADMIN_PASSWORD}"
   echo "        Public Key: ${LANGFUSE_PUBLIC_KEY} | Secret Key: ${LANGFUSE_SECRET_KEY}"
 }
 
