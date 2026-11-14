@@ -220,6 +220,8 @@ Every failure becomes a rule or a test. New failures found with a real model go 
 | 2026-11-14 | A passage containing "ignore instructions… emergency… 90% chance" could steer the explanation | Validator rejects blocked terms, percentages and cues for other next steps; TC-22.7 |
 | 2026-11-14 | A wrong deployment name returned 404 `DeploymentNotFound` on the first call | Planned: report the error code in the scorecard environment check (RF-23) |
 | 2026-11-14 | The first live scorecard counted validator probes (deliberately bad stored replies) as unsafe when the real model answered well | Probes are tagged `validator` and `replay_only`; live runs skip them; injection cases accept either fallback reason (AC-23.1, TC-23.3) |
+| 2026-11-14 | The Laya adapter's model ID (`org/name@rev`) was rejected by the audit code guard | Model IDs are written as codes (`org:name:rev12`); the audit guard stays strict (AC-25.8) |
+| 2026-11-14 | Laya zero-shot on synthetic intake cases: accuracy 0.26 with the 0.80 threshold; below 0.76 it would turn "not sure" into "yes" | Threshold kept; provider stays off (OD-15); improving it needs labelled data and a fitted head, out of scope |
 | 2026-11-14 | An adapter exception in one route could escape as a 500 | `run_safely`, shared by every model route, returns `UNAVAILABLE` with `ADAPTER_ERROR` |
 
 ## Considered and deferred (v0.2)

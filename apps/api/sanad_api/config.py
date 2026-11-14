@@ -42,6 +42,11 @@ def _str(env: Mapping[str, str], name: str) -> str | None:
     return env.get(name) or None
 
 
+def _float(env: Mapping[str, str], name: str, default: float) -> float:
+    raw = _str(env, name)
+    return float(raw) if raw else default
+
+
 def _int(env: Mapping[str, str], name: str, default: int) -> int:
     raw = env.get(name, "")
     return int(raw) if raw else default
@@ -89,6 +94,12 @@ class Settings:
     model_max_attempts: int = 2
     model_max_completion_tokens: int = 800
     model_max_calls_per_case: int = 20  # RF-23 AC-23.7, TECH_TBD
+    # RF-25, CC-015: local decision model. Only read when SANAD_MODEL_PROVIDER=laya_local.
+    laya_model: str = "convaiinnovations/laya"
+    laya_revision: str | None = None  # a pinned commit SHA; required for laya_local
+    laya_backend: str = "auto"  # auto, torch or mlx
+    laya_device: str | None = None  # None lets laya choose (CUDA, MPS, XPU, then CPU)
+    decision_min_prob: float = 0.80  # TECH_TBD, set from the RF-23 scorecard
 
     @classmethod
     def from_env(cls, env_file: Path | None = None) -> Settings:
@@ -127,6 +138,11 @@ class Settings:
             model_max_calls_per_case=_int(
                 env, "SANAD_MODEL_MAX_CALLS_PER_CASE", cls.model_max_calls_per_case
             ),
+            laya_model=_str(env, "SANAD_LAYA_MODEL") or cls.laya_model,
+            laya_revision=_str(env, "SANAD_LAYA_REVISION"),
+            laya_backend=_str(env, "SANAD_LAYA_BACKEND") or cls.laya_backend,
+            laya_device=_str(env, "SANAD_LAYA_DEVICE"),
+            decision_min_prob=_float(env, "SANAD_DECISION_MIN_PROB", cls.decision_min_prob),
             langfuse_enabled=_bool_env("SANAD_LANGFUSE_ENABLED"),
             langfuse_base_url=os.environ.get("LANGFUSE_BASE_URL") or None,
             langfuse_public_key=os.environ.get("LANGFUSE_PUBLIC_KEY") or None,

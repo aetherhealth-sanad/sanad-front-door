@@ -858,7 +858,7 @@ On `FALLBACK`, `sentences` is empty, `label` and `produced_by` are null, and the
 
 ### 6.15 Model budget, run metrics and decision record (RF-23, RF-24, `PROPOSED`)
 
-**Local decision provider (RF-25).** No endpoint changes. With `SANAD_MODEL_PROVIDER=laya_local`, `GET /chat/assistant` returns `model: {"provider": "laya_local", "label": "Laya (local model on this server)", "model_id": "convaiinnovations/laya@<revision>"}`, and `POST /cases/{id}/chat/interpret` returns the same outcomes as with Azure OpenAI. A number question returns `FALLBACK` with `reason_code: "MODEL_UNAVAILABLE"`, because the adapter does not support it.
+**Local decision provider (RF-25).** No endpoint changes. With `SANAD_MODEL_PROVIDER=laya_local`, `GET /chat/assistant` returns `model: {"provider": "laya_local", "label": "Laya (local model on this server)", "model_id": "convaiinnovations:laya:<revision, 12 chars>"}`, and `POST /cases/{id}/chat/interpret` returns the same outcomes as with Azure OpenAI. A number question returns `FALLBACK` with `reason_code: "MODEL_UNAVAILABLE"`, because the adapter does not support it.
 
 **Per-case budget.** Before any model call, `POST /cases/{id}/chat/interpret` and `POST /cases/{id}/report/explanation` count the case's `MODEL_TASK_RUN` entries that reached the adapter. At `SANAD_MODEL_MAX_CALLS_PER_CASE` they skip the model and return their usual fallback shape with `reason_code: "MODEL_BUDGET_EXCEEDED"`, still 200. In chat, the emergency word check runs before the budget check.
 

@@ -177,6 +177,23 @@ With `SANAD_AZURE_OPENAI_AUTH=entra_id`, the API uses `DefaultAzureCredential` (
 
 To turn typing off again, set `SANAD_MODEL_PROVIDER=disabled` in `apps/api/.env` (or remove the line). Emergency handling, consent and the rules never depend on this setting.
 
+## Optional: local decision model (Laya) for answer matching
+
+RF-25, CC-015 (`PROPOSED`). Laya returns a typed choice with probabilities and writes no text. It runs on the API host, so typed chat text does not leave the machine. It handles yes/no and choice questions only; number questions fall back to the buttons. The weight licence is not yet confirmed (OD-17), so use it for local evaluation only.
+
+```powershell
+# CPU torch keeps the download small; drop --index-url to get a CUDA build instead.
+apps/api/.venv/Scripts/python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+apps/api/.venv/Scripts/python -m pip install -e "apps/api[decision]"
+$env:SANAD_MODEL_PROVIDER = "laya_local"
+$env:SANAD_LAYA_REVISION = "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851"  # upstream reviewed pin
+$env:USE_TF = "0"
+# First run downloads the checkpoint into the Hugging Face cache. Afterwards:
+$env:HF_HUB_OFFLINE = "1"
+```
+
+On Apple Silicon, `pip install laya-mlx` and `SANAD_LAYA_BACKEND=auto` (or `mlx`) use the MLX port instead. Compare providers on the same synthetic cases with `python eval/run_model_eval.py --provider laya_local` and `--provider azure_openai`; enable Laya in a demo only if its scorecard shows zero unsafe conversions (OD-15, OD-16).
+
 ## Start the web app
 
 In terminal 2, from the repository root:

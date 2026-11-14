@@ -80,6 +80,7 @@ class Outcome:
 class TaskScore:
     cases: int = 0
     skipped: int = 0
+    unsupported: int = 0
     correct: int = 0
     unsafe: list[str] = field(default_factory=list)
     wrong: list[str] = field(default_factory=list)
@@ -119,7 +120,10 @@ def eval_passage(raw: dict[str, str]) -> Passage:
 
 
 def run_case(
-    case: dict[str, Any], adapter: ModelAdapter, catalogues: Catalogues, settings: Settings
+    case: dict[str, Any],
+    adapter: ModelAdapter,
+    catalogues: Catalogues,
+    settings: Settings,
 ) -> Outcome:
     data = case["input"]
     request_id = f"eval-{case['case_id']}"
@@ -215,6 +219,10 @@ def evaluate(
             score.skipped += 1
             continue
         got = run_case(case, adapter, catalogues, settings)
+        if got.result is not None and got.result.error_code == "UNSUPPORTED_TASK":
+            # Outside the provider's declared scope (AC-25.3): reported, not scored.
+            score.unsupported += 1
+            continue
         ok = is_correct(case["expected"], got)
         score.cases += 1
         score.correct += ok
@@ -243,6 +251,7 @@ def evaluate(
         tasks[task_id] = {
             "cases": s.cases,
             "skipped_replay_only": s.skipped,
+            "unsupported_by_provider": s.unsupported,
             "correct": s.correct,
             "accuracy": accuracy,
             "unsafe_conversions": len(s.unsafe),
@@ -265,8 +274,14 @@ def evaluate(
         "model_id": adapter.model_id,
         "versions": {
             "question_catalogue": catalogues.questions.catalogue_version,
-            intake_extract.TASK_ID: [intake_extract.PROMPT_VERSION, intake_extract.SCHEMA_VERSION],
-            report_explain.TASK_ID: [report_explain.PROMPT_VERSION, report_explain.SCHEMA_VERSION],
+            intake_extract.TASK_ID: [
+                intake_extract.PROMPT_VERSION,
+                intake_extract.SCHEMA_VERSION,
+            ],
+            report_explain.TASK_ID: [
+                report_explain.PROMPT_VERSION,
+                report_explain.SCHEMA_VERSION,
+            ],
         },
         "case_files": {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
         "min_accuracy": min_accuracy,
@@ -276,6 +291,41 @@ def evaluate(
     }
 
 
+def _peak_rss_mb() -> float | None:
+    """Peak resident memory of this process, for the scorecard's host line (AC-25.9)."""
+    if sys.platform == "win32":
+        import ctypes
+        from ctypes import wintypes
+
+        class Counters(ctypes.Structure):
+            _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD)] + [
+                (name, ctypes.c_size_t)
+                for name in (
+                    "PeakWorkingSetSize",
+                    "WorkingSetSize",
+                    "QuotaPeakPagedPoolUsage",
+                    "QuotaPagedPoolUsage",
+                    "QuotaPeakNonPagedPoolUsage",
+                    "QuotaNonPagedPoolUsage",
+                    "PagefileUsage",
+                    "PeakPagefileUsage",
+                )
+            ]
+
+        counters = Counters(cb=ctypes.sizeof(Counters))
+        get_process = ctypes.windll.kernel32.GetCurrentProcess
+        get_process.restype = wintypes.HANDLE
+        get_info = ctypes.windll.psapi.GetProcessMemoryInfo
+        get_info.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
+        if get_info(get_process(), ctypes.byref(counters), counters.cb):
+            return round(counters.PeakWorkingSetSize / 2**20, 1)
+        return None
+    import resource
+
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss  # KiB on Linux, bytes on macOS
+    return round(peak / (2**20 if sys.platform == "darwin" else 2**10), 1)
+
+
 def markdown(card: dict[str, Any]) -> str:
     lines = [
         f"# Model scorecard ({card['label']})",
@@ -283,18 +333,27 @@ def markdown(card: dict[str, Any]) -> str:
         f"Provider `{card['provider']}`, model `{card['model_id']}`, run {card['run_at']}.",
         f"Accuracy threshold {card['min_accuracy']}, unsafe conversions allowed: 0.",
         "Synthetic cases only. Not evidence of clinical accuracy or safety.",
+        f"Host peak memory (MB): {card.get('host', {}).get('peak_rss_mb')}",
         "",
-        "| Task | Cases | Accuracy | Unsafe | p50 ms | p95 ms | Tokens in/out | Passed |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Task | Cases | Unsupported | Accuracy | Unsafe | p50 ms | p95 ms | Tokens in/out "
+        "| Passed |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for task_id, t in card["tasks"].items():
         lines.append(
-            f"| `{task_id}` | {t['cases']} | {t['accuracy']} | {t['unsafe_conversions']} | "
+            f"| `{task_id}` | {t['cases']} | {t['unsupported_by_provider']} | {t['accuracy']} | "
+            f"{t['unsafe_conversions']} | "
             f"{t['latency_ms']['p50']} | {t['latency_ms']['p95']} | "
             f"{t['tokens']['input']}/{t['tokens']['output']} | {t['passed']} |"
         )
     for task_id, t in card["tasks"].items():
-        lines += ["", f"## `{task_id}` by tag", "", "| Tag | Cases | Accuracy |", "|---|---|---|"]
+        lines += [
+            "",
+            f"## `{task_id}` by tag",
+            "",
+            "| Tag | Cases | Accuracy |",
+            "|---|---|---|",
+        ]
         lines += [f"| {tag} | {b['cases']} | {b['accuracy']} |" for tag, b in t["by_tag"].items()]
         if t["unsafe_case_ids"]:
             lines.append(f"\nUnsafe: {', '.join(t['unsafe_case_ids'])}")
@@ -313,7 +372,9 @@ def write(card: dict[str, Any], out_dir: Path) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--provider", choices=("replay", "azure_openai"), default="replay")
+    parser.add_argument(
+        "--provider", choices=("replay", "azure_openai", "laya_local"), default="replay"
+    )
     parser.add_argument("--min-accuracy", type=float, default=0.90)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args(argv)
@@ -326,6 +387,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"set SANAD_MODEL_PROVIDER={args.provider} for a live run")
         adapter = build_model_adapter(settings)
     card = evaluate(adapter, min_accuracy=args.min_accuracy, replay=args.provider == "replay")
+    card["host"] = {"peak_rss_mb": _peak_rss_mb()}  # AC-25.9; None when it cannot be read
     print(markdown(card))
     print(f"Written: {write(card, args.out)}")
     return 0 if card["passed"] else 1

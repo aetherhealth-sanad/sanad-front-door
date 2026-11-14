@@ -53,6 +53,20 @@ DISCLOSURE = (
     "text. Microsoft handles it under its Azure OpenAI data terms. Do not type names, contact "
     "details or real health information. Answering with the buttons sends nothing to a model."
 )
+# RF-25, AC-25.8: a local provider keeps the text on this server, so it gets its own wording.
+LOCAL_DISCLOSURE_VERSION = "MODEL-DISCLOSURE-LOCAL-0.1"
+LOCAL_DISCLOSURE = (
+    "Typing is optional. If you send typed text, {label} checks it against the current question "
+    "on this server to suggest a matching answer. The text does not leave this server and is not "
+    "stored. Do not type names, contact details or real health information. Answering with the "
+    "buttons sends nothing to a model."
+)
+
+
+def _disclosure(adapter: ModelAdapter) -> tuple[str, str]:
+    if adapter.provider == "laya_local":
+        return LOCAL_DISCLOSURE.format(label=adapter.label), LOCAL_DISCLOSURE_VERSION
+    return DISCLOSURE.format(label=adapter.label), DISCLOSURE_VERSION
 
 # Draft copy (T1.11 review pending). Fixed text chosen by code, never the user's words.
 MESSAGES = {
@@ -112,8 +126,8 @@ def assistant(adapter: ModelAdapter = Depends(get_model_adapter)) -> dict[str, A
             if enabled
             else None
         ),
-        "disclosure": DISCLOSURE.format(label=adapter.label) if enabled else None,
-        "disclosure_version": DISCLOSURE_VERSION if enabled else None,
+        "disclosure": _disclosure(adapter)[0] if enabled else None,
+        "disclosure_version": _disclosure(adapter)[1] if enabled else None,
     }
 
 
@@ -238,7 +252,7 @@ def interpret_text(
 
     if not adapter.enabled:
         return _out("FALLBACK", "MODEL_DISABLED", state_view(db, case, catalogues))
-    if body.disclosure_version != DISCLOSURE_VERSION:
+    if body.disclosure_version != _disclosure(adapter)[1]:
         raise ApiError(422, ErrorCode.VALIDATION_FAILED, ["DISCLOSURE_NOT_ACKNOWLEDGED"])
 
     request_id = str(getattr(request.state, "request_id", "req-unknown"))
