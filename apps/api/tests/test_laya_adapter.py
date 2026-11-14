@@ -24,7 +24,7 @@ from sanad_api.config import Settings
 from sanad_api.main import create_app
 from sanad_api.model_adapter import intake_extract
 from sanad_api.model_adapter.factory import ModelConfigError, build_model_adapter
-from sanad_api.model_adapter.laya_local import LayaLocalAdapter
+from sanad_api.model_adapter.laya_local import LayaLocalAdapter, labels_for
 from sanad_api.model_adapter.port import ModelStatus
 from tests.helpers import Api, ManualClock
 
@@ -47,7 +47,11 @@ class StubAgent:
             time.sleep(self.sleep)
         if self.error:
             raise self.error
-        return {"answers": {"answer": self.answer}}
+        return {"answers": {key: self.answer for key in questions}}
+
+    def load_calibration(self, path: str, verify: Any = True) -> dict[str, Any]:
+        self.calibration = (path, verify)
+        return {}
 
 
 def choice(label: str, prob: float = 0.95, **extra: Any) -> dict[str, Any]:
@@ -161,6 +165,7 @@ def test_tc_25_4_labels_come_from_the_catalogue_and_text_goes_alone(
     adapter.complete_json(request(catalogues, "Q-STEROID-USE", "used them, stopped"))
     ((state, questions),) = agent.calls
     assert state == "used them, stopped"
+    assert list(questions) == ["YN_TIME"]
     (q,) = questions.values()
     assert q["type"] == "choice"
     assert list(q["criteria"]) == [
@@ -290,6 +295,116 @@ def test_tc_25_7_deadline_and_errors_fall_back(
     result = adapter.complete_json(request(catalogues, "Q-SMOKING", "no"))
     assert result.status is ModelStatus.UNAVAILABLE
     assert result.error_code == "LOCAL_MODEL_ERROR"
+
+
+# AC-25.11 / AC-25.12 -------------------------------------------------------------------------
+
+
+def test_tc_25_10_vegaml_engine_and_calibration_settings(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, catalogues: Catalogues
+) -> None:
+    loads: list[dict[str, Any]] = []
+    built: list[StubAgent] = []
+    stub = types.ModuleType("laya")
+
+    def load(*args: Any, **kwargs: Any) -> StubAgent:
+        loads.append(kwargs)
+        built.append(StubAgent())
+        return built[-1]
+
+    stub.load = load  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "laya", stub)
+    reader = "nandakishorm/vega-U"
+    with pytest.raises(ModelConfigError, match="SANAD_LAYA_ENGINE"):
+        build_model_adapter(laya_settings(tmp_path, laya_engine="gpu-magic"))
+    with pytest.raises(ModelConfigError, match="SANAD_LAYA_ENGINE=vegaml"):
+        build_model_adapter(laya_settings(tmp_path, laya_calibration=tmp_path))
+    with pytest.raises(ModelConfigError, match="not a directory"):
+        build_model_adapter(
+            laya_settings(
+                tmp_path, laya_engine="vegaml", laya_calibration=tmp_path / "missing"
+            )
+        )
+    assert loads == []
+
+    adapter = build_model_adapter(
+        laya_settings(
+            tmp_path, laya_engine="vegaml", laya_model=reader, laya_calibration=tmp_path
+        )
+    )
+    assert loads == [{"vegaml": reader, "revision": REVISION, "device": None}]
+    (agent,) = built
+    assert agent.calibration == (str(tmp_path), True)
+
+    agent.answer = choice("NO")
+    for qid, key in [
+        ("Q-STEROID-USE", "YN_TIME"),
+        ("Q-DIABETES", "YN"),
+        ("Q-TRAINING-CONTEXT", "CHOICE:REGULAR|OCCASIONAL|NONE"),
+    ]:
+        adapter.complete_json(request(catalogues, qid, "no"))
+        assert list(agent.calls[-1][1]) == [key]
+
+
+def test_tc_25_10_calibration_that_fails_to_verify_stops_start_up(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Rejecting(StubAgent):
+        def load_calibration(self, path: str, verify: Any = True) -> dict[str, Any]:
+            raise ValueError("manifest hash mismatch")
+
+    stub = types.ModuleType("laya")
+    stub.load = lambda *a, **k: Rejecting()  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "laya", stub)
+    with pytest.raises(ModelConfigError, match="could not be loaded and verified"):
+        build_model_adapter(
+            laya_settings(tmp_path, laya_engine="vegaml", laya_calibration=tmp_path)
+        )
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [choice("NO", prob=0.99, route="review"), choice("NO", prob=0.99, calibrated=False)],
+)
+def test_tc_25_11_fitted_route_and_uncalibrated_options_abstain(
+    adapter: LayaLocalAdapter, agent: StubAgent, catalogues: Catalogues, answer: dict[str, Any]
+) -> None:
+    agent.answer = answer
+    body = draft(adapter, catalogues, "Q-SMOKING", "nope")
+    assert body["status"] == "ABSTAIN" and body["abstain_reason"] == "UNCLEAR"
+
+
+# AC-25.13 ------------------------------------------------------------------------------------
+
+ROWS = Path(__file__).resolve().parents[3] / "eval" / "decision" / "intake_rows.v0.1.jsonl"
+EVAL_CASES = Path(__file__).resolve().parents[3] / "eval" / "model" / "intake_extract.v0.1.jsonl"
+
+
+def _norm(text: str) -> str:
+    return " ".join(text.lower().split())
+
+
+@pytest.mark.skipif(not ROWS.exists(), reason="rows file not written yet")
+def test_tc_25_12_rows_file_is_well_formed_and_disjoint_from_eval(
+    catalogues: Catalogues,
+) -> None:
+    eval_texts = {
+        _norm(json.loads(line)["input"]["text"])
+        for line in EVAL_CASES.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
+    ids = set()
+    for line in ROWS.read_text(encoding="utf-8").splitlines():
+        row = json.loads(line)
+        assert set(row) == {"row_id", "question_id", "state", "label", "author"}, row
+        assert row["row_id"] not in ids
+        ids.add(row["row_id"])
+        assert row["author"] in ("TEAM", "MODEL_DRAFTED_TEAM_REVIEWED", "MODEL_DRAFTED_UNREVIEWED")
+        payload = json.loads(request(catalogues, row["question_id"], row["state"]).user_content)
+        question = payload["question"]
+        assert question["answer_type"] in ("yes_no", "choice"), row
+        assert row["label"] in labels_for(question), row
+        assert _norm(row["state"]) not in eval_texts, row["row_id"]
 
 
 # AC-25.10 ------------------------------------------------------------------------------------

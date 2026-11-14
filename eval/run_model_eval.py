@@ -334,6 +334,7 @@ def markdown(card: dict[str, Any]) -> str:
         f"Accuracy threshold {card['min_accuracy']}, unsafe conversions allowed: 0.",
         "Synthetic cases only. Not evidence of clinical accuracy or safety.",
         f"Host peak memory (MB): {card.get('host', {}).get('peak_rss_mb')}",
+        f"Decision model: {card['decision_model']}" if card.get("decision_model") else "",
         "",
         "| Task | Cases | Unsupported | Accuracy | Unsafe | p50 ms | p95 ms | Tokens in/out "
         "| Passed |",
@@ -388,6 +389,14 @@ def main(argv: list[str] | None = None) -> int:
         adapter = build_model_adapter(settings)
     card = evaluate(adapter, min_accuracy=args.min_accuracy, replay=args.provider == "replay")
     card["host"] = {"peak_rss_mb": _peak_rss_mb()}  # AC-25.9; None when it cannot be read
+    if args.provider == "laya_local":  # AC-25.14
+        manifest = settings.laya_calibration and settings.laya_calibration / "manifest.json"
+        card["decision_model"] = {
+            "engine": settings.laya_engine,
+            "calibration_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest()
+            if manifest
+            else None,
+        }
     print(markdown(card))
     print(f"Written: {write(card, args.out)}")
     return 0 if card["passed"] else 1

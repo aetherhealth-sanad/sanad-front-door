@@ -25,7 +25,6 @@ from sanad_api.model_adapter.port import ModelRequest, ModelResult, ModelStatus
 logger = logging.getLogger("sanad.model")
 
 LABEL = "Laya (local model on this server)"
-QUESTION_ID = "answer"
 OPT_OUTS = {
     "NOT_SURE": "The person says they do not know or are not sure.",
     "PREFER_NOT_TO_ANSWER": "The person does not want to answer.",
@@ -82,6 +81,27 @@ def labels_for(question: dict[str, Any]) -> dict[str, tuple[str, dict[str, Any]]
     return labels
 
 
+def decision_key(question: dict[str, Any]) -> str:
+    """AC-25.11: questions with the same label set share one fitted head."""
+    if question["answer_type"] == "yes_no":
+        return "YN_TIME" if question["time_options"] else "YN"
+    return "CHOICE:" + "|".join(str(o["value"]) for o in question["options"])
+
+
+def decision_question(
+    question: dict[str, Any],
+) -> tuple[str, dict[str, Any], dict[str, tuple[str, dict[str, Any]]]]:
+    """(key, the laya `choice` question, labels). The fit script builds rows with this too, so
+    a head is fitted on exactly the prompt it later serves."""
+    labels = labels_for(question)
+    spec = {
+        "type": "choice",
+        "instructions": f"Which answer does this message give to the question: {question['text']}",
+        "criteria": {key: description for key, (description, _) in labels.items()},
+    }
+    return decision_key(question), spec, labels
+
+
 class LayaLocalAdapter:
     provider = "laya_local"
     label = LABEL
@@ -117,17 +137,8 @@ class LayaLocalAdapter:
         if question["answer_type"] not in ("yes_no", "choice") or not question["options"]:
             return self._done(ModelStatus.UNAVAILABLE, started, "UNSUPPORTED_TASK", attempts=0)
 
-        labels = labels_for(question)
-        questions = {
-            QUESTION_ID: {
-                "type": "choice",
-                "instructions": (
-                    f"Which answer does this message give to the question: {question['text']}"
-                ),
-                "criteria": {key: description for key, (description, _) in labels.items()},
-            }
-        }
-        future = self._pool.submit(self._agent.predict, payload["message"], questions)
+        key, spec, labels = decision_question(question)
+        future = self._pool.submit(self._agent.predict, payload["message"], {key: spec})
         try:
             out = future.result(timeout=request.envelope.timeout_ms / 1000)
         except FutureTimeout:
@@ -136,7 +147,7 @@ class LayaLocalAdapter:
             logger.error("local model failed: %s", type(error).__name__)
             return self._done(ModelStatus.UNAVAILABLE, started, "LOCAL_MODEL_ERROR")
 
-        draft = self._decide(out.get("answers", {}).get(QUESTION_ID) or {}, labels)
+        draft = self._decide(out.get("answers", {}).get(key) or {}, labels)
         return ModelResult(
             ModelStatus.OK,
             json.dumps(draft),
@@ -151,6 +162,8 @@ class LayaLocalAdapter:
         unclear = _draft("ABSTAIN", reason="UNCLEAR")
         top = answer.get("choice")
         if top not in labels:
+            return unclear
+        if answer.get("calibrated") is False:  # an option the fitted policy never saw
             return unclear
         if answer.get("abstain") is True or answer.get("unbound") is True:
             return unclear

@@ -100,6 +100,8 @@ class Settings:
     laya_backend: str = "auto"  # auto, torch or mlx
     laya_device: str | None = None  # None lets laya choose (CUDA, MPS, XPU, then CPU)
     decision_min_prob: float = 0.80  # TECH_TBD, set from the RF-23 scorecard
+    laya_engine: str = "checkpoint"  # checkpoint or vegaml (AC-25.11, CC-017)
+    laya_calibration: Path | None = None  # a save_calibration directory; vegaml only
 
     @classmethod
     def from_env(cls, env_file: Path | None = None) -> Settings:
@@ -143,6 +145,10 @@ class Settings:
             laya_backend=_str(env, "SANAD_LAYA_BACKEND") or cls.laya_backend,
             laya_device=_str(env, "SANAD_LAYA_DEVICE"),
             decision_min_prob=_float(env, "SANAD_DECISION_MIN_PROB", cls.decision_min_prob),
+            laya_engine=_str(env, "SANAD_LAYA_ENGINE") or cls.laya_engine,
+            laya_calibration=(
+                Path(cal) if (cal := _str(env, "SANAD_LAYA_CALIBRATION")) else None
+            ),
             langfuse_enabled=_bool_env("SANAD_LANGFUSE_ENABLED"),
             langfuse_base_url=os.environ.get("LANGFUSE_BASE_URL") or None,
             langfuse_public_key=os.environ.get("LANGFUSE_PUBLIC_KEY") or None,
