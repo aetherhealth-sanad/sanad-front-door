@@ -41,9 +41,9 @@ SANAD_DATABASE_URL='sqlite:///./sanad-dev.db' .venv/bin/uvicorn sanad_api.main:c
 
 The SQLite database is created at `apps/api/sanad-dev.db`; it is ignored by Git. The default local API addresses are:
 
-- OpenAPI UI: <http://127.0.0.1:8000/api/docs>
-- OpenAPI JSON: <http://127.0.0.1:8000/api/openapi.json>
-- Version endpoint: <http://127.0.0.1:8000/version>
+- OpenAPI UI: [http://127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs)
+- OpenAPI JSON: [http://127.0.0.1:8000/api/openapi.json](http://127.0.0.1:8000/api/openapi.json)
+- Version endpoint: [http://127.0.0.1:8000/version](http://127.0.0.1:8000/version)
 
 The seeded usernames are `demo-reviewer` and `demo-mock-facility`. Without the password environment variables, staff sign-in is disabled. Do not put passwords in source files or commit them. In the web app, choose **Mock Reviewer** or **Mock Facility** in the top navigation and sign in with the corresponding account.
 
@@ -56,13 +56,13 @@ cd apps/web
 npm run dev -- --host 127.0.0.1
 ```
 
-Open <http://127.0.0.1:3000>. Vite proxies requests under `/api` to `http://127.0.0.1:8000`, so start the API first. The development server serves the static emergency page at <http://127.0.0.1:3000/urgent.html>.
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Vite proxies requests under `/api` to `http://127.0.0.1:8000`, so start the API first. The development server serves the static emergency page at [http://127.0.0.1:3000/urgent.html](http://127.0.0.1:3000/urgent.html).
 
 ## Try the local flows
 
 - Start a blank case or choose a synthetic sample on the start screen. The app asks for consent before applying sample data.
 - Use the **Mock Reviewer** and **Mock Facility** navigation options for their simulated staff flows. Configure the local-only passwords above before starting the API.
-- Keep the emergency page reachable at <http://127.0.0.1:3000/urgent.html>. The service worker caches this static page and does not cache API responses.
+- Keep the emergency page reachable at [http://127.0.0.1:3000/urgent.html](http://127.0.0.1:3000/urgent.html). The service worker caches this static page and does not cache API responses.
 - Use separate browser tabs for patient and staff roles if you need to keep their session tokens separate.
 
 ## Stop and reset

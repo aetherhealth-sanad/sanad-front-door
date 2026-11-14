@@ -201,21 +201,21 @@ Owners follow the [README team table](../../README.md#team) as a suggestion and 
 | T2.6 | MockBadge and send button with just-in-time consent | AC-07.1 to AC-07.6, AC-17.1, AC-17.2, AC-17.4 | T2.5 | Vinh | In progress; review request and consent checks are wired; acceptance/CI verification pending |
 | T2.7 | Reviewer sign-in, role checks, queue, detail, decisions, version conflict, banner | AC-08.1 to AC-08.9 | T2.6 | Vinh, Trung | In progress; Mock Reviewer sign-in, queue and decision UI present; negative-path/CI verification pending |
 | T2.8 | Quick exit, full wipe, session end, back-forward cache protection, neutral titles | AC-09.1 to AC-09.8 | T1.9, T1.6 | Vinh | In progress; pre-network screen/storage wipe, BFCache redirect and neutral titles are wired; acceptance/CI verification pending |
-| T2.9 | Remaining J1, J4 and J5 fixtures, golden cases, J1 and J4 E2E | Journey tests in the test plan | T2.1 to T2.8 | Đạt, Hoàng | Not started |
+| T2.9 | Remaining J1, J4 and J5 fixtures, golden cases, J1 and J4 E2E | Journey tests in the test plan | T2.1 to T2.8 | Đạt, Hoàng | In progress; golden cases and API E2E journey matrix (`test_invariants_and_manifests.py`) added; browser E2E pending |
 
 ### M3 J2, J3 and the referral path
 
 | Task | Work | Delivers | Depends on | Suggested owner | Status |
 |---|---|---|---|---|---|
-| T3.1 | `evaluate_gate`, send endpoint, preview endpoint, architecture tests | AC-12.1 to AC-12.5, AC-12.7 to AC-12.9 | T2.7 | Trung | Not started |
+| T3.1 | `evaluate_gate`, send endpoint, preview endpoint, architecture tests | AC-12.1 to AC-12.5, AC-12.7 to AC-12.9 | T2.7 | Trung | In progress; API, truth-table (`GT-1`..`GT-16`), AST and import-lint tests (`test_referral_and_facility.py`) passing |
 | T3.2 | `NAVIGATION_STARTED`, `/referral` screen, three-condition display | AC-12.6 | T3.1 | Vinh | In progress; referral gate and J9/J10 UI are wired to API; acceptance/CI verification pending |
-| T3.3 | Referral and event models, lifecycle table | AC-13.2, AC-13.3, AC-13.6 | T3.1 | Trung | Not started |
+| T3.3 | Referral and event models, lifecycle table | AC-13.2, AC-13.3, AC-13.6 | T3.1 | Trung | In progress; models, lifecycle and API tests (`TC-13.1`..`TC-13.6`) passing |
 | T3.4 | Mock facility console and mock directory | AC-13.1, AC-13.2, AC-13.4, AC-13.5 | T3.3 | Vinh | In progress; Mock Facility screen is wired to API; acceptance/CI verification pending |
-| T3.5 | Tracking screen, timeline, delayed flag | AC-14.1 to AC-14.7 | T3.3 | Vinh, Trung | In progress; tracking screen reads API timeline and state; acceptance/CI verification pending |
-| T3.6 | Consent revocation in flight | AC-13.4, OD-10 | T3.4 | Trung | Not started |
-| T3.7 | J3 lab entry, confirmation, conflict handling, draft rules | AC-15.1 to AC-15.6 | T2.5 | Vinh, Hoàng | Not started |
-| T3.8 | J2 selective evidence (drop first if late) | AC-16.1 to AC-16.4 | T3.1 | Vinh, Đạt | Not started |
-| T3.9 | Mock label audit, full E2E, demo script for this flow | AC-17.3 | T3.1 to T3.7 | Hoàng, Đạt | Not started |
+| T3.5 | Tracking screen, timeline, delayed flag | AC-14.1 to AC-14.7 | T3.3 | Vinh, Trung | In progress; tracking screen and delayed-flag boundary tests (`TC-14.2`..`TC-14.6`) passing; browser E2E pending |
+| T3.6 | Consent revocation in flight | AC-13.4, OD-10 | T3.4 | Trung | In progress; live withdrawal and snapshot wipe tested (`TC-13.4`, `G4`) |
+| T3.7 | J3 lab entry, confirmation, conflict handling, draft rules | AC-15.1 to AC-15.6 | T2.5 | Vinh, Hoàng | In progress; API and tests (`TC-15.1`..`TC-15.6` in `test_observations_and_evidence.py`) passing |
+| T3.8 | J2 selective evidence (drop first if late) | AC-16.1 to AC-16.4 | T3.1 | Vinh, Đạt | In progress; API, UI and tests (`TC-16.1`..`TC-16.4` in `test_observations_and_evidence.py`) passing |
+| T3.9 | Mock label audit, full E2E, demo script for this flow | AC-17.3 | T3.1 to T3.7 | Hoàng, Đạt | In progress; API mock label and invariant suite (`TC-17.2`, `TC-INV-*`) passing; browser audit pending |
 
 ### v0.4 bounded additions
 
@@ -223,10 +223,10 @@ These are additive P0 backend/design tasks from PRD v0.4; they do not activate c
 
 | Task | Work | Delivers | Depends on | Suggested owner | Status |
 |---|---|---|---|---|---|
-| T4.1 | Optional psychosocial micro-intake, separate provenance store, consent guard, report context only | PRD-FR-29/30, PRD-AC-42/43 | T2.2, T2.5 | Backend, Product | In progress; API and intake/report UI source present, acceptance tests and review pending |
-| T4.2 | Session-bound guidance acknowledgement, idempotent progress/barrier writes, retention deletion and funnel | PRD-FR-24 to 28, PRD-AC-35 to 41 | T3.2 | Backend, Security, QA | In progress; API and `/referral` J9/J10 UI source present, TC-19.6 added, frontend acceptance/CI and review pending |
-| T4.3 | Versioned conceptual FHIR R4 mapping manifest; no export or conformance claim | PRD-FR-31, PRD-AC-46/48 | T1.10, T3.7 | Backend, Architect | In progress; manifest present, review pending |
-| T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader present, review pending |
+| T4.1 | Optional psychosocial micro-intake, separate provenance store, consent guard, report context only | PRD-FR-29/30, PRD-AC-42/43 | T2.2, T2.5 | Backend, Product | In progress; API, UI and `TC-18.1`..`TC-18.4` (`test_psychosocial.py`) passing; review pending |
+| T4.2 | Session-bound guidance acknowledgement, idempotent progress/barrier writes, retention deletion and funnel | PRD-FR-24 to 28, PRD-AC-35 to 41 | T3.2 | Backend, Security, QA | In progress; API, `/referral` J9/J10 UI and `TC-19.1`..`TC-19.6` (`test_navigation.py`) passing; browser E2E and review pending |
+| T4.3 | Versioned conceptual FHIR R4 mapping manifest; no export or conformance claim | PRD-FR-31, PRD-AC-46/48 | T1.10, T3.7 | Backend, Architect | In progress; manifest and `TC-20.1` (`test_invariants_and_manifests.py`) passing; review pending |
+| T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader and `TC-20.2` (`test_invariants_and_manifests.py`) passing; review pending |
 
 ### Critical path
 
