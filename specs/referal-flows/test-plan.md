@@ -313,6 +313,10 @@ Automated tests go in `apps/api/tests/test_laya_adapter.py`. They replace the `l
 | TC-25.7 | A | B | A stub that sleeps past the deadline or raises gives the RF-21 fallback and a `MODEL_TASK_RUN` entry with `TIMEOUT` or `UNAVAILABLE`, provider `laya_local`, model ID with revision, and no probabilities or text. | S |
 | TC-25.8 | U | B | Importing the emergency, triage, review, gate and explanation modules does not import the adapter or `laya`; with default settings `laya` is absent from `sys.modules`. | D |
 | TC-25.9 | M | B | Manual: `eval/run_model_eval.py --provider laya_local` on the RF-23 cases writes a scorecard with latency p50/p95 and peak memory; the result is compared with the Azure OpenAI scorecard on the same case-file hash. | M |
+| TC-25.10 | U | B | `SANAD_LAYA_ENGINE=vegaml` calls the stub `laya.load` with `vegaml=` the model and the pinned revision; an unknown engine, a calibration without `vegaml`, and a missing calibration directory each stop start-up naming the setting; a valid directory is loaded once with `verify=True`. The stub receives the catalogue question ID as the question key. | S |
+| TC-25.11 | U | B | With a calibration loaded, a stub answer with probability 0.99 and `route: review`, or with `calibrated: false`, gives ABSTAIN (`UNCLEAR`). | S |
+| TC-25.12 | U | B | Rows file check: every row parses, has the AC-25.13 fields, names a supported question and a label AC-25.4 builds for it, and no normalised text equals an RF-23 case text. Skipped until the file exists. | D |
+| TC-25.13 | M | B | Manual: `eval/fit_decision_head.py` writes a fit report with rows hash, reader revision and `used_by_auto`; the RF-23 scorecard is then run with the calibration and recorded in the ratchet log whether it passes or fails. | M |
 
 ### RF-24 Decision record for the reviewer (`PROPOSED`)
 

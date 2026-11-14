@@ -13,6 +13,7 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
+| 0.13 | 2026-11-14 | Added AC-25.11 to AC-25.14 (vegaml engine, fitted calibration, labelled synthetic rows, fit script), TC-25.10 to TC-25.13, T4.11, OD-18, CC-017; plan §4.10 calibration notes. No clinical rule, threshold, triage level, consent scope or data policy changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
 | 0.12 | 2026-11-14 | Withdrew CC-014 and T4.10: the team dropped hosted Jev. Product spec out-of-scope line, OD-16 and `specs/harness.md` updated. Recorded the vegaml-engine zero-shot result for RF-25 in the ratchet log. No clinical rule, threshold, triage level, consent scope or data policy changed. | Drafted by Claude Code | Pending |
 | 0.11 | 2026-11-14 | Added RF-25 local decision-model provider (AC-25.1 to AC-25.10, T4.9, TC-25.1 to TC-25.9, plan §4.10, API design §6.15 note). Laya, an open model with Jev-style typed decisions, runs on the API host through `laya` (PyTorch) or `laya-mlx` (Apple Silicon) for RF-21 yes/no and choice questions only. Moved the hosted Jev bake-off to T4.10 under CC-014. Opened CC-015; added OD-17 on the weight licence. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
 | 0.10 | 2026-11-14 | Added RF-23 model evaluation harness, per-case model budget and run metrics (AC-23.1 to AC-23.10, T4.7, TC-23.1 to TC-23.10) and RF-24 decision record for the reviewer (AC-24.1 to AC-24.4, T4.8, TC-24.1 to TC-24.4); API design §6.15; `GET /evaluation/model-runs`; reason code `MODEL_BUDGET_EXCEEDED`; token fields in `MODEL_TASK_RUN`; OD-15, OD-16. Opened CC-014 for an optional offline Jev bake-off (T4.9, blocked). Recorded as out of scope: runtime pgvector retrieval, runtime decision models, trained cross-field contradiction detection. No clinical rule, threshold, triage level, consent scope or data policy changed. **Order of work:** spec only; no code written for these items. Review before T4.7 and T4.8 start. | Drafted by Claude Code | Pending |
@@ -28,7 +29,22 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 ## Change-control records
 
-Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, and CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch).
+Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), and CC-017 with version 0.13.
+
+### CC-017 Fitted decision head on labelled synthetic rows
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Nothing implemented. Off by default; enabling still needs OD-15 and OD-17. |
+| **Reason** | Zero-shot, both local engines fail OD-15 on the RF-23 cases: the Laya checkpoint scores 0.26, the vegaml engine 0.17, both with zero unsafe conversions. vegaml sends 22 of 23 answers to review because no band is fitted, while its top label is right on 10 of 17 answerable cases. Its documentation says routing should come from a band fitted on the owner's labelled rows. |
+| **Evidence** | Ratchet log in `specs/harness.md` (2026-11-14 rows); `laya.vega.VegaAgent.fit` and `load_calibration` in laya 0.4.31 with vegaml 0.16.1: heads over frozen features, kept only if they beat chance under cross-validation and served only if they beat the engine; calibration measured on held-out rows; band at `target_precision` 0.95 with a 95% Wilson bound; an option a head never saw gives `calibrated: false` and review. |
+| **Change** | (1) Engine and calibration settings (AC-25.11, AC-25.12). (2) The decision key becomes the catalogue question ID. (3) A team-written, second-person-reviewed synthetic rows file in the repository (AC-25.13). (4) A fit script under `eval/` that writes an uncommitted calibration directory and a fit report (AC-25.14). (5) A second model download (reader and backbone, about 1.8 GB), no patient data uploaded. |
+| **Data policy** | Typed text stays on the API host. The rows are synthetic; no real or restricted data is used to fit or calibrate. |
+| **Clinical content** | None. Rows map wording to existing catalogue answers and opt-outs; they add no rule, threshold or triage level. |
+| **Affected journeys** | J1, J3, J5 at `/intake`, only when an operator enables the provider with a calibration. J4 untouched (AC-25.10). |
+| **Tests** | TC-25.10 to TC-25.13; RF-23 scorecard on the unseen cases |
+| **Approver** | Pending (Tech Lead for the adapter; QA for the rows review, OD-18; Legal for the reader licence, OD-17) |
+| **Version** | Spec 0.13 |
 
 ### CC-016 Deterministic harness, Langfuse and authoring-time MCP
 
