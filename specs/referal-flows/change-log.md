@@ -13,6 +13,7 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
+| 0.16 | 2026-11-15 | Added RF-27 identifier blocking and redaction before a model call (AC-27.1 to AC-27.8, T4.12, TC-27.1 to TC-27.7, OD-19, CC-018); API design input checks and redaction step; reason code `TEXT_CONTAINS_IDENTIFIER`; response field `redacted_types`; audit fields `redactions`, `redaction_count`. Data policy change: needs Security review. No clinical rule, threshold or triage level changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
 | 0.15 | 2026-11-14 | AC-25.13 adds author `MODEL_DRAFTED_UNREVIEWED` and the `--allow-unreviewed` flag, so draft rows are never labelled as reviewed. T4.11 implemented; fitted scorecard recorded in the ratchet log (0.87, zero unsafe, below OD-15). | Drafted by Claude Code | Pending |
 | 0.14 | 2026-11-14 | AC-25.11 amended before any code: the decision key is the label family (`YN_TIME`, `YN`, `CHOICE:<options>`), not the catalogue question ID, which the task payload does not carry and which would need over 500 rows. TC-25.10 and CC-017 updated to match. | Drafted by Claude Code | Pending |
 | 0.13 | 2026-11-14 | Added AC-25.11 to AC-25.14 (vegaml engine, fitted calibration, labelled synthetic rows, fit script), TC-25.10 to TC-25.13, T4.11, OD-18, CC-017; plan §4.10 calibration notes. No clinical rule, threshold, triage level, consent scope or data policy changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
@@ -31,7 +32,23 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 ## Change-control records
 
-Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), and CC-017 with version 0.13.
+Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), CC-017 with version 0.13, and CC-018 with version 0.16.
+
+### CC-018 Identifier blocking and redaction before a model call
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Nothing implemented. |
+| **Reason** | RF-21's guardrail blocks email addresses and numbers of seven or more digits only. Probed on 2026-11-15 with synthetic text, "my name is John Smith", "I am Nguyen Van An, 35", "I live at 12 Baker Street, Dubai", "born 12/03/1990" and "MRN 123456" all reached the model unchanged. With Azure OpenAI that text leaves the app. |
+| **Evidence** | `apps/api/sanad_api/chat/guardrail.py` on `main` (`_EMAIL`, `_LONG_NUMBER`); AGENTS.md INV-09 and INV-10; PhysioNet guidance of 2025-09-24 on sending credentialed data to third-party APIs, which favours keeping identifiers away from hosted models. |
+| **Change** | (1) A new block reason `TEXT_CONTAINS_IDENTIFIER` for ID numbers with a keyword and street addresses. (2) Code-only redaction of names and full dates to `[NAME]` and `[DATE]` in the task builder, for every provider. (3) Audit fields `redactions` and `redaction_count` (codes and counts only). (4) Response field `redacted_types` and a chat line. (5) Identifier cases and a `pii_leaks` limit of zero in the RF-23 runner. |
+| **Data policy** | Narrows what reaches any model. No new storage, no new outbound flow, no redacted value kept anywhere. |
+| **Known limits** | Pattern rules miss some names and places; the disclosure still asks users not to type identifiers (AC-27.8). |
+| **Clinical content** | None. |
+| **Affected journeys** | J1, J3, J5 at `/intake` when typing is enabled. Emergency handling unchanged (AC-27.1). |
+| **Tests** | TC-27.1 to TC-27.7; RF-23 scorecard with `pii_leaks` |
+| **Approver** | Pending (Security for the data policy; Tech Lead for the code) |
+| **Version** | Spec 0.16 |
 
 ### CC-017 Fitted decision head on labelled synthetic rows
 

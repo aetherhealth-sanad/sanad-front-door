@@ -318,6 +318,18 @@ Automated tests go in `apps/api/tests/test_laya_adapter.py`. They replace the `l
 | TC-25.12 | U | B | Rows file check: every row parses, has the AC-25.13 fields, names a supported question and a label AC-25.4 builds for it, and no normalised text equals an RF-23 case text. Skipped until the file exists. | D |
 | TC-25.13 | M | B | Manual: `eval/fit_decision_head.py` writes a fit report with rows hash, reader revision and `used_by_auto`; the RF-23 scorecard is then run with the calibration and recorded in the ratchet log whether it passes or fails. | M |
 
+### RF-27 Identifier blocking and redaction (`PROPOSED`)
+
+| ID | Level | Layer | What it checks | Data |
+|---|---|---|---|---|
+| TC-27.1 | A | B | A message with a name, a phone number and an emergency pattern returns `EMERGENCY_GUIDANCE`, with no `NEEDS_CORRECTION` and no model call. | S |
+| TC-27.2 | A | B | Each blocked sample (record number with keyword, passport or national ID with digits, street address) returns `NEEDS_CORRECTION` `TEXT_CONTAINS_IDENTIFIER`; the fake adapter is not called and the audit holds the reason code only. | S |
+| TC-27.3 | U | B | Redaction table: names after "my name is", "call me", "I'm" + two capitalised words, and "Dr" + name become `[NAME]`; `/`, `-`, `.` and ISO dates become `[DATE]`; controls ("I'm not sure", "quit in 2019", "I am 35", "twice a week", "10 mg") are unchanged. | D |
+| TC-27.4 | A | B | The fake adapter receives the redacted message; neither the original name nor the date appears anywhere in the model request. | S |
+| TC-27.5 | A | B | `MODEL_TASK_RUN` has `redactions` `DATE.NAME` and `redaction_count` 2 and no redacted value; the response has `redacted_types` `["DATE", "NAME"]`; a clean message has an empty list and no `redactions` field. | S |
+| TC-27.6 | U | B | Runner: replay over the identifier cases gives `pii_leaks` 0; a request that still holds a listed string counts one leak and fails the scorecard. | D |
+| TC-27.7 | M | W | Manual: in the chat, a typed answer with a name shows the hidden-name line and the proposal still needs confirmation. | M |
+
 ### RF-24 Decision record for the reviewer (`PROPOSED`)
 
 Automated tests are in `apps/api/tests/test_decision_record.py`. They check that the record matches stored data. They say nothing about whether a reviewer reads it.
