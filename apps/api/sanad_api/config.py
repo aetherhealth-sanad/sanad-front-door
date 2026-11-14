@@ -47,6 +47,13 @@ def _int(env: Mapping[str, str], name: str, default: int) -> int:
     return int(raw) if raw else default
 
 
+def _bool_env(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass(frozen=True)
 class Settings:
     database_url: str = "sqlite:///./sanad-dev.db"
@@ -64,6 +71,11 @@ class Settings:
     mock_facility_password: str | None = field(default=None, repr=False)
     cases_per_minute_per_ip: int = 30
     logins_per_minute_per_ip: int = 10
+    # Observability is explicitly opt-in; never infer enablement from credentials alone.
+    langfuse_enabled: bool = False
+    langfuse_base_url: str | None = None
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
     # T4.5, CC-011: the model adapter is off unless an operator turns it on. "disabled" makes
     # no network call. "azure_openai" sends typed chat text to the configured Azure resource.
     model_provider: str = "disabled"
@@ -111,4 +123,8 @@ class Settings:
             model_max_completion_tokens=_int(
                 env, "SANAD_MODEL_MAX_COMPLETION_TOKENS", cls.model_max_completion_tokens
             ),
+            langfuse_enabled=_bool_env("SANAD_LANGFUSE_ENABLED"),
+            langfuse_base_url=os.environ.get("LANGFUSE_BASE_URL") or None,
+            langfuse_public_key=os.environ.get("LANGFUSE_PUBLIC_KEY") or None,
+            langfuse_secret_key=os.environ.get("LANGFUSE_SECRET_KEY") or None,
         )

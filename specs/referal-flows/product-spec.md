@@ -2,9 +2,9 @@
 
 | Item | Value |
 |---|---|
-| **Document ID** | `AETHERHEALTH/SANAD/SPEC/REFERRAL-FLOWS/0.1` |
+| **Document ID** | `AETHERHEALTH/SANAD/SPEC/REFERRAL-FLOWS/0.2` |
 | **Status** | Draft for team review. Not approved. Clinical content not approved. |
-| **Version / date** | 0.1, 2026-11-02 |
+| **Version / date** | 0.2, 2026-11-12 |
 | **Parent documents** | [BRD v0.4](../Sanad_AetherHealth_BRD_v0.4.md), [PRD v0.4](../Sanad_AetherHealth_PRD_v0.4.md); this document retains the v0.3 M1–M3 referral-flow detail where not superseded |
 | **Companion documents** | [Implementation plan](implementation-plan.md), [API design](api-design.md), [Test plan](test-plan.md), [Change log](change-log.md) |
 | **Milestones** | M1 App foundation, M2 Journeys J1 and J4, M3 Journeys J2 and J3 plus the referral path |
@@ -70,6 +70,7 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 | RF-15 | *Implied by* "hoàn thiện J2, J3" | J3 manual lab entry | M3 |
 | RF-16 | *Implied by* "hoàn thiện J2, J3" | J2 selective evidence (exploratory) | M3 |
 | RF-17 | Mọi chỗ giả lập phải ghi rõ là "Mock" để không nhầm với dữ liệu thật. | Mock labelling across the app | M2, M3 |
+| RF-26 | Add bounded deterministic harness controls, optional redacted observability and read-only authoring-time MCP. | Harness controls proposal (CC-016); no runtime model calls or new clinical rules | Post-M3, pending review |
 | RF-21 | *Added 2026-11-08 by change request* (chat intake using Azure OpenAI, UX flow v0.3 step 4). Parent contracts: PRD-FR-04, PRD-FR-37, PRD 4.7.1–4.7.2. `PROPOSED`, CC-011 and CC-012. | Chat intake with a bounded model adapter | v0.4 additions |
 
 RF-18 to RF-20 are not used, because `TC-18.*` to `TC-20.*` already name the PRD v0.4 psychosocial, navigation and FHIR tests in the test plan.
@@ -89,6 +90,8 @@ RF-18 to RF-20 are not used, because `TC-18.*` to `TC-20.*` already name the PRD
 - LLM or SLM tasks other than RF-21's answer matching, RAG, knowledge registry and OCR. PDF or image upload is excluded with them.
 - Arabic and RTL, reminders and notifications, spouse sharing features, and care plans.
 - J6, J7 and J8.
+
+RF-26 is a review proposal only. These out-of-scope items remain excluded until CC-016 is approved; its Mode A MCP proposal must also resolve the source-manifest, protocol and knowledge-store decisions in `mcp-context-design.md`.
 
 **Parent-scope conflicts to resolve:** this draft lists Arabic/RTL as out of scope, while BRD §8.1 lists Arabic/English and key-screen RTL in P0, BRD FR-11 marks it P1, and PRD-FR-11 marks it Should. BRD §8.1 also calls for P0 evaluation/reporting while BRD FR-14 marks its dashboard P1 and PRD-FR-14 marks golden-set evaluation Must. PRD-AC-40 separately requires a J9/J10 funnel dashboard. Product must reconcile these classifications; this draft does not choose among them.
 
@@ -443,6 +446,17 @@ PRD mapping: PRD §11.3, NFR-17. BRD mapping: BR-11, BR-14.
 | AC-17.3 | An automated check visits every screen listing simulated data and fails CI if the word Mock is not visible. |
 | AC-17.4 | Enum values such as `SIMULATED` or `MOCK_ACCEPTED` are shown to users through plain labels that include Mock, never as raw codes alone. |
 
+### RF-26 Harness controls (PROPOSED; CC-016)
+
+This proposal extends the deterministic API. It does not authorize model calls, new clinical rules or a patient-facing free-text flow. Implementation remains blocked until Product, Security and Tech Lead review CC-016 and the dependencies in the implementation plan pass.
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-26.1 | Existing action authorization remains server-side and default-deny. Referral decisions continue through the pure Python `evaluate_gate`; no alternate code path creates a referral. |
+| AC-26.2 | Deterministic input checks use closed schemas and reason codes. Existing emergency checks run before non-emergency disposition. RF-26 adds no clinical trigger, threshold or emergency wording. |
+| AC-26.3 | MCP is limited to local authoring-time `sanad-knowledge` in this proposal. It is read-only, uses only approved manifest sources, has no case-store access and is absent from the patient and emergency paths. Runtime MCP remains deferred until PRD-FR-37 and its reviewed contract are implemented. |
+| AC-26.4 | Langfuse is disabled by default. When explicitly enabled against an approved endpoint, only allow-listed operational codes, versions, status and duration may be exported. Request bodies, answers, labs, prompts, passages, tokens and case identifiers are never exported. Export failure cannot change an API or policy decision. |
+| AC-26.5 | The existing audit log remains the authoritative policy record. Langfuse is diagnostic telemetry only and cannot authorize actions, alter case state or establish clinical validity. |
 ### RF-21 Chat intake with a bounded model adapter (v0.4 addition, `PROPOSED`)
 
 The `/intake` step opens as a chat that asks the catalogue questions one at a time ([UX flow v0.3](../UX-flow.md) step 4, on branch `spec/ux-flow`). Answers use buttons and number fields, exactly as the form does. When an operator enables a model provider, the user may also type an answer. A model then suggests which catalogue answer the text means, and the user confirms it before it is saved. The model decides nothing, writes nothing and writes no text the user reads. PRD mapping: PRD-FR-03, PRD-FR-04, PRD-FR-17, PRD-FR-35, PRD-FR-37, PRD-FR-38, PRD-FR-40, PRD 4.7.1–4.7.2, NFR-09, NFR-19, NFR-21, NFR-22. BRD mapping: BR-06, BR-09, BR-20. Change control: [CC-011](change-log.md#cc-011-optional-model-call-for-typed-chat-text), [CC-012](change-log.md#cc-012-draft-emergency-word-patterns-for-typed-text).

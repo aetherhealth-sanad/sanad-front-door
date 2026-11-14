@@ -263,6 +263,16 @@ These are additive P0 backend/design tasks from PRD v0.4; they do not activate c
 | T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader present, review pending |
 | T4.5 | Chat intake at `/intake`, model adapter port, disabled and Azure OpenAI adapters, `intake.extract.v1` task and validator, stage 2a word check, input checks, chat endpoints, trace events | RF-21, AC-21.1 to AC-21.12; PRD-FR-04/37/38/40 | T2.1, T2.2, T4.1 | Backend, Frontend, Security | In progress; API, adapters, chat UI and TC-21.1 to TC-21.12 (pytest) present. Spec review, CC-011 and CC-012 approval, browser E2E and a run against a real Azure deployment pending. Provider off by default. |
 
+### Harness implementation (CC-016; code present, acceptance pending)
+
+These tasks are outside the current M1–M3 exit path. The requester explicitly asked for the bounded code implementation and identified themself as Product/Security approver. Formal Tech Lead review, M3 exit criteria, acceptance checks and CC-016 closure remain pending. No task may add a clinical rule or runtime model call under this scope.
+
+| Task | Work | Delivers | Depends on | Suggested owner | Status |
+|---|---|---|---|---|---|
+| T5.11 | Preserve the existing emergency ordering, closed API schemas, reason-code errors and single Python `evaluate_gate` referral path; add structured input guardrail | RF-26, AC-26.1/2, HR-01/02/10/19/28 | M3 exit, CC-016 | Backend, Security, QA | Code present; TC-HR acceptance and formal review pending |
+| T5.12 | Optional Langfuse spans with explicit field allowlist, off-by-default config, no automatic body/prompt capture and non-blocking exporter failure | RF-26, AC-26.4/5, PRD NFR-03/08/21 | T5.11, Tech Lead review, self-hosted endpoint/operator configuration | Backend, Security | Code present; TC-HR acceptance and operator configuration pending |
+Mode A MCP code now covers the empty source manifest and topic catalogue, read-only database schema, pinned tool manifest, and stdio server. Offline ingestion, shared report citation verification and the CI checks remain open. Mode B case-context and calendar MCP remain dependent on PRD-FR-37 and separate change control. The existing Python referral gate is the policy engine for this scope; adopting OPA/Cedar is not proposed.
+
 ### Critical path
 
 ```mermaid

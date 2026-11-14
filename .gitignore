@@ -9,6 +9,7 @@ apps/api/.venv/
 *.sqlite
 *.sqlite3
 
+# Local environment files (keep .env.example tracked)
 # Dependencies & Build artifacts
 node_modules/
 .expo/

@@ -23,6 +23,77 @@ cd ../..
 
 The API loads rules, consent/question catalogues, and synthetic fixtures from this repository when it starts. By default it makes no model calls and needs no cloud credentials. The optional Azure OpenAI answer matching for the chat is described [below](#optional-azure-openai-answer-matching-in-the-chat).
 
+## Cách chạy Langfuse (self-hosted)
+
+Langfuse cần Postgres, ClickHouse, Redis và MinIO. Dùng Docker Compose trong repository chính
+của Langfuse (nằm ngoài repository Sanad). Đây là cách chạy local để phát triển; Docker Compose
+không cung cấp high availability hoặc backup. Trước khi chạy, cập nhật các secret được đánh dấu
+`CHANGEME` trong file compose của Langfuse. Vite của Sanad dùng cổng `3000`, nên đổi port mapping
+của Langfuse web từ `3000:3000` thành `127.0.0.1:3100:3000` để hai ứng dụng có thể chạy cùng lúc.
+
+```bash
+# 1. Chạy server Langfuse
+git clone https://github.com/langfuse/langfuse.git ~/langfuse
+cd ~/langfuse
+docker compose up -d
+# Chờ khoảng 2-3 phút; kiểm tra log tới khi langfuse-web báo Ready.
+docker compose logs -f langfuse-web
+```
+
+Mở <http://localhost:3100>, tạo user, organization và project. Vào **Settings → API Keys** để
+tạo cặp `pk-lf-...` / `sk-lf-...`.
+
+```bash
+# 2. Cài extra cho API (từ repository Sanad)
+cd /Users/macmini/Desktop/AIApp/sanad-front-door
+apps/api/.venv/bin/python -m pip install -e 'apps/api[observability]'
+
+# 3. Chạy API với biến môi trường; không commit key
+export SANAD_LANGFUSE_ENABLED=true
+export SANAD_DATABASE_URL=sqlite:///./apps/api/sanad-dev.db
+export LANGFUSE_BASE_URL=http://localhost:3100
+export LANGFUSE_PUBLIC_KEY=pk-lf-...
+export LANGFUSE_SECRET_KEY=sk-lf-...
+apps/api/.venv/bin/uvicorn sanad_api.main:create_app --factory --app-dir apps/api --reload
+```
+
+Gọi `http://127.0.0.1:8000/version` hoặc tạo case tổng hợp qua UI, rồi xem tab **Traces** trong
+project. Mỗi request được trace sẽ có span `http.request` với metadata `http.route`,
+`http.status_code` và thời lượng. Metadata `policy.*` chỉ có trên request phát sinh policy audit
+event.
+
+Mở trace và xác nhận input/output trống. Các endpoint ghi câu trả lời như `answers` và kiểm tra an
+toàn như `safety-check` bị loại khỏi tracing nên không tạo trace. Tracing tắt theo mặc định; khi
+bật, exporter chỉ gửi route template, method, status, thời lượng và policy codes được cho phép.
+Request/response body, case ID, câu trả lời, giá trị xét nghiệm, prompt và passages không được gửi.
+
+## Optional authoring knowledge MCP server
+
+The MCP server is a separate authoring tool. It uses stdio and the separate PostgreSQL knowledge
+database; it does not connect to the API case database. The reader connection must use the
+`sanad_kn_mcp` read-only role. The checked-in source manifest is empty and no approved corpus is
+available, so evidence searches abstain until a reviewed corpus and index exist. The embedding
+model ID and max-distance threshold must be configured to match a reviewed index and evaluation;
+without them, search returns `KNOWLEDGE_UNAVAILABLE`.
+
+```bash
+python3 -m venv apps/knowledge/.venv
+apps/knowledge/.venv/bin/python -m pip install -e apps/knowledge
+```
+
+Configure `SANAD_KNOWLEDGE_DATABASE_URL`, `SANAD_EMBEDDING_MODEL_ID`, and
+`SANAD_KNOWLEDGE_MAX_DISTANCE` in the process environment. `SANAD_KNOWLEDGE_TIMEOUT_MS` is
+optional and defaults to 3000. Then launch:
+
+```bash
+apps/knowledge/.venv/bin/sanad-knowledge-mcp
+```
+
+The command stays attached to stdin/stdout for its MCP host. It accepts only fixed topic codes and
+source/chunk identifiers; it has no case, consent, referral, calendar, or write tools. Apply the
+one-time database bootstrap in `knowledge/migrations/0001_init.sql` only to the separate knowledge
+database. Do not add patient data or unapproved sources to it.
+
 ## Start the API
 
 In terminal 1, from the repository root, create your local settings file once:
