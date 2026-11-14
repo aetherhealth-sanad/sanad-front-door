@@ -145,7 +145,6 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
   onAssessmentComplete,
   onSwitchToForm,
   onOpenLab,
-  onNavigateToReview,
   onAnswerSaved,
 }) => {
   const [assistant, setAssistant] = useState<AssistantInfo | null>(null);
