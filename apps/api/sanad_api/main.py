@@ -37,6 +37,7 @@ from sanad_api.middleware import RequestContextMiddleware
 from sanad_api.mock_facility.routes import router as mock_facility_router
 from sanad_api.model_adapter.factory import build_model_adapter
 from sanad_api.model_adapter.port import ModelAdapter
+from sanad_api.model_adapter.runs import router as model_runs_router
 from sanad_api.navigation import models as _navigation_models  # noqa: F401
 from sanad_api.navigation.routes import router as navigation_router
 from sanad_api.navigation.service import purge_expired_navigation
@@ -160,6 +161,7 @@ def create_app(
         referral_router,
         mock_facility_router,
         tracking_router,
+        model_runs_router,
     ):
         api.include_router(router)
     app.include_router(api)

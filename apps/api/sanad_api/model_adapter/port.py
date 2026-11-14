@@ -53,6 +53,8 @@ class ModelResult:
     attempts: int
     elapsed_ms: int
     error_code: str | None = None
+    input_tokens: int | None = None  # as reported by the provider (AC-23.8)
+    output_tokens: int | None = None
 
 
 class ModelAdapter(Protocol):

@@ -20,7 +20,7 @@ from sanad_api.clock import Clock
 from sanad_api.config import Settings
 from sanad_api.deps import get_catalogues, get_clock, get_db, get_model_adapter, get_settings
 from sanad_api.errors import ApiError, ErrorCode
-from sanad_api.model_adapter import report_explain
+from sanad_api.model_adapter import report_explain, runs
 from sanad_api.model_adapter.port import ModelAdapter, run_safely
 from sanad_api.navigation.service import get_or_create_episode
 from sanad_api.psychosocial.models import PsychosocialSelfReport
@@ -143,11 +143,25 @@ def explain_report(
     if not passages:
         return fallback("NO_CURATED_PASSAGES")
 
+    request_id = str(getattr(request.state, "request_id", "req-unknown"))
+    if not runs.budget_left(db, case.case_id, settings.model_max_calls_per_case):  # AC-23.7
+        runs.record_refusal(
+            db,
+            actor=pc.auth.actor,
+            now=clock.now(),
+            case_id=case.case_id,
+            case_version=case.case_version,
+            request_id=request_id,
+            task_id=report_explain.TASK_ID,
+            provider=adapter.provider,
+            model_id=adapter.model_id,
+        )
+        return fallback(runs.BUDGET_REASON)
+
     action = TriageAction(content["triage_proposal"]["action"])
     signals = sorted(
         {s["code"] for s in content["risk_signals"] if s["rule_id"] in floor_rule_ids}
     )
-    request_id = str(getattr(request.state, "request_id", "req-unknown"))
     passage_version = catalogues.passages.catalogue_version
     model_request = report_explain.build_request(
         next_step_label=label_text,
@@ -180,6 +194,8 @@ def explain_report(
         outcome=outcome if explanation.sentences else explanation.reason_code,
         attempts=result.attempts,
         elapsed_ms=result.elapsed_ms,
+        input_tokens=result.input_tokens,
+        output_tokens=result.output_tokens,
     )
     db.commit()
     if not explanation.sentences:

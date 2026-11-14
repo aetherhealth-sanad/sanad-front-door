@@ -80,6 +80,8 @@ ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
             "outcome",
             "attempts",
             "elapsed_ms",
+            "input_tokens",
+            "output_tokens",
         }
     ),
 }

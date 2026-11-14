@@ -34,7 +34,7 @@ from sanad_api.config import Settings
 from sanad_api.deps import get_catalogues, get_clock, get_db, get_model_adapter, get_settings
 from sanad_api.errors import ApiError, ErrorCode
 from sanad_api.intake.service import record_safety
-from sanad_api.model_adapter import intake_extract
+from sanad_api.model_adapter import intake_extract, runs
 from sanad_api.model_adapter.port import ModelAdapter, run_safely
 from sanad_api.rules_engine.emergency import SafetyResult
 from sanad_api.rules_engine.emergency_text import scan_text
@@ -72,6 +72,7 @@ MESSAGES = {
         "short answer to this question."
     ),
     "ABSTAIN_UNCLEAR": "I couldn't match that to one answer. Please choose one with the buttons.",
+    "MODEL_BUDGET_EXCEEDED": "Typing is paused for this session. Please use the buttons.",
 }
 FALLBACK_MESSAGE = "I couldn't match that to an answer. Please choose one with the buttons."
 
@@ -240,8 +241,23 @@ def interpret_text(
     if body.disclosure_version != DISCLOSURE_VERSION:
         raise ApiError(422, ErrorCode.VALIDATION_FAILED, ["DISCLOSURE_NOT_ACKNOWLEDGED"])
 
-    concept = catalogues.concepts[question.concept_code]
     request_id = str(getattr(request.state, "request_id", "req-unknown"))
+    if not runs.budget_left(db, case.case_id, settings.model_max_calls_per_case):  # AC-23.7
+        runs.record_refusal(
+            db,
+            actor=actor,
+            now=now,
+            case_id=case.case_id,
+            case_version=case.case_version,
+            request_id=request_id,
+            task_id=intake_extract.TASK_ID,
+            provider=adapter.provider,
+            model_id=adapter.model_id,
+            question_id=question.question_id,
+        )
+        return _out("FALLBACK", runs.BUDGET_REASON, state_view(db, case, catalogues))
+
+    concept = catalogues.concepts[question.concept_code]
     model_request = intake_extract.build_request(
         question,
         concept,
@@ -273,6 +289,8 @@ def interpret_text(
         outcome="PROPOSAL" if proposal else interpretation.reason_code,
         attempts=result.attempts,
         elapsed_ms=result.elapsed_ms,
+        input_tokens=result.input_tokens,
+        output_tokens=result.output_tokens,
     )
     db.commit()
     state = state_view(db, case, catalogues)
