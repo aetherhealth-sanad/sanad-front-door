@@ -533,7 +533,7 @@ A reviewer should see what a draft rests on before approving it, so approval is 
 
 | ID | Acceptance criterion |
 |---|---|
-| AC-24.1 | `GET /reviews/{case_id}` adds `decision_record` with: the draft action and floor; the rule IDs that set the floor, with rule version and approval status; the question, emergency, passage and consent catalogue versions; the facts the firing rules read, each with concept, state, value, temporal status and source type; the evidence status of each claim; the case's model runs (task, status, outcome, time) with no text; the current report hash; and the time the record was built. |
+| AC-24.1 | `GET /reviews/{case_id}` adds `decision_record` with: the draft action and floor; every rule that fired, with its signal, whether it set the floor, rule version and approval status; the question, emergency, typed-text emergency, lab, passage and consent catalogue versions; the facts the firing rules read, each with concept, state and every current value with its state, temporal status and source type; the confirmed lab values that lab rules read; the evidence status of each claim; the case's model runs (task, status, outcome, time) with no text; the current report hash; and the time the record was built. |
 | AC-24.2 | Every field comes from the database, catalogues or rule engine at read time. Building the record makes no model call and writes nothing. |
 | AC-24.3 | Facts keep their stored state: `UNKNOWN`, `DECLINED`, `NOT_ASKED` and `CONFLICTING` are shown as such, and every value of a conflicting fact is listed with its source (INV-05, AC-06.3). |
 | AC-24.4 | The record appears only in the reviewer detail. The patient report and its hash do not change. |

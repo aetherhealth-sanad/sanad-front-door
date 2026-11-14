@@ -316,14 +316,14 @@ Automated tests go in `apps/api/tests/test_laya_adapter.py`. They replace the `l
 
 ### RF-24 Decision record for the reviewer (`PROPOSED`)
 
-Automated tests go in `apps/api/tests/test_review.py`. They check that the record matches stored data. They say nothing about whether a reviewer reads it.
+Automated tests are in `apps/api/tests/test_decision_record.py`. They check that the record matches stored data. They say nothing about whether a reviewer reads it.
 
 | Test | Lvl | Block | Check | Oracle |
 |---|---|---|---|---|
 | TC-24.1 | A | B | For the J1 sample, `decision_record` holds the floor action, rule ID, rule version, approval status, catalogue versions, the steroid fact with state, value, temporal status and source type, the claim statuses, and the current report hash. | S |
 | TC-24.2 | A | B | Reading the detail twice makes no model call, writes no audit entry and leaves `case_version` and the report hash unchanged. | S |
 | TC-24.3 | A | B | A field answered `UNKNOWN` stays `UNKNOWN`, and a field with disagreeing sources lists every value with its source under `CONFLICTING`. | S |
-| TC-24.4 | A | B | `GET /cases/{id}/report` has no `decision_record` field, and a patient token gets 401 on the reviewer detail. | S |
+| TC-24.4 | A | B | `GET /cases/{id}/report` has no `decision_record` field, and a patient token gets 403 on the reviewer detail. | S |
 
 ### RF-23 Model evaluation harness, budget and run metrics (`PROPOSED`)
 

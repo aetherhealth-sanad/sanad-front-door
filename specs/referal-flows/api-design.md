@@ -888,12 +888,14 @@ On `FALLBACK`, `sentences` is empty, `label` and `produced_by` are null, and the
 "decision_record": {
   "action": "SPECIALIST",
   "floor": "SPECIALIST",
-  "rules": [{"rule_id": "DRAFT-STEROID-01", "rule_version": "draft-0.1", "approval_status": "CLINICAL_TBD"}],
-  "catalogue_versions": {"questions": "...", "emergency": "...", "passages": "passages-0.1", "consent": "..."},
+  "rules": [{"rule_id": "DRAFT-STEROID-01", "signal": "REPORTS_ANABOLIC_STEROID_USE", "sets_floor": true, "rule_version": "draft-0.1", "approval_status": "CLINICAL_TBD"}],
+  "catalogue_versions": {"questions": "questions-draft-0.1", "emergency": "emergency-draft-0.1", "emergency_text": "emergency-text-draft-0.1", "lab_tests": "lab-tests-draft-0.1", "passages": "passages-0.1", "consent": "CONSENT-0.1"},
   "facts_used": [
-    {"concept_code": "anabolic_steroid_use", "state": "KNOWN", "value": true, "temporal_status": "PAST", "source_type": "PATIENT_REPORTED"}
+    {"concept_code": "anabolic_steroid_use", "state": "KNOWN_POSITIVE",
+     "values": [{"state": "KNOWN_POSITIVE", "value": true, "temporal_status": "PAST", "source_type": "PATIENT_REPORTED"}]}
   ],
-  "evidence": [{"claim_id": "CLAIM-DRAFT-STEROID-01", "status": "INSUFFICIENT_EVIDENCE"}],
+  "observations_used": [],
+  "evidence": [{"claim_id": "CLAIM-DRAFT-STEROID-01", "rule_id": "DRAFT-STEROID-01", "status": "INSUFFICIENT_EVIDENCE"}],
   "model_runs": [{"task_id": "intake.extract.v1", "status": "OK", "outcome": "PROPOSAL", "at": "2026-11-14T09:00:00Z"}],
   "report_hash": "<sha256>",
   "built_at": "2026-11-14T09:05:00Z"
