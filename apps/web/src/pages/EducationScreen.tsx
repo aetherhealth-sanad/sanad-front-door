@@ -1,4 +1,3 @@
-import { MockBadge } from '../components/MockBadge';
 
 interface EducationScreenProps {
   onNewSession: () => void;
@@ -7,40 +6,44 @@ interface EducationScreenProps {
 export const EducationScreen: React.FC<EducationScreenProps> = ({ onNewSession }) => {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <div className="mb-8 pb-5 border-b border-[#0B1310]">
-        <div className="flex items-center gap-2 mb-3">
-          <MockBadge label="MOCK EDUCATION COPY · CLINICAL_TBD" />
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
-          Education Material
-        </h1>
-        <p className="text-sm sm:text-base text-[#3F4E48] mt-2 leading-relaxed">
-          Reviewed education content is not available in this research prototype. No personal assessment was started in this case.
-        </p>
-      </div>
-
-      <div className="mb-8 dossier-card bg-white p-6">
-        <p className="text-sm leading-relaxed text-[#0B1310]">
-          This page does not provide health guidance. Education material will appear here after the required content review.
-        </p>
-      </div>
-
-      <div className="dossier-card bg-[#E6F2EE] border-[#0F523E] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h2 className="text-base font-extrabold text-[#0B1310]">
-            Start a new case?
-          </h2>
-          <p className="text-xs text-[#3F4E48] mt-1">
-            Consent for this case was declined. A new case lets you review its consent choices before entering health information.
+      <div className="medical-canvas p-6 sm:p-10 space-y-6">
+        <div className="pb-5 border-b border-[#E2ECF8]">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+              HEALTH EDUCATION
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
+            Educational Materials
+          </h1>
+          <p className="text-sm sm:text-base text-[#4A6588] mt-2 leading-relaxed">
+            Reviewed educational content for reproductive health will be provided here following clinical advisory sign-off.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onNewSession}
-          className="w-full sm:w-auto px-5 py-3 rounded-[2px] font-mono font-bold text-xs text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer whitespace-nowrap"
-        >
-          Start a new case →
-        </button>
+
+        <div className="medical-card bg-white p-6 border border-[#E2ECF8]">
+          <p className="text-sm leading-relaxed text-[#4A6588]">
+            This page provides educational resources and does not offer diagnostic guidance.
+          </p>
+        </div>
+
+        <div className="medical-card bg-[#EBF3FF] border border-[#BCD8FE] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold text-[#072254]">
+              Start a new session?
+            </h2>
+            <p className="text-xs text-[#4A6588] mt-1">
+              Consent choices can be reconfigured in a fresh anonymous session.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onNewSession}
+            className="btn-pill-primary px-5 py-2.5 text-xs whitespace-nowrap"
+          >
+            Start a new case →
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,30 +1,66 @@
 import { useState, useEffect } from 'react';
-import { api, clearPendingUploadFile } from './api/client';
+import {
+  api,
+  clearPendingUploadFile,
+  type QuestionItem,
+  type ObservationRecord,
+  type IntakeAnswer,
+  type PsychosocialQuestion,
+} from './api/client';
 import { Navbar } from './components/Navbar';
-import { MockBadge } from './components/MockBadge';
 import { StartScreen } from './pages/StartScreen';
 import { ConsentScreen } from './pages/ConsentScreen';
 import { SafetyScreen } from './pages/SafetyScreen';
 import { LabScreen } from './pages/LabScreen';
 import { IntakeScreen } from './pages/IntakeScreen';
+import { ReviewProfileScreen } from './pages/ReviewProfileScreen';
+import { SubmitReceiptScreen } from './pages/SubmitReceiptScreen';
 import { ResultScreen } from './pages/ResultScreen';
 import { ReferralScreen } from './pages/ReferralScreen';
 import { TrackingScreen } from './pages/TrackingScreen';
 import { EducationScreen } from './pages/EducationScreen';
 import { ClinicianPortal } from './pages/ClinicianPortal';
 import { MockFacilityPortal } from './pages/MockFacilityPortal';
-import { UrgentLink } from './components/UrgentLink';
 import { StepProgress } from './components/StepProgress';
+import {
+  SessionDashboard,
+  type RecordedFactItem,
+  type SessionStep,
+} from './components/SessionDashboard';
 
 export function App() {
   const [currentRole, setCurrentRole] = useState<'patient' | 'clinician' | 'facility'>('patient');
   const [currentRoute, setCurrentRoute] = useState<string>('/');
   const [restoring, setRestoring] = useState(() => Boolean(sessionStorage.getItem('sanad_case_id')));
+  // Track route changes for page transitions
+  const [pageKey, setPageKey] = useState(0);
   const [emergencyCacheReady, setEmergencyCacheReady] = useState(false);
   const [caseId, setCaseId] = useState<string | null>(() => {
     return sessionStorage.getItem('sanad_case_id');
   });
 
+  // Recorded facts & session data
+  const [questions, setQuestions] = useState<QuestionItem[]>([]);
+  const [recordedAnswers, setRecordedAnswers] = useState<
+    Record<
+      string,
+      {
+        choice: string;
+        value?: boolean | number | string | null;
+        temporal_status?: string | null;
+        label: string;
+        source?: string;
+      }
+    >
+  >({});
+  const [observations, setObservations] = useState<ObservationRecord[]>([]);
+  const [psychQuestions, setPsychQuestions] = useState<PsychosocialQuestion[]>([]);
+  const [psychAnswers, setPsychAnswers] = useState<Record<string, string>>({});
+  const [isSubmittingAssessment, setIsSubmittingAssessment] = useState(false);
+  const [assessmentError, setAssessmentError] = useState<string | null>(null);
+  const [receiptReady, setReceiptReady] = useState(false);
+
+  // Restore session from sessionStorage
   useEffect(() => {
     const storedId = sessionStorage.getItem('sanad_case_id');
     if (!storedId) return;
@@ -58,6 +94,27 @@ export function App() {
     };
   }, []);
 
+  // Fetch session data (questions, observations, psychosocial) whenever caseId is active
+  useEffect(() => {
+    if (!caseId) return;
+    let mounted = true;
+    Promise.all([
+      api.getQuestions(caseId).catch(() => null),
+      api.getObservations(caseId).catch(() => null),
+      api.getPsychosocialQuestions().catch(() => null),
+    ]).then(([questionsRes, obsRes, psychRes]) => {
+      if (!mounted) return;
+      if (questionsRes) setQuestions(questionsRes.questions);
+      if (obsRes) setObservations(obsRes.observations);
+      if (psychRes) setPsychQuestions(psychRes.questions);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [caseId, currentRoute]);
+
+  // Handle pageshow / bfcache wipe for confidential privacy
   useEffect(() => {
     const handlePageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return;
@@ -95,12 +152,14 @@ export function App() {
           /* Redirect remains available offline. */
         }
       }
-      window.location.replace('about:blank');
+      const target = navigator.onLine ? 'https://www.google.com' : 'about:blank';
+      window.location.replace(target);
     };
     window.addEventListener('pageshow', handlePageShow);
     return () => window.removeEventListener('pageshow', handlePageShow);
   }, []);
 
+  // Service worker registration
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     let mounted = true;
@@ -123,6 +182,7 @@ export function App() {
       window.location.assign('/urgent.html');
       return;
     }
+    setPageKey(k => k + 1); // trigger re-mount for page-enter animation
     setCurrentRoute(route || '/');
   };
 
@@ -151,6 +211,10 @@ export function App() {
       sessionStorage.removeItem(key);
     }
     setCaseId(null);
+    setRecordedAnswers({});
+    setQuestions([]);
+    setObservations([]);
+    setPsychAnswers({});
     setCurrentRoute('/');
     setCurrentRole('patient');
   };
@@ -172,11 +236,97 @@ export function App() {
     }
   };
 
-  return (
-    <div className="min-h-[100dvh] bg-[#F3F4F1] flex flex-col font-sans text-[#0B1310] selection:bg-[#0F523E] selection:text-white">
-      {/* Top Banner Alert for Emergency */}
-      <UrgentLink variant="banner" />
+  const handleAnswerRecorded = (question: QuestionItem, answer: IntakeAnswer, label: string) => {
+    setRecordedAnswers(prev => ({
+      ...prev,
+      [question.question_id]: {
+        choice: answer.choice,
+        value: answer.value,
+        temporal_status: answer.temporal_status,
+        label,
+        source: 'Intake chat',
+      },
+    }));
+  };
 
+  const handleSubmitAssessment = async () => {
+    if (!caseId) return;
+    setIsSubmittingAssessment(true);
+    setAssessmentError(null);
+    setReceiptReady(false);
+    navigateTo('/receipt');
+
+    try {
+      const entryPath =
+        (sessionStorage.getItem('sanad_case_entry_path') as 'FULL_INTAKE' | 'LAB_ONLY') ||
+        'FULL_INTAKE';
+      const result = await api.assessCase(caseId, entryPath);
+      if (result.state.route === '/urgent.html') {
+        window.location.replace('/urgent.html');
+        return;
+      }
+      setReceiptReady(true);
+      setTimeout(() => {
+        navigateTo(result.state.route || '/result');
+        setIsSubmittingAssessment(false);
+      }, 1200);
+    } catch (err) {
+      setAssessmentError(err instanceof Error ? err.message : 'Could not submit assessment.');
+      setIsSubmittingAssessment(false);
+      navigateTo('/review');
+    }
+  };
+
+  // Convert recorded facts for dashboard right rail
+  const recordedFactsList: RecordedFactItem[] = [
+    ...Object.entries(recordedAnswers).map(([qId, ans]) => {
+      const q = questions.find(item => item.question_id === qId);
+      return {
+        id: qId,
+        question: q?.text || qId,
+        answerLabel: ans.label,
+        sourceType: ans.source || 'PATIENT_REPORTED',
+        status: (ans.choice === 'NOT_SURE'
+          ? 'Not sure'
+          : ans.choice === 'PREFER_NOT_TO_ANSWER'
+          ? 'Prefer not to say'
+          : 'Answered') as RecordedFactItem['status'],
+        onEdit: () => navigateTo('/review'),
+      };
+    }),
+    ...observations.map(obs => ({
+      id: obs.observation_id,
+      question: `Lab: ${obs.test_code.toUpperCase()}`,
+      answerLabel: obs.value !== null ? `${obs.value} ${obs.unit || ''}` : 'Recorded',
+      sourceType: 'OBSERVATION',
+      status: 'Unverified' as RecordedFactItem['status'],
+      onEdit: () => navigateTo('/lab'),
+    })),
+  ];
+
+  // Core questions progress count
+  const coreQuestions = questions.filter(q => q.blocking);
+  const coreDoneCount = coreQuestions.filter(
+    q => recordedAnswers[q.question_id] && recordedAnswers[q.question_id].choice !== 'NOT_ASKED',
+  ).length;
+
+  // Determine current session step for the dashboard left rail
+  const getSessionStep = (): SessionStep => {
+    if (currentRoute === '/consent') return 'consent';
+    if (currentRoute === '/safety') return 'safety';
+    if (currentRoute === '/intake' || currentRoute === '/lab') return 'questions';
+    if (currentRoute === '/review') return 'review';
+    if (currentRoute === '/receipt') return 'submit';
+    if (currentRoute === '/result') return 'summary';
+    return 'next_step';
+  };
+
+  const isInsideDashboard =
+    Boolean(caseId) &&
+    ['/safety', '/intake', '/lab', '/review', '/receipt'].includes(currentRoute);
+
+  return (
+    <div className="min-h-[100dvh] bg-[#F8FAFC] flex flex-col font-sans text-[#0B1310] selection:bg-[#0062FF]/20">
       {/* Main Navbar */}
       <Navbar
         currentRole={currentRole}
@@ -197,16 +347,36 @@ export function App() {
       {/* Main Content Viewport */}
       <main className="flex-1">
         {restoring && (
-          <div className="max-w-md mx-auto px-4 py-20 text-center text-sm font-mono text-[#3F4E48]">
-            Restoring this session…
+          /* ── Beautiful restore loading state ── */
+          <div className="min-h-[60dvh] flex flex-col items-center justify-center px-4 py-20 gap-6">
+            <div className="relative">
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 rounded-full bg-[#0062FF]/10 scale-150 animate-ping" style={{ animationDuration: '2s' }} />
+              {/* Logo mark */}
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0062FF] to-[#4FA8FF] text-white flex items-center justify-center font-bold text-3xl shadow-lg shadow-[#0062FF]/30">
+                س
+              </div>
+            </div>
+            <div className="text-center space-y-1.5">
+              <p className="text-sm font-semibold text-[#07215A]">Restoring your session…</p>
+              <div className="dot-pulse flex gap-1 justify-center text-[#0062FF]">
+                <span /><span /><span />
+              </div>
+            </div>
+            {/* Skeleton preview */}
+            <div className="w-full max-w-sm space-y-3 opacity-50">
+              <div className="skeleton h-4 w-3/4 mx-auto" />
+              <div className="skeleton h-3 w-1/2 mx-auto" />
+            </div>
           </div>
         )}
-        {!restoring && currentRole === 'clinician' && <ClinicianPortal />}
 
+        {!restoring && currentRole === 'clinician' && <ClinicianPortal />}
         {!restoring && currentRole === 'facility' && <MockFacilityPortal />}
 
         {!restoring && currentRole === 'patient' && (
-          <>
+          /* Page transition wrapper */
+          <div key={pageKey} className="page-enter">
             {currentRoute === '/' && (
               <StartScreen
                 onCaseCreated={handleCaseCreated}
@@ -227,18 +397,20 @@ export function App() {
 
             {currentRoute === '/privacy' && (
               <section className="max-w-2xl mx-auto px-4 py-12">
-                <div className="dossier-card bg-white p-6 sm:p-8">
-                  <MockBadge label="MOCK SESSION CONSENT STATE" />
-                  <h1 className="text-2xl font-extrabold text-[#0B1310] mt-4">
+                <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md">
+                  <span className="font-mono text-xs font-bold text-[#D92D20] bg-[#FFF1F0] px-2.5 py-0.5 rounded-full border border-[#FFCCC7]">
+                    CONSENT INACTIVE
+                  </span>
+                  <h1 className="text-2xl font-extrabold text-[#07215A] mt-4">
                     Assessment consent is no longer active
                   </h1>
-                  <p className="text-sm text-[#3F4E48] mt-2 leading-relaxed">
+                  <p className="text-sm text-[#4A6588] mt-2 leading-relaxed">
                     This case cannot continue through the assessment flow. You can close this session or start a new one.
                   </p>
                   <button
                     type="button"
                     onClick={resetSession}
-                    className="mt-5 rounded-[2px] bg-[#0B1310] text-white px-5 py-2.5 font-mono text-xs font-bold border border-[#0B1310] cursor-pointer btn-press"
+                    className="mt-5 btn-pill-primary px-5 py-2.5 text-xs font-bold"
                   >
                     Close session
                   </button>
@@ -246,24 +418,70 @@ export function App() {
               </section>
             )}
 
-            {currentRoute === '/lab' && caseId && (
-              <LabScreen
+            {/* Unified Session Dashboard Workspace */}
+            {isInsideDashboard && caseId && (
+              <SessionDashboard
+                currentStep={getSessionStep()}
                 caseId={caseId}
-                onContinueToIntake={() => navigateTo('/intake')}
-                onAssessmentComplete={navigateTo}
-              />
-            )}
-
-            {currentRoute === '/safety' && caseId && (
-              <SafetyScreen caseId={caseId} onSafetyPass={navigateTo} />
-            )}
-
-            {currentRoute === '/intake' && caseId && (
-              <IntakeScreen
-                caseId={caseId}
-                onAssessmentComplete={navigateTo}
+                coreCount={{ done: coreDoneCount, total: coreQuestions.length }}
+                recordedFacts={recordedFactsList}
+                summaryStatus={
+                  currentRoute === '/receipt'
+                    ? 'Processing…'
+                    : currentRoute === '/review'
+                    ? 'Review required'
+                    : 'Not ready yet'
+                }
                 onOpenLab={() => navigateTo('/lab')}
-              />
+                onOpenPrivacy={() => navigateTo('/privacy')}
+              >
+                {currentRoute === '/safety' && (
+                  <SafetyScreen caseId={caseId} onSafetyPass={navigateTo} />
+                )}
+
+                {currentRoute === '/lab' && (
+                  <LabScreen
+                    caseId={caseId}
+                    onContinueToIntake={() => navigateTo('/intake')}
+                    onAssessmentComplete={navigateTo}
+                  />
+                )}
+
+                {currentRoute === '/intake' && (
+                  <IntakeScreen
+                    caseId={caseId}
+                    onAssessmentComplete={navigateTo}
+                    onOpenLab={() => navigateTo('/lab')}
+                    onNavigateToReview={() => navigateTo('/review')}
+                    onAnswerRecorded={handleAnswerRecorded}
+                  />
+                )}
+
+                {currentRoute === '/review' && (
+                  <ReviewProfileScreen
+                    caseId={caseId}
+                    questions={questions}
+                    answers={recordedAnswers}
+                    observations={observations}
+                    psychQuestions={psychQuestions}
+                    psychAnswers={psychAnswers}
+                    onEditQuestion={() => navigateTo('/intake')}
+                    onOpenLab={() => navigateTo('/lab')}
+                    onReturnToQuestions={() => navigateTo('/intake')}
+                    onSubmitAssessment={handleSubmitAssessment}
+                    isSubmitting={isSubmittingAssessment}
+                    error={assessmentError}
+                  />
+                )}
+
+                {currentRoute === '/receipt' && (
+                  <SubmitReceiptScreen
+                    caseId={caseId}
+                    isReady={receiptReady}
+                    onViewSummary={() => navigateTo('/result')}
+                  />
+                )}
+              </SessionDashboard>
             )}
 
             {currentRoute === '/result' && caseId && (
@@ -290,34 +508,32 @@ export function App() {
                 onCloseCase={() => void handleCloseCase()}
               />
             )}
-          </>
+          </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[#0B1310] bg-white py-6 text-xs text-[#3F4E48]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-            <span className="font-bold text-[#0B1310]">
-              Sanad (سند) · Future Health Digital Innovation Challenge
-            </span>
-            <span className="hidden sm:inline text-[#C5CEC9]">|</span>
-            <span className="font-mono text-[11px] text-[#3F4E48]">
-              Research Prototype · Synthetic Data Only · Zero Outbound Transport
+      {/* Footer - minimal, mobile-friendly */}
+      <footer className="border-t border-[#E2ECF8]/60 bg-white/80 backdrop-blur-sm py-5 text-xs text-[#4A6588]">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-20 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-4 text-center sm:text-left">
+            <span className="font-bold text-[#07215A] text-sm">Sanad (سند)</span>
+            <span className="font-mono text-[10px] text-[#829AB8] leading-relaxed">
+              Research Prototype · Synthetic Data Only · Not a Medical Device
             </span>
           </div>
 
           <div className="flex items-center gap-4 font-mono">
             <a
               href="/urgent.html"
-              className="text-[#B91C1C] hover:text-[#7F1D1D] font-bold no-underline"
+              className="text-[#D92D20] hover:text-[#B42318] font-bold no-underline transition-colors duration-150 flex items-center gap-1.5"
             >
-              Emergency Care (Offline)
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D92D20] bio-pulse-soft inline-block" />
+              Emergency Care
             </a>
             <button
               type="button"
               onClick={resetSession}
-              className="text-[#0B1310] hover:text-[#0F523E] font-semibold underline cursor-pointer"
+              className="text-[#4A6588] hover:text-[#07215A] font-semibold underline cursor-pointer transition-colors duration-150"
             >
               Reset Session
             </button>

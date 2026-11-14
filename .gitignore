@@ -9,6 +9,12 @@ apps/api/.venv/
 *.sqlite
 *.sqlite3
 
+# Dependencies & Build artifacts
+node_modules/
+.expo/
+dist/
+web-build/
+
 # Local settings and secrets. Copy apps/api/.env.example to apps/api/.env.
 .env
 .env.*
