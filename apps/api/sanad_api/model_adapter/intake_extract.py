@@ -17,6 +17,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from sanad_api.catalogues import ConceptDef, QuestionDef
+from sanad_api.chat.guardrail import redact
 from sanad_api.config import Settings
 from sanad_api.facts.service import value_problem
 from sanad_api.model_adapter.port import ModelRequest, ModelResult, ModelStatus, TaskEnvelope
@@ -118,7 +119,7 @@ def build_request(
             "options": [option.model_dump() for option in question.options],
             "time_options": [option.model_dump() for option in question.temporal_options],
         },
-        "message": text,
+        "message": redact(text).text,  # RF-27, AC-27.4: every caller sends the redacted text
     }
     return ModelRequest(
         envelope=TaskEnvelope(

@@ -83,6 +83,8 @@ ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
             "elapsed_ms",
             "input_tokens",
             "output_tokens",
+            "redactions",  # RF-27: sorted type codes, never a value
+            "redaction_count",
         }
     ),
 }
