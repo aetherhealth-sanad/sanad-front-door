@@ -266,9 +266,9 @@ See the truth table in §5.
 | TC-17.3 | E | B | The audit reads `eval/mock-screens.json`, visits each screen and fails on a missing label. A check confirms that each route with simulated data is on the list. | S |
 | TC-17.4 | E | B | Text scan on mock screens finds no raw enum code standing alone. | S |
 
-### RF-18 Harness controls (PROPOSED; not an active CI gate)
+### RF-26 Harness controls (PROPOSED; not an active CI gate)
 
-These tests remain proposed and are not an active CI gate. They need to be authored and made blocking after CC-011 approval; the implementation work is present but has not been accepted. They verify software behavior, not clinical accuracy.
+These tests remain proposed and are not an active CI gate. They need to be authored and made blocking after CC-016 approval; the implementation work is present but has not been accepted. They verify software behavior, not clinical accuracy.
 
 | ID | Setup / action | Blocking? | Expected |
 |---|---|---:|---|

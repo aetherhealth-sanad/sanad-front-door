@@ -1,6 +1,7 @@
 """Deterministic input guardrails for the structured, synthetic-only API.
 
-This API currently accepts structured questionnaire/profile data, not conversational free text.
+This module checks structured profile uploads. Typed chat text has its own guard
+(`chat/guardrail.py`, RF-21).
 Clinical urgency remains the versioned emergency catalogue in `rules_engine.emergency`; this
 module performs only format/schema checks and never classifies clinical scope or urgency.
 """

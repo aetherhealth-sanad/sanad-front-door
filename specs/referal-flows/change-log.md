@@ -13,8 +13,8 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
-| 0.7 | 2026-11-12 | Implemented bounded harness code after the user directly requested implementation: shared structured profile guardrail, off-by-default redacted Langfuse telemetry, separate read-only authoring MCP server with strict hashed tools, and isolated knowledge database schema. No runtime model calls, new clinical rules or referral path were added. TC-HR acceptance, M3 exit and Tech Lead review remain pending. | Codex | Pending (Tech Lead and acceptance) |
-| 0.6 | 2026-11-12 | Opened CC-011 for deterministic harness hardening, opt-in redacted Langfuse telemetry and Mode A MCP only. Requester approved the Product/Security scope and selected self-hosted Langfuse; formal named approver entry, Tech Lead review and M3 exit remain pending. Runtime agents and new clinical rules remain out of scope. | Codex | Pending (Product/Security requester name and Tech Lead) |
+| 0.8 | 2026-11-12 | Implemented bounded harness code after the user directly requested implementation: shared structured profile guardrail, off-by-default redacted Langfuse telemetry, separate read-only authoring MCP server with strict hashed tools, and isolated knowledge database schema. No runtime model calls, new clinical rules or referral path were added. TC-HR acceptance, M3 exit and Tech Lead review remain pending. | Codex | Pending (Tech Lead and acceptance) |
+| 0.7 | 2026-11-12 | Opened CC-016 for deterministic harness hardening, opt-in redacted Langfuse telemetry and Mode A MCP only. Requester approved the Product/Security scope and selected self-hosted Langfuse; formal named approver entry, Tech Lead review and M3 exit remain pending. Runtime agents and new clinical rules remain out of scope. | Codex | Pending (Product/Security requester name and Tech Lead) |
 | 0.6 | 2026-11-08 | Added RF-21 chat intake with a bounded model adapter (AC-21.1 to AC-21.12, T4.5, TC-21.1 to TC-21.12, API design §6.13). Added an optional Azure OpenAI adapter, off by default, a stage 2a emergency word check for typed text, and the `INPUT_CHECKED` and `MODEL_TASK_RUN` audit events. Amended INV-01. Opened CC-011 and CC-012. Settings, including the Azure OpenAI key, can live in a Git-ignored `apps/api/.env` copied from the committed `apps/api/.env.example` (placeholders only); shell variables still win. **Order of work:** code and tests were written in the same branch as these spec changes, not after review, so the spec must be reviewed before merge and the code changed if review changes the spec. | Drafted by Claude Code for trung1234 | Pending |
 | 0.5 | 2026-11-05 | Synchronized implementation status with current patient/staff UI source; clarified J9/J10 client test gaps and parent-scope conflicts; removed unreviewed clinical claims from education; aligned Quick Exit with existing wipe/BFCache/neutral-title criteria. No BRD/PRD contract or clinical rule changed; verification and content review remain pending. | Codex | Pending |
 | 0.4 | 2026-11-03 | Specified idempotency for navigation progress/barrier retries; clarified current harness and CI scope. | Codex | Pending |
@@ -24,9 +24,9 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 ## Change-control records
 
-Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, and CC-011 with version 0.6.
+Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, and CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch).
 
-### CC-011 Deterministic harness, Langfuse and authoring-time MCP
+### CC-016 Deterministic harness, Langfuse and authoring-time MCP
 
 | Field | Value |
 |---|---|
@@ -35,7 +35,7 @@ Each proposal below changes or extends a parent document, so it needs an approve
 | **Evidence** | `harness.md` HR-01/02/10/19/28; PRD-FR-35/38/40/41 and NFR-03/08/19/21/24; `mcp-context-design.md` v0.2 is `PROPOSED`, `TECH_TBD` and requires change control before code. PRD-FR-37 defers runtime model agents. |
 | **Change** | Retain server-side default-deny checks and the single Python referral gate; preserve emergency ordering and add no clinical rules; constrain MCP to local authoring-time, read-only Mode A against approved manifest sources; make Langfuse opt-in and off by default, with an operational-field allowlist and no request bodies, health data, case IDs, prompts, passages or tokens. Bounded code is present. Langfuse deployment target is self-hosted; endpoint/operator configuration and formal review remain outstanding. MCP Mode B and all model calls remain out of scope. |
 | **Affected journeys** | J1–J5 safety/action paths; internal authoring workflow. MCP does not enter the patient or emergency journey. |
-| **Tests** | TC-HR-01 to TC-HR-08 (proposed; software checks only). |
+| **Tests** | TC-HR-01 to TC-HR-08 (proposed; software checks only). Renumbered from RF-18/CC-011 on 2026-11-14 because those IDs were already in use. |
 | **Approver** | Product/Security: requester stated approval on 2026-11-12; formal named entry pending. Tech Lead: pending. Langfuse endpoint and operator configuration remain outstanding. |
 | **Version** | Product spec 0.2; harness proposal, implementation plan and test plan updates 2026-11-12. |
 

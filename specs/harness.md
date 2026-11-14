@@ -213,7 +213,7 @@ SLM-specific notes:
 
 Source caveats: "harness engineering" is not a standard issued by a standards body. The performance figures in the source document are published by the vendors themselves. OWASP numbering may differ between the 2025 and 2026 editions, so cite the edition when quoting.
 
-### Bounded implementation (CC-011; formal review and acceptance pending)
+### Bounded implementation (CC-016; formal review and acceptance pending)
 
 The bounded code is present following the user's direct implementation request and stated Product/Security approval. It adds optional, off-by-default Langfuse operational spans and a read-only authoring-time MCP server. It does not add runtime model calls, patient-context MCP, new clinical rules or a second referral gate. The current pure Python `evaluate_gate` remains the action policy. Formal Tech Lead review, M3 exit criteria, acceptance checks and release approval remain pending; see [the change log](referal-flows/change-log.md#cc-011-deterministic-harness-langfuse-and-authoring-time-mcp).
 

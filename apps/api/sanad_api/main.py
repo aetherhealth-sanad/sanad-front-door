@@ -136,6 +136,13 @@ def create_app(
     }
     register_error_handlers(app)
     app.add_middleware(RequestContextMiddleware, telemetry=app.state.telemetry)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.get("/version", tags=["meta"])
     def version() -> dict[str, Any]:
