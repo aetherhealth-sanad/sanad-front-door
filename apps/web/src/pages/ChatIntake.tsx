@@ -27,6 +27,8 @@ interface ChatIntakeProps {
   onAssessmentComplete: (route: string) => void;
   onSwitchToForm: () => void;
   onOpenLab?: () => void;
+  onNavigateToReview?: () => void;
+  onAnswerSaved?: (question: QuestionItem, answer: IntakeAnswer, label: string) => void;
 }
 
 type Status = 'Answered' | 'Not sure' | 'Prefer not to say' | 'Skipped';
@@ -143,6 +145,8 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
   onAssessmentComplete,
   onSwitchToForm,
   onOpenLab,
+  onNavigateToReview,
+  onAnswerSaved,
 }) => {
   const [assistant, setAssistant] = useState<AssistantInfo | null>(null);
   const [approvalStatus, setApprovalStatus] = useState('CLINICAL_TBD');
@@ -272,6 +276,9 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
         note: matchedByAi ? 'Matched by AI from your typed text, confirmed by you' : undefined,
       });
       record(current, choice.label, statusOf(choice.answer), matchedByAi);
+      if (onAnswerSaved && current) {
+        onAnswerSaved(current, choice.answer, choice.label);
+      }
       moveOn();
     } catch (err) {
       setError(friendlyError(err));

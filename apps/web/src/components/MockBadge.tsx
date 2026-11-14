@@ -13,10 +13,10 @@ export const MockBadge: React.FC<MockBadgeProps> = ({
     <span
       data-testid="mock-badge"
       data-mock="true"
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[2px] text-[11px] font-mono font-bold tracking-wider uppercase bg-[#E6EAE4] text-[#0B1310] border border-[#0B1310] select-none ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase bg-[#EBF3FF] text-[#0050CC] border border-[#BCD8FE] select-none shadow-xs ${className}`}
       title="Research prototype simulated element. No real care or clinical provider is connected."
     >
-      <span className="w-1.5 h-1.5 rounded-[2px] bg-[#C84B31]" />
+      <span className="w-1.5 h-1.5 rounded-full bg-[#0066EE] animate-pulse" />
       {displayLabel}
     </span>
   );

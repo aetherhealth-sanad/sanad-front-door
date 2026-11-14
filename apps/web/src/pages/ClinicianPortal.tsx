@@ -276,25 +276,27 @@ export const ClinicianPortal: React.FC = () => {
 
   if (!authenticated) {
     return (
-      <div className="max-w-md mx-auto px-4 py-12">
-        <div className="dossier-card bg-white p-6 sm:p-8">
-          <MockBadge label="MOCK REVIEWER SIGN-IN" />
-          <h1 className="text-2xl font-extrabold text-[#0B1310] mt-4">
+      <div className="max-w-md mx-auto px-4 py-16">
+        <div className="medical-card bg-white p-8 sm:p-10 rounded-3xl border border-[#E2ECF8] shadow-xl space-y-4">
+          <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+            CLINICAL REVIEWER ACCESS
+          </span>
+          <h1 className="text-2xl font-extrabold text-[#072254] mt-3">
             Reviewer access
           </h1>
-          <p className="text-sm text-[#3F4E48] mt-2 leading-relaxed">
+          <p className="text-sm text-[#475467] leading-relaxed">
             Use the seeded demo account configured for the local API. This is a simulated reviewer role.
           </p>
           {error && (
             <div
               role="alert"
-              className="mt-4 p-3 rounded-[2px] bg-[#FEF2F2] border border-[#B91C1C] text-[#7F1D1D] text-sm"
+              className="p-3.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
             >
               {error}
             </div>
           )}
-          <form onSubmit={handleLogin} className="mt-5 space-y-4">
-            <label className="block text-xs font-mono font-bold text-[#0B1310]">
+          <form onSubmit={handleLogin} className="space-y-4 pt-2">
+            <label className="block text-xs font-bold text-[#0F172A]">
               Username
               <input
                 name="username"
@@ -302,10 +304,10 @@ export const ClinicianPortal: React.FC = () => {
                 autoComplete="username"
                 value={username}
                 onChange={event => setUsername(event.target.value)}
-                className="mt-1.5 w-full rounded-[2px] border border-[#0B1310] bg-white px-3 py-2 text-sm font-sans"
+                className="mt-1.5 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
               />
             </label>
-            <label className="block text-xs font-mono font-bold text-[#0B1310]">
+            <label className="block text-xs font-bold text-[#0F172A]">
               Password
               <input
                 type="password"
@@ -314,15 +316,15 @@ export const ClinicianPortal: React.FC = () => {
                 autoComplete="current-password"
                 value={password}
                 onChange={event => setPassword(event.target.value)}
-                className="mt-1.5 w-full rounded-[2px] border border-[#0B1310] bg-white px-3 py-2 text-sm font-sans"
+                className="mt-1.5 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
               />
             </label>
             <button
               type="submit"
               disabled={loading || !username || !password}
-              className="w-full rounded-[2px] bg-[#0F523E] hover:bg-[#093B2C] text-white border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] py-3 font-mono text-xs font-bold btn-press cursor-pointer disabled:opacity-50"
+              className="btn-pill-primary w-full py-3.5 rounded-full text-xs font-bold text-white shadow-md cursor-pointer disabled:opacity-50 mt-2"
             >
-              {loading ? 'Signing in…' : 'Sign in to Mock Reviewer'}
+              {loading ? 'Signing in...' : 'Sign in to Mock Reviewer'}
             </button>
           </form>
         </div>
@@ -331,21 +333,23 @@ export const ClinicianPortal: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-5 border-b border-[#0B1310]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-6 border-b border-[#E2ECF8]">
         <div>
-          <MockBadge label="MOCK REVIEWER CONSOLE · SIMULATED ROLE" />
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] mt-3 tracking-tight">
+          <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+            CLINICAL REVIEW QUEUE
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] mt-3 tracking-tight">
             Draft Review Queue
           </h1>
-          <p className="text-sm text-[#3F4E48] mt-1">
-            Review synthetic case drafts. A simulated approval is bound to the current <code className="font-mono">case_version</code> and is not verified clinical care.
+          <p className="text-sm text-[#475467] mt-1">
+            Review synthetic case drafts. A simulated approval is bound to the current <code>case_version</code> and is not verified clinical care.
           </p>
         </div>
         <button
           type="button"
           onClick={() => void handleLogout()}
-          className="px-4 py-2 rounded-[2px] border border-[#0B1310] bg-white hover:bg-[#E6EAE4] text-xs font-mono font-bold cursor-pointer"
+          className="btn-pill-secondary px-5 py-2.5 rounded-full text-xs font-semibold cursor-pointer"
         >
           Sign out
         </button>
@@ -354,7 +358,7 @@ export const ClinicianPortal: React.FC = () => {
       {error && (
         <div
           role="alert"
-          className="mb-5 p-4 rounded-[2px] bg-[#FEF2F2] border border-[#B91C1C] text-[#7F1D1D] text-sm font-medium"
+          className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
         >
           {error}
         </div>
@@ -362,33 +366,33 @@ export const ClinicianPortal: React.FC = () => {
       {notice && (
         <div
           role="status"
-          className="mb-5 p-4 rounded-[2px] bg-[#E6F2EE] border border-[#0F523E] text-[#0F523E] text-sm font-medium"
+          className="p-4 rounded-xl bg-[#EBF3FF] border border-[#BCD8FE] text-[#0050CC] text-sm font-semibold"
         >
           {notice}
         </div>
       )}
 
       {/* Closed-Loop Evaluation Funnel */}
-      <section className="mb-8 dossier-card bg-white p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-[#0B1310]">
+      <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E2ECF8]">
           <div className="flex items-center gap-2">
             <MockBadge label="MOCK CLOSED-LOOP FUNNEL" />
-            <span className="text-xs font-mono text-[#3F4E48]">
-              {funnel?.observed_scope ?? 'Loading active synthetic sessions…'}
+            <span className="text-xs text-[#64748B]">
+              {funnel?.observed_scope ?? 'Loading active synthetic sessions...'}
             </span>
           </div>
           {funnel && (
-            <span className="font-mono text-xs font-bold text-[#0F523E]">
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#EBF3FF] text-[#0050CC] border border-[#BCD8FE]">
               EPISODES: {funnel.guidance_episodes}
             </span>
           )}
         </div>
         {funnelError && (
-          <p className="text-xs font-mono text-[#78350F]">{funnelError}</p>
+          <p className="text-xs text-[#B54708] font-medium">{funnelError}</p>
         )}
         {funnel && (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
               {(
                 [
                   ['Acknowledged', funnel.acknowledgement],
@@ -399,15 +403,15 @@ export const ClinicianPortal: React.FC = () => {
               ).map(([label, metric]) => (
                 <div
                   key={label}
-                  className="rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] p-3.5"
+                  className="rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] p-4 text-center sm:text-left hover:border-[#BCD8FE] transition-[border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] hover:-translate-y-0.5"
                 >
-                  <span className="block text-xs font-mono font-bold text-[#0B1310]">
+                  <span className="block text-xs font-bold text-[#0F172A]">
                     {label}
                   </span>
-                  <strong className="block text-xl font-extrabold font-mono text-[#0F523E] mt-1">
+                  <strong className="block text-2xl font-extrabold text-[#0066EE] mt-1">
                     {metric.numerator}/{metric.denominator}
                   </strong>
-                  <span className="block text-[11px] font-mono text-[#3F4E48] mt-0.5">
+                  <span className="block text-xs text-[#64748B] mt-1">
                     {metric.rate === null
                       ? 'No denominator'
                       : `${Math.round(metric.rate * 100)}%`}{' '}
@@ -416,33 +420,33 @@ export const ClinicianPortal: React.FC = () => {
                 </div>
               ))}
             </div>
-            <p className="text-xs font-mono text-[#3F4E48] mt-3">
-              Provider-verified visits: <strong>{funnel.provider_verified_visits}</strong> · Care completed:{' '}
-              <strong>{funnel.care_completed}</strong>. These metrics describe synthetic demo events, not care outcomes.
+            <p className="text-xs text-[#64748B] mt-3">
+              Provider-verified visits: <strong className="text-[#0F172A]">{funnel.provider_verified_visits}</strong> · Care completed:{' '}
+              <strong className="text-[#0F172A]">{funnel.care_completed}</strong>. These metrics describe synthetic demo events, not care outcomes.
             </p>
           </>
         )}
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <aside className="lg:col-span-4 dossier-card bg-white p-5 space-y-3">
-          <div className="flex items-center justify-between pb-3 border-b border-[#0B1310]">
-            <h2 className="text-sm font-extrabold text-[#0B1310]">
+        <aside className="lg:col-span-4 medical-card bg-white p-6 space-y-3.5 rounded-2xl border border-[#E2ECF8] shadow-md">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E2ECF8]">
+            <h2 className="text-sm font-bold text-[#0F172A]">
               Pending Mock cases ({queue.length})
             </h2>
             <button
               type="button"
               onClick={() => void loadQueue()}
-              className="text-xs font-mono font-bold underline text-[#0F523E] cursor-pointer"
+              className="text-xs font-semibold text-[#0066EE] hover:underline cursor-pointer"
             >
               Refresh
             </button>
           </div>
           {loading && (
-            <p className="text-xs font-mono text-[#3F4E48]">Loading queue…</p>
+            <p className="text-xs text-[#64748B]">Loading queue...</p>
           )}
           {!loading && queue.length === 0 && (
-            <p className="text-sm text-[#3F4E48]">No pending Mock cases.</p>
+            <p className="text-sm text-[#64748B]">No pending Mock cases.</p>
           )}
           {queue.map(item => (
             <button
@@ -451,73 +455,73 @@ export const ClinicianPortal: React.FC = () => {
               onClick={() =>
                 void loadDetail(item.case_id).catch(err => setError(String(err)))
               }
-              className={`w-full text-left p-3.5 rounded-[2px] border cursor-pointer transition-colors ${
+              className={`w-full text-left p-4 rounded-xl border cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.985] ${
                 selectedCaseId === item.case_id
-                  ? 'bg-[#E6F2EE] border-[#0F523E]'
-                  : 'bg-[#F3F4F1] border-[#0B1310] hover:bg-white'
+                  ? 'bg-[#F2F7FF] border-[#BCD8FE] shadow-xs'
+                  : 'bg-[#F8FAFC] border-[#E2ECF8] hover:border-[#CBD5E1]'
               }`}
             >
-              <span className="block font-mono text-xs font-bold text-[#0B1310]">
+              <span className="block text-xs font-bold text-[#0F172A]">
                 {item.case_id} · Mock
               </span>
-              <span className="block text-xs font-mono text-[#0F523E] mt-1">
+              <span className="block text-xs font-semibold text-[#0066EE] mt-1">
                 Version {item.case_version} · {item.triage_action ?? 'No action'}
               </span>
-              <span className="block text-[11px] font-mono text-[#3F4E48] mt-1">
+              <span className="block text-xs text-[#64748B] mt-1">
                 Submitted {new Date(item.sent_at).toLocaleString()}
               </span>
             </button>
           ))}
         </aside>
 
-        <section className="lg:col-span-8 dossier-card bg-white p-6 sm:p-7 space-y-6">
+        <section className="lg:col-span-8 medical-card bg-white p-6 sm:p-8 space-y-6 rounded-2xl border border-[#E2ECF8] shadow-md">
           {!detail && (
-            <p className="text-sm text-[#3F4E48]">
+            <p className="text-sm text-[#64748B]">
               Select a case from the Mock queue.
             </p>
           )}
           {detail && (
             <>
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#0B1310] pb-4">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E2ECF8] pb-4">
                 <div>
                   <MockBadge label="MOCK CASE DETAIL" />
-                  <h2 className="text-xl font-extrabold text-[#0B1310] mt-2 font-mono">
+                  <h2 className="text-xl font-bold text-[#0F172A] mt-2">
                     {detail.case_id}
                   </h2>
-                  <p className="text-xs font-mono text-[#3F4E48]">
+                  <p className="text-xs text-[#64748B] mt-0.5">
                     Case version {detail.case_version} · {detail.state}
                   </p>
                 </div>
-                <div className="text-right p-3 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310]">
-                  <span className="block text-[10px] font-mono text-[#3F4E48] uppercase">
+                <div className="text-right p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8]">
+                  <span className="block text-xs text-[#64748B]">
                     Draft proposal (Floor: {detail.triage_proposal?.floor ?? 'None'})
                   </span>
-                  <strong className="text-sm font-mono text-[#0B1310]">
+                  <strong className="text-sm font-bold text-[#0066EE]">
                     {detail.triage_proposal?.action ?? 'Not available'}
                   </strong>
-                  <span className="block text-xs font-mono text-[#C84B31]">
+                  <span className="block text-xs text-[#D92D20] font-medium mt-0.5">
                     {detail.triage_proposal?.approval_status ?? detail.draft_label}
                   </span>
                 </div>
               </div>
 
-              <p className="text-xs text-[#3F4E48]">{detail.screening_notice}</p>
+              <p className="text-xs text-[#475467]">{detail.screening_notice}</p>
 
               <div>
-                <h3 className="text-xs font-mono font-bold text-[#0B1310] uppercase mb-2">
+                <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-2.5">
                   Recorded facts
                 </h3>
                 {detail.facts.length === 0 ? (
-                  <p className="text-xs text-[#3F4E48]">No facts in this draft.</p>
+                  <p className="text-xs text-[#64748B]">No facts in this draft.</p>
                 ) : (
-                  <div className="overflow-x-auto border border-[#0B1310] rounded-[2px]">
-                    <table className="w-full text-left text-xs font-mono">
+                  <div className="overflow-x-auto border border-[#E2ECF8] rounded-xl overflow-hidden">
+                    <table className="w-full text-left text-xs">
                       <thead>
-                        <tr className="border-b border-[#0B1310] bg-[#E6EAE4] text-[#0B1310]">
-                          <th className="py-2 px-3">Concept</th>
-                          <th className="py-2 px-3">Value / state</th>
-                          <th className="py-2 px-3">Time</th>
-                          <th className="py-2 px-3">Source</th>
+                        <tr className="border-b border-[#E2ECF8] bg-[#F8FAFC] text-[#0F172A] font-bold">
+                          <th className="py-2.5 px-3.5">Concept</th>
+                          <th className="py-2.5 px-3.5">Value / state</th>
+                          <th className="py-2.5 px-3.5">Time</th>
+                          <th className="py-2.5 px-3.5">Source</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -535,22 +539,22 @@ export const ClinicianPortal: React.FC = () => {
                           return (
                             <tr
                               key={fact.fact_id ?? index}
-                              className="border-b border-[#C5CEC9] last:border-0"
+                              className="border-b border-[#F1F5F9] last:border-0 hover:bg-[#F8FAFC] transition-colors"
                             >
-                              <td className="py-2 px-3 font-bold">
+                              <td className="py-2.5 px-3.5 font-bold text-[#0F172A]">
                                 {fact.concept_code ?? 'Unknown'}
                               </td>
-                              <td className="py-2 px-3">
+                              <td className="py-2.5 px-3.5 font-semibold text-[#0066EE]">
                                 {fact.value === null || fact.value === undefined
                                   ? fact.state
                                   : `${String(fact.value)}${
                                       fact.unit ? ` ${fact.unit}` : ''
                                     }`}
                               </td>
-                              <td className="py-2 px-3">
+                              <td className="py-2.5 px-3.5 text-[#64748B]">
                                 {fact.temporal_status ?? 'Not specified'}
                               </td>
-                              <td className="py-2 px-3">
+                              <td className="py-2.5 px-3.5 text-[#64748B]">
                                 {fact.source_type ?? 'Unknown'} ·{' '}
                                 {fact.verification_status ?? 'Unknown'}
                               </td>
@@ -565,14 +569,14 @@ export const ClinicianPortal: React.FC = () => {
 
               {detail.unknown_fields.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-mono font-bold text-[#0B1310] uppercase mb-2">
+                  <h3 className="text-xs font-bold text-[#B54708] uppercase tracking-wide mb-2">
                     Unknown fields
                   </h3>
                   <ul className="flex flex-wrap gap-2">
                     {detail.unknown_fields.map(item => (
                       <li
                         key={item.concept_code}
-                        className="rounded-[2px] bg-[#FFFBEB] border border-[#B45309] px-3 py-1 text-xs font-mono text-[#78350F]"
+                        className="rounded-full bg-[#FFFAEB] border border-[#FEDF89] px-3.5 py-1 text-xs font-medium text-[#B54708]"
                       >
                         {item.concept_code} · {item.state}
                       </li>
@@ -583,7 +587,7 @@ export const ClinicianPortal: React.FC = () => {
 
               {detail.observations.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-mono font-bold text-[#0B1310] uppercase mb-2">
+                  <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-2">
                     Reported observations · Mock
                   </h3>
                   <ul className="space-y-2">
@@ -598,10 +602,9 @@ export const ClinicianPortal: React.FC = () => {
                       return (
                         <li
                           key={`${item.test_code}-${index}`}
-                          className="rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] p-3 text-xs font-mono"
+                          className="rounded-xl bg-[#F8FAFC] border border-[#E2ECF8] p-3.5 text-xs"
                         >
-                          {item.test_code}: {String(item.value ?? 'Unknown')}{' '}
-                          {item.unit ?? ''} · {item.confirmation_status} ·{' '}
+                          <strong className="text-[#0F172A]">{item.test_code}:</strong> <span className="font-semibold text-[#0066EE]">{String(item.value ?? 'Unknown')} {item.unit ?? ''}</span> · {item.confirmation_status} ·{' '}
                           {item.source}
                         </li>
                       );
@@ -612,10 +615,10 @@ export const ClinicianPortal: React.FC = () => {
 
               {detail.risk_signals.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-mono font-bold text-[#0B1310] uppercase mb-2">
+                  <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-2">
                     Draft rule signals · Mock
                   </h3>
-                  <ul className="space-y-1 text-xs font-mono">
+                  <ul className="space-y-1 text-xs text-[#64748B]">
                     {detail.risk_signals.map((signal, index) => (
                       <li key={`${signal.code}-${index}`}>
                         {signal.code} · {signal.status} · {signal.rule_id}
@@ -626,11 +629,11 @@ export const ClinicianPortal: React.FC = () => {
               )}
 
               {detail.psychosocial_context.length > 0 && (
-                <div className="rounded-[2px] bg-[#E6EAE4] border border-[#0B1310] p-4">
-                  <h3 className="text-xs font-mono font-bold text-[#0B1310] uppercase">
+                <div className="rounded-2xl bg-[#F2F7FF] border border-[#BCD8FE] p-5">
+                  <h3 className="text-xs font-bold text-[#0050CC] uppercase tracking-wide">
                     Optional self-reported context · not triage
                   </h3>
-                  <ul className="mt-2 space-y-1 text-xs font-mono">
+                  <ul className="mt-2 space-y-1 text-xs text-[#475467]">
                     {detail.psychosocial_context.map((raw, index) => {
                       const item = raw as {
                         question_id?: string;
@@ -652,10 +655,10 @@ export const ClinicianPortal: React.FC = () => {
 
               {detail.limits.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-mono font-bold text-[#0B1310] uppercase mb-2">
+                  <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-2">
                     Draft limits
                   </h3>
-                  <ul className="space-y-1 text-xs text-[#3F4E48]">
+                  <ul className="space-y-1 text-xs text-[#64748B]">
                     {detail.limits.map((item, index) => (
                       <li key={`${item.code}-${index}`}>{item.text}</li>
                     ))}
@@ -664,32 +667,32 @@ export const ClinicianPortal: React.FC = () => {
               )}
 
               {/* Reviewer Decision Controls (APPROVE / EDIT / REQUEST_CLARIFICATION / REJECT) */}
-              <div className="space-y-4 border-t border-[#0B1310] pt-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="block text-xs font-mono font-bold text-[#0B1310]">
+              <div className="space-y-4 border-t border-[#E2ECF8] pt-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <label className="block text-xs font-bold text-[#0F172A]">
                     Optional note for this synthetic review
                     <textarea
                       rows={2}
                       maxLength={500}
                       value={decisionNote}
                       onChange={event => setDecisionNote(event.target.value)}
-                      className="mt-1 w-full p-2.5 rounded-[2px] border border-[#0B1310] bg-white text-sm font-sans"
+                      className="mt-1 w-full p-3 rounded-xl border border-[#CBD5E1] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
                     />
                   </label>
-                  <label className="block text-xs font-mono font-bold text-[#0B1310]">
+                  <label className="block text-xs font-bold text-[#0F172A]">
                     Clinician summary draft (for EDIT decision)
                     <textarea
                       rows={2}
                       maxLength={2000}
                       value={editSummary}
                       onChange={event => setEditSummary(event.target.value)}
-                      className="mt-1 w-full p-2.5 rounded-[2px] border border-[#0B1310] bg-white text-sm font-sans"
+                      className="mt-1 w-full p-3 rounded-xl border border-[#CBD5E1] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
                     />
                   </label>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <label className="text-xs font-mono font-bold text-[#0B1310]">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <label className="text-xs font-bold text-[#0F172A]">
                     Override triage action (EDIT)
                     <select
                       value={editTriageAction}
@@ -698,7 +701,7 @@ export const ClinicianPortal: React.FC = () => {
                           event.target.value as ReviewableAction | '',
                         )
                       }
-                      className="mt-1 w-full p-2 rounded-[2px] border border-[#0B1310] bg-white text-xs font-mono"
+                      className="mt-1 w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
                     >
                       <option value="">Keep current proposal</option>
                       {reviewableActions.map(act => (
@@ -709,14 +712,14 @@ export const ClinicianPortal: React.FC = () => {
                     </select>
                   </label>
 
-                  <label className="text-xs font-mono font-bold text-[#0B1310]">
+                  <label className="text-xs font-bold text-[#0F172A]">
                     Rejection reason
                     <select
                       value={rejectReason}
                       onChange={event =>
                         setRejectReason(event.target.value as RejectReason | '')
                       }
-                      className="mt-1 w-full p-2 rounded-[2px] border border-[#0B1310] bg-white text-xs font-sans"
+                      className="mt-1 w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
                     >
                       <option value="">Choose only when rejecting</option>
                       {rejectionReasons.map(reason => (
@@ -727,7 +730,7 @@ export const ClinicianPortal: React.FC = () => {
                     </select>
                   </label>
 
-                  <div className="text-xs font-mono font-bold text-[#0B1310]">
+                  <div className="text-xs font-bold text-[#0F172A]">
                     Clarification questions
                     <select
                       multiple
@@ -740,7 +743,7 @@ export const ClinicianPortal: React.FC = () => {
                           ),
                         )
                       }
-                      className="mt-1 w-full p-2 rounded-[2px] border border-[#0B1310] bg-white h-20 text-xs font-sans"
+                      className="mt-1 w-full p-2.5 rounded-xl border border-[#CBD5E1] bg-white h-20 text-xs focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
                     >
                       {questionCatalogue.questions.map(question => (
                         <option
@@ -754,12 +757,12 @@ export const ClinicianPortal: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2.5 pt-2">
+                <div className="flex flex-wrap gap-3 pt-3">
                   <button
                     type="button"
                     disabled={submitting}
                     onClick={() => void handleDecision('APPROVE')}
-                    className="px-4 py-2.5 rounded-[2px] bg-[#0F523E] hover:bg-[#093B2C] text-white border border-[#0B1310] font-mono text-xs font-bold cursor-pointer disabled:opacity-50"
+                    className="btn-pill-primary px-5 py-2.5 rounded-full text-xs font-semibold cursor-pointer disabled:opacity-50"
                   >
                     Record Mock approval
                   </button>
@@ -767,7 +770,7 @@ export const ClinicianPortal: React.FC = () => {
                     type="button"
                     disabled={submitting}
                     onClick={() => void handleDecision('EDIT')}
-                    className="px-4 py-2.5 rounded-[2px] bg-[#0B1310] hover:bg-[#3F4E48] text-white border border-[#0B1310] font-mono text-xs font-bold cursor-pointer disabled:opacity-50"
+                    className="btn-pill-secondary px-5 py-2.5 rounded-full text-xs font-semibold cursor-pointer disabled:opacity-50"
                   >
                     Save Draft Edit
                   </button>
@@ -775,7 +778,7 @@ export const ClinicianPortal: React.FC = () => {
                     type="button"
                     disabled={submitting}
                     onClick={() => void handleDecision('REQUEST_CLARIFICATION')}
-                    className="px-4 py-2.5 rounded-[2px] bg-[#FFFBEB] text-[#78350F] border border-[#B45309] font-mono text-xs font-bold cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-full bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89] text-xs font-semibold hover:bg-[#FEF0C7] transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer disabled:opacity-50"
                   >
                     Request clarification
                   </button>
@@ -783,7 +786,7 @@ export const ClinicianPortal: React.FC = () => {
                     type="button"
                     disabled={submitting}
                     onClick={() => void handleDecision('REJECT')}
-                    className="px-4 py-2.5 rounded-[2px] bg-[#FEF2F2] text-[#7F1D1D] border border-[#B91C1C] font-mono text-xs font-bold cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-full bg-[#FEF3F2] text-[#D92D20] border border-[#FECDCA] text-xs font-semibold hover:bg-[#FEE4E2] transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer disabled:opacity-50"
                   >
                     Reject Mock draft
                   </button>

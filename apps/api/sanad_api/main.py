@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager, suppress
 from typing import Any
 
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Every model module is imported so that create_all knows every table.
 from sanad_api.audit import models as _audit_models  # noqa: F401

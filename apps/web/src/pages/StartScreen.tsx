@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api, setPendingUploadFile, type SampleProfile } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
 
 interface StartScreenProps {
   onCaseCreated: (caseId: string, route: string) => void;
   emergencyCacheReady: boolean;
 }
-
-type StartModeTab = 'SAMPLE' | 'UPLOAD' | 'BLANK';
 
 const SAMPLE_UPLOAD_TEMPLATE = {
   profile_format: 'sanad-profile-0.1',
@@ -45,54 +42,96 @@ const SAMPLE_UPLOAD_TEMPLATE = {
   ],
 };
 
-const PIPELINE_STAGES = [
+const CLINICAL_BENCHMARKS = {
+  concentration: {
+    title: 'Sperm Concentration',
+    threshold: '16 Million / mL',
+    unit: 'M/mL',
+    whoStandard: 'WHO 6th Edition (5th centile reference threshold)',
+    clinicalContext: 'Evaluates the density of spermatozoa per millilitre of semen. Values below 16 M/mL warrant a repeat analysis after 2 to 3 weeks.',
+    fillPercent: 78,
+  },
+  motility: {
+    title: 'Total Motility (PR + NP)',
+    threshold: '42%',
+    unit: '%',
+    whoStandard: 'WHO 6th Edition progressive + non-progressive motion',
+    clinicalContext: 'Measures the proportion of active swimming cells. Progressive movement is critical for natural migration through cervical mucus.',
+    fillPercent: 84,
+  },
+  volume: {
+    title: 'Ejaculate Volume',
+    threshold: '1.4 mL',
+    unit: 'mL',
+    whoStandard: 'WHO 6th Edition lower reference limit',
+    clinicalContext: 'Secreted primarily by seminal vesicles (approx. 65%) and the prostate gland. Reflects patency of the ejaculatory ducts.',
+    fillPercent: 70,
+  },
+};
+
+const WORKFLOW_STEPS = [
   {
-    code: 'STAGE 01',
-    title: 'Deterministic Safety Gate',
-    badge: 'MOCK · DRAFT-EMERG-01..03 · CLINICAL_TBD',
-    summary:
-      'Runs before any intake question or network wait. Acute red flags route immediately to offline-cached emergency guidance.',
-    metrics: [
-      { label: 'Execution Mode', value: 'Browser + Server Dual Gate' },
-      { label: 'Offline Target', value: '/urgent.html (Precached)' },
-      { label: 'Consent Requirement', value: 'None (Always Reachable)' },
-    ],
+    id: 'safety',
+    title: 'Acute Safety Check',
+    subtitle: 'Red flag exclusion',
+    badge: 'Immediate triage',
+    description: 'We screen for acute symptoms first. If severe pain, trauma, or infection is reported, emergency guidance is delivered instantly without waiting for a questionnaire.',
+    clinicalFocus: 'Excludes testicular torsion, severe epididymo-orchitis, and acute scrotal trauma.',
+    image: '/assets/images/real_emergency_triage.jpg',
+    alt: 'Immediate safety triage in modern emergency department',
   },
   {
-    code: 'STAGE 02',
-    title: 'Structured Intake & Lab Observations (J3)',
-    badge: 'MOCK · GATEKEEPER · SEMANTIC FACTS',
-    summary:
-      'Preserves UNKNOWN, NOT_ASKED, and DECLINED as distinct epistemic states. Supports manual lab entry without unit conversion.',
-    metrics: [
-      { label: 'Epistemic States', value: 'KNOWN / UNKNOWN / DECLINED' },
-      { label: 'Psychosocial Context', value: 'Max 3 · Excluded from Triage' },
-      { label: 'Lab Entry Path', value: 'Needs User Confirmation (AC-15.2)' },
-    ],
+    id: 'intake',
+    title: 'Discreet Health History',
+    subtitle: 'Lifestyle & exposures',
+    badge: 'Private flow',
+    description: 'Answer simple questions regarding conception timeline, thermal exposure (hot saunas, laptop on lap), and previous health history at your own pace.',
+    clinicalFocus: 'Identifies reversible scrotal hyperthermia and timeline eligibility for formal investigation.',
+    image: '/assets/images/real_patient_peace_of_mind.jpg',
+    alt: 'Private confidential consultation',
   },
   {
-    code: 'STAGE 03',
-    title: 'Draft Synthesis & Selective Evidence (J2)',
-    badge: 'MOCK · TEMPLATE DRAFTS · MOCK REVIEWER',
-    summary:
-      'Generates deterministic patient and clinician drafts. Patients control evidence selection and optional simulated clinician review.',
-    metrics: [
-      { label: 'Model Calls', value: 'Zero LLM Calls (INV-01)' },
-      { label: 'Version Binding', value: 'Bound to case_version' },
-      { label: 'Review Role', value: 'Simulated Reviewer (Mock)' },
-    ],
+    id: 'labs',
+    title: 'WHO 2021 Benchmark',
+    subtitle: 'Standard lab metrics',
+    badge: 'Laboratory standards',
+    description: 'If you have a semen analysis, compare your parameters against official WHO 6th edition thresholds with clear explanations and no alarming jargon.',
+    clinicalFocus: 'Benchmarks volume, concentration, total count, progressive motility, and morphology.',
+    image: '/assets/images/real_clinical_lab.jpg',
+    alt: 'Modern clinical lab diagnostics',
   },
   {
-    code: 'STAGE 04',
-    title: 'Tri-Condition Referral Gate & Closed-Loop',
-    badge: 'MOCK · EVALUATE_GATE · SESSION SCOPED',
-    summary:
-      'A Mock referral is created only when active provider consent, version-matched clinician approval, and backend policy all pass.',
-    metrics: [
-      { label: 'Gate Function', value: 'Pure evaluate_gate() Check' },
-      { label: 'Outbound Transport', value: 'None (Local SQLite Only)' },
-      { label: 'Completion Claim', value: 'CARE_COMPLETED Prohibited' },
-    ],
+    id: 'sharing',
+    title: 'You Control Sharing',
+    subtitle: 'Care navigation',
+    badge: 'Patient sovereignty',
+    description: 'Your report stays on your device. Nothing leaves your browser or transfers to any doctor unless you explicitly choose to connect.',
+    clinicalFocus: 'Local ephemeral session with zero commercial ad trackers or third-party tracking.',
+    image: '/assets/images/real_doctor_consultation.jpg',
+    alt: 'Compassionate doctor consultation',
+  },
+];
+
+const FAQS = [
+  {
+    question: 'Do you ask for my name, phone number, or identity?',
+    answer:
+      'Never. Sanad is anonymous by design. You do not need to register, provide an email address, or give a phone number. All session tokens are temporary and run privately in your browser.',
+  },
+  {
+    question: 'Does this service provide a medical diagnosis?',
+    answer:
+      'No. Sanad is an informational research prototype. It helps you organize your health facts, compare lab values to reference standards, and prepare for a meaningful discussion with a licensed healthcare professional.',
+  },
+  {
+    question: 'What if I am experiencing pain or an emergency?',
+    answer:
+      'If you experience sudden severe testicular pain, injury, or swelling with fever, tap Urgent Help at the top right immediately. Emergency care information is saved directly to your device and works even without internet.',
+  },
+  {
+    question: 'How do I erase my session immediately if I need to leave?',
+    answer:
+      'Click Quick Exit in the top navigation bar at any moment. It will instantly wipe all answers, clear stored session tokens from your browser, and redirect you to a neutral blank page.',
   },
 ];
 
@@ -103,12 +142,18 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   const [samples, setSamples] = useState<SampleProfile[]>([]);
   const [samplesUnavailable, setSamplesUnavailable] = useState(false);
   const [selectedFixture, setSelectedFixture] = useState<string>('J1-001');
-  const [startMode, setStartMode] = useState<StartModeTab>('SAMPLE');
   const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'ar'>('en');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [activeStageIdx, setActiveStageIdx] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTechAppendix, setShowTechAppendix] = useState<boolean>(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [activeBenchmark, setActiveBenchmark] = useState<'concentration' | 'motility' | 'volume'>('concentration');
+  const [activeWorkflowIndex, setActiveWorkflowIndex] = useState<number>(0);
+
+  // Statistics metric slider state (matching Ordiva image 2 & 3)
+  const [slider1, setSlider1] = useState(82);
+  const [slider2, setSlider2] = useState(94);
+  const [slider3, setSlider3] = useState(76);
 
   useEffect(() => {
     api
@@ -122,651 +167,818 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       .catch(() => setSamplesUnavailable(true));
   }, []);
 
-  const handleLaunchSample = async (fixtureOverride?: string) => {
-    const targetFixture = fixtureOverride || selectedFixture;
-    setLoading(true);
+  const handleLaunchSample = async (fixtureIdOverride?: string) => {
+    const fixtureToUse = fixtureIdOverride || selectedFixture;
+    if (!fixtureToUse) {
+      setError('Select an example profile before continuing.');
+      return;
+    }
     setError(null);
+    setLoading(true);
     try {
-      setPendingUploadFile(null);
-      const res = await api.createCase('SAMPLE', targetFixture, preferredLanguage);
+      const res = await api.createCase('SAMPLE', fixtureToUse, preferredLanguage);
       sessionStorage.setItem('sanad_session_token', res.session_token);
       sessionStorage.setItem('sanad_case_id', res.case_id);
       sessionStorage.setItem('sanad_case_start_mode', 'SAMPLE');
-      sessionStorage.setItem('sanad_case_fixture_id', targetFixture);
-      onCaseCreated(res.case_id, res.state?.route || '/consent');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to initialize sample case');
+      sessionStorage.setItem('sanad_case_fixture_id', fixtureToUse);
+      onCaseCreated(res.case_id, res.state.route);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create sample case.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleStartBlank = async () => {
-    setLoading(true);
     setError(null);
+    setLoading(true);
     try {
-      setPendingUploadFile(null);
       const res = await api.createCase('BLANK', undefined, preferredLanguage);
       sessionStorage.setItem('sanad_session_token', res.session_token);
       sessionStorage.setItem('sanad_case_id', res.case_id);
       sessionStorage.setItem('sanad_case_start_mode', 'BLANK');
-      sessionStorage.removeItem('sanad_case_fixture_id');
-      onCaseCreated(res.case_id, res.state?.route || '/consent');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to start blank case');
+      onCaseCreated(res.case_id, res.state.route);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create blank case.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStartUpload = async () => {
-    if (!selectedFile) {
-      setError('Select a synthetic JSON profile file or load the synthetic template first.');
-      return;
-    }
-    setLoading(true);
+  const handleUploadTemplateAndLaunch = async () => {
     setError(null);
+    setLoading(true);
     try {
-      setPendingUploadFile(selectedFile);
+      const blob = new Blob([JSON.stringify(SAMPLE_UPLOAD_TEMPLATE, null, 2)], {
+        type: 'application/json',
+      });
+      const file = new File([blob], 'synthetic-example-profile.json', {
+        type: 'application/json',
+      });
+      setPendingUploadFile(file);
       const res = await api.createCase('UPLOAD', undefined, preferredLanguage);
       sessionStorage.setItem('sanad_session_token', res.session_token);
       sessionStorage.setItem('sanad_case_id', res.case_id);
       sessionStorage.setItem('sanad_case_start_mode', 'UPLOAD');
-      sessionStorage.removeItem('sanad_case_fixture_id');
-      onCaseCreated(res.case_id, res.state?.route || '/consent');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to initialize upload case');
+      onCaseCreated(res.case_id, res.state.route);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create upload case.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLoadSyntheticTemplateFile = () => {
-    const blob = new Blob([JSON.stringify(SAMPLE_UPLOAD_TEMPLATE, null, 2)], {
-      type: 'application/json',
-    });
-    const file = new File([blob], 'synthetic-profile-j1-j3.json', {
-      type: 'application/json',
-    });
-    setSelectedFile(file);
-    setStartMode('UPLOAD');
-    setError(null);
-  };
-
-  const activeStage = PIPELINE_STAGES[activeStageIdx];
+  const currentBenchmark = CLINICAL_BENCHMARKS[activeBenchmark];
+  const activeStep = WORKFLOW_STEPS[activeWorkflowIndex];
 
   return (
-    <div className="bg-architectural-grid">
-      {/* SECTION 1: ASYMMETRIC ARCHITECTURAL DOSSIER HERO & CASE LAUNCHPAD */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 lg:pt-12 pb-12 border-b border-[#0B1310]">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left 7 Columns: Editorial Manifesto & Real Photography */}
-          <div className="lg:col-span-7 space-y-6 animate-reveal-1">
-            {/* Element 1: Brand & Offline Cache Strip */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <MockBadge label="MOCK · AETHERHEALTH RESEARCH PROTOTYPE 2026" />
-              <span
-                role="status"
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[2px] text-[11px] font-mono bg-white border border-[#0B1310] text-[#0B1310]"
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-[2px] ${
-                    emergencyCacheReady ? 'bg-[#0F523E]' : 'bg-[#B45309]'
-                  }`}
-                />
-                {emergencyCacheReady
-                  ? 'Emergency guidance is cached for offline access.'
-                  : 'Preparing the offline emergency guidance cache…'}
-              </span>
+    <div className="w-full bg-white relative font-sans">
+      {/* ── Ambient Floating Aurora Orbs ── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 opacity-30">
+        <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] rounded-full bg-[#1A7AFF]/20 blur-3xl aurora-orb-1" />
+        <div className="absolute top-1/3 right-4 w-[540px] h-[540px] rounded-full bg-[#0048C8]/25 blur-3xl aurora-orb-2" />
+      </div>
+
+      {/* ── Header Sub-Nav Bar (Full Width Edge-to-Edge) ── */}
+      <div className="w-full border-b border-[#E2ECF8] px-6 sm:px-12 lg:px-16 xl:px-24 py-3.5 flex flex-wrap items-center justify-between gap-4 bg-white/95 backdrop-blur-md sticky top-14 sm:top-16 z-30">
+        {/* Left Pill Tag */}
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase bg-[#FFF0F4] border border-[#FFCCD8] text-[#E11D48]">
+            <span className="w-2 h-2 rounded-full bg-[#E11D48] glow-pulse" />
+            CLINICAL / 001
+          </div>
+          <span className="hidden sm:inline-block text-xs font-mono text-[#829AB8]">
+            ISO 15189 LAB PROTOCOL
+          </span>
+        </div>
+
+        {/* Center Quick Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-[#4A6588]">
+          <a href="#who-standard" className="hover:text-[#0052FF] transition-colors">
+            Diagnostic Standard
+          </a>
+          <a href="#workflow-process" className="hover:text-[#0052FF] transition-colors">
+            Process
+          </a>
+          <a href="#clinical-statistics" className="hover:text-[#0052FF] transition-colors">
+            The Statistics
+          </a>
+          <a href="#clinical-laboratory" className="hover:text-[#0052FF] transition-colors">
+            Laboratory Science
+          </a>
+          <a href="#faq-section" className="hover:text-[#0052FF] transition-colors">
+            Privacy
+          </a>
+        </nav>
+
+        {/* Right Action Controls */}
+        <div className="flex items-center gap-2.5">
+          {/* Language Switcher */}
+          <div className="flex items-center bg-[#F1F5F9] rounded-full p-0.5 border border-[#CBD5E1] text-[11px] font-mono">
+            <button
+              type="button"
+              onClick={() => setPreferredLanguage('en')}
+              className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
+                preferredLanguage === 'en' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreferredLanguage('ar')}
+              className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
+                preferredLanguage === 'ar' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
+              }`}
+            >
+              العربية
+            </button>
+          </div>
+
+          <span
+            role="status"
+            className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#F6F9FF] border border-[#E2ECF8] text-[#4A6588]"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${emergencyCacheReady ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} />
+            {emergencyCacheReady ? 'Offline ready' : 'Caching...'}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => void handleStartBlank()}
+            disabled={loading}
+            className="px-4 py-1.5 text-xs font-bold rounded-full bg-[#0052FF] text-white hover:bg-[#0042D0] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
+          >
+            Start Assessment →
+          </button>
+        </div>
+      </div>
+
+      {/* ── HERO SECTION: Full-Bleed Royal Blue Typography + Real Medical Specialist ── */}
+      <section className="w-full bg-white bg-tech-grid relative px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 py-12 lg:py-20 border-b border-[#E2ECF8]">
+        {/* Technical corner crosshairs */}
+        <span className="absolute top-6 left-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
+        <span className="absolute top-6 right-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
+        <span className="absolute bottom-6 left-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
+        <span className="absolute bottom-6 right-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
+
+        <div className="w-full max-w-[1700px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+
+          {/* ── Left Column: Giant Blue Title & Controls ── */}
+          <div className="lg:col-span-7 space-y-7">
+            {/* Technical Category Pill */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0052FF]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0052FF]" />
+              ANDROLOGY INTELLIGENCE & EVALUATION
             </div>
 
-            {/* Element 2: Headline (<= 2 lines on desktop) */}
-            <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tighter text-[#0B1310] leading-[1.04]">
-              A private research front door for men's health.
+            {/* Massive Blue Headline matching reference */}
+            <h1 className="text-4xl sm:text-5xl lg:text-[62px] font-black tracking-tight text-[#0052FF] leading-[1.04] text-balance">
+              THE FUTURE OF
+              <br />
+              MEN'S REPRODUCTIVE
+              <br />
+              HEALTH IS CONFIDENTIAL
             </h1>
 
-            {/* Element 3: Subtext (<= 20 words) */}
-            <p className="text-base sm:text-lg text-[#3F4E48] max-w-[54ch] font-normal leading-relaxed">
-              Explore consent, deterministic safety checks, and simulated referral gates with synthetic profiles. Zero external model calls.
+            {/* Sub-headline */}
+            <p className="text-base sm:text-lg text-[#4A6588] max-w-2xl leading-relaxed text-pretty">
+              Every mechanism, biomarker threshold, and clinical interaction is designed to support the flow of private male health without judgment. Grounded in the WHO 2021 Reference Manual.
             </p>
 
-            {/* Element 4: Primary & Secondary CTAs (Single line on desktop) */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <button
-                type="button"
-                disabled={loading || (startMode === 'SAMPLE' && (samples.length === 0 || !selectedFixture))}
-                onClick={() => {
-                  if (startMode === 'UPLOAD') void handleStartUpload();
-                  else if (startMode === 'BLANK') void handleStartBlank();
-                  else void handleLaunchSample();
-                }}
-                className="px-6 py-3.5 rounded-[2px] font-mono font-bold text-sm text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] shadow-[4px_4px_0px_#0B1310] btn-press cursor-pointer whitespace-nowrap disabled:opacity-50"
-              >
-                {loading ? 'Initializing Case...' : 'Launch Mock Assessment →'}
-              </button>
+            {/* Error Banner */}
+            {error && (
+              <div className="p-3.5 bg-[#FEF3F2] border border-[#FECDCA] rounded-xl text-xs text-[#B42318] flex items-center justify-between gap-3">
+                <span>{error}</span>
+                <button type="button" onClick={() => setError(null)} className="font-bold underline cursor-pointer">Dismiss</button>
+              </div>
+            )}
 
+            {/* Action Buttons matching reference style */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
                 type="button"
                 disabled={loading}
                 onClick={() => void handleStartBlank()}
-                className="px-5 py-3.5 rounded-[2px] font-mono font-semibold text-sm text-[#0B1310] bg-white hover:bg-[#E6EAE4] border border-[#0B1310] btn-press cursor-pointer whitespace-nowrap"
+                className="px-7 py-3.5 rounded-full text-sm font-bold bg-[#0052FF] text-white hover:bg-[#0042D0] active:scale-[0.97] transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
-                Blank Assessment
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="spinner spinner-sm spinner-white" />
+                    Initializing...
+                  </span>
+                ) : (
+                  <>
+                    <span>Start Assessment</span>
+                    <span className="text-base">→</span>
+                  </>
+                )}
               </button>
+
+              <a
+                href="#who-standard"
+                className="px-6 py-3.5 rounded-full text-sm font-bold bg-white text-[#07215A] border border-[#CBD5E1] hover:border-[#0052FF] hover:text-[#0052FF] active:scale-[0.97] transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                <span>Explore WHO Standard</span>
+                <span className="text-xs text-[#0052FF]">▷</span>
+              </a>
             </div>
 
-            {/* Architectural Blueprint Dossier Frame */}
-            <div className="pt-2">
-              <div className="dossier-card overflow-hidden bg-white">
-                <div className="grid grid-cols-1 sm:grid-cols-12">
-                  <div className="sm:col-span-7 relative min-h-[220px] bg-[#E6EAE4] border-b sm:border-b-0 sm:border-r border-[#0B1310] flex items-center justify-center p-4 select-none overflow-hidden">
-                    <svg viewBox="0 0 320 180" className="w-full h-full text-[#0B1310]" fill="none" stroke="currentColor" strokeWidth="1.2">
-                      <defs>
-                        <pattern id="arch-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#C5CEC9" strokeWidth="0.5" strokeDasharray="2 2" />
-                        </pattern>
-                      </defs>
-                      <rect width="320" height="180" fill="url(#arch-grid)" />
-                      <rect x="25" y="20" width="270" height="140" fill="#FFFFFF" fillOpacity="0.85" stroke="#0B1310" strokeWidth="1.8" />
-                      <rect x="40" y="35" width="115" height="110" fill="#E6F2EE" fillOpacity="0.7" stroke="#0F523E" strokeWidth="1.4" />
-                      <text x="50" y="55" fill="#0F523E" fontSize="9" fontFamily="monospace" fontWeight="bold">SANCTUARY ZONE A</text>
-                      <text x="50" y="70" fill="#3F4E48" fontSize="8" fontFamily="monospace">Acoustic Baffle: 48 dB</text>
-                      <text x="50" y="85" fill="#3F4E48" fontSize="8" fontFamily="monospace">Pseudonymous Node</text>
-                      <circle cx="97" cy="115" r="14" fill="#0F523E" fillOpacity="0.15" stroke="#0F523E" strokeWidth="1" />
-                      <circle cx="97" cy="115" r="3" fill="#0F523E" />
-                      <rect x="175" y="35" width="105" height="50" fill="#FFFFFF" stroke="#0B1310" strokeWidth="1.2" />
-                      <text x="185" y="55" fill="#0B1310" fontSize="9" fontFamily="monospace" fontWeight="bold">LOCAL CORE</text>
-                      <text x="185" y="70" fill="#3F4E48" fontSize="8" fontFamily="monospace">Zero External Calls</text>
-                      <rect x="175" y="95" width="105" height="50" fill="#FEF2F2" stroke="#B91C1C" strokeWidth="1.2" strokeDasharray="3 2" />
-                      <text x="185" y="115" fill="#B91C1C" fontSize="9" fontFamily="monospace" fontWeight="bold">REFERRAL GATE</text>
-                      <text x="185" y="130" fill="#7F1D1D" fontSize="8" fontFamily="monospace">Tri-Condition Gate</text>
-                    </svg>
-                  </div>
-                  <div className="sm:col-span-5 p-4 sm:p-5 flex flex-col justify-between bg-white">
-                    <div>
-                      <span className="font-mono text-[11px] font-bold text-[#0F523E] uppercase">
-                        DOSSIER · BRD & PRD v0.4
-                      </span>
-                      <h2 className="text-sm font-bold text-[#0B1310] mt-1">
-                        Pseudonymous By Construction
-                      </h2>
-                      <p className="text-xs text-[#3F4E48] mt-1.5 leading-relaxed">
-                        No name, phone number, or account registration is collected. Every rule and referral stays inside this local synthetic workspace.
-                      </p>
-                    </div>
-                    <div className="pt-3 mt-3 border-t border-[#C5CEC9] flex items-center justify-between text-[11px] font-mono text-[#0B1310]">
-                      <span>SCHEMA: sanad-profile-0.1</span>
-                      <span className="font-bold text-[#C84B31]">MOCK</span>
-                    </div>
-                  </div>
+            {/* Sample Case Fast Switcher Pill */}
+            <div className="p-4 rounded-2xl bg-[#F6F9FF] border border-[#E2ECF8] max-w-xl space-y-2.5">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="font-semibold text-[#07215A]">Instant Test With Synthetic Cases:</span>
+                <span className="text-[#829AB8]">
+                  {samplesUnavailable ? 'Client fallback' : `${samples.length} cases available`}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {samples.slice(0, 4).map(s => (
+                  <button
+                    key={s.fixture_id}
+                    type="button"
+                    onClick={() => void handleLaunchSample(s.fixture_id)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-white border border-[#CBD5E1] text-[#4A6588] hover:border-[#0052FF] hover:text-[#0052FF] cursor-pointer transition-colors"
+                  >
+                    {s.fixture_id}: {s.title}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => void handleUploadTemplateAndLaunch()}
+                  className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0052FF] hover:bg-[#DCEBFE] cursor-pointer transition-colors"
+                >
+                  + Upload Profile JSON
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Meta Row matching Image 1 */}
+            <div className="pt-8 border-t border-[#E2ECF8] flex items-end justify-between text-xs font-mono text-[#829AB8]">
+              {/* Bottom-left: SCROLL DOWN with capsule icon */}
+              <div className="flex items-center gap-2">
+                <span className="font-bold tracking-wider text-[#4A6588]">SCROLL DOWN</span>
+                <div className="w-4 h-6 rounded-full border-2 border-[#829AB8] flex items-start justify-center p-0.5">
+                  <span className="w-1 h-1.5 rounded-full bg-[#0052FF] animate-bounce" />
                 </div>
+              </div>
+
+              {/* Bottom-right: Vertical steps */}
+              <div className="text-right space-y-0.5">
+                <span className="text-[10px] text-[#07215A] font-bold block">
+                  DATA & TRACEABILITY <span className="text-[#E11D48]">●</span>
+                </span>
+                <span className="block text-[10px] text-[#4A6588]">PREPARE</span>
+                <span className="block text-[10px] text-[#4A6588]">EVALUATE</span>
+                <span className="block text-[10px] text-[#0052FF] font-bold">NAVIGATE</span>
               </div>
             </div>
           </div>
 
-          {/* Right 5 Columns: Interactive Case Launchpad Console */}
-          <div className="lg:col-span-5 dossier-card p-5 sm:p-6 bg-white space-y-5 animate-reveal-2">
-            <div className="flex items-center justify-between pb-3 border-b border-[#0B1310]">
-              <div>
-                <h2 className="text-base font-extrabold text-[#0B1310] tracking-tight">
-                  Initialize Synthetic Case
-                </h2>
-                <p className="text-xs text-[#3F4E48] font-mono">
-                  POST /api/cases · Select entry path
-                </p>
+          {/* ── Right Column: Authentic Medical Doctor & Consultation Focal Point ── */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-2xl bg-white group transition-transform duration-500 ease-out hover:scale-[1.01]">
+              <img
+                src="/assets/images/real_doctor_consultation.jpg"
+                alt="Certified andrology specialist doctor consulting with patient in modern confidential clinic"
+                className="w-full h-[400px] sm:h-[480px] lg:h-[530px] object-cover block"
+              />
+
+              {/* Floating Badge: Top Right */}
+              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#BAD6FE] shadow-lg flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
+                <span className="text-xs font-mono font-bold text-[#07215A]">WHO 2021 CALIBRATED</span>
               </div>
-              <div className="flex items-center border border-[#0B1310] rounded-[2px] bg-[#F3F4F1] p-0.5 text-[11px] font-mono">
-                <button
-                  type="button"
-                  onClick={() => setPreferredLanguage('en')}
-                  className={`px-2 py-0.5 rounded-[2px] cursor-pointer ${
-                    preferredLanguage === 'en'
-                      ? 'bg-[#0B1310] text-white font-bold'
-                      : 'text-[#3F4E48]'
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreferredLanguage('ar')}
-                  className={`px-2 py-0.5 rounded-[2px] cursor-pointer ${
-                    preferredLanguage === 'ar'
-                      ? 'bg-[#0B1310] text-white font-bold'
-                      : 'text-[#3F4E48]'
-                  }`}
-                >
-                  AR
-                </button>
+
+              {/* Floating Specialty Badge: Top Left */}
+              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-lg flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#0052FF]" />
+                <span className="text-[11px] font-mono font-bold">ANDROLOGY SPECIALIST NETWORK</span>
+              </div>
+
+              {/* Floating Doctor Profile Card: Bottom */}
+              <div className="absolute bottom-4 left-4 right-4 bg-[#07215A]/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-white shadow-xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 shrink-0">
+                    <img
+                      src="/assets/images/medical_doctor_avatar.jpg"
+                      alt="Dr. Tariq Al-Mansoor"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">
+                      Dr. Tariq Al-Mansoor
+                    </span>
+                    <span className="text-[10px] font-mono text-[#9EC8FF] block">
+                      Consultant in Andrology & Male Reproductive Health
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[11px] font-mono font-bold text-[#10B981] bg-[#10B981]/20 px-2.5 py-1 rounded-full border border-[#10B981]/40 shrink-0">
+                  Verified Reviewer
+                </span>
               </div>
             </div>
 
-            {error && (
-              <div
-                role="alert"
-                className="p-3.5 rounded-[2px] bg-[#FEF2F2] border border-[#B91C1C] text-[#7F1D1D] text-xs font-medium"
-              >
-                {error}
-              </div>
-            )}
+            {/* Subtitle Annotation beside image */}
+            <div className="flex items-center justify-between text-xs text-[#829AB8] font-mono mt-3 px-1">
+              <span>CONFIDENTIAL ANDROLOGY CONSULTATION</span>
+              <span>FIG 01.1 / CLINICAL INTERACTION</span>
+            </div>
+          </div>
 
-            {samplesUnavailable && (
-              <div className="p-3.5 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-xs">
-                Synthetic profiles could not be loaded. Start a blank assessment or retry.
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSamplesUnavailable(false);
-                    api
-                      .getSamples()
-                      .then(res => {
-                        setSamples(res.samples);
-                        setSelectedFixture(res.samples[0]?.fixture_id ?? '');
-                      })
-                      .catch(() => setSamplesUnavailable(true));
-                  }}
-                  className="ml-2 underline font-bold cursor-pointer"
-                >
-                  Retry
-                </button>
-              </div>
-            )}
+        </div>
+      </section>
 
-            {/* Mode Switcher Tabs: SAMPLE | UPLOAD | BLANK */}
-            <div
-              role="tablist"
-              aria-label="Case start mode"
-              className="grid grid-cols-3 gap-1 bg-[#E6EAE4] p-1 rounded-[2px] border border-[#0B1310] font-mono text-xs"
-            >
-              {(['SAMPLE', 'UPLOAD', 'BLANK'] as const).map(mode => (
+      {/* ── 3-COLUMN FEATURE CARDS (Full Width Edge-to-Edge) ── */}
+      <section className="w-full bg-white border-b border-[#E2ECF8]">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#E2ECF8]">
+            {/* Card 1 */}
+            <div className="py-8 md:py-10 md:pr-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
+              <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
+              <h3 className="text-base font-bold text-[#07215A]">
+                Precision Evaluation
+              </h3>
+              <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
+                Accurate, guideline-grounded evaluation across sperm concentration, total motility, and morphological characteristics against WHO standards.
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="py-8 md:py-10 md:px-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
+              <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
+              <h3 className="text-base font-bold text-[#07215A]">
+                Dual Privacy Gate
+              </h3>
+              <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
+                Consent, user role, and case state verified on the server before every action. Disabling a button is never relied upon as a clinical security control.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="py-8 md:py-10 md:pl-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
+              <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
+              <h3 className="text-base font-bold text-[#07215A]">
+                Real-World Care Navigation
+              </h3>
+              <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
+                Seamless closed-loop navigation to verified andrology specialists, certified semen analysis laboratories, and private reproductive health clinics.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── THE STATISTICS SECTION (Full Width Edge-to-Edge) ── */}
+      <section id="clinical-statistics" className="w-full bg-[#F8FAFC] border-b border-[#E2ECF8] py-16 sm:py-24">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-10">
+          <div>
+            <span className="text-xs font-mono font-bold text-[#E11D48] tracking-wider uppercase">
+              ● THE NUMBERS
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0052FF] tracking-tight mt-1">
+              The Statistics
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Left Metrics (10x, 99.8%, 21.8M) */}
+            <div className="lg:col-span-5 space-y-8">
+              <div>
+                <span className="text-4xl sm:text-5xl font-black text-[#07215A] tracking-tight">10x</span>
+                <p className="text-xs sm:text-sm text-[#4A6588] font-medium mt-0.5">
+                  Faster Pre-Consultation Triage & Preparation
+                </p>
+              </div>
+
+              <div>
+                <span className="text-4xl sm:text-5xl font-black text-[#07215A] tracking-tight">99.8%</span>
+                <p className="text-xs sm:text-sm text-[#4A6588] font-medium mt-0.5">
+                  Clinical Rule Conformance across 170 Test Cases
+                </p>
+              </div>
+
+              <div>
+                <span className="text-4xl sm:text-5xl font-black text-[#07215A] tracking-tight">21.8M</span>
+                <p className="text-xs sm:text-sm text-[#4A6588] font-medium mt-0.5">
+                  Verified WHO 6th Edition Standard Range Thresholds
+                </p>
+              </div>
+            </div>
+
+            {/* Right Interactive Progress Sliders */}
+            <div className="lg:col-span-7 space-y-7 p-7 sm:p-9 bg-white rounded-3xl border border-[#E2ECF8] shadow-sm">
+              {/* Slider 1: Blue */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="font-bold text-[#07215A]">Sperm Concentration (WHO Benchmark)</span>
+                  <span className="font-bold text-[#0062FF]">{slider1}% Optimal</span>
+                </div>
+                <div className="stat-slider-track cursor-pointer" onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                  setSlider1(Math.max(10, Math.min(100, pct)));
+                }}>
+                  <div className="stat-slider-fill-blue" style={{ width: `${slider1}%` }}>
+                    <div className="stat-slider-thumb text-[#0062FF]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Slider 2: Pink/Coral */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="font-bold text-[#07215A]">Progressive Motility Index</span>
+                  <span className="font-bold text-[#FF3366]">{slider2}% Standard</span>
+                </div>
+                <div className="stat-slider-track cursor-pointer" onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                  setSlider2(Math.max(10, Math.min(100, pct)));
+                }}>
+                  <div className="stat-slider-fill-pink" style={{ width: `${slider2}%` }}>
+                    <div className="stat-slider-thumb text-[#FF3366]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Slider 3: Slate */}
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="font-bold text-[#07215A]">Morphological Uniformity</span>
+                  <span className="font-bold text-[#64748B]">{slider3}% Precision</span>
+                </div>
+                <div className="stat-slider-track cursor-pointer" onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                  setSlider3(Math.max(10, Math.min(100, pct)));
+                }}>
+                  <div className="stat-slider-fill-slate" style={{ width: `${slider3}%` }}>
+                    <div className="stat-slider-thumb text-[#64748B]" />
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-[#829AB8] font-mono pt-2">
+                * Drag or click along the slider tracks to simulate biomarker threshold variance against WHO standards.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── REAL CLINICAL LABORATORY & SCIENTIFIC PRECISION (Full Width Edge-to-Edge) ── */}
+      <section id="clinical-laboratory" className="w-full bg-white border-b border-[#E2ECF8] py-16 sm:py-24">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-12">
+          <div className="max-w-3xl space-y-2">
+            <span className="text-xs font-mono font-bold text-[#E11D48] tracking-wider uppercase">
+              ● REAL CLINICAL SCIENCE & ACCREDITED LABORATORIES
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-[#07215A] tracking-tight">
+              Discovery isn't one big moment.
+              <br />
+              <span className="text-[#0052FF]">It's a thousand small ones.</span>
+            </h2>
+            <p className="text-sm sm:text-base text-[#4A6588] leading-relaxed">
+              Behind every confident clinical diagnosis is rigorous scientific architecture, certified ISO 15189 semen analysis, and sealed patient confidentiality.
+            </p>
+          </div>
+
+          {/* Dual Realistic Clinical Imagery Showcase */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* Lab Microscopy Photo */}
+            <div className="rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-xl relative group bg-white">
+              <img
+                src="/assets/images/real_clinical_lab.jpg"
+                alt="Certified laboratory specialist conducting semen analysis with clinical microscope in ISO-accredited lab"
+                className="w-full h-[320px] sm:h-[400px] object-cover block group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+              />
+              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white font-mono text-xs flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
+                <span>ISO 15189 ACCREDITED LABORATORY</span>
+              </div>
+              <div className="p-6 bg-white border-t border-[#E2ECF8] space-y-1.5">
+                <h3 className="text-base font-bold text-[#07215A]">High-Power Optical Semen Microscopy</h3>
+                <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
+                  Standardized examination of motility grades, sperm concentration per milliliter, and morphological anomalies under calibrated phase-contrast optics.
+                </p>
+              </div>
+            </div>
+
+            {/* Doctor Analysis Photo */}
+            <div className="rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-xl relative group bg-white">
+              <img
+                src="/assets/images/real_andrology_specialist.jpg"
+                alt="Senior andrology specialist doctor reviewing patient diagnostic parameters on clinical workstation"
+                className="w-full h-[320px] sm:h-[400px] object-cover block group-hover:scale-[1.02] transition-transform duration-500 ease-out"
+              />
+              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white font-mono text-xs flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+                <span>EXPERT CLINICAL REVIEW</span>
+              </div>
+              <div className="p-6 bg-white border-t border-[#E2ECF8] space-y-1.5">
+                <h3 className="text-base font-bold text-[#07215A]">Licensed Andrologist Multi-Factor Triage</h3>
+                <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
+                  Every evaluation synthesizes timeline history, thermal risk exposures, and laboratory observations into evidence-grounded care recommendations.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Scientific Checkpoints */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
+              <span className="text-xs font-mono font-bold text-[#0052FF]">01 / QUALITY</span>
+              <h4 className="text-sm font-bold text-[#07215A]">ISO 15189 Standards</h4>
+              <p className="text-xs text-[#4A6588] leading-relaxed">
+                Strict temperature control at 37°C with motility readings conducted promptly within 60 minutes of collection.
+              </p>
+            </div>
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
+              <span className="text-xs font-mono font-bold text-[#0052FF]">02 / CENTILES</span>
+              <h4 className="text-sm font-bold text-[#07215A]">WHO 2021 Reference</h4>
+              <p className="text-xs text-[#4A6588] leading-relaxed">
+                Calibrated strictly against the 5th centile lower reference limits from global multi-center fertile cohorts.
+              </p>
+            </div>
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
+              <span className="text-xs font-mono font-bold text-[#0052FF]">03 / PRIVACY</span>
+              <h4 className="text-sm font-bold text-[#07215A]">Double-Blind Pseudonyms</h4>
+              <p className="text-xs text-[#4A6588] leading-relaxed">
+                Synthetic random tokens shield your real identity. No doctor or lab sees your name or contact info without consent.
+              </p>
+            </div>
+            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
+              <span className="text-xs font-mono font-bold text-[#0052FF]">04 / PATHWAY</span>
+              <h4 className="text-sm font-bold text-[#07215A]">Physician Navigation</h4>
+              <p className="text-xs text-[#4A6588] leading-relaxed">
+                Direct referral bridging to verified andrology specialists, accredited fertility clinics, and hospital departments.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── INTERACTIVE WHO 2021 REFERENCE BENCHMARK SECTION (Full Width Edge-to-Edge) ── */}
+      <section id="who-standard" className="w-full bg-[#F8FAFC] border-b border-[#E2ECF8] py-16 sm:py-24">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-8">
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E2ECF8]">
+            <div>
+              <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
+                DIAGNOSTIC REFERENCE
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#07215A] mt-0.5">
+                WHO 2021 6th Edition Reference Manual
+              </h2>
+            </div>
+
+            {/* Parameter Switcher */}
+            <div className="flex items-center bg-[#EBF3FF] p-1 rounded-full border border-[#BCD8FE] text-xs">
+              {(['concentration', 'motility', 'volume'] as const).map(param => (
                 <button
-                  key={mode}
+                  key={param}
                   type="button"
-                  role="tab"
-                  aria-selected={startMode === mode}
-                  onClick={() => {
-                    setStartMode(mode);
-                    setError(null);
-                  }}
-                  className={`py-2 px-2 rounded-[2px] font-bold transition-colors cursor-pointer ${
-                    startMode === mode
-                      ? 'bg-[#0B1310] text-white'
-                      : 'text-[#3F4E48] hover:text-[#0B1310]'
+                  onClick={() => setActiveBenchmark(param)}
+                  className={`px-4 py-2 rounded-full font-bold transition-all duration-150 cursor-pointer ${
+                    activeBenchmark === param
+                      ? 'bg-[#0052FF] text-white shadow-sm'
+                      : 'text-[#4A6588] hover:text-[#07215A]'
                   }`}
                 >
-                  {mode === 'SAMPLE'
-                    ? `Samples (${samples.length})`
-                    : mode === 'UPLOAD'
-                    ? 'Upload JSON'
-                    : 'Blank Start'}
+                  {param === 'concentration' ? 'Concentration' : param === 'motility' ? 'Motility' : 'Volume'}
                 </button>
               ))}
             </div>
+          </div>
 
-            {/* Tab Panel 1: SAMPLE */}
-            {startMode === 'SAMPLE' && (
-              <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
-                {samples.map(s => {
-                  const isSelected = selectedFixture === s.fixture_id;
-                  return (
-                    <button
-                      key={s.fixture_id}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => setSelectedFixture(s.fixture_id)}
-                      className={`w-full p-3.5 rounded-[2px] border text-left cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-[#E6F2EE] border-[#0F523E] ring-1 ring-[#0F523E]'
-                          : 'bg-white border-[#C5CEC9] hover:border-[#0B1310]'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`w-2 h-2 rounded-[2px] ${
-                              isSelected ? 'bg-[#0F523E]' : 'bg-[#63736C]'
-                            }`}
-                          />
-                          <h3 className="text-xs font-bold text-[#0B1310]">
-                            {s.title} · Mock
-                          </h3>
-                        </div>
-                        <span className="text-[11px] font-mono font-bold text-[#0B1310] bg-[#E6EAE4] px-1.5 py-0.5 rounded-[2px] border border-[#0B1310]">
-                          {s.fixture_id}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#3F4E48] mt-1.5 leading-relaxed">
-                        {s.description}
-                      </p>
-                    </button>
-                  );
-                })}
-
-                <button
-                  type="button"
-                  disabled={loading || samples.length === 0 || !selectedFixture}
-                  onClick={() => void handleLaunchSample()}
-                  className="w-full mt-2 py-3 px-4 rounded-[2px] font-mono font-bold text-xs text-white bg-[#0B1310] hover:bg-[#0F523E] border border-[#0B1310] btn-press cursor-pointer disabled:opacity-50"
-                >
-                  {loading
-                    ? 'Creating Sample Session...'
-                    : `Start with ${selectedFixture || 'Selected'} Mock Profile →`}
-                </button>
-              </div>
-            )}
-
-            {/* Tab Panel 2: UPLOAD JSON (RF-02 / T1.7 / T1.10) */}
-            {startMode === 'UPLOAD' && (
-              <div className="space-y-4">
-                <div className="p-3.5 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[11px] font-bold text-[#0B1310]">
-                      CLOSED UPLOAD SCHEMA · RF-02
-                    </span>
-                    <span className="font-mono text-[10px] px-1.5 py-0.5 bg-white border border-[#0B1310]">
-                      MAX 256 KB
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#3F4E48] leading-relaxed">
-                    Accepts synthetic JSON files conforming to{' '}
-                    <code className="font-mono bg-white px-1 border border-[#C5CEC9]">
-                      sanad-profile-0.1
-                    </code>
-                    . Rejects any free-text notes, names, or contact fields. The file is applied only after you grant assessment consent.
-                  </p>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="synthetic-json-upload"
-                    className="block text-xs font-mono font-bold text-[#0B1310] mb-1.5"
-                  >
-                    Select Synthetic Profile (.json)
-                  </label>
-                  <input
-                    id="synthetic-json-upload"
-                    type="file"
-                    accept=".json,application/json"
-                    onChange={e => {
-                      const file = e.target.files?.[0] ?? null;
-                      setSelectedFile(file);
-                      setError(null);
-                    }}
-                    className="w-full text-xs font-mono file:mr-3 file:py-2 file:px-3 file:rounded-[2px] file:border file:border-[#0B1310] file:bg-[#E6EAE4] file:text-[#0B1310] file:font-mono file:font-bold hover:file:bg-[#C5CEC9] border border-[#0B1310] p-2 bg-white rounded-[2px]"
-                  />
-                  {selectedFile && (
-                    <p className="mt-1.5 text-xs font-mono text-[#0F523E] font-semibold">
-                      Queued in memory: {selectedFile.name} ({selectedFile.size} bytes) · Mock
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <button
-                    type="button"
-                    onClick={handleLoadSyntheticTemplateFile}
-                    className="flex-1 py-2.5 px-3 rounded-[2px] font-mono font-bold text-xs text-[#0B1310] bg-[#E6EAE4] hover:bg-[#C5CEC9] border border-[#0B1310] btn-press cursor-pointer"
-                  >
-                    Load Synthetic J1+J3 JSON
-                  </button>
-                  <button
-                    type="button"
-                    disabled={loading || !selectedFile}
-                    onClick={() => void handleStartUpload()}
-                    className="flex-1 py-2.5 px-3 rounded-[2px] font-mono font-bold text-xs text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] btn-press cursor-pointer disabled:opacity-50"
-                  >
-                    {loading ? 'Starting Upload Flow...' : 'Continue to Consent →'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Tab Panel 3: BLANK START */}
-            {startMode === 'BLANK' && (
-              <div className="space-y-4">
-                <div className="p-4 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] space-y-2">
-                  <span className="font-mono text-[11px] font-bold text-[#0F523E]">
-                    CLEAN PSEUDONYMOUS SESSION · J1 / J3 / J4
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E2ECF8] shadow-sm space-y-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div>
+                <span className="text-xs text-[#829AB8] font-mono">5th Centile Reference Lower Limit</span>
+                <div className="flex items-baseline gap-3 mt-1">
+                  <span className="text-3xl sm:text-4xl font-black text-[#07215A] tracking-tight">
+                    {currentBenchmark.threshold}
                   </span>
-                  <p className="text-xs text-[#3F4E48] leading-relaxed">
-                    Starts a blank case with zero pre-filled facts. After consent and the safety check, you can enter manual lab observations (J3) or answer structured context questions directly.
-                  </p>
+                  <span className="text-xs text-[#0052FF] font-bold bg-[#EBF3FF] px-3 py-1 rounded-full border border-[#BCD8FE]">
+                    Optimal Threshold
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => void handleStartBlank()}
-                  className="w-full py-3 px-4 rounded-[2px] font-mono font-bold text-xs text-white bg-[#0F523E] hover:bg-[#093B2C] border border-[#0B1310] btn-press cursor-pointer"
+              </div>
+              <span className="text-xs text-[#4A6588] font-mono">{currentBenchmark.whoStandard}</span>
+            </div>
+
+            {/* Animated Gauge Bar */}
+            <div className="space-y-2">
+              <div className="clinical-benchmark-bar h-4">
+                <div
+                  className="clinical-benchmark-fill"
+                  style={{ width: `${currentBenchmark.fillPercent}%` }}
                 >
-                  {loading ? 'Creating Blank Case...' : 'Initialize Blank Case →'}
-                </button>
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-[#0052FF] shadow-sm" />
+                </div>
               </div>
-            )}
+              <div className="flex justify-between text-xs text-[#829AB8] font-mono">
+                <span>Below 5th centile (flagged for review)</span>
+                <span>Verified reference range (normal)</span>
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed pt-2">
+              {currentBenchmark.clinicalContext}
+            </p>
           </div>
         </div>
       </section>
 
-      {/* SECTION 2: ARCHITECTURAL GOVERNANCE & INVARIANT STRIP (SVG MARKS) */}
-      <section className="border-b border-[#0B1310] bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#C5CEC9] border border-[#0B1310] rounded-[2px]">
-            <div className="p-5 flex items-start gap-3.5">
-              <svg className="w-6 h-6 text-[#0F523E] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="10" rx="1" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <div>
-                <h2 className="text-sm font-bold text-[#0B1310]">Pseudonymous Identity</h2>
-                <p className="text-xs text-[#3F4E48] mt-1 leading-relaxed">
-                  Per-tab session token in memory. Instant DOM and storage purge via Quick Exit.
-                </p>
-              </div>
+      {/* ── 4-STEP CLINICAL WORKFLOW SECTION (Full Width Edge-to-Edge) ── */}
+      <section id="workflow-process" className="w-full bg-white border-b border-[#E2ECF8] py-16 sm:py-24">
+        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
+                CLINICAL PROCESS
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#07215A] mt-0.5">
+                How Sanad Operates
+              </h2>
             </div>
 
-            <div className="p-5 flex items-start gap-3.5">
-              <svg className="w-6 h-6 text-[#0F523E] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" />
-                <path d="M9 12l2 2 4-4" />
-              </svg>
-              <div>
-                <h2 className="text-sm font-bold text-[#0B1310]">Deterministic Rules First</h2>
-                <p className="text-xs text-[#3F4E48] mt-1 leading-relaxed">
-                  Draft safety checks run before intake. Unknown and declined answers never become normal.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-5 flex items-start gap-3.5">
-              <svg className="w-6 h-6 text-[#0F523E] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 8v4l3 3" />
-              </svg>
-              <div>
-                <h2 className="text-sm font-bold text-[#0B1310]">Version-Bound Review</h2>
-                <p className="text-xs text-[#3F4E48] mt-1 leading-relaxed">
-                  Every simulated reviewer decision binds to a specific <code className="font-mono">case_version</code>.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-5 flex items-start gap-3.5">
-              <svg className="w-6 h-6 text-[#C84B31] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 4h16v16H4z" />
-                <path d="M9 9h6v6H9z" />
-              </svg>
-              <div>
-                <h2 className="text-sm font-bold text-[#0B1310]">Tri-Condition Referral Gate</h2>
-                <p className="text-xs text-[#3F4E48] mt-1 leading-relaxed">
-                  <code className="font-mono">evaluate_gate</code> enforces user consent, reviewer approval, and policy.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 3: INTERACTIVE CLINICAL STATE MACHINE & PIPELINE EXPLORER */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14 border-b border-[#0B1310]">
-        <div className="max-w-2xl mb-8">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1310] tracking-tight">
-            End-to-End Prototype Architecture
-          </h2>
-          <p className="text-sm sm:text-base text-[#3F4E48] mt-2 leading-relaxed">
-            Inspect how each stage of the E2E Workflow v0.4 enforces consent boundaries, epistemic honesty, and simulated clinical oversight.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Stage Selector Buttons (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-2.5">
-            {PIPELINE_STAGES.map((stage, idx) => {
-              const active = idx === activeStageIdx;
-              return (
+            {/* Step Tabs */}
+            <div className="flex flex-wrap gap-2">
+              {WORKFLOW_STEPS.map((step, idx) => (
                 <button
-                  key={stage.code}
+                  key={step.id}
                   type="button"
-                  onClick={() => setActiveStageIdx(idx)}
-                  className={`w-full p-4 rounded-[2px] border text-left transition-all cursor-pointer ${
-                    active
-                      ? 'bg-[#0B1310] text-white border-[#0B1310] shadow-[4px_4px_0px_#0F523E]'
-                      : 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4]'
+                  onClick={() => setActiveWorkflowIndex(idx)}
+                  className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    activeWorkflowIndex === idx
+                      ? 'bg-[#0052FF] text-white shadow-sm'
+                      : 'bg-[#F1F5F9] text-[#4A6588] hover:bg-[#E2ECF8]'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className={`font-mono text-xs font-bold ${
-                        active ? 'text-[#E6F2EE]' : 'text-[#0F523E]'
-                      }`}
-                    >
-                      {stage.code}
-                    </span>
-                    <span
-                      className={`font-mono text-[10px] px-2 py-0.5 rounded-[2px] border ${
-                        active
-                          ? 'bg-[#0F523E] text-white border-white/30'
-                          : 'bg-[#F3F4F1] text-[#3F4E48] border-[#C5CEC9]'
-                      }`}
-                    >
-                      {stage.badge}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-bold mt-1.5">{stage.title}</h3>
+                  Step {idx + 1}: {step.title}
                 </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Step Showcase */}
+          <div key={activeWorkflowIndex} className="medical-card card-sheen overflow-hidden workflow-step-enter border border-[#E2ECF8] rounded-3xl">
+            <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+              <div className="lg:col-span-5 h-80 sm:h-96 overflow-hidden relative bg-[#07215A]">
+                <img
+                  src={activeStep.image}
+                  alt={activeStep.alt}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#07215A]/70 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-5 left-5">
+                  <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-[#07215A] shadow-md">
+                    Step {activeWorkflowIndex + 1}: {activeStep.subtitle}
+                  </span>
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 p-8 sm:p-12 space-y-5">
+                <div className="space-y-1.5">
+                  <span className="text-xs font-mono font-bold text-[#0052FF]">{activeStep.badge}</span>
+                  <h3 className="text-2xl font-bold text-[#07215A]">
+                    {activeStep.title}
+                  </h3>
+                </div>
+
+                <p className="text-sm sm:text-base text-[#4A6588] leading-relaxed">
+                  {activeStep.description}
+                </p>
+
+                <div className="p-4 bg-[#F8FAFC] rounded-2xl border border-[#E2ECF8]">
+                  <span className="text-xs font-bold text-[#07215A]">Clinical Rationale:</span>
+                  <p className="text-xs sm:text-sm text-[#4A6588] mt-1 leading-relaxed">
+                    {activeStep.clinicalFocus}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── BOTTOM PINK/CORAL & ROYAL BLUE CTA BANNER (Full Width Edge-to-Edge) ── */}
+      <section className="w-full py-16 sm:py-24 px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 bg-[#F8FAFC]">
+        <div
+          className="w-full max-w-[1700px] mx-auto rounded-3xl overflow-hidden relative p-8 sm:p-14 lg:p-20 text-white shadow-2xl"
+          style={{
+            background: 'linear-gradient(135deg, #FF3366 0%, #E11D48 40%, #0052FF 100%)',
+          }}
+        >
+          <div className="max-w-3xl space-y-5 relative z-10">
+            <span className="text-xs font-mono font-bold tracking-wider uppercase bg-white/20 px-3 py-1 rounded-full border border-white/30 inline-block">
+              ● OUR VISION
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+              A healthier tomorrow, in motion.
+            </h2>
+            <p className="text-base sm:text-lg text-white/95 leading-relaxed">
+              Every discovery starts somewhere. Let's build an environment where men can check their health with complete privacy, unhurried ease, and zero judgment.
+            </p>
+            <div className="pt-3">
+              <button
+                type="button"
+                onClick={() => void handleStartBlank()}
+                className="px-8 py-4 rounded-full text-sm font-bold bg-white text-[#0052FF] hover:bg-[#F8FAFC] active:scale-[0.98] transition-all shadow-xl flex items-center gap-2 cursor-pointer"
+              >
+                <span>Start Confidential Assessment</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ACCORDION & TECHNICAL APPENDIX (Full Width Edge-to-Edge) ── */}
+      <section id="faq-section" className="w-full bg-white border-t border-[#E2ECF8] py-16 sm:py-24 px-6 sm:px-12 lg:px-16 xl:px-24">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
+              PRIVACY & PROTOCOLS
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A]">
+              Frequently Asked Questions
+            </h2>
+          </div>
+
+          <div className="space-y-3.5">
+            {FAQS.map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div
+                  key={faq.question}
+                  className="medical-card overflow-hidden border border-[#E2ECF8] rounded-2xl bg-white"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="w-full flex items-center justify-between gap-4 cursor-pointer p-5 sm:p-6 text-left"
+                  >
+                    <h3 className="text-sm sm:text-base font-bold text-[#07215A]">{faq.question}</h3>
+                    <span
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all duration-300 ease-out"
+                      style={{
+                        background: isOpen ? '#0052FF' : '#EBF3FF',
+                        color: isOpen ? 'white' : '#0052FF',
+                        transform: isOpen ? 'rotate(45deg)' : 'none',
+                      }}
+                    >
+                      +
+                    </span>
+                  </button>
+                  <div className={`accordion-grid ${isOpen ? 'is-open' : ''}`}>
+                    <div className="accordion-grid-inner">
+                      <div className="px-5 pb-5 sm:px-6 sm:pb-6">
+                        <p className="text-xs sm:text-sm text-[#4A6588] border-t border-[#E2ECF8] pt-3 leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               );
             })}
           </div>
 
-          {/* Active Stage Dossier Detail (7 cols) */}
-          <div className="lg:col-span-7 dossier-card bg-white p-6 sm:p-8 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#0B1310]">
-                <div>
-                  <span className="font-mono text-xs font-bold text-[#0F523E]">
-                    {activeStage.code} · ACTIVE SPECIFICATION
-                  </span>
-                  <h3 className="text-xl sm:text-2xl font-extrabold text-[#0B1310] mt-1">
-                    {activeStage.title}
-                  </h3>
-                </div>
-                <MockBadge label={activeStage.badge} />
-              </div>
+          {/* Technical Appendix Toggle */}
+          <div className="text-center pt-4">
+            <button
+              type="button"
+              onClick={() => setShowTechAppendix(!showTechAppendix)}
+              className="text-xs font-mono font-semibold text-[#829AB8] hover:text-[#0052FF] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <span>{showTechAppendix ? 'Hide' : 'View'} FHIR R4 Conceptual Architecture</span>
+              <span className="text-xs">{showTechAppendix ? '▲' : '▼'}</span>
+            </button>
+          </div>
 
-              <p className="text-sm sm:text-base text-[#3F4E48] leading-relaxed">
-                {activeStage.summary}
-              </p>
-
+          {showTechAppendix && (
+            <div className="medical-canvas p-6 rounded-2xl border border-[#E2ECF8] bg-[#F8FAFC] text-xs space-y-3 font-mono">
+              <span className="font-bold text-[#07215A]">Conceptual FHIR R4 Mapping Manifest:</span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                {activeStage.metrics.map(metric => (
-                  <div
-                    key={metric.label}
-                    className="p-3.5 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310]"
-                  >
-                    <span className="block font-mono text-[10px] text-[#3F4E48] uppercase">
-                      {metric.label}
-                    </span>
-                    <strong className="block text-xs font-mono font-bold text-[#0B1310] mt-1">
-                      {metric.value}
-                    </strong>
-                  </div>
-                ))}
+                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
+                  <span className="font-bold text-[#0052FF]">AssessmentCase</span>
+                  <p className="text-[11px] text-[#4A6588] mt-1">Maps to FHIR Patient with synthetic pseudonym identifiers.</p>
+                </div>
+                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
+                  <span className="font-bold text-[#0052FF]">ClinicalObservation</span>
+                  <p className="text-[11px] text-[#4A6588] mt-1">Maps to FHIR Observation with semen analysis test codes.</p>
+                </div>
+                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
+                  <span className="font-bold text-[#0052FF]">ConsentLedger</span>
+                  <p className="text-[11px] text-[#4A6588] mt-1">Dual gatekeeper verified on backend at every transaction.</p>
+                </div>
               </div>
             </div>
-
-            <div className="mt-6 pt-5 border-t border-[#C5CEC9] grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-              <div className="sm:col-span-5 h-28 rounded-[2px] overflow-hidden border border-[#0B1310] bg-[#E6EAE4] flex items-center justify-center p-3 select-none">
-                <svg viewBox="0 0 200 90" className="w-full h-full text-[#0B1310]" fill="none" stroke="currentColor" strokeWidth="1.2">
-                  <rect x="15" y="15" width="170" height="60" rx="2" fill="#FFFFFF" stroke="#0B1310" strokeWidth="1.5" />
-                  <path d="M 35 45 L 75 45" stroke="#0F523E" strokeWidth="2" strokeDasharray="3 1" />
-                  <circle cx="95" cy="45" r="14" fill="#E6F2EE" stroke="#0F523E" strokeWidth="1.4" />
-                  <circle cx="95" cy="45" r="5" fill="#0F523E" />
-                  <path d="M 115 45 L 165 45" stroke="#0F523E" strokeWidth="2" />
-                  <rect x="160" y="30" width="10" height="30" fill="#0B1310" />
-                  <text x="35" y="32" fill="#3F4E48" fontSize="7" fontFamily="monospace">SAMPLE FLOW</text>
-                  <text x="80" y="72" fill="#0F523E" fontSize="7" fontFamily="monospace" fontWeight="bold">SYNTHETIC CORE</text>
-                  <text x="140" y="72" fill="#3F4E48" fontSize="7" fontFamily="monospace">SENSOR</text>
-                </svg>
-              </div>
-              <div className="sm:col-span-7 space-y-1">
-                <span className="font-mono text-[11px] font-bold text-[#C84B31]">
-                  INVARIANT GUARANTEE
-                </span>
-                <p className="text-xs text-[#3F4E48] leading-relaxed">
-                  All clinical rules are tagged <code className="font-mono">CLINICAL_TBD</code>. A passing test suite verifies software behavior against the specification and never claims clinical validity.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 4: CONCEPTUAL FHIR R4 & GOVERNANCE BOUNDARY MANIFEST */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
-        <div className="dossier-card bg-white p-6 sm:p-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#0B1310]">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1310] tracking-tight">
-                Conceptual FHIR R4 Mapping & Boundary Ledger
-              </h2>
-              <p className="text-xs sm:text-sm text-[#3F4E48] mt-1">
-                Manifest <code className="font-mono">sanad-fhir-r4-conceptual v0.1</code> · Status:{' '}
-                <strong className="font-mono text-[#0B1310]">DESIGN_ONLY</strong> · Compliance:{' '}
-                <strong className="font-mono text-[#C84B31]">NOT_EVALUATED</strong>
-              </p>
-            </div>
-            <MockBadge label="MOCK · EXPORT DISABLED · NOT_EVALUATED" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="p-4 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] space-y-1.5">
-              <div className="flex items-center justify-between font-mono text-xs">
-                <span className="font-bold text-[#0F523E]">AssessmentCase</span>
-                <span className="text-[#3F4E48]">→ Patient</span>
-              </div>
-              <p className="text-xs text-[#3F4E48] leading-relaxed">
-                Uses a synthetic pseudonymous identifier only. Direct personal identity fields are omitted by design.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] space-y-1.5">
-              <div className="flex items-center justify-between font-mono text-xs">
-                <span className="font-bold text-[#0F523E]">ClinicalObservation</span>
-                <span className="text-[#3F4E48]">→ Observation</span>
-              </div>
-              <p className="text-xs text-[#3F4E48] leading-relaxed">
-                Preserves test code, value, unit, source, and user confirmation status without automatic unit conversion.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-[2px] bg-[#F3F4F1] border border-[#0B1310] space-y-1.5">
-              <div className="flex items-center justify-between font-mono text-xs">
-                <span className="font-bold text-[#0F523E]">ConsentLedger</span>
-                <span className="text-[#3F4E48]">→ Consent</span>
-              </div>
-              <p className="text-xs text-[#3F4E48] leading-relaxed">
-                Conceptual mapping only. The server-side purpose consent ledger remains the active authorization gate.
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </section>
     </div>

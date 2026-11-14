@@ -5,14 +5,15 @@ interface StepProgressProps {
 }
 
 const STEPS = [
-  { id: '/', label: '01 Start' },
-  { id: '/consent', label: '02 Consent' },
-  { id: '/safety', label: '03 Safety' },
-  { id: '/lab', label: '04 Lab (J3)' },
-  { id: '/intake', label: '05 Intake' },
-  { id: '/result', label: '06 Synthesis' },
-  { id: '/referral', label: '07 Gate' },
-  { id: '/tracking', label: '08 Tracking' },
+  { id: '/', label: 'Start', shortLabel: 'Start' },
+  { id: '/consent', label: 'Privacy', shortLabel: 'Privacy' },
+  { id: '/safety', label: 'Safety', shortLabel: 'Safety' },
+  { id: '/lab', label: 'Lab Tests', shortLabel: 'Lab' },
+  { id: '/intake', label: 'Questions', shortLabel: 'Q&A' },
+  { id: '/review', label: 'Review', shortLabel: 'Review' },
+  { id: '/result', label: 'Summary', shortLabel: 'Result' },
+  { id: '/referral', label: 'Referral', shortLabel: 'Refer' },
+  { id: '/tracking', label: 'Status', shortLabel: 'Status' },
 ];
 
 export const StepProgress: React.FC<StepProgressProps> = ({
@@ -23,75 +24,131 @@ export const StepProgress: React.FC<StepProgressProps> = ({
   const currentIndex = STEPS.findIndex(s => s.id === currentRoute);
   if (currentIndex === -1) return null;
 
+  const progressPct = Math.round((currentIndex / (STEPS.length - 1)) * 100);
+
   return (
-    <div className="w-full bg-white border-b border-[#0B1310] py-2.5 px-4 sm:px-6">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        <div className="flex items-center gap-1.5 sm:gap-2.5 w-full overflow-x-auto no-scrollbar">
+    <nav
+      aria-label="Assessment progress"
+      className="w-full bg-white/80 backdrop-blur-md border-b border-[#E2ECF8]/80"
+      style={{ boxShadow: '0 1px 0 rgba(7,33,90,0.04)' }}
+    >
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20">
+
+        {/* ── Thin progress track (always visible) ── */}
+        <div className="step-track mt-0 relative">
+          <div
+            className="step-fill"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+
+        {/* ── Step chips ── */}
+        <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar py-2">
           {STEPS.map((step, idx) => {
             const visitedLab =
               typeof window !== 'undefined' &&
               sessionStorage.getItem('sanad_visited_lab') === 'true';
-            const isCompleted =
-              step.id === '/lab'
-                ? visitedLab && idx < currentIndex
-                : idx < currentIndex;
-            const isSkippedLab =
-              step.id === '/lab' && !visitedLab && idx < currentIndex;
+
+            const isCompleted = step.id === '/lab'
+              ? visitedLab && idx < currentIndex
+              : idx < currentIndex;
+
+            const isSkippedLab = step.id === '/lab' && !visitedLab && idx < currentIndex;
             const isCurrent = idx === currentIndex;
+
             const isInteractive =
               onNavigate &&
-              ((step.id === '/lab' && (currentRoute === '/intake' || currentRoute === '/result') && canEnterObservations) ||
+              ((step.id === '/lab' &&
+                (currentRoute === '/intake' || currentRoute === '/result') &&
+                canEnterObservations) ||
                 (step.id === '/intake' && currentRoute === '/lab'));
 
-            const badgeContent = (
+            const stepContent = (
               <div
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-[2px] border text-xs font-mono transition-colors ${
-                  isCurrent
-                    ? 'bg-[#0B1310] text-white border-[#0B1310] font-bold'
+                className={`
+                  flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold
+                  transition-all duration-200 ease-out shrink-0
+                  ${isCurrent
+                    ? 'bg-[#0062FF] text-white shadow-sm'
                     : isCompleted
-                    ? 'bg-[#E6F2EE] text-[#0F523E] border-[#0F523E] font-semibold'
+                    ? 'bg-[#EBF4FF] text-[#0062FF]'
                     : isSkippedLab
-                    ? 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
+                    ? 'text-[#829AB8]'
                     : isInteractive
-                    ? 'bg-white text-[#0B1310] border-[#0B1310] hover:bg-[#E6EAE4] font-semibold'
-                    : 'bg-[#F3F4F1] text-[#63736C] border-[#C5CEC9]'
-                }`}
+                    ? 'text-[#4A6588] hover:bg-[#EBF4FF] hover:text-[#07215A]'
+                    : 'text-[#C4D4E8]'
+                  }
+                `}
+                style={isCurrent ? { boxShadow: '0 2px 8px -2px rgba(0,98,255,0.4)' } : {}}
               >
-                <span>{isCompleted ? '✓' : isSkippedLab ? '—' : step.label}</span>
-                {isCompleted && <span>{step.label.slice(3)}</span>}
-                {isSkippedLab && <span>Lab (Optional)</span>}
+                {/* Step indicator */}
+                {isCompleted ? (
+                  <span
+                    className="w-3.5 h-3.5 rounded-full bg-[#0062FF] text-white flex items-center justify-center shrink-0"
+                    style={{ fontSize: '8px' }}
+                  >
+                    ✓
+                  </span>
+                ) : (
+                  <span
+                    className={`
+                      w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0
+                      text-[8px] font-mono font-bold
+                      ${isCurrent ? 'bg-white text-[#0062FF]' : 'bg-[#E2ECF8] text-[#829AB8]'}
+                    `}
+                  >
+                    {idx + 1}
+                  </span>
+                )}
+
+                {/* Label - hidden on smallest screens for non-current */}
+                <span className={isCurrent ? 'inline' : 'hidden sm:inline'}>
+                  <span className="sm:hidden">{step.shortLabel}</span>
+                  <span className="hidden sm:inline">{step.label}</span>
+                </span>
+                {/* Always show current label on mobile */}
+                {isCurrent && (
+                  <span className="sm:hidden">{step.shortLabel}</span>
+                )}
               </div>
             );
 
             return (
-              <div key={step.id} className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+              <div key={step.id} className="flex items-center gap-1 shrink-0">
                 {isInteractive ? (
                   <button
                     type="button"
                     onClick={() => onNavigate(step.id)}
-                    className="cursor-pointer btn-press"
+                    className="cursor-pointer active:scale-95 transition-transform duration-100"
+                    aria-current={isCurrent ? 'step' : undefined}
                   >
-                    {badgeContent}
+                    {stepContent}
                   </button>
                 ) : (
-                  badgeContent
+                  <div aria-current={isCurrent ? 'step' : undefined}>
+                    {stepContent}
+                  </div>
                 )}
+
+                {/* Connector line */}
                 {idx < STEPS.length - 1 && (
                   <div
-                    className={`w-2 sm:w-4 h-px ${
-                      idx < currentIndex ? 'bg-[#0F523E]' : 'bg-[#C5CEC9]'
+                    className={`w-2 sm:w-3 h-px rounded-full shrink-0 ${
+                      idx < currentIndex ? 'bg-[#0062FF]/40' : 'bg-[#E2ECF8]'
                     }`}
                   />
                 )}
               </div>
             );
           })}
-        </div>
 
-        <div className="hidden md:flex items-center gap-2 pl-4 border-l border-[#C5CEC9] text-[11px] font-mono text-[#3F4E48] whitespace-nowrap">
-          <span>STAGE {currentIndex + 1}/{STEPS.length}</span>
+          {/* Step count - right edge */}
+          <div className="hidden md:flex items-center ml-auto pl-4 border-l border-[#E2ECF8] text-[11px] font-mono text-[#829AB8] whitespace-nowrap shrink-0 gap-1">
+            <span className="font-bold text-[#07215A]">{currentIndex + 1}</span>
+            <span>/ {STEPS.length}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };

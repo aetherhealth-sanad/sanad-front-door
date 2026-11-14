@@ -2,7 +2,8 @@
 const CACHE_NAME = 'sanad-emergency-v1';
 const ALLOWLISTED_PRECACHE = [
   '/urgent.html',
-  '/favicon.svg'
+  '/favicon.svg',
+  '/assets/images/medical_urgent_care_3d.jpg'
 ];
 
 self.addEventListener('install', (event) => {

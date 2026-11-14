@@ -7,7 +7,7 @@ interface QuickExitProps {
 
 export const QuickExit: React.FC<QuickExitProps> = ({
   className = '',
-  neutralUrl = 'about:blank',
+  neutralUrl = 'https://www.google.com',
 }) => {
   const handleQuickExit = () => {
     let token: string | null = null;
@@ -48,8 +48,9 @@ export const QuickExit: React.FC<QuickExitProps> = ({
       }
     }
 
-    // A blank local document is neutral and works without a network connection.
-    window.location.replace(neutralUrl);
+    // A neutral URL when online; blank local document fallback when offline.
+    const target = typeof navigator !== 'undefined' && navigator.onLine ? neutralUrl : 'about:blank';
+    window.location.replace(target);
   };
 
   return (
@@ -59,9 +60,11 @@ export const QuickExit: React.FC<QuickExitProps> = ({
       data-testid="quick-exit"
       onClick={handleQuickExit}
       title="Leave this page and clear this Sanad session from the tab"
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[2px] text-xs font-mono font-bold bg-[#B91C1C] hover:bg-[#991B1B] text-white border border-[#0B1310] transition-all duration-150 btn-press cursor-pointer select-none whitespace-nowrap ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-[#D92D20] hover:bg-[#B42318] text-white shadow-xs transition-[transform,background-color,box-shadow] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer select-none whitespace-nowrap ${className}`}
     >
-      <span className="font-mono text-xs leading-none">✕</span>
+      <svg className="w-3.5 h-3.5 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      </svg>
       Quick Exit
     </button>
   );
