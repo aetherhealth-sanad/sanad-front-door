@@ -13,6 +13,10 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
+| 0.15 | 2026-11-14 | AC-25.13 adds author `MODEL_DRAFTED_UNREVIEWED` and the `--allow-unreviewed` flag, so draft rows are never labelled as reviewed. T4.11 implemented; fitted scorecard recorded in the ratchet log (0.87, zero unsafe, below OD-15). | Drafted by Claude Code | Pending |
+| 0.14 | 2026-11-14 | AC-25.11 amended before any code: the decision key is the label family (`YN_TIME`, `YN`, `CHOICE:<options>`), not the catalogue question ID, which the task payload does not carry and which would need over 500 rows. TC-25.10 and CC-017 updated to match. | Drafted by Claude Code | Pending |
+| 0.13 | 2026-11-14 | Added AC-25.11 to AC-25.14 (vegaml engine, fitted calibration, labelled synthetic rows, fit script), TC-25.10 to TC-25.13, T4.11, OD-18, CC-017; plan §4.10 calibration notes. No clinical rule, threshold, triage level, consent scope or data policy changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
+| 0.12 | 2026-11-14 | Withdrew CC-014 and T4.10: the team dropped hosted Jev. Product spec out-of-scope line, OD-16 and `specs/harness.md` updated. Recorded the vegaml-engine zero-shot result for RF-25 in the ratchet log. No clinical rule, threshold, triage level, consent scope or data policy changed. | Drafted by Claude Code | Pending |
 | 0.11 | 2026-11-14 | Added RF-25 local decision-model provider (AC-25.1 to AC-25.10, T4.9, TC-25.1 to TC-25.9, plan §4.10, API design §6.15 note). Laya, an open model with Jev-style typed decisions, runs on the API host through `laya` (PyTorch) or `laya-mlx` (Apple Silicon) for RF-21 yes/no and choice questions only. Moved the hosted Jev bake-off to T4.10 under CC-014. Opened CC-015; added OD-17 on the weight licence. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
 | 0.10 | 2026-11-14 | Added RF-23 model evaluation harness, per-case model budget and run metrics (AC-23.1 to AC-23.10, T4.7, TC-23.1 to TC-23.10) and RF-24 decision record for the reviewer (AC-24.1 to AC-24.4, T4.8, TC-24.1 to TC-24.4); API design §6.15; `GET /evaluation/model-runs`; reason code `MODEL_BUDGET_EXCEEDED`; token fields in `MODEL_TASK_RUN`; OD-15, OD-16. Opened CC-014 for an optional offline Jev bake-off (T4.9, blocked). Recorded as out of scope: runtime pgvector retrieval, runtime decision models, trained cross-field contradiction detection. No clinical rule, threshold, triage level, consent scope or data policy changed. **Order of work:** spec only; no code written for these items. Review before T4.7 and T4.8 start. | Drafted by Claude Code | Pending |
 | 0.9 | 2026-11-14 | Added RF-22 pinned citations and grounded explanation (AC-22.1 to AC-22.10, T4.6, TC-22.1 to TC-22.10, API design §6.14). Added the `TEAM_CURATED` evidence status, `knowledge/passages.v0.1.json` (shipped empty), the `report.explain.v1` task and `POST /cases/{id}/report/explanation`, and the error `REPORT_NOT_RELEASED`. Opened CC-013. No clinical rule, threshold or triage level changed. **Order of work:** code and tests were written in the same branch as these spec changes, so the spec must be reviewed before merge. | Drafted by Claude Code | Pending |
@@ -27,7 +31,22 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 ## Change-control records
 
-Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, and CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch).
+Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), and CC-017 with version 0.13.
+
+### CC-017 Fitted decision head on labelled synthetic rows
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Nothing implemented. Off by default; enabling still needs OD-15 and OD-17. |
+| **Reason** | Zero-shot, both local engines fail OD-15 on the RF-23 cases: the Laya checkpoint scores 0.26, the vegaml engine 0.17, both with zero unsafe conversions. vegaml sends 22 of 23 answers to review because no band is fitted, while its top label is right on 10 of 17 answerable cases. Its documentation says routing should come from a band fitted on the owner's labelled rows. |
+| **Evidence** | Ratchet log in `specs/harness.md` (2026-11-14 rows); `laya.vega.VegaAgent.fit` and `load_calibration` in laya 0.4.31 with vegaml 0.16.1: heads over frozen features, kept only if they beat chance under cross-validation and served only if they beat the engine; calibration measured on held-out rows; band at `target_precision` 0.95 with a 95% Wilson bound; an option a head never saw gives `calibrated: false` and review. |
+| **Change** | (1) Engine and calibration settings (AC-25.11, AC-25.12). (2) The decision key becomes the label family (`YN_TIME`, `YN`, `CHOICE:<options>`), because a head needs at least five rows per label and one head per question would need over 500 rows for seven questions. (3) A team-written, second-person-reviewed synthetic rows file in the repository (AC-25.13). (4) A fit script under `eval/` that writes an uncommitted calibration directory and a fit report (AC-25.14). (5) A second model download (reader and backbone, about 1.8 GB), no patient data uploaded. |
+| **Data policy** | Typed text stays on the API host. The rows are synthetic; no real or restricted data is used to fit or calibrate. |
+| **Clinical content** | None. Rows map wording to existing catalogue answers and opt-outs; they add no rule, threshold or triage level. |
+| **Affected journeys** | J1, J3, J5 at `/intake`, only when an operator enables the provider with a calibration. J4 untouched (AC-25.10). |
+| **Tests** | TC-25.10 to TC-25.13; RF-23 scorecard on the unseen cases |
+| **Approver** | Pending (Tech Lead for the adapter; QA for the rows review, OD-18; Legal for the reader licence, OD-17) |
+| **Version** | Spec 0.13 |
 
 ### CC-016 Deterministic harness, Langfuse and authoring-time MCP
 
@@ -62,7 +81,7 @@ Each proposal below changes or extends a parent document, so it needs an approve
 
 | Field | Value |
 |---|---|
-| **Status** | `PROPOSED`, approval pending. Nothing implemented. T4.10 is blocked until approval and API access. |
+| **Status** | `WITHDRAWN` 2026-11-14 by the team. Nothing implemented; T4.10 withdrawn. Hosted only, so typed text would leave the app, and the incumbent already scores 27/27 with zero unsafe conversions, so a bake-off adds little. The local route stays under CC-015. |
 | **Reason** | RF-21's answer matching and the chat routing ideas are choice-shaped decisions. A decision model that returns typed choices with probabilities, such as TypeSafe Jev (released 2026-09-15), claims to be much faster and cheaper than a generative model for this. The claim is the vendor's and needs measuring on Sanad's own cases. |
 | **Evidence** | Vendor and third-party descriptions: three primitives (Noul yes/no probability, Choice over 1–255 labels, Score over 2–10 ordered levels); "confidence" measures how concentrated the distribution is, not the chance of being right; hosted API only, no published weights or on-premises option; endpoints differ between sources. See the harness review in `specs/harness.md` §"Considered and deferred". |
 | **Change** | (1) An evaluation-only provider under `eval/`, never imported by `sanad_api`, so no patient session can reach it. (2) It runs only the RF-23 synthetic case files, which hold no patient data. (3) Sending those synthetic cases to TypeSafe or a reseller is an outbound data flow and needs this approval even though the data is synthetic. (4) Adoption at runtime is **not** part of this record: it needs a new requirement, a data-processing review of the hosted service and region, a separate change-control record, and a scorecard with zero unsafe conversions and accuracy at least equal to the incumbent. |

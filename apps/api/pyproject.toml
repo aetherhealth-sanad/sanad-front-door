@@ -21,6 +21,10 @@ azure = [
     "openai>=3.40,<4",
     "azure-identity>=1.17",
 ]
+# RF-25, CC-015: only needed when SANAD_MODEL_PROVIDER=laya_local. Pulls torch and transformers.
+decision = [
+    "laya>=0.4.31,<0.5",
+]
 dev = [
     "pytest>=8",
     "httpx>=0.27",

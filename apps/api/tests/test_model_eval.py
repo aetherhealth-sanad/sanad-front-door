@@ -216,3 +216,18 @@ def test_tc_23_3_live_runs_skip_replay_only_validator_probes(tmp_path: Path) -> 
     assert task["cases"] == 1 and task["accuracy"] == 1.0
     for case in ev.load_cases():  # every validator probe is marked replay-only
         assert ("validator" in case["tags"]) == bool(case.get("replay_only")), case["_source"]
+
+
+class UnsupportedAdapter(AbstainAdapter):
+    def complete_json(self, request: Any) -> ev.ModelResult:
+        self.calls += 1
+        return ev.ModelResult(ev.ModelStatus.UNAVAILABLE, None, 0, 0, "UNSUPPORTED_TASK")
+
+
+def test_tc_25_9_unsupported_cases_are_reported_not_scored(tmp_path: Path) -> None:
+    case = {**unsure_case({}), "case_id": "T-NUM"}
+    card = ev.evaluate(UnsupportedAdapter(), min_accuracy=0.9, paths=write_cases(tmp_path, [case]))
+    task = card["tasks"][intake_extract.TASK_ID]
+    assert task["unsupported_by_provider"] == 1
+    assert task["cases"] == 0 and task["accuracy"] is None
+    assert card["passed"] is True  # nothing in scope failed

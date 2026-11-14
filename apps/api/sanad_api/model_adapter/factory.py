@@ -11,7 +11,7 @@ from sanad_api.config import Settings
 from sanad_api.model_adapter.disabled import DisabledAdapter
 from sanad_api.model_adapter.port import ModelAdapter
 
-PROVIDERS = ("disabled", "azure_openai")
+PROVIDERS = ("disabled", "azure_openai", "laya_local")
 # Deployment names go into audit entries, which hold codes only (INV-03).
 _DEPLOYMENT = re.compile(r"^[A-Za-z0-9_.\-]{1,64}$")
 
@@ -25,6 +25,8 @@ def build_model_adapter(settings: Settings) -> ModelAdapter:
         return DisabledAdapter()
     if settings.model_provider == "azure_openai":
         return _azure_openai(settings)
+    if settings.model_provider == "laya_local":
+        return _laya_local(settings)
     raise ModelConfigError(f"SANAD_MODEL_PROVIDER must be one of {', '.join(PROVIDERS)}")
 
 
@@ -84,3 +86,75 @@ def _azure_openai(settings: Settings) -> ModelAdapter:
 
     client = OpenAI(base_url=base_url, api_key=api_key, max_retries=0)
     return AzureOpenAIAdapter(client, deployment, settings.model_max_completion_tokens)
+
+
+def _laya_local(settings: Settings) -> ModelAdapter:
+    """RF-25, AC-25.1/25.2: pinned revision, one load at start-up, backend chosen here."""
+    import importlib.util
+    import platform
+
+    _check_budget(settings)
+    if not settings.laya_revision:
+        raise ModelConfigError(
+            "SANAD_MODEL_PROVIDER=laya_local needs SANAD_LAYA_REVISION (a pinned commit SHA)"
+        )
+    if settings.laya_backend not in ("auto", "torch", "mlx"):
+        raise ModelConfigError("SANAD_LAYA_BACKEND must be one of auto, torch, mlx")
+    if not 0.5 <= settings.decision_min_prob <= 1.0:
+        raise ModelConfigError("SANAD_DECISION_MIN_PROB must be between 0.5 and 1.0")
+    vega = settings.laya_engine == "vegaml"
+    if settings.laya_engine not in ("checkpoint", "vegaml"):
+        raise ModelConfigError("SANAD_LAYA_ENGINE must be checkpoint or vegaml")
+    calibration = settings.laya_calibration
+    if calibration is not None and not vega:
+        raise ModelConfigError("SANAD_LAYA_CALIBRATION needs SANAD_LAYA_ENGINE=vegaml")
+    if calibration is not None and not calibration.is_dir():
+        raise ModelConfigError(f"SANAD_LAYA_CALIBRATION is not a directory: {calibration}")
+
+    apple_silicon = platform.system() == "Darwin" and platform.machine() == "arm64"
+    use_mlx = not vega and (
+        settings.laya_backend == "mlx"
+        or (
+            settings.laya_backend == "auto"
+            and apple_silicon
+            and importlib.util.find_spec("laya_mlx") is not None
+        )
+    )
+    from sanad_api.model_adapter.laya_local import LayaLocalAdapter
+
+    try:
+        if vega:
+            import laya  # type: ignore[import-not-found]
+
+            agent = laya.load(
+                vegaml=settings.laya_model,
+                revision=settings.laya_revision,
+                device=settings.laya_device,
+            )
+        elif use_mlx:
+            import laya_mlx  # type: ignore[import-not-found]
+
+            # ponytail: the MLX port takes its own Hub ids and has no revision argument here;
+            # untested on this repo's CI, which has no Apple Silicon runner.
+            agent = laya_mlx.load(settings.laya_model)
+        else:
+            import laya  # type: ignore[import-not-found]
+
+            agent = laya.load(
+                settings.laya_model, revision=settings.laya_revision, device=settings.laya_device
+            )
+    except ImportError as error:
+        raise ModelConfigError(
+            "SANAD_MODEL_PROVIDER=laya_local needs the optional extra: "
+            "pip install -e 'apps/api[decision]'"
+        ) from error
+    if calibration is not None:
+        try:
+            agent.load_calibration(str(calibration), verify=True)  # AC-25.12
+        except Exception as error:  # laya raises PolicyError, OSError or ValueError here
+            raise ModelConfigError(
+                f"SANAD_LAYA_CALIBRATION could not be loaded and verified: {type(error).__name__}"
+            ) from error
+    return LayaLocalAdapter(
+        agent, settings.laya_model, settings.laya_revision, min_prob=settings.decision_min_prob
+    )
