@@ -35,7 +35,7 @@ from sanad_api.deps import get_catalogues, get_clock, get_db, get_model_adapter,
 from sanad_api.errors import ApiError, ErrorCode
 from sanad_api.intake.service import record_safety
 from sanad_api.model_adapter import intake_extract
-from sanad_api.model_adapter.port import ModelAdapter, ModelRequest, ModelResult, ModelStatus
+from sanad_api.model_adapter.port import ModelAdapter, run_safely
 from sanad_api.rules_engine.emergency import SafetyResult
 from sanad_api.rules_engine.emergency_text import scan_text
 from sanad_api.schemas import CaseStateOut
@@ -177,15 +177,6 @@ def _out(
     }
 
 
-def _run_model(adapter: ModelAdapter, request: ModelRequest) -> ModelResult:
-    """An adapter bug must fail closed to the fallback form, and must not log the request."""
-    try:
-        return adapter.complete_json(request)
-    except Exception as error:  # any failure means "no proposal"
-        logger.error("model adapter failed: %s", type(error).__name__)
-        return ModelResult(ModelStatus.UNAVAILABLE, None, 0, 0, "ADAPTER_ERROR")
-
-
 @router.post("/cases/{case_id}/chat/interpret", response_model=InterpretOut)
 def interpret_text(
     body: InterpretIn,
@@ -259,7 +250,7 @@ def interpret_text(
         catalogue_version=catalogues.questions.catalogue_version,
         settings=settings,
     )
-    result = _run_model(adapter, model_request)
+    result = run_safely(adapter, model_request)
     interpretation = intake_extract.interpret(result, question, concept)
     proposal = interpretation.proposal
     record(

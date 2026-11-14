@@ -10,7 +10,7 @@
 
 This document defines the HTTP contract between the web app and the API. BRD/PRD v0.4 decide scope and behavior; the product spec supplies M1–M3 detail where it is not superseded. The generated OpenAPI file is the source of truth for field shapes, and this document stays the source of truth for access, state and error rules.
 
-Every response here is synthetic. Nothing in this API sends data outside the app, with one exception that is off by default: when an operator enables a model provider, `POST /cases/{id}/chat/interpret` sends typed text and one catalogue question to it (§6.13, CC-011).
+Every response here is synthetic. Nothing in this API sends data outside the app, with one exception that is off by default: when an operator enables a model provider, `POST /cases/{id}/chat/interpret` sends typed text and one catalogue question to it (§6.13, CC-011), and `POST /cases/{id}/report/explanation` sends the released next-step label, signal codes and team-curated passages (§6.14, CC-013).
 
 ## 1. Conventions
 
@@ -77,6 +77,7 @@ The gate (§6.7) runs after checks 1 to 3, so a caller without access never sees
 | `GET /chat/assistant` | Assistant labels, whether typing is on, provider and disclosure | Public | T4.5 | AC-21.10 |
 | `POST /cases/{id}/chat/interpret` | Typed text for one intake question: emergency, correction, proposal or fallback. Writes no fact. | Patient | T4.5 | AC-21.1 to AC-21.9 |
 | `GET /cases/{id}/report` | Patient view of the draft or released result | Patient | T2.5 | AC-11.2 to AC-11.4, AC-08.9 |
+| `POST /cases/{id}/report/explanation` | Optional plain-language rewording of the released next step, citing team-curated passages, or the static text as a fallback. Writes nothing to the case. | Patient | T4.6 | AC-22.5 to AC-22.10 |
 | `POST /cases/{id}/review-requests` | The send button | Patient | T2.6 | AC-07.2 to AC-07.6 |
 | `GET /psychosocial/questions` | Draft optional question catalogue; clearly marked pending review | Public | T4.1 | PRD-FR-29 |
 | `GET /cases/{id}/psychosocial` | Read the three contextual response states | Patient, assessment consent | T4.1 | PRD-FR-29, PRD-AC-42 |
@@ -92,6 +93,7 @@ The gate (§6.7) runs after checks 1 to 3, so a caller without access never sees
 | `POST /cases/{id}/navigation/progress` | Append a user-selected progress status with an idempotency key | Patient, assessment consent | T4.2 | PRD-FR-25/28 |
 | `POST /cases/{id}/navigation/barriers` | Append optional barrier codes with an idempotency key; no free text | Patient, assessment consent | T4.2 | PRD-FR-26/28 |
 | `GET /evaluation/navigation-funnel` | Aggregate active synthetic episodes with denominators and source | Reviewer | T4.2 | PRD-FR-27 |
+| `GET /evaluation/model-runs` | Code-only aggregate of model task runs: counts, statuses, outcomes, latency, tokens, budget refusals | Reviewer | T4.7 | AC-23.9 |
 | `GET /mock-directory` | Mock facilities by care type | Patient | T3.2 | AC-13.5 |
 | `GET /cases/{id}/referral-gate` | Gate preview, grants nothing | Patient | T3.1 | AC-12.3, AC-12.6 |
 | `POST /cases/{id}/mock-referral` | Evaluate the gate and create the referral | Patient | T3.1 | AC-12.1 to AC-12.5 |
@@ -176,7 +178,7 @@ All errors share one body. `details` carries codes only, never submitted values.
 | 401 | `AUTH_REQUIRED`, `INVALID_CREDENTIALS` | No valid token, or failed sign-in |
 | 403 | `ROLE_NOT_ALLOWED`, `CONSENT_REQUIRED`, `GATE_DENIED`, `SPOUSE_SHARE_NOT_AVAILABLE` | Authenticated but not permitted |
 | 404 | `NOT_FOUND` | Missing, or not this session's case |
-| 409 | `INVALID_TRANSITION`, `CASE_VERSION_CONFLICT`, `CONSENT_VERSION_OUTDATED`, `DRAFT_NOT_CURRENT`, `BLOCKING_ITEMS_REMAIN`, `IDEMPOTENCY_KEY_REUSED` | Conflict with current state or retry key reused with a different payload |
+| 409 | `INVALID_TRANSITION`, `CASE_VERSION_CONFLICT`, `CONSENT_VERSION_OUTDATED`, `DRAFT_NOT_CURRENT`, `REPORT_NOT_RELEASED`, `BLOCKING_ITEMS_REMAIN`, `IDEMPOTENCY_KEY_REUSED` | Conflict with current state or retry key reused with a different payload |
 | 413 | `UPLOAD_TOO_LARGE` | File over 256 KB |
 | 415 | `UPLOAD_WRONG_TYPE` | File is not JSON |
 | 422 | `VALIDATION_FAILED`, `UPLOAD_SCHEMA_INVALID`, `UPLOAD_UNKNOWN_FIELD`, `UPLOAD_NOT_SYNTHETIC`, `UNKNOWN_SAMPLE`, `REASON_REQUIRED`, `TRIAGE_BELOW_FLOOR`, `OBSERVATION_INVALID` | Body rejected |
@@ -813,6 +815,91 @@ Order of work, each step only if the previous one did not answer:
 
 **What reaches the model.** A system prompt, the question's text, answer type, unit and options, and the typed text. No case ID, token, earlier answer or other identifier. Stored completions are never requested.
 
+### 6.14 Pinned citations and report explanation (RF-22, `PROPOSED`)
+
+**Citations in `GET /cases/{id}/report`.** Each `evidence` entry keeps `claim_id`, `rule_id`, `status` and `citation`. `status` is `SUPPORTED` (a `VERIFIED` ref, none exist today), `TEAM_CURATED` or `INSUFFICIENT_EVIDENCE`. For `TEAM_CURATED`, `citation` adds the passage fields:
+
+```json
+{
+  "claim_id": "CLAIM-DRAFT-STEROID-01",
+  "rule_id": "DRAFT-STEROID-01",
+  "status": "TEAM_CURATED",
+  "citation": {
+    "source_id": "<SOURCE-ID>", "version": "<version>",
+    "passage_id": "<PASSAGE-ID>", "title": "<document title>", "locator": "<section or page>",
+    "url": "<publisher URL>", "license": "<license>", "excerpt": "<verbatim excerpt, max 600 chars>",
+    "review_status": "TEAM_CURATED", "review_note": "Team-selected source, not reviewed by a clinician"
+  }
+}
+```
+
+**`POST /cases/{id}/report/explanation`** takes no body.
+
+1. Report guard: 401, 404, 403 `CONSENT_REQUIRED`. No current draft: 409 `DRAFT_NOT_CURRENT`. Not released (no current simulated approval): 409 `REPORT_NOT_RELEASED`.
+2. No model call, `FALLBACK`, when: no provider (`MODEL_DISABLED`), the reviewer changed the next step (`REVIEWER_EDITED`), or no floor rule has a usable `TEAM_CURATED` passage (`NO_CURATED_PASSAGES`).
+3. Otherwise `report.explain.v1` runs through the adapter, then the validator (AC-22.7).
+
+```json
+{
+  "outcome": "AI_DRAFT",
+  "reason_code": null,
+  "next_step_label": "Consider a specialist men's health service (andrology).",
+  "fallback_text": "You reported using anabolic steroids, now or in the past. A draft rule suggests a specialist service for this.",
+  "sentences": [{"text": "<plain-language sentence>", "passage_ids": ["<PASSAGE-ID>"]}],
+  "citations": [{"passage_id": "<PASSAGE-ID>", "title": "...", "locator": "...", "url": "...", "review_note": "Team-selected source, not reviewed by a clinician"}],
+  "label": "AI draft — Mock review",
+  "produced_by": {"provider": "azure_openai", "model_id": "<deployment>", "label": "Azure OpenAI", "is_ai_generated": true, "verification_status": "UNVERIFIED"}
+}
+```
+
+On `FALLBACK`, `sentences` is empty, `label` and `produced_by` are null, and the client shows `fallback_text`. The response is computed on each call and nothing is stored.
+
+**What reaches the model.** A system prompt, the next-step label, the signal codes of the floor rules and the passage IDs with excerpts. No case ID, token, answer, lab value or free text.
+
+### 6.15 Model budget, run metrics and decision record (RF-23, RF-24, `PROPOSED`)
+
+**Local decision provider (RF-25).** No endpoint changes. With `SANAD_MODEL_PROVIDER=laya_local`, `GET /chat/assistant` returns `model: {"provider": "laya_local", "label": "Laya (local model on this server)", "model_id": "convaiinnovations/laya@<revision>"}`, and `POST /cases/{id}/chat/interpret` returns the same outcomes as with Azure OpenAI. A number question returns `FALLBACK` with `reason_code: "MODEL_UNAVAILABLE"`, because the adapter does not support it.
+
+**Per-case budget.** Before any model call, `POST /cases/{id}/chat/interpret` and `POST /cases/{id}/report/explanation` count the case's `MODEL_TASK_RUN` entries that reached the adapter. At `SANAD_MODEL_MAX_CALLS_PER_CASE` they skip the model and return their usual fallback shape with `reason_code: "MODEL_BUDGET_EXCEEDED"`, still 200. In chat, the emergency word check runs before the budget check.
+
+**`GET /evaluation/model-runs`** (reviewer token) aggregates audit entries. It takes no parameters and returns no case ID, value or text.
+
+```json
+{
+  "observed_scope": "ALL_SYNTHETIC_CASES",
+  "synthetic_demo": true,
+  "tasks": [
+    {
+      "task_id": "intake.extract.v1",
+      "calls": 42,
+      "by_status": {"OK": 39, "TIMEOUT": 1, "BUDGET_EXCEEDED": 2},
+      "by_outcome": {"PROPOSAL": 31, "ABSTAIN": 6, "FALLBACK": 5},
+      "attempts_mean": 1.1,
+      "latency_ms": {"p50": 1450, "p95": 3800},
+      "tokens": {"input": 18200, "output": 2100}
+    }
+  ]
+}
+```
+
+**`decision_record` in `GET /reviews/{case_id}`** is built at read time from stored data. Values below are illustrative.
+
+```json
+"decision_record": {
+  "action": "SPECIALIST",
+  "floor": "SPECIALIST",
+  "rules": [{"rule_id": "DRAFT-STEROID-01", "rule_version": "draft-0.1", "approval_status": "CLINICAL_TBD"}],
+  "catalogue_versions": {"questions": "...", "emergency": "...", "passages": "passages-0.1", "consent": "..."},
+  "facts_used": [
+    {"concept_code": "anabolic_steroid_use", "state": "KNOWN", "value": true, "temporal_status": "PAST", "source_type": "PATIENT_REPORTED"}
+  ],
+  "evidence": [{"claim_id": "CLAIM-DRAFT-STEROID-01", "status": "INSUFFICIENT_EVIDENCE"}],
+  "model_runs": [{"task_id": "intake.extract.v1", "status": "OK", "outcome": "PROPOSAL", "at": "2026-11-14T09:00:00Z"}],
+  "report_hash": "<sha256>",
+  "built_at": "2026-11-14T09:05:00Z"
+}
+```
+
 ## 7. Audit events
 
 The API has no endpoint for reading the audit log in this flow. Tests read the table directly, and reviewers see `decision_history`. Each entry holds actor, time, event type, case ID and the relevant versions (INV-09), and never answers, lab values or notes (INV-03).
@@ -837,7 +924,7 @@ The API has no endpoint for reading the audit log in this flow. Tests read the t
 | `NAVIGATION_BARRIER_RECORDED` | Barrier selection | `count`, `prefer_not_to_say` (never reason codes) |
 | `SAFETY_CHECKED` with `origin: CHAT_TEXT` | Typed text matched an emergency word pattern | `rule_ids`, `catalogue_version`, `result` |
 | `INPUT_CHECKED` | Typed text rejected by the input checks | `result`, `reason_code`, `origin`, `question_id` (never the text) |
-| `MODEL_TASK_RUN` | Every model task call | `request_id`, `task_id`, `provider`, `model_id`, `prompt_version`, `schema_version`, `question_catalogue_version`, `question_id`, `status`, `error_code`, `outcome`, `attempts`, `elapsed_ms` |
+| `MODEL_TASK_RUN` | Every model task call, and every call refused by the per-case budget (status `BUDGET_EXCEEDED`) | `request_id`, `task_id`, `provider`, `model_id`, `prompt_version`, `schema_version`, `question_catalogue_version`, `question_id`, `status`, `error_code`, `outcome`, `attempts`, `elapsed_ms`, `input_tokens`, `output_tokens` (when reported) |
 
 Navigation write keys are unique per episode and operation. They are opaque retry tokens, not patient identifiers. The server stores a hash of the normalized request payload with each key so a retry can be distinguished from accidental key reuse.
 

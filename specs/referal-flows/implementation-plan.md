@@ -199,6 +199,30 @@ flowchart LR
 - **Settings.** `SANAD_MODEL_PROVIDER` (`disabled` or `azure_openai`), `SANAD_AZURE_OPENAI_ENDPOINT`, `SANAD_AZURE_OPENAI_DEPLOYMENT`, `SANAD_AZURE_OPENAI_AUTH` (`api_key` or `entra_id`), `SANAD_AZURE_OPENAI_API_KEY`, `SANAD_MODEL_TIMEOUT_MS` (12000), `SANAD_MODEL_MAX_ATTEMPTS` (2), `SANAD_MODEL_MAX_COMPLETION_TOKENS` (800). The defaults are the PRD's engineering defaults and stay `TECH_TBD` (OQ-32).
 - **Where settings live.** `config.Settings.from_env` reads `apps/api/.env` (Git-ignored, located from the package, or `SANAD_ENV_FILE`) through `python-dotenv`, overlaid by the real environment, which wins. `os.environ` is not changed, values are literal, and empty values count as unset. `apps/api/.env.example` is the committed template with placeholders only; a test fails if it holds a key or password or turns the model on. Hosted deployments use protected app settings or Key Vault instead of a file.
 
+### 4.10 Local decision model (RF-25)
+
+```mermaid
+flowchart LR
+    INT[POST /chat/interpret] --> S0B{S0b word check}
+    S0B -->|clear| TASK[intake.extract.v1 builds payload]
+    TASK --> PORT[[ModelAdapter port]]
+    PORT --> AZ[AzureOpenAIAdapter]
+    PORT --> LAYA[LayaLocalAdapter]
+    LAYA --> MAP[Labels from catalogue: answers, time, NOT_SURE, PREFER_NOT, NOT_AN_ANSWER]
+    MAP --> RUN[laya / laya-mlx choice, one forward pass, local]
+    RUN --> AB{abstain, unbound, review, low prob, set > 1?}
+    AB -->|yes| ABS[ABSTAIN JSON]
+    AB -->|no| JSON[intake.extract.v1 JSON]
+    ABS --> V1[Unchanged V1 validator]
+    JSON --> V1
+    AZ --> V1
+```
+
+- **Why behind the same port.** The task, its schema, validator, trace and fallback stay identical, so the RF-23 harness compares providers on the same case file and the route code does not change.
+- **Backends.** `laya` (PyTorch; CPU, CUDA, MPS) is the portable default and the one Windows hosts use. `laya-mlx` is an Apple Silicon port with the same `load` and `predict` calls; it is optional and never required in CI.
+- **Setup notes.** Install with `pip install -e "apps/api[decision]"`. Set `USE_TF=0` if TensorFlow is installed, because the upstream model card reports a hang at load otherwise. Download the pinned revision once, then run with `HF_HUB_OFFLINE=1`. The checkpoints total about 2.3 GB; only the English checkpoint is in scope.
+- **Calibration.** Upstream describes the shipped checkpoints as over-confident and thresholds as policy choices to fit on one's own data. `SANAD_DECISION_MIN_PROB` is therefore set from the scorecard, not from vendor guidance. Fitting a per-question head (`agent.fit`) needs a few hundred labelled rows and is out of scope.
+
 ## 5. API
 
 The full contract, including endpoints, access checks, action rules and error codes, is in the [API design](api-design.md). Each endpoint there names the task that builds it.
@@ -262,6 +286,11 @@ These are additive P0 backend/design tasks from PRD v0.4; they do not activate c
 | T4.3 | Versioned conceptual FHIR R4 mapping manifest; no export or conformance claim | PRD-FR-31, PRD-AC-46/48 | T1.10, T3.7 | Backend, Architect | In progress; manifest present, review pending |
 | T4.4 | Synthetic fixture provenance manifest and startup file-integrity validation; keep unreviewed ranges explicit | PRD-FR-32, PRD-AC-45 | T2.9, T3.7 | QA, Clinical Advisor | In progress; manifest/loader present, review pending |
 | T4.5 | Chat intake at `/intake`, model adapter port, disabled and Azure OpenAI adapters, `intake.extract.v1` task and validator, stage 2a word check, input checks, chat endpoints, trace events | RF-21, AC-21.1 to AC-21.12; PRD-FR-04/37/38/40 | T2.1, T2.2, T4.1 | Backend, Frontend, Security | In progress; API, adapters, chat UI and TC-21.1 to TC-21.12 (pytest) present. Spec review, CC-011 and CC-012 approval, browser E2E and a run against a real Azure deployment pending. Provider off by default. |
+| T4.6 | Team-curated passage file and loader, `TEAM_CURATED` evidence refs, citation fields in the report, `report.explain.v1` task and validator, `POST /cases/{id}/report/explanation` | RF-22, AC-22.1 to AC-22.10; BR-08, PRD-FR-07/37/38 | T4.5, CC-013 | Backend, Security; passage selection: team with clinical input | In progress; backend and TC-22.1 to TC-22.10 (pytest) present, smoke-run once against a real Azure deployment with a synthetic passage. The shipped passage file is empty until the team selects sources. Patient UI, spec review and CC-013 approval pending. Provider off by default. |
+| T4.7 | Evaluation case files for `intake.extract.v1` and `report.explain.v1`, replay and Azure runner reusing the production task code, scorecard, CI replay job; per-case model call cap; token counts in `MODEL_TASK_RUN`; `GET /evaluation/model-runs` | RF-23, AC-23.1 to AC-23.10; PRD-FR-14/18, NFR-14, HR-25 | T4.5, T4.6 | Backend, QA | In progress; budget, token trace, `GET /evaluation/model-runs`, 43 synthetic cases, runner, CI replay step and TC-23.1 to TC-23.10 (pytest) present. Live runs on gpt-6-luna (2026-11-14, two runs): intake 27/27 and explanation 5/5 on live cases, zero unsafe conversions, p95 latency 2.2–3.4 s. Spec review and a reviewer UI panel for the metrics pending. |
+| T4.8 | `decision_record` in the reviewer detail, built from stored facts, rules, catalogues and model-run audit entries | RF-24, AC-24.1 to AC-24.4; PRD-FR-08, HR-14 | T2.7, T4.7 (model-run list) | Backend, Frontend (reviewer page) | Not started. Spec written first, awaiting review. |
+| T4.9 | `LayaLocalAdapter` behind the model port, optional extra `apps/api[decision]`, settings and start-up checks, label mapping and abstain rules, `--provider laya_local` in the evaluation runner, RUNBOOK setup for Windows (torch, CPU) and macOS (laya-mlx) | RF-25, AC-25.1 to AC-25.10; OD-16, OD-17 | T4.7, CC-015 | Backend, QA, Security | Not started. Spec written first, awaiting review. Weight licence unconfirmed: local evaluation only. |
+| T4.10 | Optional offline bake-off of hosted Jev: an evaluation-only provider in `eval/`, never imported by `sanad_api`, using the same label mapping as T4.9 | RF-23 AC-23.2 extension, OD-16 | T4.9, CC-014 approval, API access | Backend, Security | Blocked on CC-014 approval and API access. Not a runtime provider. |
 
 ### Critical path
 

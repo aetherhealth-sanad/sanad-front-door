@@ -13,6 +13,9 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
+| 0.9 | 2026-11-14 | Added RF-25 local decision-model provider (AC-25.1 to AC-25.10, T4.9, TC-25.1 to TC-25.9, plan §4.10, API design §6.15 note). Laya, an open model with Jev-style typed decisions, runs on the API host through `laya` (PyTorch) or `laya-mlx` (Apple Silicon) for RF-21 yes/no and choice questions only. Moved the hosted Jev bake-off to T4.10 under CC-014. Opened CC-015; added OD-17 on the weight licence. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
+| 0.8 | 2026-11-14 | Added RF-23 model evaluation harness, per-case model budget and run metrics (AC-23.1 to AC-23.10, T4.7, TC-23.1 to TC-23.10) and RF-24 decision record for the reviewer (AC-24.1 to AC-24.4, T4.8, TC-24.1 to TC-24.4); API design §6.15; `GET /evaluation/model-runs`; reason code `MODEL_BUDGET_EXCEEDED`; token fields in `MODEL_TASK_RUN`; OD-15, OD-16. Opened CC-014 for an optional offline Jev bake-off (T4.9, blocked). Recorded as out of scope: runtime pgvector retrieval, runtime decision models, trained cross-field contradiction detection. No clinical rule, threshold, triage level, consent scope or data policy changed. **Order of work:** spec only; no code written for these items. Review before T4.7 and T4.8 start. | Drafted by Claude Code | Pending |
+| 0.7 | 2026-11-14 | Added RF-22 pinned citations and grounded explanation (AC-22.1 to AC-22.10, T4.6, TC-22.1 to TC-22.10, API design §6.14). Added the `TEAM_CURATED` evidence status, `knowledge/passages.v0.1.json` (shipped empty), the `report.explain.v1` task and `POST /cases/{id}/report/explanation`, and the error `REPORT_NOT_RELEASED`. Opened CC-013. No clinical rule, threshold or triage level changed. **Order of work:** code and tests were written in the same branch as these spec changes, so the spec must be reviewed before merge. | Drafted by Claude Code | Pending |
 | 0.6 | 2026-11-08 | Added RF-21 chat intake with a bounded model adapter (AC-21.1 to AC-21.12, T4.5, TC-21.1 to TC-21.12, API design §6.13). Added an optional Azure OpenAI adapter, off by default, a stage 2a emergency word check for typed text, and the `INPUT_CHECKED` and `MODEL_TASK_RUN` audit events. Amended INV-01. Opened CC-011 and CC-012. Settings, including the Azure OpenAI key, can live in a Git-ignored `apps/api/.env` copied from the committed `apps/api/.env.example` (placeholders only); shell variables still win. **Order of work:** code and tests were written in the same branch as these spec changes, not after review, so the spec must be reviewed before merge and the code changed if review changes the spec. | Drafted by Claude Code for trung1234 | Pending |
 | 0.5 | 2026-11-05 | Synchronized implementation status with current patient/staff UI source; clarified J9/J10 client test gaps and parent-scope conflicts; removed unreviewed clinical claims from education; aligned Quick Exit with existing wipe/BFCache/neutral-title criteria. No BRD/PRD contract or clinical rule changed; verification and content review remain pending. | Codex | Pending |
 | 0.4 | 2026-11-03 | Specified idempotency for navigation progress/barrier retries; clarified current harness and CI scope. | Codex | Pending |
@@ -23,6 +26,50 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 ## Change-control records
 
 Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, and CC-009 with version 0.2.
+
+### CC-015 Local decision-model provider
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Nothing implemented. Off by default; not to be enabled in a demo before the RF-23 scorecard passes and the weight licence is confirmed (OD-17). |
+| **Reason** | RF-21 answer matching is a choice among catalogue answers. A local decision model may give the same bounded result faster and cheaper than a generative model, and keeps typed text on the API host. The team asked to run a Jev-style model locally, as `laya-mlx` does. |
+| **Evidence** | `laya` on PyPI (0.4.31): `predict(state, questions)` with `choice`, `score`, `noul`; output fields include probabilities, `answer_confidence`, a conformal `prediction_set`, `abstain`, `unbound` and `route`; runs on CPU, CUDA, MPS and XPU, including Windows; shipped checkpoints described as over-confident. `laya-mlx`: independent Apple Silicon port, Apache-2.0 code, macOS 14+, port fidelity 63/63 against upstream, which the authors state is not task accuracy. Jev itself has no published weights, so it cannot run locally. |
+| **Change** | (1) A new provider `laya_local` behind the existing port, for `intake.extract.v1` yes/no and choice questions only. (2) A new optional dependency set (`torch`, `transformers`, `laya`, optionally `laya-mlx`), not installed by default or in CI. (3) Third-party weights pulled once from Hugging Face at a pinned revision into the local cache; no request downloads anything and no patient data is uploaded. (4) Abstain rules in code (abstain, out-of-distribution, review route, low probability, ambiguous prediction set) before the unchanged RF-21 validator. |
+| **Data policy** | Typed text stays on the API host for this provider. The one outbound transfer is the model download, which carries no patient data. |
+| **Supply chain** | Pin the revision, record the weight files' hashes in the scorecard, and confirm the weight licence before any public demo (OD-17). |
+| **Clinical content** | None. Label descriptions repeat catalogue wording only. |
+| **Affected journeys** | J1, J3, J5 at `/intake`, only when an operator enables the provider. J4 untouched (AC-25.10). |
+| **Tests** | TC-25.1 to TC-25.9; RF-23 scorecard comparison |
+| **Approver** | Pending (Tech Lead for the adapter and dependency; Security for supply chain; Legal for the weight licence) |
+| **Version** | Spec 0.9 |
+
+### CC-014 Offline Jev bake-off with synthetic evaluation cases
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Nothing implemented. T4.10 is blocked until approval and API access. |
+| **Reason** | RF-21's answer matching and the chat routing ideas are choice-shaped decisions. A decision model that returns typed choices with probabilities, such as TypeSafe Jev (released 2026-09-15), claims to be much faster and cheaper than a generative model for this. The claim is the vendor's and needs measuring on Sanad's own cases. |
+| **Evidence** | Vendor and third-party descriptions: three primitives (Noul yes/no probability, Choice over 1–255 labels, Score over 2–10 ordered levels); "confidence" measures how concentrated the distribution is, not the chance of being right; hosted API only, no published weights or on-premises option; endpoints differ between sources. See the harness review in `specs/harness.md` §"Considered and deferred". |
+| **Change** | (1) An evaluation-only provider under `eval/`, never imported by `sanad_api`, so no patient session can reach it. (2) It runs only the RF-23 synthetic case files, which hold no patient data. (3) Sending those synthetic cases to TypeSafe or a reseller is an outbound data flow and needs this approval even though the data is synthetic. (4) Adoption at runtime is **not** part of this record: it needs a new requirement, a data-processing review of the hosted service and region, a separate change-control record, and a scorecard with zero unsafe conversions and accuracy at least equal to the incumbent. |
+| **Clinical content** | None. Jev would never be used for emergency checks, triage, the floor, review or the referral gate. |
+| **Affected journeys** | None at runtime. |
+| **Tests** | TC-23.1 to TC-23.5 apply to the bake-off run. |
+| **Approver** | Pending (Tech Lead + Security) |
+| **Version** | Spec 0.8 |
+
+### CC-013 Team-curated citations and a report explanation task
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Code is present; the passage file is empty and the model task is **off by default**. |
+| **Reason** | BR-08 and PRD-FR-07 ask for a source behind every clinical claim, and every draft rule cites a placeholder, so every report says "insufficient evidence". The team also asked for a visible, safe use of the model in the report. |
+| **Evidence** | `rules/triage.draft-0.1.json` (all refs `PENDING`); `reports/drafts.py` `_evidence()`; harness HR-20/21; `mcp-context-design.md` (full retrieval design, not adopted here). |
+| **Change** | (1) New evidence status `TEAM_CURATED`: a source chosen by the team, shown as not reviewed by a clinician, never as verified or supported. This extends the label taxonomy. (2) A passage file with hashed excerpts, pinned to rules; no runtime retrieval. (3) Task `report.explain.v1`: after release, a model may reword the next step citing only those passages; a strict validator and blocked-term list (draft, `CLINICAL_TBD`) gate it, and any failure falls back to the static text. (4) Sending the next-step label, signal codes and passage excerpts to the provider is a data-policy change under the same conditions as CC-011; no patient answer, lab value, free text or identifier is sent. |
+| **Clinical content** | Not decided here. Which sources and excerpts to pin needs a team decision with clinical input. The blocked-term list makes model output stricter; it is draft wording, `CLINICAL_TBD`. |
+| **Affected journeys** | J1, J3, J5 result screen. J4 is untouched (AC-22.4). |
+| **Tests** | TC-22.1 to TC-22.10 |
+| **Approver** | Pending (Product for the taxonomy; Product + Security for the data policy; clinical input for passage selection; Tech Lead for the code) |
+| **Version** | Spec 0.7 |
 
 ### CC-011 Optional model call for typed chat text
 

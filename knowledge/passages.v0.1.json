@@ -1,0 +1,6 @@
+{
+  "catalogue_id": "evidence-passages",
+  "catalogue_version": "passages-0.1",
+  "status_note": "RF-22, CC-013 (PROPOSED). Short verbatim excerpts the team pins to draft triage rules through evidence_refs. Every passage is TEAM_CURATED: chosen by the team, not reviewed by a clinician, and never shown as verified. content_sha256 is the SHA-256 of the UTF-8 excerpt; the API recomputes it at start-up and ignores a passage that does not match. Excerpts are at most 600 characters; quote copyrighted sources briefly and link to them. Which sources to use is a team decision with clinical input, so this file ships empty.",
+  "passages": []
+}

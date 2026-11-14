@@ -71,6 +71,10 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 | RF-16 | *Implied by* "hoàn thiện J2, J3" | J2 selective evidence (exploratory) | M3 |
 | RF-17 | Mọi chỗ giả lập phải ghi rõ là "Mock" để không nhầm với dữ liệu thật. | Mock labelling across the app | M2, M3 |
 | RF-21 | *Added 2026-11-08 by change request* (chat intake using Azure OpenAI, UX flow v0.3 step 4). Parent contracts: PRD-FR-04, PRD-FR-37, PRD 4.7.1–4.7.2. `PROPOSED`, CC-011 and CC-012. | Chat intake with a bounded model adapter | v0.4 additions |
+| RF-22 | *Added 2026-11-14 by change request* (pinned guideline citations in the report, then an optional model explanation). Parent contracts: BR-08, BR-25, PRD-FR-07, PRD-FR-37/38, harness HR-20/21. `PROPOSED`, CC-013. | Pinned citations and grounded explanation | v0.4 additions |
+| RF-23 | *Added 2026-11-14 by change request* (harness review against the ProtonX 7-harness framework: Evaluation and AgentOps gaps). Parent contracts: PRD-FR-14, PRD-FR-18, PRD-FR-37/38, NFR-14, harness HR-25, HR-27, HR-28. `PROPOSED`, CC-014 for the optional Jev bake-off only. | Model evaluation harness, per-case model budget and run metrics | v0.4 additions |
+| RF-24 | *Added 2026-11-14 by change request* (Governance harness: explainability). Parent contracts: BR-08, BR-11, PRD-FR-08, PRD-AC-08, harness HR-14, HR-28. `PROPOSED`. | Decision record for the reviewer | v0.4 additions |
+| RF-25 | *Added 2026-11-14 by change request* (Jev-style typed decisions, run locally like laya-mlx). Parent contracts: PRD-FR-04, PRD-FR-37/38, NFR-09, harness HR-19, HR-27. `PROPOSED`, CC-015; hosted Jev stays under CC-014. | Local decision-model provider for choice-shaped tasks | v0.4 additions |
 
 RF-18 to RF-20 are not used, because `TC-18.*` to `TC-20.*` already name the PRD v0.4 psychosocial, navigation and FHIR tests in the test plan.
 
@@ -81,12 +85,19 @@ RF-18 to RF-20 are not used, because `TC-18.*` to `TC-20.*` already name the PRD
 - Everything in §2, in English, mobile-first for patients and desktop-first for reviewer and mock facility pages.
 - Deterministic rules and template-built drafts. No model decides anything in the flow.
 - One bounded model task, off by default: matching a typed chat message to an answer from the question catalogue, for the user to confirm (RF-21, `PROPOSED`).
+- Pinned citations from a team-curated passage file, and a second bounded model task, off by default, that rewords an already released next step using only those passages (RF-22, `PROPOSED`).
+- An offline evaluation harness for the model tasks on synthetic cases, a per-case cap on model calls, and code-only run metrics for staff (RF-23, `PROPOSED`).
+- A decision record on the reviewer page that shows, from stored data only, which rule, facts, sources and model runs stand behind a draft (RF-24, `PROPOSED`).
+- A local decision-model provider (Laya, an open model with Jev's Choice, Score and Noul primitives) for RF-21 answer matching, running on the API host with no outbound request, off by default and enabled only after its RF-23 scorecard passes (RF-25, `PROPOSED`).
 - Synthetic fixtures for J1, J2, J3, J4, J5 and consent-negative cases.
 
 ### 3.2 Out of scope
 
-- Real referrals, real clinics, booking, payments, FHIR or EHR links, and any outbound message other than RF-21's optional model request.
-- LLM or SLM tasks other than RF-21's answer matching, RAG, knowledge registry and OCR. PDF or image upload is excluded with them.
+- Real referrals, real clinics, booking, payments, FHIR or EHR links, and any outbound message other than the optional model requests of RF-21 and RF-22.
+- LLM or SLM tasks other than RF-21's answer matching and RF-22's explanation, runtime retrieval (vector search, including pgvector), knowledge registry and OCR. PDF or image upload is excluded with them.
+- Any runtime use of a **hosted** decision model such as TypeSafe Jev. It is allowed only as an offline candidate in the evaluation harness, with synthetic cases, after CC-014 is approved. The local provider of RF-25 is the only decision model the API may load.
+- Decision models for number answers, the report explanation text, emergency checks, triage, review or the referral gate.
+- Cross-field contradiction detection with a trained model. Same-field disagreement is already kept and blocks the assessment as `CONFLICTING` (AC-06.3, AC-15.6).
 - Arabic and RTL, reminders and notifications, spouse sharing features, and care plans.
 - J6, J7 and J8.
 
@@ -464,6 +475,74 @@ This requirement covers the chat at `/intake` only. The full session dashboard i
 | AC-21.11 | The Azure OpenAI adapter uses the v1 API (`/openai/v1/`, no `api-version`), the deployment name as `model`, and strict structured output. It retries timeouts, connection errors, 429 and 5xx within one deadline and a maximum number of attempts, never retries a content-filter block or another 4xx, and treats a filtered, truncated or refused completion as no answer. A missing or invalid setting stops start-up with a message that repeats no secret. |
 | AC-21.12 | With default settings the API builds no model client and makes no model call (INV-01). |
 
+### RF-22 Pinned citations and grounded explanation (v0.4 addition, `PROPOSED`)
+
+Each draft triage rule may point to short guideline passages chosen ahead of time by the team. The report shows them as sources. Nothing is searched at runtime. Optionally, once a report is released, a model may reword the next step in plain language, using only those passages. The rule floor and the released next step never change. PRD mapping: PRD-FR-07, PRD-FR-37, PRD-FR-38, PRD-FR-40, NFR-21. BRD mapping: BR-08, BR-09, BR-17, BR-25. Harness: HR-19, HR-20, HR-21, HR-27. Change control: [CC-013](change-log.md#cc-013-team-curated-citations-and-a-report-explanation-task).
+
+No clinician has reviewed any passage. A passage is `TEAM_CURATED`: a source the team chose, shown as "not reviewed by a clinician". It is never `VERIFIED`, and a claim it backs is never `SUPPORTED`. Which sources and excerpts to use is a team and clinical decision outside this requirement; the passage file may be empty.
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-22.1 | Passages live in `knowledge/passages.v0.1.json`. Each has a passage ID, source ID and version, title, locator, URL, license, an excerpt of at most 600 characters, the SHA-256 of the excerpt and `review_status: TEAM_CURATED`. The loader recomputes each hash at start-up. A mismatched passage is marked unusable and logged by ID; it never stops start-up. |
+| AC-22.2 | A rule's `evidence_refs` entry may carry `passage_id` and `content_sha256`, with `verification: TEAM_CURATED`. When the passage exists, is usable and its hash equals the ref's hash, the claim has status `TEAM_CURATED` and a citation with source, version, title, locator, URL, license, excerpt and the note "Team-selected source, not reviewed by a clinician". In every other case the claim stays `INSUFFICIENT_EVIDENCE` with no citation. |
+| AC-22.3 | No code path turns `TEAM_CURATED` into `VERIFIED`, `SUPPORTED`, approved or clinician-reviewed. While no claim is `SUPPORTED`, the report keeps the limit `NO_VERIFIED_EVIDENCE`. |
+| AC-22.4 | The emergency path (safety check, typed-text word check, `urgent.html`) neither imports nor reads the passage file or the explanation task. |
+| AC-22.5 | `POST /cases/{id}/report/explanation` uses the report guard (patient token, active `assessment` consent). It answers only for a released report, otherwise 409 `REPORT_NOT_RELEASED`. It never changes the draft, report hash, approval, case state or `case_version`, and it stores no model text. |
+| AC-22.6 | Task `report.explain.v1` sends only the released next-step label, the risk-signal codes of the rules that set the floor and their usable passages (ID and excerpt). It sends no case ID, token, answer, lab value, free text or psychosocial report. |
+| AC-22.7 | The validator accepts only strict JSON with 1 to 3 sentences of at most 280 characters, each citing at least one passage ID that was sent. It rejects any sentence that holds a draft blocked term (diagnosis, infertility or sterility, probability, a percentage, "cannot have children" and similar) or a cue for a next step other than the released one. Any rejection is a fallback, never a partial answer. |
+| AC-22.8 | The endpoint returns `AI_DRAFT` only after the validator passes. Otherwise it returns `FALLBACK` with the static `why_next_step` and one reason code: `MODEL_DISABLED`, `NO_CURATED_PASSAGES`, `REVIEWER_EDITED`, `MODEL_UNAVAILABLE`, `MODEL_CONTENT_FILTERED`, `MODEL_REFUSED`, `MODEL_OUTPUT_INVALID` or `ABSTAIN`. A fallback is a normal 200 response. |
+| AC-22.9 | An `AI_DRAFT` is labelled "AI draft — Mock review", names the provider, and carries `is_ai_generated: true` and `verification_status: UNVERIFIED`. Each model call writes a code-only `MODEL_TASK_RUN` trace with the task, prompt and schema versions, rule version, status, outcome, attempts and elapsed time, never model text. |
+| AC-22.10 | With default settings the explanation endpoint makes no model call and returns `FALLBACK` `MODEL_DISABLED` (INV-01). |
+
+### RF-23 Model evaluation harness, per-case budget and run metrics (v0.4 addition, `PROPOSED`)
+
+RF-21 and RF-22 have contract tests with a fake model, but nothing measures how a real model behaves on them. This requirement adds an offline evaluation harness that runs the production task code against labelled synthetic cases and writes a scorecard. It also caps model calls per case and gives staff code-only metrics on model runs. It adds no model task and changes no clinical rule. PRD mapping: PRD-FR-14, PRD-FR-18, PRD-FR-37, PRD-FR-38, NFR-14. Harness: HR-25, HR-27, HR-28. Change control: [CC-014](change-log.md#cc-014-offline-jev-bake-off-with-synthetic-evaluation-cases) for the optional Jev bake-off only.
+
+A scorecard shows how the software behaves on synthetic cases the team wrote. It is never evidence of clinical accuracy or safety and is labelled `NOT_CLINICALLY_VALIDATED`.
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-23.1 | Evaluation cases live in `eval/model/intake_extract.v0.1.jsonl` and `eval/model/report_explain.v0.1.jsonl`. Each line has a case ID, task ID, input, expected result (an answer, `ABSTAIN` or `FALLBACK` with an allowed reason), at least one tag (for example `clear`, `unsure`, `declined`, `negation`, `temporal`, `out_of_scope`, `injection`, `blocked_term`, `other_step`) and a `replay` reply for offline runs. A case whose stored reply is deliberately bad, to probe the validator, is tagged `validator` and marked `replay_only`; live runs skip it and the scorecard counts it as skipped. Cases are synthetic and pass the fixture guard: no names, contact details or identifiers. |
+| AC-23.2 | `eval/run_model_eval.py` runs each case through the same task builder and validator the API uses, not a copy, with the provider chosen on the command line: `replay` (default, no network), or `azure_openai` from environment settings. It writes a scorecard as JSON and Markdown to a Git-ignored output folder, naming the provider, model, prompt, schema and catalogue versions, case-file hash and run date. |
+| AC-23.3 | The scorecard reports, per task and per tag: accuracy on cases with an expected answer; **unsafe conversions**, meaning an expected `UNKNOWN`, `DECLINED`, opt-out or abstain that came back as a concrete answer, or an expected fallback that came back as a proposal or draft; fallback and abstain counts by reason code; attempts; latency p50 and p95; and input and output tokens when the provider reports them. |
+| AC-23.4 | The runner exits with an error when any unsafe conversion occurs, or when accuracy is below the configured threshold (draft 0.90, `TECH_TBD`, OD-15). The unsafe-conversion limit is zero and is not configurable. |
+| AC-23.5 | CI runs the harness with `replay` on every push: no key, no network call. A live run against a real provider is started by hand, reads the key from the environment and is never part of CI. |
+| AC-23.6 | Every model failure found in a live run, review or demo is added as a case, tagged with its source, in the same pull request as its fix (ratchet rule). |
+| AC-23.7 | Each case may use at most `SANAD_MODEL_MAX_CALLS_PER_CASE` model calls (default 20, allowed 1 to 100, `TECH_TBD`). The count is the number of `MODEL_TASK_RUN` entries for the case that reached the adapter. Past the cap, chat matching and the report explanation return their normal fallback with reason `MODEL_BUDGET_EXCEEDED` and make no model call. The typed-text emergency check still runs first and is never capped. |
+| AC-23.8 | `MODEL_TASK_RUN` adds `input_tokens` and `output_tokens` when the provider reports them, and a budget refusal is recorded with status `BUDGET_EXCEEDED` and no tokens. No model text is added. |
+| AC-23.9 | `GET /evaluation/model-runs` (reviewer only) returns, per task: call count, counts by status and outcome, attempts, latency p50 and p95, token totals and budget refusals. It holds no case ID, question value or text, and is labelled synthetic demo data. |
+| AC-23.10 | With default settings the harness CI job and the metrics endpoint make no model call (INV-01). |
+
+### RF-24 Decision record for the reviewer (v0.4 addition, `PROPOSED`)
+
+A reviewer should see what a draft rests on before approving it, so approval is not a one-tap habit (HR-14). The record is built from stored data at read time. No model writes or summarises it. PRD mapping: PRD-FR-08, PRD-AC-08. BRD mapping: BR-08, BR-11. Harness: HR-14, HR-28.
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-24.1 | `GET /reviews/{case_id}` adds `decision_record` with: the draft action and floor; the rule IDs that set the floor, with rule version and approval status; the question, emergency, passage and consent catalogue versions; the facts the firing rules read, each with concept, state, value, temporal status and source type; the evidence status of each claim; the case's model runs (task, status, outcome, time) with no text; the current report hash; and the time the record was built. |
+| AC-24.2 | Every field comes from the database, catalogues or rule engine at read time. Building the record makes no model call and writes nothing. |
+| AC-24.3 | Facts keep their stored state: `UNKNOWN`, `DECLINED`, `NOT_ASKED` and `CONFLICTING` are shown as such, and every value of a conflicting fact is listed with its source (INV-05, AC-06.3). |
+| AC-24.4 | The record appears only in the reviewer detail. The patient report and its hash do not change. |
+
+### RF-25 Local decision-model provider for choice-shaped tasks (v0.4 addition, `PROPOSED`)
+
+RF-21 asks a generative model to pick one answer from a short list. That is a classification, so a decision model that returns a choice with probabilities in one forward pass may be faster, cheaper and easier to bound. TypeSafe Jev is such a model but is hosted only, with no published weights. **Laya** (Convai Innovations, code Apache-2.0) offers the same three primitives (`choice`, `score`, `noul`), runs on CPU or GPU through the `laya` package (PyTorch), and on Apple Silicon through the independent `laya-mlx` port. This requirement adds Laya as a second provider behind the existing `ModelAdapter` port, for RF-21 only. PRD mapping: PRD-FR-04, PRD-FR-37, PRD-FR-38, NFR-09. Harness: HR-19, HR-27. Change control: [CC-015](change-log.md#cc-015-local-decision-model-provider).
+
+The decision model never writes text the user reads and never decides anything. Its output goes through the same RF-21 validator and the same user confirmation. Running on the API host means typed text does not leave the app for this provider. Vendor speed and calibration claims are not relied on: the RF-23 scorecard on Sanad's own synthetic cases decides whether it may be enabled.
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-25.1 | `SANAD_MODEL_PROVIDER=laya_local` selects `LayaLocalAdapter`. It needs the optional extra `apps/api[decision]`, `SANAD_LAYA_MODEL` (default `convaiinnovations/laya`) and a pinned `SANAD_LAYA_REVISION` (a commit hash). `SANAD_LAYA_BACKEND` is `auto`, `torch` or `mlx`; `auto` picks `laya-mlx` on Apple Silicon when installed and `laya` otherwise. A missing package, missing revision or unknown backend stops start-up with a message that names the setting. |
+| AC-25.2 | Weights are loaded once at start-up from the local Hugging Face cache, never per request, and never committed to the repository. A run with `HF_HUB_OFFLINE=1` works once the pinned revision is cached. No request path downloads anything. |
+| AC-25.3 | The adapter supports only `intake.extract.v1` questions whose answer type is yes/no or choice. It reads the task payload the task builder already produced. For a number question or any other task it returns `UNAVAILABLE` with `UNSUPPORTED_TASK`, which RF-21 turns into its normal fallback. |
+| AC-25.4 | The adapter builds one `choice` question whose labels come from code, not from the model: each catalogue answer (for yes with time options: `YES_CURRENT`, `YES_PAST`, `YES_TIME_UNCLEAR`), plus `NOT_SURE`, `PREFER_NOT_TO_ANSWER` and `NOT_AN_ANSWER`. Each label's description repeats catalogue wording only. The typed text is passed as data, with no case ID, token or earlier answer. |
+| AC-25.5 | The adapter returns ABSTAIN (`UNCLEAR`) when Laya sets `abstain`, `unbound` or `route: review`, when the top probability is below `SANAD_DECISION_MIN_PROB` (draft 0.80, `TECH_TBD`, fitted from the scorecard), when the prediction set holds more than one label, or when the top label is `YES_TIME_UNCLEAR`. `NOT_AN_ANSWER` gives ABSTAIN (`OUT_OF_SCOPE`). |
+| AC-25.6 | Otherwise the adapter emits JSON that matches the `intake.extract.v1` output schema, and the unchanged RF-21 validator checks it. `NOT_SURE` and `PREFER_NOT_TO_ANSWER` map to their opt-outs and never to No. |
+| AC-25.7 | Inference runs off the request thread within the task deadline. A timeout or exception returns `TIMEOUT` or `UNAVAILABLE`, and the user gets the RF-21 fallback. |
+| AC-25.8 | `MODEL_TASK_RUN` records provider `laya_local`, the model ID with revision, status, outcome and elapsed time, and no probabilities per label, typed text or label descriptions. `GET /chat/assistant` names the provider as "Laya (local model on this server)" in the disclosure. |
+| AC-25.9 | `eval/run_model_eval.py --provider laya_local` runs the RF-23 `intake_extract` cases through the same adapter and writes a scorecard that also reports p50 and p95 latency and peak memory on the host. CI never downloads weights: its tests replace the `laya` module with a stub. |
+| AC-25.10 | Emergency modules, triage, review, the referral gate and the report explanation neither import the adapter nor the `laya` packages. With default settings neither package is imported (INV-01). |
+
 ## 8. Invariants
 
 These hold on every screen and API call. Each one has a test in the test plan.
@@ -603,3 +682,6 @@ Each has a working default, so work need not stop. A named owner must confirm it
 | OD-12 | Who approves the **CC** items in §10? | Pending, marked `PROPOSED` | Tech Lead + Product | Change control |
 | OD-13 | Is the RF-21 model provider enabled in the demo, and which Azure region, deployment type and model? | Disabled. Typing is off until enabled, and the buttons work alone. If enabled: a Standard (regional) deployment in the resource's geography, a model that supports structured outputs, abuse-monitoring status recorded. | Tech Lead + Security | OQ-09, OQ-31, TBD-06 |
 | OD-14 | Who approves the emergency word patterns for typed text, and are they needed in Arabic? | Nobody yet. English only, shown as simulated, and text in other scripts is never sent on. | Clinical + Localization | OQ-30, OD-02 |
+| OD-15 | What accuracy threshold must a model task pass in the RF-23 harness before it may be enabled in a demo? | 0.90 on the synthetic set, with zero unsafe conversions. The threshold is an engineering default, not a clinical one. | Tech Lead + QA | PRD-FR-18, NFR-14 |
+| OD-16 | Should a decision model be tried as a cheaper, faster provider for choice-shaped tasks? | Yes, locally first: Laya under RF-25, enabled in a demo only if its scorecard has zero unsafe conversions and accuracy at least equal to Azure OpenAI on the same cases. Hosted Jev: offline bake-off only, after CC-014 approval and API access. | Tech Lead + Security | CC-014, CC-015 |
+| OD-17 | Under which licence are the Laya weights distributed, and may the team use them in a public demo? | Unknown. The code is Apache-2.0; the weight licence is not stated on the pages read. Use for local evaluation only until confirmed. | Tech Lead + Legal | CC-015 |

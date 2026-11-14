@@ -1,18 +1,18 @@
-# Sanad – Harness Rules v0.1 (EN)
+# Sanad – Harness Rules v0.2 (EN)
 
-Nov 3, 2026 · @Nguyen Thanh Trung
+Nov 3, 2026 · @Nguyen Thanh Trung · v0.2 Nov 14, 2026: synced with the RF-21/RF-22 model tasks, mapped to the 7-harness framework, added RF-23/RF-24 plans, a ratchet log and deferred options
 
 ## Goals and principles
 
-Sanad's harness is the deterministic rules, consent and state gates, audit logging, and automated checks around the backend. This is a research prototype: the current API makes no model calls, has no browser client, and sends no data outside the app. The HR rules below mix implemented backend controls with future model-agent design; they are targets, not claims that every item is implemented. The current automated gate is the backend pytest suite and Ruff. Model traces, browser/server parity, model timeouts and agent-tool restrictions are not executable until those components exist.
+Sanad's harness is the deterministic rules, consent and state gates, audit logging, and automated checks around the backend. This is a research prototype. With default settings the API makes no model call and sends no data outside the app. When an operator enables a provider, two bounded tasks may call Azure OpenAI: `intake.extract.v1` (RF-21, answer matching the user confirms) and `report.explain.v1` (RF-22, rewording a released next step from pinned passages). Both are schema-constrained, validated in code, traced with codes only, and fall back to fixed text. The HR rules below mix implemented backend controls with future model-agent design; they are targets, not claims that every item is implemented. The current automated gate is the backend pytest suite and Ruff. Model timeouts and fallbacks are tested with a fake adapter. Model quality measurement (RF-23), a per-case model budget (RF-23) and browser/server parity are not executable yet. There is no agent or tool runtime, so agent-tool restrictions remain design targets.
 
-1. **Rules first.** Emergency and draft triage rules run deterministically. There is currently no model result to combine with the rule floor.
+1. **Rules first.** Emergency and draft triage rules run deterministically. No model output feeds the rule floor; the typed-text emergency word check runs before any model call.
 2. **Policy sits outside the model and defaults to deny.** Every action with a side effect (writing a record, sending a referral) passes through a code gate. No rule that allows it means it is blocked.
 3. **Numbers come from code.** Any implemented comparison uses deterministic code and versioned catalogue values. Clinical thresholds remain draft or absent; no WHO threshold or model explanation is claimed.
 4. **Least privilege.** Each agent has only the tools its role needs.
 5. **Reviewers see enough to judge.** Yellow and above needs doctor review, and the review screen shows the sources, the rule that fired and the floor.
 6. **Every decision leaves a trace and has a test.** Audit events, traces and evals run in CI.
-7. **No model in the current backend.** If model integration is proposed later, it requires a separate reviewed contract, provider abstraction, constrained output, deterministic checks and a bake-off before use. No SLM choice is made by this document.
+7. **Models are bounded helpers, off by default.** Each model task has a reviewed contract (RF-21, RF-22), a provider port, a strict output schema, a code validator and a fixed fallback. A task is enabled in a demo only after its RF-23 scorecard shows zero unsafe conversions (OD-15). No SLM or decision-model choice is made by this document.
 
 **Current action vocabulary:** the backend uses `TriageAction` values such as `EMERGENCY_GUIDANCE`, `PRIORITY_REVIEW`, and `SPECIALIST`, ordered by the versioned catalogue. The Red/Orange/Yellow/Blue/Green terms below are legacy planning language and do not define the current API taxonomy.
 
@@ -75,9 +75,9 @@ Thirty rules in six groups. The "Enforced by" column says whether a rule is guar
 | ID | Rule | Enforced by | Task |
 | --- | --- | --- | --- |
 | HR-24 | The state machine allows only valid transitions; an illegal one is blocked | Transition table; unit test | T-08 |
-| HR-25 | Each case has a cap on steps, tool calls and tokens; exceeding it stops the case safely | Counters in the orchestrator | T-05 |
+| HR-25 | Each case has a cap on model calls; exceeding it returns the fixed fallback and never blocks emergency guidance | Planned: `SANAD_MODEL_MAX_CALLS_PER_CASE` (RF-23, AC-23.7) | T4.7 |
 | HR-26 | Every write (referral, event, progress) carries an idempotency key so a retry creates no duplicate | Duplicate-guard key at the API | T-28, T-29 |
-| HR-27 | If a future model or search call times out, return a rules-only result with a label and never invent content | Planned provider abstraction; no model/search calls exist in the current API | T-05 |
+| HR-27 | If a model call times out or fails, return a rules-only result with a label and never invent content | Implemented: provider port, deadline and retry limits, fixed fallbacks (AC-21.6, AC-21.11, AC-22.8); tests TC-21.x and TC-22.8 | T4.5, T4.6 |
 
 ### F. Observability, privacy and labels
 
@@ -159,7 +159,9 @@ Future agent evals should check traces as well as final answers. The current rep
 | Consent revoked mid-session | The next dependent call is blocked | Backend tests |
 | SLM proposes a level below the floor | Final result is overridden and audited | Planned; no model |
 | Uploaded report contains instructions | Data is normalized and cannot call tools or alter policy | Planned; no OCR/agent |
-| SLM times out | Rules-only result is returned with a label | Planned; no model |
+| Model times out or fails | Fixed fallback with a reason code | Backend tests with a fake adapter (TC-21.6, TC-22.8) |
+| Passage text carries an injection | Validator or abstain gives the static fallback | Backend tests (TC-22.7); one live run on gpt-6-luna (2 of 2 ABSTAIN) |
+| Real-model quality on synthetic cases | Scorecard with zero unsafe conversions | Planned (RF-23, T4.7) |
 | Browser/server rule parity | Both evaluators agree across the golden set | Planned; no browser client |
 | Logs and traces | No health data or prompt text is recorded | Backend privacy tests; no model traces |
 
@@ -178,8 +180,8 @@ The target for 20/11 is to fully reach L2 and the first part of L3 and L4 on the
 | --- | --- | --- |
 | L1 Basic controls | Reached: tool allowlist, output schema, central logging | HR-17, HR-19, HR-28 |
 | L2 Correct authorization | Reached: default-deny policy, purpose-level consent, doctor review | HR-01 to HR-03, HR-07 to HR-16 |
-| L3 Durable operation | Partial: state machine, idempotency, timeout and fallback, quota and tracing at the model gateway. No durable checkpointing yet | HR-24 to HR-27 |
-| L4 Continuous measurement | Partial: evals on traces in CI, golden set, one round of cross red-team. No SLOs yet | Section 6 |
+| L3 Durable operation | Partial: state machine, idempotency, model timeout and fallback in place; per-case model budget planned (RF-23). No durable checkpointing yet | HR-24 to HR-27 |
+| L4 Continuous measurement | Partial: rule golden set and API tests in CI. Planned: model evaluation scorecard with replay in CI and code-only run metrics (RF-23). No SLOs yet | Section 6 |
 | L5 Self-improving | Not done: repeated failures are turned into new rules or tests by a person | Not applied |
 
 Ownership by person:
@@ -193,6 +195,43 @@ Ownership by person:
 | Đạt | Rule catalogue content, simulated reviewer wording, hard-user role in red-team | HR-04, HR-16, HR-30 |
 
 Next step: add a Rule column to the backlog and put the HR IDs into each task's acceptance criteria.
+
+## Map to the 7-harness framework (v0.2)
+
+The ProtonX course reference (`AGENT = MODEL + HARNESS`) groups controls into seven harnesses. This table maps Sanad onto it so the gaps are visible. *Implemented* means code and tests exist.
+
+| Harness | Sanad controls | Status | Gap and plan |
+|---|---|---|---|
+| Context | Versioned catalogues; pinned passages with SHA-256 and `TEAM_CURATED` status (RF-22), the equivalent of an "approved, current version only" retrieval filter | Implemented; passage file empty | Team selects sources; add an effective date per source once sources exist |
+| Tool | No agent tools. Model calls only through `ModelAdapter`; strict JSON schema; retries only timeouts, connection errors, 429 and 5xx; referral only through `evaluate_gate` | Implemented | None needed |
+| Orchestration | Server-side case state machine; rules before model; fixed fallbacks | Implemented | Per-case model budget (RF-23) |
+| Evaluation | 71 rule golden cases; API tests; contract tests with a fake model | Partial | Model evaluation harness and scorecard (RF-23) |
+| Security | Input checks, PII guard, data isolation (system prompt vs data), validators, blocked terms, Mock labels | Partial | Rotate the exposed key; Entra ID or Key Vault in hosting; secret scan in CI; red-team cases in the RF-23 files |
+| Governance | AGENTS.md, change control, status tags, approval bound to the report hash, versioned audit | Implemented | Decision record for the reviewer (RF-24) |
+| AgentOps | Code-only `MODEL_TASK_RUN` traces with status, attempts and elapsed time | Partial | Token counts and `GET /evaluation/model-runs` (RF-23) |
+
+## Ratchet log (v0.2)
+
+Every failure becomes a rule or a test. New failures found with a real model go into the RF-23 case files (AC-23.6).
+
+| Date | Failure | Rule or test it produced |
+|---|---|---|
+| 2026-11-14 | Azure strict structured output rejected `minItems` and `maxLength` in the schema | Counts and lengths are checked in the task validator, not the schema (`report_explain.py`) |
+| 2026-11-14 | A passage containing "ignore instructions… emergency… 90% chance" could steer the explanation | Validator rejects blocked terms, percentages and cues for other next steps; TC-22.7 |
+| 2026-11-14 | A wrong deployment name returned 404 `DeploymentNotFound` on the first call | Planned: report the error code in the scorecard environment check (RF-23) |
+| 2026-11-14 | The first live scorecard counted validator probes (deliberately bad stored replies) as unsafe when the real model answered well | Probes are tagged `validator` and `replay_only`; live runs skip them; injection cases accept either fallback reason (AC-23.1, TC-23.3) |
+| 2026-11-14 | An adapter exception in one route could escape as a 500 | `run_safely`, shared by every model route, returns `UNAVAILABLE` with `ADAPTER_ERROR` |
+
+## Considered and deferred (v0.2)
+
+| Option | Decision | Why | Revisit when |
+|---|---|---|---|
+| Multi-agent frameworks (LangGraph, CrewAI, debate, voting) | Not used | Triage must be deterministic and testable; a state machine already holds every transition. The reference itself warns that not every problem needs multi-agent | A task needs several independent model steps |
+| pgvector or another vector store | Not used | Passages are few and pinned per rule; runtime retrieval is out of scope (product spec §3.2); embeddings add another outbound model call; PostgreSQL is not yet a verified deployment target | More than about 100 passages, or a retrieval task gets its own requirement; then prefer pgvector on the same PostgreSQL over a separate vector database |
+| Decision model (TypeSafe Jev, hosted) | Offline bake-off only, after CC-014 (T4.10) | Choice-shaped tasks fit its Choice and Noul primitives, but it is hosted only, and its confidence measures distribution concentration, not correctness | A scorecard shows zero unsafe conversions and at least equal accuracy, and a data-processing review passes |
+| Local decision model (Laya via `laya` or `laya-mlx`) | Specified as RF-25, off by default (CC-015, T4.9) | Same primitives as Jev, runs on the API host so typed text stays local; output still passes the RF-21 validator and user confirmation | Enable in a demo only after its scorecard passes and the weight licence is confirmed (OD-17) |
+| Trained contradiction detector (DistilBERT gate plus LLM, MIMIC-trained) | Not adopted | Targets hospital discharge notes, not self-reported intake; weights derive from MIMIC under a data use agreement; no licence; metrics are agreement with a teacher, not clinician labels. Same-field disagreement already blocks as `CONFLICTING` (AC-06.3, AC-15.6) | Document upload or multi-field chat extraction exists and cross-field pairs are clinically approved; then use catalogue rules first |
+| Hosted tracing that stores prompts (Langfuse cloud, LangSmith) | Not used | Would store health text outside the app, against INV-03 | Code-only telemetry stops being enough |
 
 ## Not applied yet, SLM notes and caveats
 
