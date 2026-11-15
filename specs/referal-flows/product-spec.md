@@ -78,6 +78,7 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 | RF-25 | *Added 2026-11-14 by change request* (Jev-style typed decisions, run locally like laya-mlx). Parent contracts: PRD-FR-04, PRD-FR-37/38, NFR-09, harness HR-19, HR-27. `PROPOSED`, CC-015. | Local decision-model provider for choice-shaped tasks | v0.4 additions |
 | RF-27 | *Added 2026-11-15 by change request* (Security harness: personal identifiers before a model call). Parent contracts: AC-21.3, AC-21.9, PRD-FR-35, NFR-22, harness HR-28, INV-09, INV-10. `PROPOSED`, CC-018. | Identifier blocking and redaction before a model call | v0.4 additions |
 | RF-28 | *Added 2026-11-15 by change request* (Context harness: memory across visits without server retention). Parent contracts: BR-18, FR-01, persona "Patient returning with results", RF-02, INV-09, INV-16. `PROPOSED`, CC-019. | Patient-held visit summary | v0.4 additions |
+| RF-30 | *Added 2026-11-15 by task assignment* (Tech Lead: contradiction detection, with `ad-kat/clinical-contradiction-detector` as a reference). Parent contracts: PRD-FR-05, PRD-FR-17, PRD-AC-08, PRD-AC-26, MIC-AC-03, RF-21. `PROPOSED`, CC-022. | Contradiction check for typed chat answers | v0.4 additions, pending review |
 
 RF-18 to RF-20 are not used, because `TC-18.*` to `TC-20.*` already name the PRD v0.4 psychosocial, navigation and FHIR tests in the test plan.
 
@@ -600,6 +601,22 @@ Sanad keeps no memory between visits: each visit is a new anonymous case, and as
 | AC-28.6 | When a concept has both an uploaded value and a newer `PATIENT_REPORTED` value that differs, the reviewer's decision record lists it under `changes_since_summary` with both values and their sources. Code computes the list; no model judges whether anything improved or worsened, and nothing labels a change as clinical progress (INV-08). |
 | AC-28.7 | Export writes a `SUMMARY_EXPORTED` audit entry with counts only (responses, observations), never values. |
 
+### RF-30 Contradiction check for typed chat answers (v0.4 addition, `PROPOSED`)
+
+When the RF-21 chat turns a typed message into a proposal, the server checks whether confirming it would contradict an answer the case already holds for the same field, from the form, an earlier chat message, the sample profile or an upload. If it would, the user sees the earlier answer, where it came from, and a fixed message, before anything is saved. The check is plain code on the server after the strict validator. The model never sees the earlier answer, decides nothing and says nothing about which answer is right. PRD mapping: PRD-FR-05, PRD-FR-17, PRD-AC-08, PRD-AC-26, MIC-AC-03. Change control: [CC-022](change-log.md#cc-022-contradiction-check-for-typed-chat-answers).
+
+The reference project the Tech Lead shared (`ad-kat/clinical-contradiction-detector`) finds allergy, medication and diagnosis contradictions across hospital notes with a hosted LLM, a trained classifier and hand-weighted severity. RF-30 keeps its idea of naming each contradiction with its source and an explanation, and none of the rest: no hosted model beyond RF-21's, no trained classifier, no severity score and no clinical pairing of different fields (§3.2, OD-27).
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-30.1 | A `PROPOSAL` whose value, time (current or past) or known state differs from a current known fact for the same concept returns `contradiction` with each differing earlier answer: its catalogue label, its `source_type` and a change code (`VALUE_DIFFERS`, `TIME_DIFFERS`, `BECOMES_UNKNOWN`). |
+| AC-30.2 | With a contradiction, `message` is the fixed text "This is different from an earlier answer. Check which one is right. Nothing changes until you confirm." It never says which answer is right. No fact is written and `case_version` does not change. |
+| AC-30.3 | No contradiction is returned when the field was not asked, when the earlier answer is not sure or prefer not to answer, or when the earlier answer equals the proposal. Numbers are compared after the catalogue's normalisation (29 equals 29.0). |
+| AC-30.4 | The model request is the same whatever the case holds: question and typed text only, no earlier answer, source or case data (AC-21.9). |
+| AC-30.5 | Confirming goes through `POST /cases/{id}/answers` unchanged: it replaces an earlier answer from the same source, and an answer from another source stays, so the field reads `CONFLICTING` and blocks the assessment until the user resolves it (AC-06.3). |
+| AC-30.6 | The `MODEL_TASK_RUN` audit entry adds `contradiction` with the sorted change codes only, never a label or value. A `FALLBACK` runs no check. |
+| AC-30.7 | The chat shows each earlier answer with its source next to the proposal, as draft copy. Different fields are never compared with each other. |
+
 ## 8. Invariants
 
 These hold on every screen and API call. Each one has a test in the test plan.
@@ -745,3 +762,4 @@ Each has a working default, so work need not stop. A named owner must confirm it
 | OD-20 | Should Sanad keep anything between visits on the server (an account or a return code)? | No for now. Memory is the patient-held summary of RF-28; any server retention needs a consent scope, a retention period and a deletion path (TBD-04, TBD-19). | Product + Security + Legal | CC-019 |
 | OD-19 | Should identifiers in typed text be redacted and sent, or always blocked? | Combined: block contact details, ID numbers and street addresses; redact names and full dates and send the rest (RF-27). Engineering default pending Security review. | Security + Tech Lead | CC-018 |
 | OD-18 | Who reviews the labelled rows for the fitted decision head, and how many per question are enough? | A team member other than the author reviews every row before a fit. Draft: at least 30 rows per supported question and the minimum `fit` demands, covering negation, past and current, not sure, declined and off-topic. Engineering default, `TECH_TBD`. | Tech Lead + QA | CC-017 |
+| OD-27 | Should contradictions between different fields be checked (for example "no" to steroid use and a typed mention of testosterone injections)? | No. RF-30 compares one field with itself. Which fields contradict each other is a clinical rule: it needs a reviewed, versioned pair catalogue tagged `CLINICAL_TBD` and its own change control, and §3.2 excludes a trained model for it. | Clinical + Tech Lead | PRD-FR-05, CC-022 |

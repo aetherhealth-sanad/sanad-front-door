@@ -28,11 +28,13 @@ from sanad_api.cases.guards import Action, PatientCase, guard
 from sanad_api.cases.state_machine import CaseEvent, transition
 from sanad_api.cases.views import state_view
 from sanad_api.catalogues import Catalogues
+from sanad_api.chat import contradiction
 from sanad_api.chat.guardrail import MAX_TEXT_CHARS, check, decode, redact
 from sanad_api.clock import Clock
 from sanad_api.config import Settings
 from sanad_api.deps import get_catalogues, get_clock, get_db, get_model_adapter, get_settings
 from sanad_api.errors import ApiError, ErrorCode
+from sanad_api.facts.service import current_facts
 from sanad_api.intake.service import record_safety
 from sanad_api.model_adapter import intake_extract, runs
 from sanad_api.model_adapter.port import ModelAdapter, run_safely
@@ -72,6 +74,11 @@ def _disclosure(adapter: ModelAdapter) -> tuple[str, str]:
 MESSAGES = {
     "EMERGENCY": "What you wrote may describe an urgent problem. Opening emergency guidance.",
     "PROPOSAL": "Check this answer. Nothing is saved until you confirm it.",
+    # RF-30, AC-30.2: says that the answers differ, never which one is right.
+    "PROPOSAL_CHANGES_ANSWER": (
+        "This is different from an earlier answer. Check which one is right. Nothing changes "
+        "until you confirm."
+    ),
     "TEXT_EMPTY": "Type a short answer, or use the buttons.",
     "TEXT_LANGUAGE_NOT_SUPPORTED": (
         "Typing works in English only for now. Nothing was sent. Please use the buttons."
@@ -157,6 +164,19 @@ class ProducedByOut(BaseModel):
     needs_user_confirmation: bool
 
 
+class EarlierAnswerOut(BaseModel):
+    echo_label: str
+    source_type: str
+    change: Literal["VALUE_DIFFERS", "TIME_DIFFERS", "BECOMES_UNKNOWN"]
+
+
+class ContradictionOut(BaseModel):
+    """RF-30: the earlier answers that confirming the proposal would contradict."""
+
+    question_id: str
+    earlier: list[EarlierAnswerOut]
+
+
 class EmergencyOut(BaseModel):
     rule_ids: list[str]
     catalogue_version: str
@@ -174,6 +194,7 @@ class InterpretOut(BaseModel):
     emergency: EmergencyOut | None
     state: CaseStateOut
     redacted_types: list[Literal["DATE", "NAME"]] = []  # RF-27, AC-27.5: types only
+    contradiction: ContradictionOut | None = None  # RF-30
 
 
 def _out(
@@ -293,6 +314,12 @@ def interpret_text(
     result = run_safely(adapter, model_request)
     interpretation = intake_extract.interpret(result, question, concept)
     proposal = interpretation.proposal
+    # RF-30: compared on the server after V1; the model never saw the earlier answer.
+    conflict = (
+        contradiction.check(proposal, question, concept, current_facts(db, case.case_id))
+        if proposal
+        else None
+    )
     record(
         db,
         AuditType.MODEL_TASK_RUN,
@@ -316,6 +343,7 @@ def interpret_text(
         input_tokens=result.input_tokens,
         output_tokens=result.output_tokens,
         **redacted,
+        **({"contradiction": conflict.changes} if conflict else {}),
     )
     db.commit()
     state = state_view(db, case, catalogues)
@@ -326,7 +354,23 @@ def interpret_text(
         "PROPOSAL",
         None,
         state,
+        message_key="PROPOSAL_CHANGES_ANSWER" if conflict else None,
         redacted_types=types,
+        contradiction=(
+            {
+                "question_id": conflict.question_id,
+                "earlier": [
+                    {
+                        "echo_label": item.echo_label,
+                        "source_type": item.source_type,
+                        "change": item.change.value,
+                    }
+                    for item in conflict.earlier
+                ],
+            }
+            if conflict
+            else None
+        ),
         proposal={
             "question_id": proposal.question_id,
             "choice": proposal.choice,

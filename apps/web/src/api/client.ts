@@ -131,6 +131,15 @@ export interface InterpretResponse {
   message: string;
   /** RF-27: what was hidden before the model saw the text; never the hidden value. */
   redacted_types?: ('DATE' | 'NAME')[];
+  /** RF-30: earlier answers that confirming the proposal would contradict. Labels come from the catalogue. */
+  contradiction?: {
+    question_id: string;
+    earlier: {
+      echo_label: string;
+      source_type: 'PATIENT_REPORTED' | 'SAMPLE_FIXTURE' | 'USER_UPLOADED' | 'USER_ENTERED' | string;
+      change: 'VALUE_DIFFERS' | 'TIME_DIFFERS' | 'BECOMES_UNKNOWN';
+    }[];
+  } | null;
   proposal: {
     question_id: string;
     choice: IntakeAnswer['choice'];

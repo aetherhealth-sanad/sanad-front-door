@@ -527,6 +527,17 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                   <p className="text-sm text-[#0B1310]">
                     I noted: <strong>{proposal.proposal.echo_label}</strong>. Is that right?
                   </p>
+                  {proposal.contradiction && proposal.contradiction.earlier.length > 0 && (
+                    // RF-30 (DRAFT copy): name the earlier answer and where it came from, never which is right.
+                    <div role="note" className="p-3 rounded-[2px] bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-sm space-y-1">
+                      {proposal.contradiction.earlier.map((item, index) => (
+                        <p key={index}>
+                          Earlier answer{SOURCE_LABELS[item.source_type] ? ` (${SOURCE_LABELS[item.source_type]})` : ''}:{' '}
+                          <strong>{item.echo_label}</strong>
+                        </p>
+                      ))}
+                    </div>
+                  )}
                   <p className="text-xs text-[#3F4E48]">{proposal.message}</p>
                   <div className="flex flex-wrap gap-2">
                     <button type="button" disabled={busy} onClick={confirmProposal} className={`${buttonBase} border-[#0B1310] bg-[#0F523E] text-white font-bold hover:bg-[#093B2C]`}>
