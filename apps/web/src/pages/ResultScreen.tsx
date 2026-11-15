@@ -46,6 +46,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   const [consent, setConsent] = useState<CaseConsentRecord | null>(null);
   const [caseState, setCaseState] = useState<CaseState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [updatingEvidence, setUpdatingEvidence] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -503,6 +504,30 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
           <strong className="font-bold">{report.next_step_withheld}</strong>.
         </div>
       )}
+
+      <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 className="text-base font-bold text-[#0F172A]">Keep a summary for your next visit</h2>
+          <p className="text-xs text-[#64748B] mt-1">
+            The file holds your answers to these health questions. Sanad does not keep a copy, so
+            store it somewhere private. Next time, start with "Upload profile" to skip repeating
+            them; you can still change any answer.
+          </p>
+          {summaryError && <p className="text-xs text-[#B54708] mt-1">{summaryError}</p>}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setSummaryError(null);
+            api.downloadSummary(caseId).catch(err =>
+              setSummaryError(err instanceof Error ? err.message : 'Download failed.'),
+            );
+          }}
+          className="w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold border border-[#BCD8FE] text-[#0050CC] bg-white cursor-pointer whitespace-nowrap"
+        >
+          Download my summary
+        </button>
+      </section>
 
       {canRequestReview && (
         <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#BCD8FE] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
