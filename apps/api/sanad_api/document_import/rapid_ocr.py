@@ -1,8 +1,8 @@
 """A local OCR engine: RapidOCR running the PP-OCR detection and recognition models on ONNX
-Runtime (T4.12, optional `ocr` extra).
+Runtime (T4.18, optional `ocr` extra).
 
 It runs in-process on the CPU. The models ship inside the installed package, so reading a
-document makes no network call (AC-27.11). It is a detection and recognition pipeline, not a
+document makes no network call (AC-29.11). It is a detection and recognition pipeline, not a
 language model: it returns the text it sees with a box and a confidence, and cannot write text
 that is not on the page.
 """

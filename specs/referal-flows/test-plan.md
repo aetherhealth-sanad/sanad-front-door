@@ -298,6 +298,102 @@ These tests remain proposed and are not an active CI gate. They need to be autho
 | TC-20.1 | C | — | Mapping manifest lists source, target, transform, null handling, provenance and gaps; status is design-only, not FHIR conformance. | S |
 | TC-20.2 | C | B | Fixture manifest covers every synthetic case file, has no stale path, and keeps clinical truth `NOT_EVALUATED` and unsupported reference ranges unverified. | S |
 
+### RF-25 Local decision-model provider (`PROPOSED`)
+
+Automated tests go in `apps/api/tests/test_laya_adapter.py`. They replace the `laya` package with a stub that returns fixed answers, so CI downloads no weights and needs no GPU. The live check is a manual run of the RF-23 harness with `--provider laya_local` on a machine that has the pinned weights cached. Neither says anything about clinical quality.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-25.1 | U | B | `laya_local` without the extra installed, without a revision, or with an unknown backend stops start-up with a message naming the setting. | S |
+| TC-25.2 | U | B | The adapter loads through `laya.load` with the pinned revision, once per process; nothing imports `laya_mlx`. | S |
+| TC-25.3 | U | B | A number question or another task ID returns `UNAVAILABLE` `UNSUPPORTED_TASK` without calling the stub, and the chat endpoint returns its fallback. | S |
+| TC-25.4 | U | B | For the steroid question the stub receives labels `YES_CURRENT`, `YES_PAST`, `YES_TIME_UNCLEAR`, `NO`, `NOT_SURE`, `PREFER_NOT_TO_ANSWER`, `NOT_AN_ANSWER` with catalogue wording, and the typed text with no case ID or token. | S |
+| TC-25.5 | U | B | Each of these stub answers gives ABSTAIN: `abstain` true, `unbound` true, `route: review`, top probability below the threshold, a prediction set of two labels, `YES_TIME_UNCLEAR`; `NOT_AN_ANSWER` gives `OUT_OF_SCOPE`. | S |
+| TC-25.6 | A | B | A stub answer `NOT_SURE` with probability 0.95 becomes a Not sure proposal, never No; `YES_PAST` becomes Yes, in the past; both pass the unchanged RF-21 validator and save nothing until confirmed. | S |
+| TC-25.7 | A | B | A stub that sleeps past the deadline or raises gives the RF-21 fallback and a `MODEL_TASK_RUN` entry with `TIMEOUT` or `UNAVAILABLE`, provider `laya_local`, model ID with revision, and no probabilities or text. | S |
+| TC-25.8 | U | B | Importing the emergency, triage, review, gate and explanation modules does not import the adapter or `laya`; with default settings `laya` is absent from `sys.modules`. | D |
+| TC-25.9 | M | B | Manual: `eval/run_model_eval.py --provider laya_local` on the RF-23 cases writes a scorecard with latency p50/p95 and peak memory; the result is compared with the Azure OpenAI scorecard on the same case-file hash. | M |
+| TC-25.10 | U | B | `SANAD_LAYA_ENGINE=vegaml` calls the stub `laya.load` with `vegaml=` the model and the pinned revision; an unknown engine, a calibration without `vegaml`, and a missing calibration directory each stop start-up naming the setting; a valid directory is loaded once with `verify=True`. The stub receives `YN_TIME` for the steroid question, `YN` for the diabetes question and `CHOICE:REGULAR|OCCASIONAL|NONE` for the training question as the question key. | S |
+| TC-25.11 | U | B | With a calibration loaded, a stub answer with probability 0.99 and `route: review`, or with `calibrated: false`, gives ABSTAIN (`UNCLEAR`). | S |
+| TC-25.12 | U | B | Rows file check: every row parses, has the AC-25.13 fields, names a supported question and a label AC-25.4 builds for it, and no normalised text equals an RF-23 case text. Skipped until the file exists. | D |
+| TC-25.13 | M | B | Manual: `eval/fit_decision_head.py` writes a fit report with rows hash, reader revision and `used_by_auto`; the RF-23 scorecard is then run with the calibration and recorded in the ratchet log whether it passes or fails. | M |
+
+### RF-28 Patient-held visit summary (`PROPOSED`)
+
+| ID | Level | Layer | What it checks | Data |
+|---|---|---|---|---|
+| TC-28.1 | A | B | The export for a case with answers and a lab value validates against `schemas/upload-profile.schema.json`, holds `summary_of`, and contains no case ID or token; a patient token for another case gets 404, and no `assessment` consent gets 403. | S |
+| TC-28.2 | A | B | A case whose safety check answered No exports no emergency-screen concept and no psychosocial item. | S |
+| TC-28.3 | U | B | A concept with a fixture value and a newer patient answer exports the patient answer; `UNKNOWN` and `DECLINED` export as states. | S |
+| TC-28.4 | A | B | Round trip: a new case started by upload with the exported file holds the same answers as `USER_UPLOADED`, and the rules re-run. | S |
+| TC-28.5 | A | B | After round trip, a changed patient answer appears in the decision record's `changes_since_summary` with both values; an unchanged one does not. | S |
+| TC-28.6 | A | B | Export writes `SUMMARY_EXPORTED` with counts only. | S |
+| TC-28.7 | M | W | Manual: the summary page offers the download with the privacy note; nothing downloads on its own. | M |
+
+### RF-27 Identifier blocking and redaction (`PROPOSED`)
+
+| ID | Level | Layer | What it checks | Data |
+|---|---|---|---|---|
+| TC-27.1 | A | B | A message with a name, a phone number and an emergency pattern returns `EMERGENCY_GUIDANCE`, with no `NEEDS_CORRECTION` and no model call. | S |
+| TC-27.2 | A | B | Each blocked sample (record number with keyword, passport or national ID with digits, street address) returns `NEEDS_CORRECTION` `TEXT_CONTAINS_IDENTIFIER`; the fake adapter is not called and the audit holds the reason code only. | S |
+| TC-27.3 | U | B | Redaction table: names after "my name is", "call me", "I'm" + two capitalised words, and "Dr" + name become `[NAME]`; `/`, `-`, `.` and ISO dates become `[DATE]`; controls ("I'm not sure", "quit in 2019", "I am 35", "twice a week", "10 mg") are unchanged. | D |
+| TC-27.4 | A | B | The fake adapter receives the redacted message; neither the original name nor the date appears anywhere in the model request. | S |
+| TC-27.5 | A | B | `MODEL_TASK_RUN` has `redactions` `DATE.NAME` and `redaction_count` 2 and no redacted value; the response has `redacted_types` `["DATE", "NAME"]`; a clean message has an empty list and no `redactions` field. | S |
+| TC-27.6 | U | B | Runner: replay over the identifier cases gives `pii_leaks` 0; a request that still holds a listed string counts one leak and fails the scorecard. | D |
+| TC-27.7 | M | W | Manual: in the chat, a typed answer with a name shows the hidden-name line and the proposal still needs confirmation. | M |
+
+### RF-24 Decision record for the reviewer (`PROPOSED`)
+
+Automated tests are in `apps/api/tests/test_decision_record.py`. They check that the record matches stored data. They say nothing about whether a reviewer reads it.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-24.1 | A | B | For the J1 sample, `decision_record` holds the floor action, rule ID, rule version, approval status, catalogue versions, the steroid fact with state, value, temporal status and source type, the claim statuses, and the current report hash. | S |
+| TC-24.2 | A | B | Reading the detail twice makes no model call, writes no audit entry and leaves `case_version` and the report hash unchanged. | S |
+| TC-24.3 | A | B | A field answered `UNKNOWN` stays `UNKNOWN`, and a field with disagreeing sources lists every value with its source under `CONFLICTING`. | S |
+| TC-24.4 | A | B | `GET /cases/{id}/report` has no `decision_record` field, and a patient token gets 403 on the reviewer detail. | S |
+| TC-24.4b | A | B | AC-24.5: a case with a skipped question and a declined one lists both under `limitations` with their states; no field in the record holds a percentage. | S |
+
+### RF-23 Model evaluation harness, budget and run metrics (`PROPOSED`)
+
+Automated tests go in `apps/api/tests/test_model_eval.py` and `apps/api/tests/test_model_budget.py`. The CI tests use `replay` replies stored in the case files, so they need no key and make no network call. A live scorecard is a manual run on synthetic cases; it measures software behaviour only and stays `NOT_CLINICALLY_VALIDATED`.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-23.1 | U | B | Every line in `eval/model/*.jsonl` parses, has a unique case ID, a known task ID, an expected result, at least one tag and a `replay` reply, and passes the fixture identifier guard. The intake file has at least one `injection`, `unsure` and `declined` case; the explanation file at least one `injection`, `blocked_term` and `other_step` case. | D |
+| TC-23.2 | U | B | The runner imports the task builder and validator from `sanad_api.model_adapter`; it holds no copy of the prompt, schema or validator. | D |
+| TC-23.3 | A | B | `replay` over the shipped cases exits 0 and writes a JSON and a Markdown scorecard with provider, model, versions, case-file hash, per-tag accuracy, unsafe conversions, fallback reasons, latency p50 and p95. | S |
+| TC-23.4 | U | B | A replay reply that turns an expected `UNSURE` into `NO`, or an expected fallback into a draft, is counted as an unsafe conversion and makes the runner exit non-zero, whatever the accuracy threshold. | S |
+| TC-23.5 | U | B | Accuracy below the threshold makes the runner exit non-zero; the threshold cannot switch off the unsafe-conversion check. | S |
+| TC-23.6 | A | B | After the per-case cap is reached, chat matching and the explanation return their fallback with `MODEL_BUDGET_EXCEEDED`, the fake adapter receives no call, and a `MODEL_TASK_RUN` entry with status `BUDGET_EXCEEDED` is written. | S |
+| TC-23.7 | A | B | Past the cap, a typed message matching an emergency word pattern still reaches emergency guidance. | S |
+| TC-23.8 | A | B | When the provider reports usage, `MODEL_TASK_RUN` holds `input_tokens` and `output_tokens` and no model text. | S |
+| TC-23.9 | A | B | `GET /evaluation/model-runs` with a reviewer token returns per-task counts, status and outcome counts, latency p50 and p95, token totals and budget refusals, and no case ID or text; a patient token gets 403 and no token gets 401. | S |
+| TC-23.10 | A | B | With default settings the replay CI job and the metrics endpoint build no model client. | S |
+| TC-23.11 | U | B | The intake case file has at least one case for each jailbreak tag, each expecting a fallback or `NEEDS_CORRECTION`; replay scores them with zero unsafe conversions. | D |
+| TC-23.12 | U | B | A run equal to the baseline passes; one with lower accuracy beyond tolerance, or one more unsafe conversion or PII leak, fails and names the task. | D |
+| TC-23.13 | U | B | Every task ID constant in `sanad_api.model_adapter` and every provider name has a heading in `specs/model-task-policies.md`. | D |
+| TC-23.14 | M | W | Manual: as reviewer, the metrics panel shows the counts and latency returned by the endpoint and the `NOT_CLINICALLY_VALIDATED` label; as patient, it is absent. | M |
+| TC-23.15 | U | B | With a stub judge: agreement below 0.80 on the calibration set stops the run with no scores reported; at or above 0.80 the explanations are scored and every score has a reason. | D |
+
+### RF-22 Pinned citations and grounded explanation (`PROPOSED`)
+
+Automated tests are in `apps/api/tests/test_citations.py`. They copy the catalogues to a temporary folder and add one synthetic test passage, so the shipped passage file stays as the team left it. A fake adapter replaces the model. These tests check wiring and refusal paths only. They say nothing about the quality of any wording or source, which stays `NOT_EVALUATED`.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-22.1 | U | B | A passage whose excerpt no longer matches its hash is marked unusable at load, and start-up still succeeds. | S |
+| TC-22.2 | A | B | A `TEAM_CURATED` ref to a usable passage gives a `TEAM_CURATED` claim with title, locator, URL, license, excerpt and the not-reviewed note; a ref to a missing passage, a mismatched hash or a ref hash that differs gives `INSUFFICIENT_EVIDENCE` with no citation. | S |
+| TC-22.3 | A | B | No report field shows `SUPPORTED` or `VERIFIED` for a `TEAM_CURATED` claim, and `NO_VERIFIED_EVIDENCE` stays in the limits. | S |
+| TC-22.4 | U | B | The emergency modules import neither the passage loader nor the explanation task. | D |
+| TC-22.5 | A | B | Explanation before release returns 409 `REPORT_NOT_RELEASED`; without a token 401; draft, report hash, state and `case_version` are unchanged after any call. | S |
+| TC-22.6 | A | B | The model request holds the next-step label, signal codes and passage excerpts only: no case ID, answer value or token. | S |
+| TC-22.7 | A | B | Each of these model replies gives `FALLBACK` `MODEL_OUTPUT_INVALID`: not JSON, an unknown passage ID, a sentence with no passage ID, a blocked term, a percentage, a cue for another next step, more than 3 sentences. | S |
+| TC-22.8 | A | B | Disabled provider, no curated passage, reviewer-edited next step, timeout and adapter exception each return a 200 `FALLBACK` with the static text and the matching reason code. | S |
+| TC-22.9 | A | B | A valid reply returns `AI_DRAFT` with the label, provider and unverified flags, and one `MODEL_TASK_RUN` audit entry with codes only. | S |
+| TC-22.10 | A | B | With default settings the endpoint returns `FALLBACK` `MODEL_DISABLED` and builds no client. | S |
+| TC-22.11 | U | B | Stored replies with "you have", "definitely", an email address, a seven-digit number and `[NAME]` each give `OUTPUT_POLICY_BLOCKED`; a reply with a missing field still gives `MODEL_OUTPUT_INVALID`. | D |
+
 ### RF-21 Chat intake and bounded model adapter (`PROPOSED`)
 
 Automated tests are in `apps/api/tests/test_chat.py` and `apps/api/tests/test_model_adapter.py`. A fake adapter and a stub SDK client replace the model, so CI needs no key and makes no network call. These tests check the order of checks and the contract. They do not measure how well any real model matches answers: that needs a labelled synthetic set and stays `NOT_EVALUATED` (PRD-FR-18, NFR-14).
@@ -316,29 +412,30 @@ Automated tests are in `apps/api/tests/test_chat.py` and `apps/api/tests/test_mo
 | TC-21.10 | A | B | `GET /chat/assistant` shows the scripted label with typing off by default, and names the provider and disclosure when on. | S |
 | TC-21.11 | U | B | Azure adapter: deployment as `model`, strict `json_schema`, retries only transient errors within attempts and deadline, no retry on content filter or 4xx, filtered, truncated and refused completions give no content, v1 base URL, bad settings stop start-up without echoing the key. | S |
 | TC-21.12 | U | B | With default settings the app holds the disabled adapter, which never reaches the network. | S |
+| TC-21.13 | U | B | `SANAD_HOSTED=true` with `api_key` raises a configuration error naming `SANAD_HOSTED`; with `entra_id` it builds the adapter with a token provider; locally `api_key` still works. | S |
 | TC-21.13 | E | — | Chat at `/intake`: buttons, opt-outs and skip; typed proposal confirm and reject; emergency sentence replaces the page with `/urgent.html`; works at 360 px; keyboard only. Not yet automated (no Playwright suite). | S |
 | TC-21.14 | M | — | Against a real Azure deployment with synthetic text: a smoke run of J1 by typing, plus a content-filter and timeout check. Record region, deployment type, model version and abuse-monitoring status. | S |
 
-### RF-27 OCR one synthetic lab report, T-60 (`PROPOSED`)
+### RF-29 OCR one synthetic lab report, T-60 (`PROPOSED`)
 
 Automated tests are in `apps/api/tests/test_lab_ocr.py`. Fixtures are in `apps/api/tests/fixtures/lab_ocr/` (stand-ins from `eval/lab_ocr/make_fixtures.py` until the T-20/T-34 package arrives). Most tests replay the text layer through a fake engine, so CI needs no OCR engine; the real-engine B1 cases are skipped when neither RapidOCR nor Tesseract is installed. The oracle is the fixtures' ground truth, a software oracle.
 
 | Test | Lvl | Block | Check | Oracle |
 |---|---|---|---|---|
-| TC-27.1 | U | B | Wrong type by content, broken PDF, oversized file and too many pages are refused with a reason code. | S |
-| TC-27.2 | U | B | No banner, or an ID without `SYN-`, gives `DOCUMENT_NOT_SYNTHETIC` and no field. | S |
-| TC-27.3 | U | — | A text layer is read with no OCR call; an image-only page goes to the engine; each field records its method. | S |
-| TC-27.4 | U | B | A1: `lab_A` returns all nine fields with value, unit, raw text, box and confidence, no flag, `UNCONFIRMED`. Generated reports are read back exactly. | S |
-| TC-27.5 | U | B | B1: the T-60 baseline failures from a confident engine are flagged and `NEEDS_CONFIRMATION`; a misread in-range digit is caught by the motility total; low OCR confidence alone sets `NEEDS_CONFIRMATION`; `lab_B` (PDF and PNG) through each installed engine has no silent error. | S |
-| TC-27.6 | U | B | C1: `lab_C` gives exactly the ground-truth flags and statuses for decimal commas, missing units and the ambiguous date. | S |
-| TC-27.7 | U | B | Confidence equals the lowest of the three scores; the reader never confirms. | S |
-| TC-27.8 | U | B | Blank, missing, unreadable, duplicated, comma-ambiguous, unknown-unit and out-of-range readings, and day-first, month-first, two-digit-year and invalid dates, give the listed value and flag. | S |
-| TC-27.9 | A | B | U1: values stored from the draft are `NEEDS_USER_CONFIRMATION`; an unconfirmed concentration of 0 raises no `LAB_REPORTS_NO_SPERM`; after the user edits and confirms it, it does. Every target test code exists in the lab catalogue with the canonical unit. | S |
-| TC-27.10 | U | B | Instruction-like lines in the report leave the draft identical. | S |
-| TC-27.11 | U | B | Log capture at DEBUG holds none of the report's text or values. | S |
-| TC-27.12 | U, C | B | No engine: scans give `OCR_UNAVAILABLE`, text PDFs work; the emergency modules do not import the reader. | S |
-| TC-27.13 | U | — | E1: the run result has `run_id`, commit SHA, label, `n`, layouts and A1/B1/C1; silent errors come first in the Markdown. Fixture hashes match `ground_truth.json`. | S |
-| TC-27.14 | A, E | — | Waits for T4.13: endpoint guard (401, 404, 403, 409), no write, no stored file, audit codes only; T-33 screen, cleared at session end and Quick Exit, no browser storage. Not written. | S |
+| TC-29.1 | U | B | Wrong type by content, broken PDF, oversized file and too many pages are refused with a reason code. | S |
+| TC-29.2 | U | B | No banner, or an ID without `SYN-`, gives `DOCUMENT_NOT_SYNTHETIC` and no field. | S |
+| TC-29.3 | U | — | A text layer is read with no OCR call; an image-only page goes to the engine; each field records its method. | S |
+| TC-29.4 | U | B | A1: `lab_A` returns all nine fields with value, unit, raw text, box and confidence, no flag, `UNCONFIRMED`. Generated reports are read back exactly. | S |
+| TC-29.5 | U | B | B1: the T-60 baseline failures from a confident engine are flagged and `NEEDS_CONFIRMATION`; a misread in-range digit is caught by the motility total; low OCR confidence alone sets `NEEDS_CONFIRMATION`; `lab_B` (PDF and PNG) through each installed engine has no silent error. | S |
+| TC-29.6 | U | B | C1: `lab_C` gives exactly the ground-truth flags and statuses for decimal commas, missing units and the ambiguous date. | S |
+| TC-29.7 | U | B | Confidence equals the lowest of the three scores; the reader never confirms. | S |
+| TC-29.8 | U | B | Blank, missing, unreadable, duplicated, comma-ambiguous, unknown-unit and out-of-range readings, and day-first, month-first, two-digit-year and invalid dates, give the listed value and flag. | S |
+| TC-29.9 | A | B | U1: values stored from the draft are `NEEDS_USER_CONFIRMATION`; an unconfirmed concentration of 0 raises no `LAB_REPORTS_NO_SPERM`; after the user edits and confirms it, it does. Every target test code exists in the lab catalogue with the canonical unit. | S |
+| TC-29.10 | U | B | Instruction-like lines in the report leave the draft identical. | S |
+| TC-29.11 | U | B | Log capture at DEBUG holds none of the report's text or values. | S |
+| TC-29.12 | U, C | B | No engine: scans give `OCR_UNAVAILABLE`, text PDFs work; the emergency modules do not import the reader. | S |
+| TC-29.13 | U | — | E1: the run result has `run_id`, commit SHA, label, `n`, layouts and A1/B1/C1; silent errors come first in the Markdown. Fixture hashes match `ground_truth.json`. | S |
+| TC-29.14 | A, E | — | Waits for T4.19: endpoint guard (401, 404, 403, 409), no write, no stored file, audit codes only; T-33 screen, cleared at session end and Quick Exit, no browser storage. Not written. | S |
 
 ### Invariants
 

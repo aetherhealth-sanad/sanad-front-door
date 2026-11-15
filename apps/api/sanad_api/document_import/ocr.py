@@ -2,7 +2,7 @@
 
 This follows the model adapter of RF-21. The default install has no engine: `DisabledOcr` never
 reaches an engine or the network, and a page that needs OCR is refused with `OCR_UNAVAILABLE`
-(AC-27.11). An engine runs locally and in-process; it must not send a document anywhere.
+(AC-29.11). An engine runs locally and in-process; it must not send a document anywhere.
 """
 
 from __future__ import annotations

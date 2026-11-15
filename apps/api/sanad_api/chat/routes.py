@@ -28,14 +28,14 @@ from sanad_api.cases.guards import Action, PatientCase, guard
 from sanad_api.cases.state_machine import CaseEvent, transition
 from sanad_api.cases.views import state_view
 from sanad_api.catalogues import Catalogues
-from sanad_api.chat.guardrail import MAX_TEXT_CHARS, check, decode
+from sanad_api.chat.guardrail import MAX_TEXT_CHARS, check, decode, redact
 from sanad_api.clock import Clock
 from sanad_api.config import Settings
 from sanad_api.deps import get_catalogues, get_clock, get_db, get_model_adapter, get_settings
 from sanad_api.errors import ApiError, ErrorCode
 from sanad_api.intake.service import record_safety
-from sanad_api.model_adapter import intake_extract
-from sanad_api.model_adapter.port import ModelAdapter, ModelRequest, ModelResult, ModelStatus
+from sanad_api.model_adapter import intake_extract, runs
+from sanad_api.model_adapter.port import ModelAdapter, run_safely
 from sanad_api.rules_engine.emergency import SafetyResult
 from sanad_api.rules_engine.emergency_text import scan_text
 from sanad_api.schemas import CaseStateOut
@@ -53,6 +53,20 @@ DISCLOSURE = (
     "text. Microsoft handles it under its Azure OpenAI data terms. Do not type names, contact "
     "details or real health information. Answering with the buttons sends nothing to a model."
 )
+# RF-25, AC-25.8: a local provider keeps the text on this server, so it gets its own wording.
+LOCAL_DISCLOSURE_VERSION = "MODEL-DISCLOSURE-LOCAL-0.1"
+LOCAL_DISCLOSURE = (
+    "Typing is optional. If you send typed text, {label} checks it against the current question "
+    "on this server to suggest a matching answer. The text does not leave this server and is not "
+    "stored. Do not type names, contact details or real health information. Answering with the "
+    "buttons sends nothing to a model."
+)
+
+
+def _disclosure(adapter: ModelAdapter) -> tuple[str, str]:
+    if adapter.provider == "laya_local":
+        return LOCAL_DISCLOSURE.format(label=adapter.label), LOCAL_DISCLOSURE_VERSION
+    return DISCLOSURE.format(label=adapter.label), DISCLOSURE_VERSION
 
 # Draft copy (T1.11 review pending). Fixed text chosen by code, never the user's words.
 MESSAGES = {
@@ -66,12 +80,16 @@ MESSAGES = {
         "Please remove contact details such as email addresses or phone numbers. "
         "Nothing was sent."
     ),
+    "TEXT_CONTAINS_IDENTIFIER": (
+        "Please remove ID numbers and addresses. Nothing was sent."
+    ),
     "MODEL_DISABLED": "Typing is not available. Please use the buttons.",
     "ABSTAIN_OUT_OF_SCOPE": (
         "I can only help with the current question here. Please use the buttons, or type a "
         "short answer to this question."
     ),
     "ABSTAIN_UNCLEAR": "I couldn't match that to one answer. Please choose one with the buttons.",
+    "MODEL_BUDGET_EXCEEDED": "Typing is paused for this session. Please use the buttons.",
 }
 FALLBACK_MESSAGE = "I couldn't match that to an answer. Please choose one with the buttons."
 
@@ -111,8 +129,8 @@ def assistant(adapter: ModelAdapter = Depends(get_model_adapter)) -> dict[str, A
             if enabled
             else None
         ),
-        "disclosure": DISCLOSURE.format(label=adapter.label) if enabled else None,
-        "disclosure_version": DISCLOSURE_VERSION if enabled else None,
+        "disclosure": _disclosure(adapter)[0] if enabled else None,
+        "disclosure_version": _disclosure(adapter)[1] if enabled else None,
     }
 
 
@@ -155,6 +173,7 @@ class InterpretOut(BaseModel):
     produced_by: ProducedByOut | None
     emergency: EmergencyOut | None
     state: CaseStateOut
+    redacted_types: list[Literal["DATE", "NAME"]] = []  # RF-27, AC-27.5: types only
 
 
 def _out(
@@ -175,15 +194,6 @@ def _out(
         "state": state,
         **extra,
     }
-
-
-def _run_model(adapter: ModelAdapter, request: ModelRequest) -> ModelResult:
-    """An adapter bug must fail closed to the fallback form, and must not log the request."""
-    try:
-        return adapter.complete_json(request)
-    except Exception as error:  # any failure means "no proposal"
-        logger.error("model adapter failed: %s", type(error).__name__)
-        return ModelResult(ModelStatus.UNAVAILABLE, None, 0, 0, "ADAPTER_ERROR")
 
 
 @router.post("/cases/{case_id}/chat/interpret", response_model=InterpretOut)
@@ -246,11 +256,32 @@ def interpret_text(
 
     if not adapter.enabled:
         return _out("FALLBACK", "MODEL_DISABLED", state_view(db, case, catalogues))
-    if body.disclosure_version != DISCLOSURE_VERSION:
+    if body.disclosure_version != _disclosure(adapter)[1]:
         raise ApiError(422, ErrorCode.VALIDATION_FAILED, ["DISCLOSURE_NOT_ACKNOWLEDGED"])
 
-    concept = catalogues.concepts[question.concept_code]
     request_id = str(getattr(request.state, "request_id", "req-unknown"))
+    if not runs.budget_left(db, case.case_id, settings.model_max_calls_per_case):  # AC-23.7
+        runs.record_refusal(
+            db,
+            actor=actor,
+            now=now,
+            case_id=case.case_id,
+            case_version=case.case_version,
+            request_id=request_id,
+            task_id=intake_extract.TASK_ID,
+            provider=adapter.provider,
+            model_id=adapter.model_id,
+            question_id=question.question_id,
+        )
+        return _out("FALLBACK", runs.BUDGET_REASON, state_view(db, case, catalogues))
+
+    concept = catalogues.concepts[question.concept_code]
+    redaction = redact(text)  # the builder redacts again; this copy is for the trace only
+    redacted = (
+        {"redactions": ".".join(redaction.types), "redaction_count": redaction.count}
+        if redaction.types
+        else {}
+    )
     model_request = intake_extract.build_request(
         question,
         concept,
@@ -259,7 +290,7 @@ def interpret_text(
         catalogue_version=catalogues.questions.catalogue_version,
         settings=settings,
     )
-    result = _run_model(adapter, model_request)
+    result = run_safely(adapter, model_request)
     interpretation = intake_extract.interpret(result, question, concept)
     proposal = interpretation.proposal
     record(
@@ -282,15 +313,20 @@ def interpret_text(
         outcome="PROPOSAL" if proposal else interpretation.reason_code,
         attempts=result.attempts,
         elapsed_ms=result.elapsed_ms,
+        input_tokens=result.input_tokens,
+        output_tokens=result.output_tokens,
+        **redacted,
     )
     db.commit()
     state = state_view(db, case, catalogues)
+    types = list(redaction.types)
     if proposal is None:
-        return _out("FALLBACK", interpretation.reason_code, state)
+        return _out("FALLBACK", interpretation.reason_code, state, redacted_types=types)
     return _out(
         "PROPOSAL",
         None,
         state,
+        redacted_types=types,
         proposal={
             "question_id": proposal.question_id,
             "choice": proposal.choice,

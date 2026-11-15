@@ -384,7 +384,9 @@ def test_tc_21_6_trace_records_versions_and_counts(chat: Api, fake: FakeAdapter)
         "attempts": 1,
         "elapsed_ms": 4,
         "error_code": None,
+        "input_tokens": None,  # the fake reports no usage (AC-23.8)
         "model_id": "fake-model-1",
+        "output_tokens": None,
         "outcome": "PROPOSAL",
         "prompt_version": "intake-extract-prompt-0.1",
         "provider": "fake",

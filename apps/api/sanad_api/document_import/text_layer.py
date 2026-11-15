@@ -1,7 +1,7 @@
 """S2, first choice: read the words a PDF already holds.
 
 A PDF written by software carries its text and the position of every word, and reading that is
-exact. OCR runs only on a page that has no usable text layer (AC-27.3). `pdfplumber` is imported
+exact. OCR runs only on a page that has no usable text layer (AC-29.3). `pdfplumber` is imported
 here and nowhere else, so the API still starts when the optional dependency is missing.
 """
 

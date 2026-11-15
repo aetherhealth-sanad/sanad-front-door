@@ -1,4 +1,4 @@
-"""T-60 / RF-27: OCR one synthetic lab report.
+"""T-60 / RF-29: OCR one synthetic lab report.
 
 The fixtures in `tests/fixtures/lab_ocr/` are stand-ins made by `eval/lab_ocr/make_fixtures.py`
 until Đạt's package (T-20, T-34) arrives. Most tests need no OCR engine: a fake engine replays
@@ -111,7 +111,7 @@ def caught(draft: LabDraft, field_id: str) -> bool:
     return bool(item.flags) and item.status.value == "NEEDS_CONFIRMATION"
 
 
-# --- TC-27.1, TC-27.2: what may be opened ------------------------------------------------
+# --- TC-29.1, TC-29.2: what may be opened ------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -148,7 +148,7 @@ def test_tc_27_2_a_report_without_the_synthetic_marker_returns_no_field(
     )
 
 
-# --- TC-27.3: text layer fast path, OCR path for scanned pages ----------------------------
+# --- TC-29.3: text layer fast path, OCR path for scanned pages ----------------------------
 
 
 def test_tc_27_3_a_text_layer_skips_ocr_and_a_scanned_page_goes_to_ocr(lab: LabCatalogue) -> None:
@@ -162,7 +162,7 @@ def test_tc_27_3_a_text_layer_skips_ocr_and_a_scanned_page_goes_to_ocr(lab: LabC
     assert values(scanned) == values(fast)
 
 
-# --- TC-27.4 (A1): the clean reference ----------------------------------------------------
+# --- TC-29.4 (A1): the clean reference ----------------------------------------------------
 
 
 def test_tc_27_4_a1_lab_a_returns_every_field_with_confidence_and_no_flag(
@@ -190,7 +190,7 @@ def test_tc_27_4_generated_reports_are_read_back_exactly(lab: LabCatalogue, seed
     assert all(not item.flags for item in draft.fields)
 
 
-# --- TC-27.5 (B1): the OCR path catches its own errors ------------------------------------
+# --- TC-29.5 (B1): the OCR path catches its own errors ------------------------------------
 
 
 def test_tc_27_5_b1_the_known_tesseract_failures_are_caught(lab: LabCatalogue) -> None:
@@ -263,7 +263,7 @@ def test_tc_27_5_b1_lab_b_through_a_real_engine_has_no_silent_error(
             assert caught(draft, item.field_id), f"silent error in {item.field_id}"
 
 
-# --- TC-27.6 (C1): ambiguity flags ---------------------------------------------------------
+# --- TC-29.6 (C1): ambiguity flags ---------------------------------------------------------
 
 
 def test_tc_27_6_c1_lab_c_flags_commas_missing_units_and_the_date(lab: LabCatalogue) -> None:
@@ -276,7 +276,7 @@ def test_tc_27_6_c1_lab_c_flags_commas_missing_units_and_the_date(lab: LabCatalo
         assert item.status.value == want["status"], item.field_id
 
 
-# --- TC-27.7: confidence and status --------------------------------------------------------
+# --- TC-29.7: confidence and status --------------------------------------------------------
 
 
 def test_tc_27_7_confidence_is_the_lowest_of_three_scores(lab: LabCatalogue) -> None:
@@ -297,7 +297,7 @@ def test_tc_27_7_no_field_is_ever_confirmed_by_the_extractor(lab: LabCatalogue) 
         assert statuses <= {"UNCONFIRMED", "NEEDS_CONFIRMATION"}
 
 
-# --- TC-27.8: never guess ------------------------------------------------------------------
+# --- TC-29.8: never guess ------------------------------------------------------------------
 
 
 def test_tc_27_8_a_blank_or_missing_field_stays_empty_and_asks_the_user(
@@ -367,7 +367,7 @@ def test_tc_27_8_a_field_printed_twice_is_not_chosen(lab: LabCatalogue) -> None:
     assert item.value is None and "DUPLICATE_VALUE" in item.flags
 
 
-# --- TC-27.9 (U1): only confirmed values reach the rules ----------------------------------
+# --- TC-29.9 (U1): only confirmed values reach the rules ----------------------------------
 
 
 def test_tc_27_9_u1_unconfirmed_values_do_not_reach_the_rules(api: Api, lab: LabCatalogue) -> None:
@@ -411,7 +411,7 @@ def test_tc_27_9_every_target_test_code_exists_in_the_lab_catalogue(
             assert item.canonical_unit in test.accepted_units, item.field_id
 
 
-# --- TC-27.10, TC-27.11, TC-27.12: data, logs, engines ------------------------------------
+# --- TC-29.10, TC-29.11, TC-29.12: data, logs, engines ------------------------------------
 
 
 def test_tc_27_10_file_content_is_data_not_instructions(lab: LabCatalogue) -> None:
@@ -455,7 +455,7 @@ def test_tc_27_12_emergency_code_does_not_import_the_reader() -> None:
         assert "document_import" not in source.read_text(encoding="utf-8"), source.name
 
 
-# --- TC-27.13 (E1): the evaluation report -------------------------------------------------
+# --- TC-29.13 (E1): the evaluation report -------------------------------------------------
 
 
 def test_tc_27_13_e1_the_report_carries_run_id_commit_and_the_t60_metrics(

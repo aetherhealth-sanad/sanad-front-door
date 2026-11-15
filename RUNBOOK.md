@@ -1,6 +1,6 @@
 # Sanad Local Runbook
 
-This runbook starts the current local API and web source for development. Sanad is a research prototype, not a medical device. Use synthetic fixtures only; no model provider or real clinic connection is configured.
+This runbook starts the current local API and web source for development, and describes a [manual container deploy to Azure Container Apps](#deploy-to-azure-container-apps-manual). Sanad is a research prototype, not a medical device. Use synthetic fixtures only; no model provider or real clinic connection is configured.
 
 ## Prerequisites
 
@@ -177,6 +177,49 @@ With `SANAD_AZURE_OPENAI_AUTH=entra_id`, the API uses `DefaultAzureCredential` (
 
 To turn typing off again, set `SANAD_MODEL_PROVIDER=disabled` in `apps/api/.env` (or remove the line). Emergency handling, consent and the rules never depend on this setting.
 
+### Entra ID instead of an API key (recommended)
+
+API keys are long-lived secrets; Entra ID uses short-lived tokens. Install the extra and sign in:
+
+```powershell
+apps/api/.venv/Scripts/python -m pip install -e "apps/api[azure]"
+az login   # locally; a hosted deployment uses its managed identity instead
+```
+
+Give your identity the **Cognitive Services OpenAI User** role on the Azure resource, then set `SANAD_AZURE_OPENAI_AUTH=entra_id` and leave `SANAD_AZURE_OPENAI_API_KEY` empty. A hosted deployment sets `SANAD_HOSTED=true`, which refuses `api_key` at start-up (AC-21.13).
+
+## Optional: local decision model (Laya) for answer matching
+
+RF-25, CC-015 (`PROPOSED`). Laya returns a typed choice with probabilities and writes no text. It runs on the API host, so typed chat text does not leave the machine. It handles yes/no and choice questions only; number questions fall back to the buttons. The weight licence is not yet confirmed (OD-17), so use it for local evaluation only.
+
+```powershell
+# CPU torch keeps the download small; drop --index-url to get a CUDA build instead.
+apps/api/.venv/Scripts/python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+apps/api/.venv/Scripts/python -m pip install -e "apps/api[decision]"
+$env:SANAD_MODEL_PROVIDER = "laya_local"
+$env:SANAD_LAYA_REVISION = "55cf4c4ebb4ebe31b2550e8bdf3bd21b99753851"  # upstream reviewed pin
+$env:USE_TF = "0"
+# First run downloads the checkpoint into the Hugging Face cache. Afterwards:
+$env:HF_HUB_OFFLINE = "1"
+```
+
+On Apple Silicon, install the default `torch` build instead of the CPU wheel; PyTorch uses MPS. The `laya-mlx` port is not supported. Compare providers on the same synthetic cases with `python eval/run_model_eval.py --provider laya_local` and `--provider azure_openai`; enable Laya in a demo only if its scorecard shows zero unsafe conversions (OD-15, OD-16).
+
+### Fitted head with the vegaml engine (T4.11, CC-017)
+
+The vegaml engine keeps a 0.8B reader frozen and fits small heads plus a calibration on labelled synthetic rows (`eval/decision/intake_rows.v0.1.jsonl`). The RF-23 cases are never used to fit. The calibration directory is not committed; rebuild it from the rows:
+
+```powershell
+$rev = "4d2050287982ca7a7bb0c22fd19a389f5f94474e"   # nandakishorm/vega-U, read 2026-11-14
+apps/api/.venv/Scripts/python eval/fit_decision_head.py --revision $rev   # add --allow-unreviewed for draft rows
+$env:SANAD_MODEL_PROVIDER = "laya_local"
+$env:SANAD_LAYA_ENGINE = "vegaml"
+$env:SANAD_LAYA_MODEL = "nandakishorm/vega-U"
+$env:SANAD_LAYA_REVISION = $rev
+$env:SANAD_LAYA_CALIBRATION = "eval/out/decision/calibration"
+apps/api/.venv/Scripts/python eval/run_model_eval.py --provider laya_local
+```
+
 ## Start the web app
 
 In terminal 2, from the repository root:
@@ -217,6 +260,118 @@ npm run preview
 ```
 
 `npm run preview` serves the most recent `npm run build` output. The Vite development server is the normal local workflow.
+
+## Deploy to Azure Container Apps (manual)
+
+T1.4, `TECH_TBD`. The deploy target (OD-05) is not yet decided, and this is a manual deploy, not the deploy-on-merge that AC-01.4 asks for. Synthetic data only: do not enter real health information in a hosted demo. What happened on the first deploy, the problems hit and what is still unverified are recorded in [specs/azure-container.md](specs/azure-container.md).
+
+Two container apps share one environment:
+
+```text
+Browser ──HTTPS──▶ sanad-web  (external ingress, nginx)
+                     ├─ /                 built React app, sw.js, urgent.html
+                     └─ /api/*, /version ──▶ sanad-api  (internal ingress, FastAPI, exactly 1 replica)
+```
+
+The web app calls the relative path `/api`, and the service worker skips `/api/` by path, so the API is served from the same origin through nginx and has no public address. nginx sets `Cache-Control: no-store` on every API response (invariant 11).
+
+| File | Purpose |
+|---|---|
+| `apps/api/Dockerfile` | API image. Copies `rules/`, `catalogue/`, `schemas/`, `data/synthetic/` and `knowledge/passages.v0.1.json`, which the API loads at start-up. No model extra is installed. |
+| `apps/web/Dockerfile` | Builds the web app and serves `dist/` with nginx. |
+| `apps/web/nginx/default.conf.template` | Proxy to `${API_HOST}`, cache headers, SPA fallback, client-IP handling for the rate limits. |
+| `.dockerignore` | Keeps `apps/api/.env`, `*.db`, `node_modules` and `.git` out of the build context that `az acr build` uploads. |
+
+Build both images from the repository root.
+
+**Try the containers locally first** (needs Docker). Locally there is no Container Apps router, so the web container talks to the API's port directly:
+
+```bash
+docker build -f apps/api/Dockerfile -t sanad-api:local .
+docker build -f apps/web/Dockerfile -t sanad-web:local .
+docker network create sanad-local
+docker run -d --name sanad-api --network sanad-local -e SANAD_COMMIT_SHA=local sanad-api:local
+docker run -d --name sanad-web --network sanad-local -p 127.0.0.1:8088:80 -e API_HOST=sanad-api:8000 sanad-web:local
+# open http://127.0.0.1:8088 ; clean up with:
+docker rm -f sanad-web sanad-api && docker network rm sanad-local
+```
+
+**First deploy.** `az acr build` builds the images in Azure, so an Apple Silicon Mac needs no local Docker or `--platform` flag. The commands below create billable resources.
+
+```bash
+RG=sanad-demo-rg
+LOC=uaenorth                    # azure-service-guide §5; UAE North has access restrictions, so confirm your subscription
+ACR=sanaddemo$RANDOM            # globally unique, lowercase letters and digits
+ENV=sanad-env
+SHA=$(git rev-parse --short HEAD)
+REVIEWER_PW=$(openssl rand -base64 18)    # never reuse run.sh's local default password
+FACILITY_PW=$(openssl rand -base64 18)
+
+az login
+az provider register --namespace Microsoft.App
+az provider register --namespace Microsoft.OperationalInsights
+
+az group create -n $RG -l $LOC
+az acr create -g $RG -n $ACR --sku Basic
+az acr build -r $ACR -t sanad-api:$SHA -f apps/api/Dockerfile .
+az acr build -r $ACR -t sanad-web:$SHA -f apps/web/Dockerfile .
+
+az containerapp env create -g $RG -n $ENV -l $LOC
+
+# Create the API first: nginx does not start if it cannot resolve "sanad-api".
+# --allow-insecure: nginx reaches the API over plain HTTP inside the environment.
+az containerapp create -g $RG -n sanad-api --environment $ENV \
+  --image $ACR.azurecr.io/sanad-api:$SHA \
+  --registry-server $ACR.azurecr.io --registry-identity system \
+  --ingress internal --target-port 8000 --allow-insecure \
+  --min-replicas 1 --max-replicas 1 \
+  --secrets reviewer-pw="$REVIEWER_PW" facility-pw="$FACILITY_PW" \
+  --env-vars SANAD_COMMIT_SHA=$SHA \
+             SANAD_DEMO_REVIEWER_PASSWORD=secretref:reviewer-pw \
+             SANAD_DEMO_MOCK_FACILITY_PASSWORD=secretref:facility-pw
+
+az containerapp create -g $RG -n sanad-web --environment $ENV \
+  --image $ACR.azurecr.io/sanad-web:$SHA \
+  --registry-server $ACR.azurecr.io --registry-identity system \
+  --ingress external --target-port 80 \
+  --min-replicas 1 --max-replicas 2 \
+  --env-vars API_HOST=sanad-api
+
+WEB=$(az containerapp show -g $RG -n sanad-web --query properties.configuration.ingress.fqdn -o tsv)
+echo "https://$WEB"
+```
+
+Keep the two passwords somewhere safe; they are the Mock Reviewer and Mock Facility sign-ins for the hosted demo. To keep them in Azure Key Vault instead, follow [specs/azure-key-vault.md](specs/azure-key-vault.md).
+
+**Check the deploy:**
+
+```bash
+curl -s  https://$WEB/version                                   # {"commit_sha":"<SHA>"}
+curl -sI https://$WEB/api/openapi.json | grep -i cache-control  # no-store
+curl -sI https://$WEB/urgent.html | head -1                     # 200
+```
+
+Then open the site, load it once, switch DevTools to offline and confirm the emergency page still opens (AC-05.4). Container Apps serves HTTPS, which the service worker needs.
+
+**Redeploy** a new commit:
+
+```bash
+SHA=$(git rev-parse --short HEAD)
+az acr build -r $ACR -t sanad-api:$SHA -f apps/api/Dockerfile .
+az acr build -r $ACR -t sanad-web:$SHA -f apps/web/Dockerfile .
+az containerapp update -g $RG -n sanad-api --image $ACR.azurecr.io/sanad-api:$SHA --set-env-vars SANAD_COMMIT_SHA=$SHA
+az containerapp update -g $RG -n sanad-web --image $ACR.azurecr.io/sanad-web:$SHA
+```
+
+**Remove everything:** `az group delete -n $RG`.
+
+Limits of this setup:
+
+- **Cases are lost on every API restart or redeploy.** SQLite lives at `/tmp/sanad.db` inside the container, which is why the API runs exactly one replica. PostgreSQL is not yet validated as a target (azure-service-guide §3).
+- **Rate limits use the real client address.** nginx takes the last `X-Forwarded-For` entry, which the Container Apps ingress adds, and the API trusts forwarded headers only because its ingress is internal. Earlier entries, which a client could forge, are ignored. Confirm this once on the hosted demo.
+- **Keep every model provider off.** Do not set `SANAD_MODEL_PROVIDER` (CC-011, OD-13 and OD-17 are open), and leave Langfuse disabled.
+- **The interactive API docs are public** through the web address. Uncomment the two `return 404` lines in `apps/web/nginx/default.conf.template` to hide them (azure-service-guide §3).
+- **Logs:** nginx access logging is off. API logs go to the environment's Log Analytics workspace; set a short retention period there (azure-service-guide §3).
 
 ## Current implementation limits
 

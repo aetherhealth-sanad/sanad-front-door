@@ -25,3 +25,6 @@ web-build/
 .agents/
 .agents-backup*/
 skills-lock.json
+
+# Model evaluation scorecards (RF-23); synthetic results, kept out of Git
+eval/out/

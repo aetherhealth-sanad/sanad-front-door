@@ -3,7 +3,7 @@
   "catalogue_version": "lab-report-ocr-draft-0.1",
   "layout_id": "synthetic-semen-report-v1",
   "approval_status": "CLINICAL_TBD",
-  "status_note": "Fields T-60 reads from one synthetic semen analysis report layout. Plausibility bounds catch reading errors such as a lost decimal point; they are wide on purpose and are NOT reference limits, and nothing here says whether a value is normal. Unit spellings map to one canonical spelling with no numeric conversion. Bounds and spellings are TECH_TBD and need BA review. target_test_code is null where the lab catalogue has no test code yet: those values are read and shown for confirmation but cannot be stored until BA adds a code (OD-20).",
+  "status_note": "Fields T-60 reads from one synthetic semen analysis report layout. Plausibility bounds catch reading errors such as a lost decimal point; they are wide on purpose and are NOT reference limits, and nothing here says whether a value is normal. Unit spellings map to one canonical spelling with no numeric conversion. Bounds and spellings are TECH_TBD and need BA review. target_test_code is null where the lab catalogue has no test code yet: those values are read and shown for confirmation but cannot be stored until BA adds a code (OD-23).",
   "synthetic_banner": "SYNTHETIC DATA. Not a real person.",
   "report_id_label": "Report ID",
   "report_id_prefix": "SYN-",

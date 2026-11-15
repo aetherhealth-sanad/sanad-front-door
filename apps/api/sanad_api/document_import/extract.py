@@ -1,4 +1,4 @@
-"""`extract`: one synthetic semen analysis report in, a draft of its fields out (T-60, RF-27).
+"""`extract`: one synthetic semen analysis report in, a draft of its fields out (T-60, RF-29).
 
 Order of work: type and size (S1), text source (S2), synthetic marker (S3), rows (S4), field
 lookup by label (S5), parsing and plausibility (S6), status (S7). Each stage fails closed.
@@ -38,7 +38,7 @@ from sanad_api.document_import.model import (
 )
 from sanad_api.document_import.parse import parse_date, parse_measurement
 
-DEFAULT_CONFIDENCE_THRESHOLD = 0.90  # TECH_TBD until calibrated on the fixtures (OD-21)
+DEFAULT_CONFIDENCE_THRESHOLD = 0.90  # TECH_TBD until calibrated on the fixtures (OD-24)
 
 
 @dataclass(frozen=True)

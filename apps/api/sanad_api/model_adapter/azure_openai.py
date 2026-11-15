@@ -140,6 +140,8 @@ class AzureOpenAIAdapter:
             choice.message.content,
             attempts=attempts,
             elapsed_ms=self._elapsed_ms(started),
+            input_tokens=completion.usage.prompt_tokens if completion.usage else None,
+            output_tokens=completion.usage.completion_tokens if completion.usage else None,
         )
 
     def _done(

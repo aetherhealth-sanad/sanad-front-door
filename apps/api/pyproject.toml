@@ -21,6 +21,10 @@ azure = [
     "openai>=3.40,<4",
     "azure-identity>=1.17",
 ]
+# RF-25, CC-015: only needed when SANAD_MODEL_PROVIDER=laya_local. Pulls torch and transformers.
+decision = [
+    "laya>=0.4.31,<0.5",
+]
 dev = [
     "pytest>=8",
     "httpx>=0.27",
@@ -28,16 +32,16 @@ dev = [
     "mypy>=1.11",
     # Adapter tests use the SDK's own error and response types. They make no network call.
     "openai>=3.40,<4",
-    # RF-27 / T-60 tests read synthetic lab report PDFs. reportlab only draws test documents.
+    # RF-29 / T-60 tests read synthetic lab report PDFs. reportlab only draws test documents.
     "pdfplumber>=0.11",
     "reportlab>=4.2",
 ]
-# RF-27, T-60, CC-017 (PROPOSED): reads the text layer of a synthetic lab report PDF. No
+# RF-29, T-60, CC-021 (PROPOSED): reads the text layer of a synthetic lab report PDF. No
 # endpoint uses it yet.
 documents = [
     "pdfplumber>=0.11",
 ]
-# RF-27, T-60 (PROPOSED): local OCR for a page with no text layer. Off unless installed and
+# RF-29, T-60 (PROPOSED): local OCR for a page with no text layer. Off unless installed and
 # passed to the extractor. The models ship in the package; reading makes no network call.
 # numpy straightens scanned pages. Tesseract, the baseline engine, is a system package.
 ocr = [

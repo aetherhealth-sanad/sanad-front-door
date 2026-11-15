@@ -7,6 +7,7 @@ nothing an adapter receives needs to identify a person (data minimisation, NFR-0
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Protocol
@@ -52,6 +53,8 @@ class ModelResult:
     attempts: int
     elapsed_ms: int
     error_code: str | None = None
+    input_tokens: int | None = None  # as reported by the provider (AC-23.8)
+    output_tokens: int | None = None
 
 
 class ModelAdapter(Protocol):
@@ -66,3 +69,12 @@ class ModelAdapter(Protocol):
     def enabled(self) -> bool: ...
 
     def complete_json(self, request: ModelRequest) -> ModelResult: ...
+
+
+def run_safely(adapter: ModelAdapter, request: ModelRequest) -> ModelResult:
+    """An adapter bug must fail closed to the task's fallback, and must not log the request."""
+    try:
+        return adapter.complete_json(request)
+    except Exception as error:  # any failure means "no model result"
+        logging.getLogger("sanad.model").error("model adapter failed: %s", type(error).__name__)
+        return ModelResult(ModelStatus.UNAVAILABLE, None, 0, 0, "ADAPTER_ERROR")

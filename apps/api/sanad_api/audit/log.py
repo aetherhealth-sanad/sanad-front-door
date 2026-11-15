@@ -39,6 +39,7 @@ class AuditType(StrEnum):
     NAVIGATION_BARRIER_RECORDED = "NAVIGATION_BARRIER_RECORDED"
     INPUT_CHECKED = "INPUT_CHECKED"
     MODEL_TASK_RUN = "MODEL_TASK_RUN"
+    SUMMARY_EXPORTED = "SUMMARY_EXPORTED"
 
 
 ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
@@ -63,6 +64,8 @@ ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
     AuditType.NAVIGATION_BARRIER_RECORDED: frozenset({"count", "prefer_not_to_say"}),
     # Typed chat text (T4.5): reason codes and versions only, never the text (PRD-AC-54).
     AuditType.INPUT_CHECKED: frozenset({"result", "reason_code", "origin", "question_id"}),
+    # RF-28: counts only, never a value (AC-28.7).
+    AuditType.SUMMARY_EXPORTED: frozenset({"responses", "observations"}),
     # The bounded task trace (PRD 4.7.2, NFR-21).
     AuditType.MODEL_TASK_RUN: frozenset(
         {
@@ -74,11 +77,17 @@ ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
             "schema_version",
             "question_catalogue_version",
             "question_id",
+            "rule_version",
+            "passage_catalogue_version",
             "status",
             "error_code",
             "outcome",
             "attempts",
             "elapsed_ms",
+            "input_tokens",
+            "output_tokens",
+            "redactions",  # RF-27: sorted type codes, never a value
+            "redaction_count",
         }
     ),
 }

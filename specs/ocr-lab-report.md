@@ -5,10 +5,10 @@
 | **Status** | `PROPOSED`. Not approved. The extractor, both OCR engines, stand-in fixtures and the evaluation run are present; no endpoint or screen uses them yet. |
 | **Version / date** | 0.2, 2026-11-15. Replaces v0.1 (synthetic Patient Summary import), which read the wrong document type. |
 | **Task brief** | T-60 "OCR one synthetic lab report" (Tech Lead), GitHub issue #103 |
-| **Requirement** | [RF-27](referal-flows/product-spec.md#rf-27-ocr-one-synthetic-lab-report-t-60-v04-addition-proposed) |
-| **Tasks** | T4.11, T4.12, T4.13 in the [implementation plan](referal-flows/implementation-plan.md) |
-| **Tests** | TC-27.1 to TC-27.14 in the [test plan](referal-flows/test-plan.md), in `apps/api/tests/test_lab_ocr.py` |
-| **Change control** | [CC-017](referal-flows/change-log.md#cc-017-synthetic-profile-document-import-with-local-ocr) |
+| **Requirement** | [RF-29](referal-flows/product-spec.md#rf-27-ocr-one-synthetic-lab-report-t-60-v04-addition-proposed) |
+| **Tasks** | T4.17, T4.18, T4.19 in the [implementation plan](referal-flows/implementation-plan.md) |
+| **Tests** | TC-29.1 to TC-29.14 in the [test plan](referal-flows/test-plan.md), in `apps/api/tests/test_lab_ocr.py` |
+| **Change control** | [CC-021](referal-flows/change-log.md#cc-021-ocr-one-synthetic-lab-report) |
 | **Parent contracts** | PRD-FR-13, BRD FR-13, NFR-19, harness HR-04, HR-23 (T-60 calls it HR-09) |
 | **Owner** | Hoàng. Lab-entry screen: Vinh (T-33). Fixtures: Đạt (T-20, T-34, T-35). |
 
@@ -30,7 +30,7 @@ It reads one synthetic semen analysis report, as a PDF or a picture, in one Engl
 | Normal forms | `normal_forms` | % | `MORPHOLOGY_PLACEHOLDER` |
 | Collection date | `collection_date` | ISO date | `collected_on` of each value |
 
-Four fields have no lab catalogue code yet. They are read and shown for confirmation, but they cannot be stored until BA adds a code (OD-20). Labels, unit spellings and plausibility bounds live in [`catalogue/lab-report-ocr.draft-0.1.json`](../catalogue/lab-report-ocr.draft-0.1.json).
+Four fields have no lab catalogue code yet. They are read and shown for confirmation, but they cannot be stored until BA adds a code (OD-23). Labels, unit spellings and plausibility bounds live in [`catalogue/lab-report-ocr.draft-0.1.json`](../catalogue/lab-report-ocr.draft-0.1.json).
 
 ## 2. Hard rules
 
@@ -88,7 +88,7 @@ Each field, as T-60 requirement 1 lists:
 | `parse` | one clean number or ISO date | 0.5 when a rule was needed (decimal comma, day-first date); 0 when unreadable |
 | `plausibility` | unit present and known, value inside the bounds | 0 otherwise, and for PR, NP and IM that break the total |
 
-The threshold is 0.90 (`TECH_TBD`, OD-21). Below it the field gets `OCR_CONFIDENCE_LOW` (when the OCR score is the cause) and `NEEDS_CONFIRMATION`.
+The threshold is 0.90 (`TECH_TBD`, OD-24). Below it the field gets `OCR_CONFIDENCE_LOW` (when the OCR score is the cause) and `NEEDS_CONFIRMATION`.
 
 **Flags.** The six T-60 flags, plus five for cases its requirements name but give no flag for:
 
@@ -108,11 +108,11 @@ The threshold is 0.90 (`TECH_TBD`, OD-21). Below it the field gets `OCR_CONFIDEN
 
 The plausibility bounds catch reading errors such as a lost decimal point. They are wide on purpose (volume 0–20 mL, pH 0–14, concentration 0–1000 million/mL, total 0–5000 million, percentages 0–100). They are **not** reference limits, and they are `TECH_TBD` until BA reviews them.
 
-**Unit spellings** map to one canonical spelling with no numeric change: `10^6/mL`, `x10^6/mL`, `×10^6/mL` and `million/mL` are all `million/mL`. This answers the unit question in OD-19 for the reader; BA still needs to confirm the list.
+**Unit spellings** map to one canonical spelling with no numeric change: `10^6/mL`, `x10^6/mL`, `×10^6/mL` and `million/mL` are all `million/mL`. This answers the unit question in OD-22 for the reader; BA still needs to confirm the list.
 
-## 5. Storage and screens (T4.13, waits for CC-017)
+## 5. Storage and screens (T4.19, waits for CC-021)
 
-The reader writes nothing. `to_observation_inputs(draft)` turns the fields that have a lab catalogue code into `POST /cases/{id}/observations` bodies. The client sends them only after the user has reviewed them on the lab-entry screen (T-33). They are stored as `NEEDS_USER_CONFIRMATION`, and the user confirms each one through the existing confirm endpoint (RF-15), which also needs a reference source. TC-27.9 shows an unconfirmed value of 0 does not raise the draft `LAB_EQUALS` signal, and does once confirmed.
+The reader writes nothing. `to_observation_inputs(draft)` turns the fields that have a lab catalogue code into `POST /cases/{id}/observations` bodies. The client sends them only after the user has reviewed them on the lab-entry screen (T-33). They are stored as `NEEDS_USER_CONFIRMATION`, and the user confirms each one through the existing confirm endpoint (RF-15), which also needs a reference source. TC-29.9 shows an unconfirmed value of 0 does not raise the draft `LAB_EQUALS` signal, and does once confirmed.
 
 Still to build: the read-only `POST /cases/{id}/profile/document` endpoint and its audit event, the T-33 screen with the bounding-box highlight, and the temporary-file handling of T-60 requirement 9 (in memory only, cleared at session end and Quick Exit, no `localStorage` or IndexedDB).
 
@@ -156,10 +156,10 @@ Sources: [PaddleOCR documentation](https://www.paddleocr.ai/latest/en/index.html
 
 | ID | Question | Working default | Owner |
 |---|---|---|---|
-| OD-18 | The task was first described as storing results in pgvector. T-60 does not mention it. | Not stored in pgvector. | Tech Lead |
-| OD-19 | Are the unit spellings in the catalogue right? | As listed, `TECH_TBD` | BA |
-| OD-20 | Lab catalogue codes for pH, total count, NP and IM | Read and shown, not stored | BA + Clinical |
-| OD-21 | Size, page and pixel limits, confidence threshold, plausibility bounds | 5 MB, 5 pages, 0.90, §4 bounds | Tech Lead + QA |
-| OD-23 | T-60 U1 says unconfirmed values must not appear in the report output. The current report (RF-15) lists held values with `used_in_assessment: false`. | Rules ignore them (tested); the report is unchanged until decided | Tech Lead + Product |
+| OD-21 | The task was first described as storing results in pgvector. T-60 does not mention it. | Not stored in pgvector. | Tech Lead |
+| OD-22 | Are the unit spellings in the catalogue right? | As listed, `TECH_TBD` | BA |
+| OD-23 | Lab catalogue codes for pH, total count, NP and IM | Read and shown, not stored | BA + Clinical |
+| OD-24 | Size, page and pixel limits, confidence threshold, plausibility bounds | 5 MB, 5 pages, 0.90, §4 bounds | Tech Lead + QA |
+| OD-26 | T-60 U1 says unconfirmed values must not appear in the report output. The current report (RF-15) lists held values with `used_in_assessment: false`. | Rules ignore them (tested); the report is unchanged until decided | Tech Lead + Product |
 | — | T-60 says not to start before T-36 and T-46 are done (issues #79 and #89 look like them and are open). | Work started on the owner's request | Tech Lead |
 | — | Đạt's fixture package (T-20, T-34) | Stand-in fixtures | Đạt |

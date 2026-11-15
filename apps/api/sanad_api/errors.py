@@ -32,6 +32,7 @@ class ErrorCode(StrEnum):
     CASE_VERSION_CONFLICT = "CASE_VERSION_CONFLICT"
     CONSENT_VERSION_OUTDATED = "CONSENT_VERSION_OUTDATED"
     DRAFT_NOT_CURRENT = "DRAFT_NOT_CURRENT"
+    REPORT_NOT_RELEASED = "REPORT_NOT_RELEASED"
     IDEMPOTENCY_KEY_REUSED = "IDEMPOTENCY_KEY_REUSED"
     BLOCKING_ITEMS_REMAIN = "BLOCKING_ITEMS_REMAIN"
     UPLOAD_TOO_LARGE = "UPLOAD_TOO_LARGE"
@@ -61,6 +62,7 @@ MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.CASE_VERSION_CONFLICT: "The case has changed. Reload it and try again.",
     ErrorCode.CONSENT_VERSION_OUTDATED: "The consent text has changed. Read the current version.",
     ErrorCode.DRAFT_NOT_CURRENT: "The draft result is missing or out of date.",
+    ErrorCode.REPORT_NOT_RELEASED: "The result has not been released yet.",
     ErrorCode.IDEMPOTENCY_KEY_REUSED: "That retry key was already used for a different request.",
     ErrorCode.BLOCKING_ITEMS_REMAIN: "Some required items are still missing.",
     ErrorCode.UPLOAD_TOO_LARGE: "The file is larger than 256 KB.",

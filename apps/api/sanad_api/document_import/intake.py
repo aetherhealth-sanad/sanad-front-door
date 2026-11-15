@@ -1,7 +1,7 @@
 """S1: what kind of file this is and whether it is small enough to open.
 
 The type comes from the first bytes, never from a file name or a content-type header
-(AC-27.1). The limits are engineering defaults (TECH_TBD, OD-21).
+(AC-29.1). The limits are engineering defaults (TECH_TBD, OD-24).
 """
 
 from __future__ import annotations

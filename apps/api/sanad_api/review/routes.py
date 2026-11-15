@@ -37,6 +37,7 @@ from sanad_api.observations.service import observation_out
 from sanad_api.psychosocial.models import PsychosocialSelfReport
 from sanad_api.reports.drafts import apply_reviewer_edit
 from sanad_api.reports.service import REVIEWER_EDIT, content_of, current_draft, store_draft
+from sanad_api.review import decision_record
 from sanad_api.review.models import ClarificationRequest, ReviewDecision, ReviewRequest
 from sanad_api.review.service import (
     DECIDED,
@@ -228,6 +229,8 @@ class ReviewDetailOut(BaseModel):
     tracking_flag: FlagOut | None
     psychosocial_context: list[dict[str, Any]]
     psychosocial_context_use: str
+    # RF-24: what the draft rests on, rebuilt from stored data on each read. Reviewer only.
+    decision_record: dict[str, Any] | None
 
 
 def _decision_out(decision: ReviewDecision) -> dict[str, Any]:
@@ -299,6 +302,11 @@ def review_detail(
             for row in psychosocial
         ],
         "psychosocial_context_use": "CONTEXT_ONLY_NOT_TRIAGE",
+        "decision_record": (
+            decision_record.build(db, case.case_id, ctx, draft, content, catalogues, clock.now())
+            if draft and content
+            else None
+        ),
     }
 
 
