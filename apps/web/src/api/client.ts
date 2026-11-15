@@ -129,6 +129,8 @@ export interface InterpretResponse {
   outcome: 'EMERGENCY_GUIDANCE' | 'NEEDS_CORRECTION' | 'PROPOSAL' | 'FALLBACK';
   reason_code: string | null;
   message: string;
+  /** RF-27: what was hidden before the model saw the text; never the hidden value. */
+  redacted_types?: ('DATE' | 'NAME')[];
   proposal: {
     question_id: string;
     choice: IntakeAnswer['choice'];

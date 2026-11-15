@@ -66,13 +66,20 @@ def test_tc_23_1_case_files_are_complete_and_synthetic() -> None:
     assert len(ids) == len(set(ids))
     for case in cases:
         assert case["task_id"] in ev.TASKS, case["_source"]
-        assert case["expected"]["outcome"] in {"PROPOSAL", "AI_DRAFT", "FALLBACK"}
+        outcome = case["expected"]["outcome"]
+        assert outcome in {"PROPOSAL", "AI_DRAFT", "FALLBACK", "NEEDS_CORRECTION"}
         assert case["tags"], case["_source"]
         assert "replay" in case, case["_source"]
         texts = [case["input"].get("text", "")]
         texts += [p["excerpt"] for p in case["input"].get("passages", [])]
-        for text in texts:  # the same contact-detail guard typed chat text passes
-            assert check(text) is None or check(text).value == "TEXT_EMPTY", case["_source"]
+        for text in texts:  # the same guard typed chat text passes, unless meant to be blocked
+            reason = check(text)
+            if outcome == "NEEDS_CORRECTION":  # RF-27 identifier cases (AC-27.7)
+                assert reason and reason.value in case["expected"]["reasons"], case["_source"]
+            else:
+                assert reason is None or reason.value == "TEXT_EMPTY", case["_source"]
+        if case.get("pii"):  # every listed identifier really is in the text
+            assert all(s in case["input"]["text"] for s in case["pii"]), case["_source"]
     tags = {
         task: {tag for case in cases if case["task_id"] == task for tag in case["tags"]}
         for task in ev.TASKS

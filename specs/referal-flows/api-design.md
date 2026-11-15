@@ -794,10 +794,11 @@ Order of work, each step only if the previous one did not answer:
 1. Order guard as for answers: 401, 404, 403 `CONSENT_REQUIRED`, 409 `INVALID_TRANSITION`. The body is limited to 500 characters (422).
 2. Decoding (NFKC, control characters removed), then the stage 2a word check against `rules/emergency-text.draft-0.1.json`. A hit applies `EMERGENCY_TRIGGER` and returns `EMERGENCY_GUIDANCE` with `emergency.rule_ids`, version, `CLINICAL_TBD` and `is_simulated: true`.
 3. `question_id` must be an intake catalogue question, otherwise 422 `VALIDATION_FAILED` `UNKNOWN_QUESTION`. Safety questions are never accepted.
-4. Input checks: `TEXT_EMPTY`, `TEXT_LANGUAGE_NOT_SUPPORTED` (anything outside ASCII, because the word check covers English only) and `TEXT_CONTAINS_CONTACT_DETAILS` return `NEEDS_CORRECTION`.
+4. Input checks: `TEXT_EMPTY`, `TEXT_LANGUAGE_NOT_SUPPORTED` (anything outside ASCII, because the word check covers English only) `TEXT_CONTAINS_CONTACT_DETAILS` and, under RF-27, `TEXT_CONTAINS_IDENTIFIER` (ID numbers with a keyword, street addresses) return `NEEDS_CORRECTION`.
 5. No provider enabled: `FALLBACK` with `MODEL_DISABLED`.
 6. `disclosure_version` must match, otherwise 422 `VALIDATION_FAILED` `DISCLOSURE_NOT_ACKNOWLEDGED`.
-7. The `intake.extract.v1` task runs through the adapter, then the validator. The result is `PROPOSAL` or `FALLBACK` with one of `ABSTAIN_OUT_OF_SCOPE`, `ABSTAIN_UNCLEAR`, `MODEL_UNAVAILABLE`, `MODEL_CONTENT_FILTERED`, `MODEL_REFUSED` or `MODEL_OUTPUT_INVALID`.
+7. RF-27 redaction: the task builder replaces names with `[NAME]` and full dates with `[DATE]` before the payload is built. The response carries `redacted_types` (`NAME`, `DATE`; empty when none) and never a redacted value.
+8. The `intake.extract.v1` task runs through the adapter, then the validator. The result is `PROPOSAL` or `FALLBACK` with one of `ABSTAIN_OUT_OF_SCOPE`, `ABSTAIN_UNCLEAR`, `MODEL_UNAVAILABLE`, `MODEL_CONTENT_FILTERED`, `MODEL_REFUSED` or `MODEL_OUTPUT_INVALID`.
 
 ```json
 {

@@ -28,7 +28,7 @@ from sanad_api.cases.guards import Action, PatientCase, guard
 from sanad_api.cases.state_machine import CaseEvent, transition
 from sanad_api.cases.views import state_view
 from sanad_api.catalogues import Catalogues
-from sanad_api.chat.guardrail import MAX_TEXT_CHARS, check, decode
+from sanad_api.chat.guardrail import MAX_TEXT_CHARS, check, decode, redact
 from sanad_api.clock import Clock
 from sanad_api.config import Settings
 from sanad_api.deps import get_catalogues, get_clock, get_db, get_model_adapter, get_settings
@@ -79,6 +79,9 @@ MESSAGES = {
     "TEXT_CONTAINS_CONTACT_DETAILS": (
         "Please remove contact details such as email addresses or phone numbers. "
         "Nothing was sent."
+    ),
+    "TEXT_CONTAINS_IDENTIFIER": (
+        "Please remove ID numbers and addresses. Nothing was sent."
     ),
     "MODEL_DISABLED": "Typing is not available. Please use the buttons.",
     "ABSTAIN_OUT_OF_SCOPE": (
@@ -170,6 +173,7 @@ class InterpretOut(BaseModel):
     produced_by: ProducedByOut | None
     emergency: EmergencyOut | None
     state: CaseStateOut
+    redacted_types: list[Literal["DATE", "NAME"]] = []  # RF-27, AC-27.5: types only
 
 
 def _out(
@@ -272,6 +276,12 @@ def interpret_text(
         return _out("FALLBACK", runs.BUDGET_REASON, state_view(db, case, catalogues))
 
     concept = catalogues.concepts[question.concept_code]
+    redaction = redact(text)  # the builder redacts again; this copy is for the trace only
+    redacted = (
+        {"redactions": ".".join(redaction.types), "redaction_count": redaction.count}
+        if redaction.types
+        else {}
+    )
     model_request = intake_extract.build_request(
         question,
         concept,
@@ -305,15 +315,18 @@ def interpret_text(
         elapsed_ms=result.elapsed_ms,
         input_tokens=result.input_tokens,
         output_tokens=result.output_tokens,
+        **redacted,
     )
     db.commit()
     state = state_view(db, case, catalogues)
+    types = list(redaction.types)
     if proposal is None:
-        return _out("FALLBACK", interpretation.reason_code, state)
+        return _out("FALLBACK", interpretation.reason_code, state, redacted_types=types)
     return _out(
         "PROPOSAL",
         None,
         state,
+        redacted_types=types,
         proposal={
             "question_id": proposal.question_id,
             "choice": proposal.choice,
