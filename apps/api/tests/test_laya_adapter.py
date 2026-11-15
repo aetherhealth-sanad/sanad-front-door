@@ -112,8 +112,6 @@ def test_tc_25_1_bad_configuration_stops_start_up(
     monkeypatch.setitem(sys.modules, "laya", stub)
     with pytest.raises(ModelConfigError, match="SANAD_LAYA_REVISION"):
         build_model_adapter(laya_settings(tmp_path, laya_revision=None))
-    with pytest.raises(ModelConfigError, match="SANAD_LAYA_BACKEND"):
-        build_model_adapter(laya_settings(tmp_path, laya_backend="cuda-magic"))
     with pytest.raises(ModelConfigError, match="SANAD_DECISION_MIN_PROB"):
         build_model_adapter(laya_settings(tmp_path, decision_min_prob=0.3))
 
@@ -133,7 +131,6 @@ def test_tc_25_2_torch_backend_loads_once_with_the_pinned_revision(
 
     stub.load = load  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "laya", stub)
-    monkeypatch.setitem(sys.modules, "laya_mlx", None)
     adapter = build_model_adapter(laya_settings(tmp_path))
     assert isinstance(adapter, LayaLocalAdapter)
     assert loads == [(("convaiinnovations/laya",), {"revision": REVISION, "device": None})]

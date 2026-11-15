@@ -89,17 +89,12 @@ def _azure_openai(settings: Settings) -> ModelAdapter:
 
 
 def _laya_local(settings: Settings) -> ModelAdapter:
-    """RF-25, AC-25.1/25.2: pinned revision, one load at start-up, backend chosen here."""
-    import importlib.util
-    import platform
-
+    """RF-25, AC-25.1/25.2: pinned revision, one load at start-up, `laya` (PyTorch) only."""
     _check_budget(settings)
     if not settings.laya_revision:
         raise ModelConfigError(
             "SANAD_MODEL_PROVIDER=laya_local needs SANAD_LAYA_REVISION (a pinned commit SHA)"
         )
-    if settings.laya_backend not in ("auto", "torch", "mlx"):
-        raise ModelConfigError("SANAD_LAYA_BACKEND must be one of auto, torch, mlx")
     if not 0.5 <= settings.decision_min_prob <= 1.0:
         raise ModelConfigError("SANAD_DECISION_MIN_PROB must be between 0.5 and 1.0")
     vega = settings.laya_engine == "vegaml"
@@ -111,35 +106,18 @@ def _laya_local(settings: Settings) -> ModelAdapter:
     if calibration is not None and not calibration.is_dir():
         raise ModelConfigError(f"SANAD_LAYA_CALIBRATION is not a directory: {calibration}")
 
-    apple_silicon = platform.system() == "Darwin" and platform.machine() == "arm64"
-    use_mlx = not vega and (
-        settings.laya_backend == "mlx"
-        or (
-            settings.laya_backend == "auto"
-            and apple_silicon
-            and importlib.util.find_spec("laya_mlx") is not None
-        )
-    )
     from sanad_api.model_adapter.laya_local import LayaLocalAdapter
 
     try:
-        if vega:
-            import laya  # type: ignore[import-not-found]
+        import laya  # type: ignore[import-not-found]
 
+        if vega:
             agent = laya.load(
                 vegaml=settings.laya_model,
                 revision=settings.laya_revision,
                 device=settings.laya_device,
             )
-        elif use_mlx:
-            import laya_mlx  # type: ignore[import-not-found]
-
-            # ponytail: the MLX port takes its own Hub ids and has no revision argument here;
-            # untested on this repo's CI, which has no Apple Silicon runner.
-            agent = laya_mlx.load(settings.laya_model)
         else:
-            import laya  # type: ignore[import-not-found]
-
             agent = laya.load(
                 settings.laya_model, revision=settings.laya_revision, device=settings.laya_device
             )

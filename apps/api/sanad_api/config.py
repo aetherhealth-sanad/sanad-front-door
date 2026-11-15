@@ -97,7 +97,6 @@ class Settings:
     # RF-25, CC-015: local decision model. Only read when SANAD_MODEL_PROVIDER=laya_local.
     laya_model: str = "convaiinnovations/laya"
     laya_revision: str | None = None  # a pinned commit SHA; required for laya_local
-    laya_backend: str = "auto"  # auto, torch or mlx
     laya_device: str | None = None  # None lets laya choose (CUDA, MPS, XPU, then CPU)
     decision_min_prob: float = 0.80  # TECH_TBD, set from the RF-23 scorecard
     laya_engine: str = "checkpoint"  # checkpoint or vegaml (AC-25.11, CC-017)
@@ -142,7 +141,6 @@ class Settings:
             ),
             laya_model=_str(env, "SANAD_LAYA_MODEL") or cls.laya_model,
             laya_revision=_str(env, "SANAD_LAYA_REVISION"),
-            laya_backend=_str(env, "SANAD_LAYA_BACKEND") or cls.laya_backend,
             laya_device=_str(env, "SANAD_LAYA_DEVICE"),
             decision_min_prob=_float(env, "SANAD_DECISION_MIN_PROB", cls.decision_min_prob),
             laya_engine=_str(env, "SANAD_LAYA_ENGINE") or cls.laya_engine,

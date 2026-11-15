@@ -192,7 +192,7 @@ $env:USE_TF = "0"
 $env:HF_HUB_OFFLINE = "1"
 ```
 
-On Apple Silicon, `pip install laya-mlx` and `SANAD_LAYA_BACKEND=auto` (or `mlx`) use the MLX port instead. Compare providers on the same synthetic cases with `python eval/run_model_eval.py --provider laya_local` and `--provider azure_openai`; enable Laya in a demo only if its scorecard shows zero unsafe conversions (OD-15, OD-16).
+On Apple Silicon, install the default `torch` build instead of the CPU wheel; PyTorch uses MPS. The `laya-mlx` port is not supported. Compare providers on the same synthetic cases with `python eval/run_model_eval.py --provider laya_local` and `--provider azure_openai`; enable Laya in a demo only if its scorecard shows zero unsafe conversions (OD-15, OD-16).
 
 ### Fitted head with the vegaml engine (T4.11, CC-017)
 
