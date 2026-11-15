@@ -305,7 +305,7 @@ Automated tests go in `apps/api/tests/test_laya_adapter.py`. They replace the `l
 | Test | Lvl | Block | Check | Oracle |
 |---|---|---|---|---|
 | TC-25.1 | U | B | `laya_local` without the extra installed, without a revision, or with an unknown backend stops start-up with a message naming the setting. | S |
-| TC-25.2 | U | B | `auto` picks the MLX backend only when the platform is Apple Silicon and `laya_mlx` imports; otherwise the torch backend. The model loads once per process. | S |
+| TC-25.2 | U | B | The adapter loads through `laya.load` with the pinned revision, once per process; nothing imports `laya_mlx`. | S |
 | TC-25.3 | U | B | A number question or another task ID returns `UNAVAILABLE` `UNSUPPORTED_TASK` without calling the stub, and the chat endpoint returns its fallback. | S |
 | TC-25.4 | U | B | For the steroid question the stub receives labels `YES_CURRENT`, `YES_PAST`, `YES_TIME_UNCLEAR`, `NO`, `NOT_SURE`, `PREFER_NOT_TO_ANSWER`, `NOT_AN_ANSWER` with catalogue wording, and the typed text with no case ID or token. | S |
 | TC-25.5 | U | B | Each of these stub answers gives ABSTAIN: `abstain` true, `unbound` true, `route: review`, top probability below the threshold, a prediction set of two labels, `YES_TIME_UNCLEAR`; `NOT_AN_ANSWER` gives `OUT_OF_SCOPE`. | S |
