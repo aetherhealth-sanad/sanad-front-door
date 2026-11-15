@@ -12,7 +12,7 @@ WORKDIR /app
 
 COPY apps/api/pyproject.toml apps/api/pyproject.toml
 COPY apps/api/sanad_api apps/api/sanad_api
-RUN pip install --no-cache-dir ./apps/api
+RUN pip install --no-cache-dir "./apps/api[azure]"
 
 COPY rules rules
 COPY catalogue catalogue
