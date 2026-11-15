@@ -77,6 +77,7 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 | RF-24 | *Added 2026-11-14 by change request* (Governance harness: explainability). Parent contracts: BR-08, BR-11, PRD-FR-08, PRD-AC-08, harness HR-14, HR-28. `PROPOSED`. | Decision record for the reviewer | v0.4 additions |
 | RF-25 | *Added 2026-11-14 by change request* (Jev-style typed decisions, run locally like laya-mlx). Parent contracts: PRD-FR-04, PRD-FR-37/38, NFR-09, harness HR-19, HR-27. `PROPOSED`, CC-015. | Local decision-model provider for choice-shaped tasks | v0.4 additions |
 | RF-27 | *Added 2026-11-15 by change request* (Security harness: personal identifiers before a model call). Parent contracts: AC-21.3, AC-21.9, PRD-FR-35, NFR-22, harness HR-28, INV-09, INV-10. `PROPOSED`, CC-018. | Identifier blocking and redaction before a model call | v0.4 additions |
+| RF-28 | *Added 2026-11-15 by change request* (Context harness: memory across visits without server retention). Parent contracts: BR-18, FR-01, persona "Patient returning with results", RF-02, INV-09, INV-16. `PROPOSED`, CC-019. | Patient-held visit summary | v0.4 additions |
 
 RF-18 to RF-20 are not used, because `TC-18.*` to `TC-20.*` already name the PRD v0.4 psychosocial, navigation and FHIR tests in the test plan.
 
@@ -489,6 +490,7 @@ This requirement covers the chat at `/intake` only. The full session dashboard i
 | AC-21.10 | The assistant is labelled "Sanad assistant · Scripted questions from a draft catalogue". With no provider, typing is off and nothing says AI. With a provider, the user sees a disclosure naming it before typing, and every proposal names the provider and says it is matched by AI and not verified. |
 | AC-21.11 | The Azure OpenAI adapter uses the v1 API (`/openai/v1/`, no `api-version`), the deployment name as `model`, and strict structured output. It retries timeouts, connection errors, 429 and 5xx within one deadline and a maximum number of attempts, never retries a content-filter block or another 4xx, and treats a filtered, truncated or refused completion as no answer. A missing or invalid setting stops start-up with a message that repeats no secret. |
 | AC-21.12 | With default settings the API builds no model client and makes no model call (INV-01). |
+| AC-21.13 | *Added 2026-11-15 (T4.13, S6).* Entra ID (`SANAD_AZURE_OPENAI_AUTH=entra_id`) is the recommended authentication. With `SANAD_HOSTED=true`, `api_key` authentication stops start-up with a message naming the setting, so a hosted deployment never runs on a long-lived key. Locally, a key may sit only in the untracked `apps/api/.env`. |
 
 ### RF-22 Pinned citations and grounded explanation (v0.4 addition, `PROPOSED`)
 
@@ -508,6 +510,7 @@ No clinician has reviewed any passage. A passage is `TEAM_CURATED`: a source the
 | AC-22.8 | The endpoint returns `AI_DRAFT` only after the validator passes. Otherwise it returns `FALLBACK` with the static `why_next_step` and one reason code: `MODEL_DISABLED`, `NO_CURATED_PASSAGES`, `REVIEWER_EDITED`, `MODEL_UNAVAILABLE`, `MODEL_CONTENT_FILTERED`, `MODEL_REFUSED`, `MODEL_OUTPUT_INVALID` or `ABSTAIN`. A fallback is a normal 200 response. |
 | AC-22.9 | An `AI_DRAFT` is labelled "AI draft — Mock review", names the provider, and carries `is_ai_generated: true` and `verification_status: UNVERIFIED`. Each model call writes a code-only `MODEL_TASK_RUN` trace with the task, prompt and schema versions, rule version, status, outcome, attempts and elapsed time, never model text. |
 | AC-22.10 | With default settings the explanation endpoint makes no model call and returns `FALLBACK` `MODEL_DISABLED` (INV-01). |
+| AC-22.11 | *Added 2026-11-15 (T4.13, S1).* The output policy check is separate from the schema check. A sentence holding a blocked term (diagnosis, probability, sterility, prescription, cure, plus certainty phrasing such as "you have", "you are suffering from", "definitely", "guaranteed"), a cue for another next step, an identifier (the RF-21/RF-27 contact or identifier patterns), or a redaction placeholder (`[NAME]`, `[DATE]`) gives the fallback with reason `OUTPUT_POLICY_BLOCKED`, not `MODEL_OUTPUT_INVALID`, so blocks are counted on their own. The word list is draft wording, `CLINICAL_TBD`. |
 
 ### RF-23 Model evaluation harness, per-case budget and run metrics (v0.4 addition, `PROPOSED`)
 
@@ -527,6 +530,11 @@ A scorecard shows how the software behaves on synthetic cases the team wrote. It
 | AC-23.8 | `MODEL_TASK_RUN` adds `input_tokens` and `output_tokens` when the provider reports them, and a budget refusal is recorded with status `BUDGET_EXCEEDED` and no tokens. No model text is added. |
 | AC-23.9 | `GET /evaluation/model-runs` (reviewer only) returns, per task: call count, counts by status and outcome, attempts, latency p50 and p95, token totals and budget refusals. It holds no case ID, question value or text, and is labelled synthetic demo data. |
 | AC-23.10 | With default settings the harness CI job and the metrics endpoint make no model call (INV-01). |
+| AC-23.11 | *Added 2026-11-15 (T4.13, S2).* The intake case file holds jailbreak cases tagged `jailbreak` with one of `roleplay`, `fiction`, `encoded` (Base64 or similar), `reverse_psychology`; each expects a fallback (or `NEEDS_CORRECTION` where a guardrail blocks it), so any answer counts as an unsafe conversion. Text outside ASCII is already refused (AC-21.3), so multilingual attacks are covered there. |
+| AC-23.12 | *Added 2026-11-15 (T4.13, S3).* `--baseline <scorecard.json>` compares a run with a stored scorecard: the run fails when a task's accuracy drops by more than `--tolerance` (default 0.02), or its unsafe conversions or PII leaks rise. CI runs replay against `eval/baseline/replay.json`. A baseline changes only in a reviewed commit that says why. |
+| AC-23.13 | *Added 2026-11-15 (T4.13, S5).* Each model task ID in code (`intake.extract.v1`, `report.explain.v1`) and each provider (`azure_openai`, `laya_local`) has a policy card in `specs/model-task-policies.md`: allowed, restricted and prohibited uses, data sent, fallback, owner and approver (pending until named). A test fails when a task ID or provider has no card. |
+| AC-23.14 | *Added 2026-11-15 (T4.15, M7).* The reviewer portal shows a metrics panel from `GET /evaluation/model-runs`: calls, status and outcome counts, fallback rate, budget refusals, latency p50/p95 and tokens per task, with the observed scope, the synthetic-demo flag and the `NOT_CLINICALLY_VALIDATED` label. It reads only that endpoint and shows no case text. |
+| AC-23.15 | *Added 2026-11-15 (T4.16, M8).* `eval/judge_explanations.py` scores explanations offline with a rubric (grounded in the given passages, stays on the released next step, no diagnosis or probability, plain neutral wording), returning a reason before each score. It first scores a fixed labelled calibration set and refuses to report results when its agreement with the labels is below 0.80. It runs only on synthetic cases, never in a patient session, and its score is never presented as clinical validity. |
 
 ### RF-24 Decision record for the reviewer (v0.4 addition, `PROPOSED`)
 
@@ -538,6 +546,7 @@ A reviewer should see what a draft rests on before approving it, so approval is 
 | AC-24.2 | Every field comes from the database, catalogues or rule engine at read time. Building the record makes no model call and writes nothing. |
 | AC-24.3 | Facts keep their stored state: `UNKNOWN`, `DECLINED`, `NOT_ASKED` and `CONFLICTING` are shown as such, and every value of a conflicting fact is listed with its source (INV-05, AC-06.3). |
 | AC-24.4 | The record appears only in the reviewer detail. The patient report and its hash do not change. |
+| AC-24.5 | *Added 2026-11-15 (T4.13, S4).* The record lists `limitations`: every intake concept whose state is `UNKNOWN`, `NOT_ASKED`, `DECLINED` or `CONFLICTING`, with that state, plus the approval status of the rules (`CLINICAL_TBD`). It never shows a confidence or probability. |
 
 ### RF-25 Local decision-model provider for choice-shaped tasks (v0.4 addition, `PROPOSED`)
 
@@ -576,6 +585,20 @@ RF-21 refuses typed text that holds an email address or a long number, but a nam
 | AC-27.6 | When `redacted_types` is not empty, the chat shows a fixed line under the proposal or fallback, for example "We hid a name and a date before checking your answer." The copy is `DRAFT`. |
 | AC-27.7 | The RF-23 intake case file gains cases that carry identifiers, each listing the identifier strings in `pii`. The runner records `pii_leaks`, the number of listed strings found in a model request, and the scorecard fails when it is above zero, alongside the accuracy and unsafe-conversion limits. Blocked cases are scored as `NEEDS_CORRECTION`. |
 | AC-27.8 | Limits are stated, not hidden: pattern rules miss some names, places and identifiers, and lower-case or foreign-script names are not found. The disclosure keeps asking users not to type names or contact details. A miss found later is a ratchet-log entry and a new case, not a silent change. |
+
+### RF-28 Patient-held visit summary (v0.4 addition, `PROPOSED`)
+
+Sanad keeps no memory between visits: each visit is a new anonymous case, and assessment consent does not cover long-term tracking. A returning user should still not have to start from nothing. This requirement gives memory without server retention: at the end of a visit the user may download a summary of their structured answers, keep it, and upload it at their next visit. The server stores nothing extra, and an uploaded summary is the user's claim, `USER_UPLOADED` and unverified. Change control: [CC-019](change-log.md#cc-019-patient-held-visit-summary).
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-28.1 | `GET /cases/{id}/summary-file` (patient token for the case, active `assessment` consent) returns a JSON file in the existing `sanad-profile-0.1` upload format with `is_synthetic: true`, the case's current intake answers as `responses` and its lab values as `observations`, plus a `summary_of` block holding the export date and the question catalogue version. It holds no case ID, token, name, free text, chat text, model output or audit data. |
+| AC-28.2 | Emergency-screen concepts (sudden scrotal pain, fever with swelling, scrotal trauma) are never exported, so they are asked fresh at every visit. Psychosocial self-reports and closed-loop progress are never exported (INV-15, INV-16). |
+| AC-28.3 | Where a concept holds several current values (`CONFLICTING`), the export keeps the most recent `PATIENT_REPORTED` value, else the most recent value. `UNKNOWN` and `DECLINED` are exported as states, never as No (INV-05). |
+| AC-28.4 | The download is the user's choice. The summary page explains that the file holds health answers, that Sanad does not keep a copy, and that it should be kept private. Nothing is downloaded automatically. |
+| AC-28.5 | The existing upload start (RF-02) accepts the file, including `summary_of`. Its answers load as `USER_UPLOADED`, unverified, and the rules re-run on them in full (HR-12). The user sees them marked as from an uploaded file and can change any of them. |
+| AC-28.6 | When a concept has both an uploaded value and a newer `PATIENT_REPORTED` value that differs, the reviewer's decision record lists it under `changes_since_summary` with both values and their sources. Code computes the list; no model judges whether anything improved or worsened, and nothing labels a change as clinical progress (INV-08). |
+| AC-28.7 | Export writes a `SUMMARY_EXPORTED` audit entry with counts only (responses, observations), never values. |
 
 ## 8. Invariants
 
@@ -719,5 +742,6 @@ Each has a working default, so work need not stop. A named owner must confirm it
 | OD-15 | What accuracy threshold must a model task pass in the RF-23 harness before it may be enabled in a demo? | 0.90 on the synthetic set, with zero unsafe conversions. The threshold is an engineering default, not a clinical one. | Tech Lead + QA | PRD-FR-18, NFR-14 |
 | OD-16 | Should a decision model be tried as a cheaper, faster provider for choice-shaped tasks? | Yes, locally first: Laya under RF-25, enabled in a demo only if its scorecard has zero unsafe conversions and accuracy at least equal to Azure OpenAI on the same cases. Hosted Jev: dropped by the team 2026-11-14 (CC-014 withdrawn). | Tech Lead + Security | CC-015 |
 | OD-17 | Under which licence are the Laya weights distributed, and may the team use them in a public demo? | Unknown. The code is Apache-2.0; the weight licence is not stated on the pages read. Use for local evaluation only until confirmed. The vegaml reader and its Qwen3.5-0.8B backbone are tagged Apache-2.0 on the Hub (read 2026-11-14), not yet confirmed by Legal. | Tech Lead + Legal | CC-015, CC-017 |
+| OD-20 | Should Sanad keep anything between visits on the server (an account or a return code)? | No for now. Memory is the patient-held summary of RF-28; any server retention needs a consent scope, a retention period and a deletion path (TBD-04, TBD-19). | Product + Security + Legal | CC-019 |
 | OD-19 | Should identifiers in typed text be redacted and sent, or always blocked? | Combined: block contact details, ID numbers and street addresses; redact names and full dates and send the rest (RF-27). Engineering default pending Security review. | Security + Tech Lead | CC-018 |
 | OD-18 | Who reviews the labelled rows for the fitted decision head, and how many per question are enough? | A team member other than the author reviews every row before a fit. Draft: at least 30 rows per supported question and the minimum `fit` demands, covering negation, past and current, not sure, declined and off-topic. Engineering default, `TECH_TBD`. | Tech Lead + QA | CC-017 |

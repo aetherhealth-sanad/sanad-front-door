@@ -318,6 +318,18 @@ Automated tests go in `apps/api/tests/test_laya_adapter.py`. They replace the `l
 | TC-25.12 | U | B | Rows file check: every row parses, has the AC-25.13 fields, names a supported question and a label AC-25.4 builds for it, and no normalised text equals an RF-23 case text. Skipped until the file exists. | D |
 | TC-25.13 | M | B | Manual: `eval/fit_decision_head.py` writes a fit report with rows hash, reader revision and `used_by_auto`; the RF-23 scorecard is then run with the calibration and recorded in the ratchet log whether it passes or fails. | M |
 
+### RF-28 Patient-held visit summary (`PROPOSED`)
+
+| ID | Level | Layer | What it checks | Data |
+|---|---|---|---|---|
+| TC-28.1 | A | B | The export for a case with answers and a lab value validates against `schemas/upload-profile.schema.json`, holds `summary_of`, and contains no case ID or token; a patient token for another case gets 404, and no `assessment` consent gets 403. | S |
+| TC-28.2 | A | B | A case whose safety check answered No exports no emergency-screen concept and no psychosocial item. | S |
+| TC-28.3 | U | B | A concept with a fixture value and a newer patient answer exports the patient answer; `UNKNOWN` and `DECLINED` export as states. | S |
+| TC-28.4 | A | B | Round trip: a new case started by upload with the exported file holds the same answers as `USER_UPLOADED`, and the rules re-run. | S |
+| TC-28.5 | A | B | After round trip, a changed patient answer appears in the decision record's `changes_since_summary` with both values; an unchanged one does not. | S |
+| TC-28.6 | A | B | Export writes `SUMMARY_EXPORTED` with counts only. | S |
+| TC-28.7 | M | W | Manual: the summary page offers the download with the privacy note; nothing downloads on its own. | M |
+
 ### RF-27 Identifier blocking and redaction (`PROPOSED`)
 
 | ID | Level | Layer | What it checks | Data |
@@ -340,6 +352,7 @@ Automated tests are in `apps/api/tests/test_decision_record.py`. They check that
 | TC-24.2 | A | B | Reading the detail twice makes no model call, writes no audit entry and leaves `case_version` and the report hash unchanged. | S |
 | TC-24.3 | A | B | A field answered `UNKNOWN` stays `UNKNOWN`, and a field with disagreeing sources lists every value with its source under `CONFLICTING`. | S |
 | TC-24.4 | A | B | `GET /cases/{id}/report` has no `decision_record` field, and a patient token gets 403 on the reviewer detail. | S |
+| TC-24.4b | A | B | AC-24.5: a case with a skipped question and a declined one lists both under `limitations` with their states; no field in the record holds a percentage. | S |
 
 ### RF-23 Model evaluation harness, budget and run metrics (`PROPOSED`)
 
@@ -357,6 +370,11 @@ Automated tests go in `apps/api/tests/test_model_eval.py` and `apps/api/tests/te
 | TC-23.8 | A | B | When the provider reports usage, `MODEL_TASK_RUN` holds `input_tokens` and `output_tokens` and no model text. | S |
 | TC-23.9 | A | B | `GET /evaluation/model-runs` with a reviewer token returns per-task counts, status and outcome counts, latency p50 and p95, token totals and budget refusals, and no case ID or text; a patient token gets 403 and no token gets 401. | S |
 | TC-23.10 | A | B | With default settings the replay CI job and the metrics endpoint build no model client. | S |
+| TC-23.11 | U | B | The intake case file has at least one case for each jailbreak tag, each expecting a fallback or `NEEDS_CORRECTION`; replay scores them with zero unsafe conversions. | D |
+| TC-23.12 | U | B | A run equal to the baseline passes; one with lower accuracy beyond tolerance, or one more unsafe conversion or PII leak, fails and names the task. | D |
+| TC-23.13 | U | B | Every task ID constant in `sanad_api.model_adapter` and every provider name has a heading in `specs/model-task-policies.md`. | D |
+| TC-23.14 | M | W | Manual: as reviewer, the metrics panel shows the counts and latency returned by the endpoint and the `NOT_CLINICALLY_VALIDATED` label; as patient, it is absent. | M |
+| TC-23.15 | U | B | With a stub judge: agreement below 0.80 on the calibration set stops the run with no scores reported; at or above 0.80 the explanations are scored and every score has a reason. | D |
 
 ### RF-22 Pinned citations and grounded explanation (`PROPOSED`)
 
@@ -374,6 +392,7 @@ Automated tests are in `apps/api/tests/test_citations.py`. They copy the catalog
 | TC-22.8 | A | B | Disabled provider, no curated passage, reviewer-edited next step, timeout and adapter exception each return a 200 `FALLBACK` with the static text and the matching reason code. | S |
 | TC-22.9 | A | B | A valid reply returns `AI_DRAFT` with the label, provider and unverified flags, and one `MODEL_TASK_RUN` audit entry with codes only. | S |
 | TC-22.10 | A | B | With default settings the endpoint returns `FALLBACK` `MODEL_DISABLED` and builds no client. | S |
+| TC-22.11 | U | B | Stored replies with "you have", "definitely", an email address, a seven-digit number and `[NAME]` each give `OUTPUT_POLICY_BLOCKED`; a reply with a missing field still gives `MODEL_OUTPUT_INVALID`. | D |
 
 ### RF-21 Chat intake and bounded model adapter (`PROPOSED`)
 
@@ -393,6 +412,7 @@ Automated tests are in `apps/api/tests/test_chat.py` and `apps/api/tests/test_mo
 | TC-21.10 | A | B | `GET /chat/assistant` shows the scripted label with typing off by default, and names the provider and disclosure when on. | S |
 | TC-21.11 | U | B | Azure adapter: deployment as `model`, strict `json_schema`, retries only transient errors within attempts and deadline, no retry on content filter or 4xx, filtered, truncated and refused completions give no content, v1 base URL, bad settings stop start-up without echoing the key. | S |
 | TC-21.12 | U | B | With default settings the app holds the disabled adapter, which never reaches the network. | S |
+| TC-21.13 | U | B | `SANAD_HOSTED=true` with `api_key` raises a configuration error naming `SANAD_HOSTED`; with `entra_id` it builds the adapter with a token provider; locally `api_key` still works. | S |
 | TC-21.13 | E | — | Chat at `/intake`: buttons, opt-outs and skip; typed proposal confirm and reject; emergency sentence replaces the page with `/urgent.html`; works at 360 px; keyboard only. Not yet automated (no Playwright suite). | S |
 | TC-21.14 | M | — | Against a real Azure deployment with synthetic text: a smoke run of J1 by typing, plus a content-filter and timeout check. Record region, deployment type, model version and abuse-monitoring status. | S |
 
