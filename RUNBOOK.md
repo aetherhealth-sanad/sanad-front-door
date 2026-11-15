@@ -252,7 +252,7 @@ npm run preview
 
 ## Deploy to Azure Container Apps (manual)
 
-T1.4, `TECH_TBD`. The deploy target (OD-05) is not yet decided, and this is a manual deploy, not the deploy-on-merge that AC-01.4 asks for. Synthetic data only: do not enter real health information in a hosted demo.
+T1.4, `TECH_TBD`. The deploy target (OD-05) is not yet decided, and this is a manual deploy, not the deploy-on-merge that AC-01.4 asks for. Synthetic data only: do not enter real health information in a hosted demo. What happened on the first deploy, the problems hit and what is still unverified are recorded in [specs/azure-container.md](specs/azure-container.md).
 
 Two container apps share one environment:
 
