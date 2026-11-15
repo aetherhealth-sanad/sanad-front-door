@@ -1,0 +1,47 @@
+# Sanad web server (T1.4). The nginx image fills in ${API_HOST} when the container starts;
+# nginx's own $variables are left as they are.
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+
+    # Invariant 10: keep logs thin. Request paths carry case IDs.
+    access_log off;
+
+    # Take the client address from the last X-Forwarded-For entry, which the Azure Container Apps
+    # ingress adds. Earlier entries come from the client and can be forged.
+    set_real_ip_from 0.0.0.0/0;
+    real_ip_header X-Forwarded-For;
+    real_ip_recursive off;
+
+    # Above the API's own 256 KB upload limit, so oversized files get the API's error code.
+    client_max_body_size 2m;
+
+    # Same-origin API. Host must be the API app's name, or the Container Apps router returns 404.
+    location ~ ^/(api/|version$) {
+        proxy_pass http://${API_HOST};
+        proxy_set_header Host ${API_HOST};
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        # Invariant 11: API responses are never cached.
+        proxy_hide_header Cache-Control;
+        add_header Cache-Control "no-store" always;
+    }
+
+    # Uncomment to hide the interactive API docs on a public demo (azure-service-guide §3).
+    # location ^~ /api/docs { return 404; }
+    # location = /api/openapi.json { return 404; }
+
+    # Always revalidate, so a new deploy replaces the cached shell and service worker (AC-05.6).
+    location = /sw.js      { add_header Cache-Control "no-cache"; }
+    location = /index.html { add_header Cache-Control "no-cache"; }
+
+    # A missing asset is a 404, not the app shell, so the service worker never precaches HTML
+    # under an asset name and a stale page gets a clear error for an old bundle.
+    location /assets/ {
+        try_files $uri =404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
