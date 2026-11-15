@@ -20,6 +20,7 @@ from sanad_api.audit.models import AuditEvent
 from sanad_api.catalogues import Catalogues
 from sanad_api.facts.service import ConceptView, decode_value
 from sanad_api.intake.service import AssessmentContext
+from sanad_api.intake.summary import changes_since_upload
 from sanad_api.observations.service import observation_out
 from sanad_api.reports.models import Draft
 
@@ -139,6 +140,7 @@ def build(
             ctx.views, [q.concept_code for q in catalogues.questions.questions]
         ),
         "rules_approval_status": proposal["approval_status"],
+        "changes_since_summary": changes_since_upload(db, case_id),  # AC-28.6
         "report_hash": draft.report_hash,
         "built_at": now,
     }
