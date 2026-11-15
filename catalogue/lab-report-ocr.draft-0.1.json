@@ -1,0 +1,95 @@
+{
+  "catalogue_id": "lab-report-ocr",
+  "catalogue_version": "lab-report-ocr-draft-0.1",
+  "layout_id": "synthetic-semen-report-v1",
+  "approval_status": "CLINICAL_TBD",
+  "status_note": "Fields T-60 reads from one synthetic semen analysis report layout. Plausibility bounds catch reading errors such as a lost decimal point; they are wide on purpose and are NOT reference limits, and nothing here says whether a value is normal. Unit spellings map to one canonical spelling with no numeric conversion. Bounds and spellings are TECH_TBD and need BA review. target_test_code is null where the lab catalogue has no test code yet: those values are read and shown for confirmation but cannot be stored until BA adds a code (OD-20).",
+  "synthetic_banner": "SYNTHETIC DATA. Not a real person.",
+  "report_id_label": "Report ID",
+  "report_id_prefix": "SYN-",
+  "date_field": {
+    "field_id": "collection_date",
+    "labels": ["Collection date", "Date of collection", "Collected"]
+  },
+  "motility_sum": {
+    "field_ids": ["progressive_motility", "non_progressive_motility", "immotile"],
+    "total": 100,
+    "tolerance": 1,
+    "status": "TECH_TBD",
+    "note": "PR, NP and IM are the three parts of one count, so a reading that breaks the total is flagged. Nothing is computed from them."
+  },
+  "fields": [
+    {
+      "field_id": "volume",
+      "labels": ["Volume", "Semen volume"],
+      "canonical_unit": "mL",
+      "unit_spellings": ["mL", "ml"],
+      "plausible_min": 0,
+      "plausible_max": 20,
+      "target_test_code": "VOLUME_PLACEHOLDER"
+    },
+    {
+      "field_id": "ph",
+      "labels": ["pH"],
+      "canonical_unit": null,
+      "unit_spellings": [],
+      "plausible_min": 0,
+      "plausible_max": 14,
+      "target_test_code": null
+    },
+    {
+      "field_id": "concentration",
+      "labels": ["Sperm concentration", "Concentration"],
+      "canonical_unit": "million/mL",
+      "unit_spellings": ["million/mL", "10^6/mL", "x10^6/mL", "×10^6/mL", "10⁶/mL", "x10⁶/mL", "×10⁶/mL", "M/mL"],
+      "plausible_min": 0,
+      "plausible_max": 1000,
+      "target_test_code": "CONCENTRATION_PLACEHOLDER"
+    },
+    {
+      "field_id": "total_count",
+      "labels": ["Total sperm count", "Total count", "Total sperm number"],
+      "canonical_unit": "million",
+      "unit_spellings": ["million", "10^6", "x10^6", "×10^6", "10⁶", "10^6/ejaculate", "x10^6/ejaculate", "million/ejaculate"],
+      "plausible_min": 0,
+      "plausible_max": 5000,
+      "target_test_code": null
+    },
+    {
+      "field_id": "progressive_motility",
+      "labels": ["Progressive motility (PR)", "Progressive motility", "PR"],
+      "canonical_unit": "%",
+      "unit_spellings": ["%"],
+      "plausible_min": 0,
+      "plausible_max": 100,
+      "target_test_code": "PROGRESSIVE_MOTILITY_PLACEHOLDER"
+    },
+    {
+      "field_id": "non_progressive_motility",
+      "labels": ["Non-progressive motility (NP)", "Non-progressive motility", "NP"],
+      "canonical_unit": "%",
+      "unit_spellings": ["%"],
+      "plausible_min": 0,
+      "plausible_max": 100,
+      "target_test_code": null
+    },
+    {
+      "field_id": "immotile",
+      "labels": ["Immotile (IM)", "Immotile", "IM"],
+      "canonical_unit": "%",
+      "unit_spellings": ["%"],
+      "plausible_min": 0,
+      "plausible_max": 100,
+      "target_test_code": null
+    },
+    {
+      "field_id": "normal_forms",
+      "labels": ["Normal forms", "Normal morphology"],
+      "canonical_unit": "%",
+      "unit_spellings": ["%"],
+      "plausible_min": 0,
+      "plausible_max": 100,
+      "target_test_code": "MORPHOLOGY_PLACEHOLDER"
+    }
+  ]
+}

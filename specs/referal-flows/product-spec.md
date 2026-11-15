@@ -70,6 +70,7 @@ The original brief is quoted so reviewers can check the interpretation. Rows mar
 | RF-15 | *Implied by* "hoàn thiện J2, J3" | J3 manual lab entry | M3 |
 | RF-16 | *Implied by* "hoàn thiện J2, J3" | J2 selective evidence (exploratory) | M3 |
 | RF-17 | Mọi chỗ giả lập phải ghi rõ là "Mock" để không nhầm với dữ liệu thật. | Mock labelling across the app | M2, M3 |
+| RF-27 | *Added 2026-11-14 by task assignment, rescoped 2026-11-15 to task brief T-60* (OCR one synthetic lab report, GitHub issue #103). Parent contracts: PRD-FR-13 (stretch), BRD FR-13 (P2). `PROPOSED`, CC-017. | OCR one synthetic lab report with local engines and user confirmation | v0.4 additions, pending review |
 | RF-26 | Add bounded deterministic harness controls, optional redacted observability and read-only authoring-time MCP. | Harness controls proposal (CC-016); no runtime model calls or new clinical rules | Post-M3, pending review |
 | RF-21 | *Added 2026-11-08 by change request* (chat intake using Azure OpenAI, UX flow v0.3 step 4). Parent contracts: PRD-FR-04, PRD-FR-37, PRD 4.7.1–4.7.2. `PROPOSED`, CC-011 and CC-012. | Chat intake with a bounded model adapter | v0.4 additions |
 
@@ -87,7 +88,7 @@ RF-18 to RF-20 are not used, because `TC-18.*` to `TC-20.*` already name the PRD
 ### 3.2 Out of scope
 
 - Real referrals, real clinics, booking, payments, FHIR or EHR links, and any outbound message other than RF-21's optional model request.
-- LLM or SLM tasks other than RF-21's answer matching, RAG, knowledge registry and OCR. PDF or image upload is excluded with them.
+- LLM or SLM tasks other than RF-21's answer matching, RAG, knowledge registry and OCR. PDF or image upload is excluded with them. RF-27 proposes one exception, a synthetic lab report read by a local engine (`PROPOSED`, CC-017); it stays excluded from the patient flow until CC-017 is approved.
 - Arabic and RTL, reminders and notifications, spouse sharing features, and care plans.
 - J6, J7 and J8.
 
@@ -478,6 +479,29 @@ This requirement covers the chat at `/intake` only. The full session dashboard i
 | AC-21.11 | The Azure OpenAI adapter uses the v1 API (`/openai/v1/`, no `api-version`), the deployment name as `model`, and strict structured output. It retries timeouts, connection errors, 429 and 5xx within one deadline and a maximum number of attempts, never retries a content-filter block or another 4xx, and treats a filtered, truncated or refused completion as no answer. A missing or invalid setting stops start-up with a message that repeats no secret. |
 | AC-21.12 | With default settings the API builds no model client and makes no model call (INV-01). |
 
+### RF-27 OCR one synthetic lab report (T-60, v0.4 addition, `PROPOSED`)
+
+Sanad reads one synthetic semen analysis report, as a PDF or a picture, in one English layout. For each of nine fields (volume, pH, sperm concentration, total sperm count, progressive, non-progressive and immotile motility, normal forms, collection date) it returns the value, unit, raw text, bounding box, a confidence and ambiguity flags. Nothing is applied: the user confirms or edits each value on the lab-entry screen (T-33), and the rules read confirmed values only. The reader never interprets a value. Task brief: T-60 (Tech Lead). Design: [OCR one synthetic lab report](../ocr-lab-report.md). PRD mapping: PRD-FR-13, PRD-FR-12, NFR-19. BRD mapping: FR-13, BR-03, BR-15, BR-17. Harness: HR-04, HR-23. Change control: [CC-017](change-log.md#cc-017-synthetic-profile-document-import-with-local-ocr). GitHub issue #103.
+
+AC-27.1 to AC-27.13 cover the reader and its evaluation and add no endpoint. AC-27.14 changes the upload contract and waits for CC-017.
+
+| ID | Acceptance criterion |
+|---|---|
+| AC-27.1 | Only PDF, PNG or JPEG is opened, identified by content, within the size, page and pixel limits. Anything else is refused with a reason code. |
+| AC-27.2 | A report is read only when every page carries the synthetic banner and the report ID starts with `SYN-`. Otherwise `DOCUMENT_NOT_SYNTHETIC` and no field. |
+| AC-27.3 | A page with a text layer is read from it. A page without one goes through a local OCR engine (Tesseract or PaddleOCR models). Each field records the method. |
+| AC-27.4 | (T-60 A1) On `lab_A` every field is returned with value, unit, raw text, bounding box (page, x, y, width, height) and confidence, and no flag. |
+| AC-27.5 | (T-60 B1) The OCR path runs on `lab_B`. Every wrong field is flagged or `NEEDS_CONFIRMATION`; silent errors are 0. The T-60 baseline failures (`2.5 mL` as `25 mt`, `7.4` as `74`, `10^6` as `1076`) are caught even from a confident engine. |
+| AC-27.6 | (T-60 C1) On `lab_C` a missing unit gives `UNIT_MISSING`, a decimal comma is normalised and flagged `DECIMAL_SEPARATOR_UNCLEAR`, and the `dd/mm/yy` date gives `DATE_FORMAT_AMBIGUOUS`, each with `NEEDS_CONFIRMATION`. |
+| AC-27.7 | Confidence is the lowest of the OCR, parse and plausibility scores. Low confidence or any flag gives `NEEDS_CONFIRMATION`; every other field is `UNCONFIRMED`. The reader confirms nothing. |
+| AC-27.8 | A blank, missing, unreadable or duplicated field stays empty with a flag and asks the user. Nothing is guessed, corrected, converted or computed from other values. |
+| AC-27.9 | (T-60 U1) Values from the reader enter only as `NEEDS_USER_CONFIRMATION` observations and do not reach the rules until confirmed. See OD-23 for the report output. |
+| AC-27.10 | File content is data. Instruction-like text changes nothing. |
+| AC-27.11 | Logs hold reason codes and hashes only, never text or values. |
+| AC-27.12 | With the default install there is no OCR engine: a scan returns `OCR_UNAVAILABLE` and a text-layer PDF still works. Engines run locally and make no network call. The emergency modules do not import the reader. |
+| AC-27.13 | (T-60 E1) The evaluation report states `run_id`, commit SHA, `n`, layouts, the acceptance checks, and per engine silent errors first, then field accuracy, date accuracy and flag recall. It is a fixture result, never real-world or clinical accuracy. |
+| AC-27.14 | Endpoint and T-33 screen: the read-only extraction endpoint writes nothing; the screen shows each value with its flags and box and Confirm and Edit; the file and page image stay in memory, are cleared at session end and Quick Exit, and use no `localStorage` or IndexedDB (T-60 requirement 9). |
+
 ## 8. Invariants
 
 These hold on every screen and API call. Each one has a test in the test plan.
@@ -596,6 +620,7 @@ The brief and the parent documents differ in these places. The right column is w
 | R15 | §3.2 put every LLM task out of scope, and INV-01 forbade any model call. PRD-FR-37 (Must) and PRD-FR-04 call for a bounded model adapter for extraction and catalogue-bounded questions. | RF-21 adds one task, answer matching, off by default and confirmed by the user. INV-01 is amended. **CC** (CC-011) |
 | R16 | The `assessment` consent text says data is seen by "Only this session". RF-21's optional model call sends typed text to an outside service. | No consent scope or text is changed here. Typing stays off unless an operator enables it, and the user must read a just-in-time disclosure naming the provider before typing. Revising the consent text needs Product, Security and Legal approval. **CC** (CC-011) |
 | R17 | Typed text needs the stage 2a emergency check (PRD-FR-03, GOLD IG-01), but no approved word patterns exist. | Draft patterns that only restate the three existing draft triggers, labelled `CLINICAL_TBD` and simulated. **CC** (CC-012) |
+| R18 | R1 keeps upload to synthetic JSON, and §3.2 excludes OCR and PDF or image upload. PRD-FR-13 lists OCR of a synthetic report as a stretch item, and task brief T-60 asks for it now. | RF-27 reads one synthetic lab report layout with a local engine, returns a draft, and stores confirmed values in the case store through the existing endpoints. Nothing goes to pgvector, which holds approved source text only (OD-18). **CC** (CC-017) |
 
 ## 11. Open decisions
 
@@ -617,3 +642,9 @@ Each has a working default, so work need not stop. A named owner must confirm it
 | OD-12 | Who approves the **CC** items in §10? | Pending, marked `PROPOSED` | Tech Lead + Product | Change control |
 | OD-13 | Is the RF-21 model provider enabled in the demo, and which Azure region, deployment type and model? | Disabled. Typing is off until enabled, and the buttons work alone. If enabled: a Standard (regional) deployment in the resource's geography, a model that supports structured outputs, abuse-monitoring status recorded. | Tech Lead + Security | OQ-09, OQ-31, TBD-06 |
 | OD-14 | Who approves the emergency word patterns for typed text, and are they needed in Arabic? | Nobody yet. English only, shown as simulated, and text in other scripts is never sent on. | Clinical + Localization | OQ-30, OD-02 |
+| OD-18 | The RF-27 task was described as storing the result in pgvector. What would a vector of profile data be used for? | Not stored in pgvector. Confirmed values go to the case store. Embedding case data needs its own change control, a separate store, a stated query and a deletion path. | Tech Lead + Security | [MCP context design](../mcp-context-design.md) §2, CC-017 |
+| OD-19 | Which printed unit spellings mean the same unit (`10^6/mL`, `x10^6/mL`, `×10^6/mL`, `million/mL`)? | The spellings in `catalogue/lab-report-ocr.draft-0.1.json` map to one canonical spelling with no numeric change. `TECH_TBD`. | BA + Clinical | AC-15.2, T-60 |
+| OD-20 | T-60 reads pH, total sperm count, NP and IM, which have no lab catalogue code. Add codes? | Read and shown for confirmation, not stored. New codes need taxonomy change control. | BA + Clinical | BRD §17, T-60 |
+| OD-21 | What are the RF-27 size, page and pixel limits, the confidence threshold and the plausibility bounds? | 5 MB, 5 pages, 0.90, bounds in the design §4. All `TECH_TBD`. | Tech Lead + QA | PRD-FR-13 |
+| OD-22 | Is a new `SourceType` needed for a value read from a document? | No. `USER_UPLOADED` is used and the audit event records the method. | Backend + Product | BRD §17 |
+| OD-23 | T-60 U1 says unconfirmed values must not appear in the report output. The patient report (RF-15) lists held lab values with `used_in_assessment: false`. Which wins? | The rules ignore unconfirmed values (TC-27.9). The report is not changed until decided. | Tech Lead + Product | T-60, AC-15.3 |

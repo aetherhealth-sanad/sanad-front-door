@@ -28,6 +28,23 @@ dev = [
     "mypy>=1.11",
     # Adapter tests use the SDK's own error and response types. They make no network call.
     "openai>=3.40,<4",
+    # RF-27 / T-60 tests read synthetic lab report PDFs. reportlab only draws test documents.
+    "pdfplumber>=0.11",
+    "reportlab>=4.2",
+]
+# RF-27, T-60, CC-017 (PROPOSED): reads the text layer of a synthetic lab report PDF. No
+# endpoint uses it yet.
+documents = [
+    "pdfplumber>=0.11",
+]
+# RF-27, T-60 (PROPOSED): local OCR for a page with no text layer. Off unless installed and
+# passed to the extractor. The models ship in the package; reading makes no network call.
+# numpy straightens scanned pages. Tesseract, the baseline engine, is a system package.
+ocr = [
+    "pdfplumber>=0.11",
+    "rapidocr>=3.10,<4",
+    "onnxruntime>=1.20",
+    "numpy>=2",
 ]
 observability = [
     "langfuse>=5,<6",
@@ -70,5 +87,5 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 
 [[tool.mypy.overrides]]
-module = ["jsonschema.*"]
+module = ["jsonschema.*", "pdfplumber.*", "pypdfium2.*", "reportlab.*", "rapidocr.*"]
 ignore_missing_imports = true
