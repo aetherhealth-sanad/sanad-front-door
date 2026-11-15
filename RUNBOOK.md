@@ -177,6 +177,17 @@ With `SANAD_AZURE_OPENAI_AUTH=entra_id`, the API uses `DefaultAzureCredential` (
 
 To turn typing off again, set `SANAD_MODEL_PROVIDER=disabled` in `apps/api/.env` (or remove the line). Emergency handling, consent and the rules never depend on this setting.
 
+### Entra ID instead of an API key (recommended)
+
+API keys are long-lived secrets; Entra ID uses short-lived tokens. Install the extra and sign in:
+
+```powershell
+apps/api/.venv/Scripts/python -m pip install -e "apps/api[azure]"
+az login   # locally; a hosted deployment uses its managed identity instead
+```
+
+Give your identity the **Cognitive Services OpenAI User** role on the Azure resource, then set `SANAD_AZURE_OPENAI_AUTH=entra_id` and leave `SANAD_AZURE_OPENAI_API_KEY` empty. A hosted deployment sets `SANAD_HOSTED=true`, which refuses `api_key` at start-up (AC-21.13).
+
 ## Optional: local decision model (Laya) for answer matching
 
 RF-25, CC-015 (`PROPOSED`). Laya returns a typed choice with probabilities and writes no text. It runs on the API host, so typed chat text does not leave the machine. It handles yes/no and choice questions only; number questions fall back to the buttons. The weight licence is not yet confirmed (OD-17), so use it for local evaluation only.
@@ -192,7 +203,7 @@ $env:USE_TF = "0"
 $env:HF_HUB_OFFLINE = "1"
 ```
 
-On Apple Silicon, `pip install laya-mlx` and `SANAD_LAYA_BACKEND=auto` (or `mlx`) use the MLX port instead. Compare providers on the same synthetic cases with `python eval/run_model_eval.py --provider laya_local` and `--provider azure_openai`; enable Laya in a demo only if its scorecard shows zero unsafe conversions (OD-15, OD-16).
+On Apple Silicon, install the default `torch` build instead of the CPU wheel; PyTorch uses MPS. The `laya-mlx` port is not supported. Compare providers on the same synthetic cases with `python eval/run_model_eval.py --provider laya_local` and `--provider azure_openai`; enable Laya in a demo only if its scorecard shows zero unsafe conversions (OD-15, OD-16).
 
 ### Fitted head with the vegaml engine (T4.11, CC-017)
 

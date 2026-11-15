@@ -313,6 +313,22 @@ def evaluate(
     }
 
 
+def drift(baseline: dict[str, Any], card: dict[str, Any], *, tolerance: float) -> list[str]:
+    """AC-23.12: what got worse than the stored scorecard. Empty means no drift."""
+    problems = []
+    for task_id, base in baseline["tasks"].items():
+        now = card["tasks"].get(task_id)
+        if now is None:
+            continue
+        was, got = base.get("accuracy"), now.get("accuracy")
+        if was is not None and got is not None and got < was - tolerance:
+            problems.append(f"{task_id}: accuracy {got} < baseline {was} - {tolerance}")
+        for key in ("unsafe_conversions", "pii_leaks"):
+            if now.get(key, 0) > base.get(key, 0):
+                problems.append(f"{task_id}: {key} {now[key]} > baseline {base.get(key, 0)}")
+    return problems
+
+
 def _peak_rss_mb() -> float | None:
     """Peak resident memory of this process, for the scorecard's host line (AC-25.9)."""
     if sys.platform == "win32":
@@ -400,6 +416,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--min-accuracy", type=float, default=0.90)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument("--baseline", type=Path, help="stored scorecard to compare with")
+    parser.add_argument("--tolerance", type=float, default=0.02)
     args = parser.parse_args(argv)
 
     if args.provider == "replay":
@@ -421,7 +439,12 @@ def main(argv: list[str] | None = None) -> int:
         }
     print(markdown(card))
     print(f"Written: {write(card, args.out)}")
-    return 0 if card["passed"] else 1
+    problems = []
+    if args.baseline:
+        baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
+        problems = drift(baseline, card, tolerance=args.tolerance)
+        print("Drift against baseline:", "; ".join(problems) or "none")
+    return 0 if card["passed"] and not problems else 1
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ModelRunsSummary } from '../api/client';
 import { api, type NavigationFunnel } from '../api/client';
 import { MockBadge } from '../components/MockBadge';
 import questionCatalogue from '../../../../catalogue/questions.draft-0.1.json';
@@ -57,6 +58,13 @@ interface DecisionRecord {
   model_runs: Array<{ task_id: string; status: string; outcome: string | null; at: string }>;
   report_hash: string;
   built_at: string;
+  limitations?: Array<{ concept_code: string; state: string }>;
+  rules_approval_status?: string;
+  changes_since_summary?: Array<{
+    concept_code: string;
+    before: { state: string; value: unknown; temporal_status: string | null; source_type: string };
+    now: { state: string; value: unknown; temporal_status: string | null; source_type: string };
+  }>;
 }
 
 type ReviewDecision = 'APPROVE' | 'EDIT' | 'REJECT' | 'REQUEST_CLARIFICATION';
@@ -108,6 +116,7 @@ export const ClinicianPortal: React.FC = () => {
   const [editTriageAction, setEditTriageAction] = useState<ReviewableAction | ''>('');
   const [editSummary, setEditSummary] = useState('');
   const [funnel, setFunnel] = useState<NavigationFunnel | null>(null);
+  const [modelRuns, setModelRuns] = useState<ModelRunsSummary | null>(null);
   const [funnelError, setFunnelError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -177,6 +186,11 @@ export const ClinicianPortal: React.FC = () => {
     return () => {
       mounted = false;
     };
+  }, [authenticated]);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    api.getModelRuns().then(setModelRuns).catch(() => setModelRuns(null));
   }, [authenticated]);
 
   useEffect(() => {
@@ -389,6 +403,55 @@ export const ClinicianPortal: React.FC = () => {
         >
           {notice}
         </div>
+      )}
+
+      {/* AC-23.14: model run metrics, aggregates only */}
+      {modelRuns && (
+        <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-3">
+          <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-[#E2ECF8]">
+            <MockBadge label="MODEL RUNS · NOT_CLINICALLY_VALIDATED" />
+            <span className="text-xs text-[#64748B]">
+              {modelRuns.observed_scope}{modelRuns.synthetic_demo ? ' · synthetic demo' : ''}
+            </span>
+          </div>
+          {modelRuns.tasks.length === 0 ? (
+            <p className="text-xs text-[#64748B]">No model calls yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left text-[#475467]">
+                <thead className="text-[#0F172A]">
+                  <tr>
+                    <th className="py-1 pr-3">Task</th><th className="pr-3">Calls</th>
+                    <th className="pr-3">Fallback rate</th><th className="pr-3">Budget refusals</th>
+                    <th className="pr-3">p50 / p95 ms</th><th className="pr-3">Tokens in/out</th>
+                    <th>Outcomes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modelRuns.tasks.map(task => {
+                    const done = task.calls - task.budget_refusals;
+                    const proposals = (task.by_outcome.PROPOSAL ?? 0) + (task.by_outcome.AI_DRAFT ?? 0);
+                    const rate = done > 0 ? `${Math.round(((done - proposals) / done) * 100)}%` : '-';
+                    return (
+                      <tr key={task.task_id} className="border-t border-[#E2ECF8]">
+                        <td className="py-1 pr-3 font-mono">{task.task_id}</td>
+                        <td className="pr-3">{task.calls}</td>
+                        <td className="pr-3">{rate}</td>
+                        <td className="pr-3">{task.budget_refusals}</td>
+                        <td className="pr-3">{task.latency_ms.p50 ?? '-'} / {task.latency_ms.p95 ?? '-'}</td>
+                        <td className="pr-3">{task.tokens.input}/{task.tokens.output}</td>
+                        <td>{Object.entries(task.by_outcome).map(([k, v]) => `${k} ${v}`).join(' · ')}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="text-[11px] text-[#64748B]">
+            Operational counts from synthetic sessions. They describe the software, not clinical accuracy or safety.
+          </p>
+        </section>
       )}
 
       {/* Closed-Loop Evaluation Funnel */}
@@ -732,6 +795,26 @@ export const ClinicianPortal: React.FC = () => {
                         .map(([key, value]) => `${key} ${value}`)
                         .join(' · ')}
                     </p>
+                    <p>
+                      Not known or not asked:{' '}
+                      {(detail.decision_record.limitations ?? [])
+                        .map(item => `${item.concept_code} ${item.state}`)
+                        .join(' · ') || 'none'}{' '}
+                      · rules {detail.decision_record.rules_approval_status ?? 'CLINICAL_TBD'}
+                    </p>
+                    {(detail.decision_record.changes_since_summary ?? []).length > 0 && (
+                      <ul className="space-y-1">
+                        <li className="font-bold text-[#0F172A]">Changed since the uploaded summary (listed, not interpreted)</li>
+                        {(detail.decision_record.changes_since_summary ?? []).map(change => (
+                          <li key={change.concept_code}>
+                            <strong>{change.concept_code}</strong>: {String(change.before.value ?? change.before.state)}
+                            {change.before.temporal_status ? ` (${change.before.temporal_status})` : ''} →{' '}
+                            {String(change.now.value ?? change.now.state)}
+                            {change.now.temporal_status ? ` (${change.now.temporal_status})` : ''} from {change.now.source_type}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     <p className="break-all">Report hash {detail.decision_record.report_hash}</p>
                   </div>
                 </details>

@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -18,7 +19,7 @@ from pydantic import (
 )
 from sqlalchemy.orm import Session
 
-from sanad_api.audit.log import deny_transition
+from sanad_api.audit.log import AuditType, deny_transition, record
 from sanad_api.cases.guards import Action, PatientCase, guard
 from sanad_api.cases.state_machine import CaseEvent, CaseState, transition
 from sanad_api.cases.views import state_view
@@ -40,6 +41,7 @@ from sanad_api.facts.service import (
     write_fact,
 )
 from sanad_api.gatekeeper.service import QuestionNeed
+from sanad_api.intake import summary
 from sanad_api.intake.service import (
     MAX_UPLOAD_BYTES,
     apply_profile,
@@ -56,6 +58,37 @@ from sanad_api.schemas import CaseStateOut, RiskSignalOut, TriageProposalOut
 from sanad_api.vocab import SCREENING_NOTICE, EntryPath, FieldState, SourceType
 
 router = APIRouter(tags=["intake"])
+
+
+@router.get("/cases/{case_id}/summary-file")
+def export_summary(
+    pc: PatientCase = Depends(guard(Action.EXPORT_SUMMARY)),
+    db: Session = Depends(get_db),
+    clock: Clock = Depends(get_clock),
+    catalogues: Catalogues = Depends(get_catalogues),
+) -> JSONResponse:
+    """RF-28: the user's structured answers as a file they keep. Sanad keeps no copy."""
+    now = clock.now()
+    body = summary.build(db, pc.case.case_id, catalogues, now.date())
+    record(
+        db,
+        AuditType.SUMMARY_EXPORTED,
+        actor=pc.auth.actor,
+        now=now,
+        case_id=pc.case.case_id,
+        case_version=pc.case.case_version,
+        responses=len(body["responses"]),
+        observations=len(body["observations"]),
+    )
+    db.commit()
+    name = f"sanad-summary-{now.date().isoformat()}.json"
+    return JSONResponse(
+        body,
+        headers={
+            "Content-Disposition": f'attachment; filename="{name}"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 JSON_CONTENT_TYPES = {"", "application/json", "text/json", "text/plain", "application/octet-stream"}
 ANSWER_TYPES = {

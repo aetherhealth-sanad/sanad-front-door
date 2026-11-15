@@ -13,6 +13,8 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
+| 0.19 | 2026-11-15 | Harness hardening from the ProtonX reference review: AC-21.13 (hosted deployments refuse API-key auth), AC-22.11 (`OUTPUT_POLICY_BLOCKED`, certainty, identifier and placeholder checks on explanations; wording `CLINICAL_TBD`, amends CC-013), AC-23.11 to AC-23.15 (jailbreak cases, drift gate, policy cards, reviewer metrics panel, offline LLM-as-judge), AC-24.5 (`limitations`), RF-28 patient-held visit summary (AC-28.1 to AC-28.7), OD-20, CC-019, CC-020, T4.13 to T4.16, matching TC rows. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
+| 0.18 | 2026-11-15 | Dropped the `laya-mlx` backend from RF-25: AC-25.1 and TC-25.2 now name the `laya` (PyTorch) runtime only; `SANAD_LAYA_BACKEND` removed. Reason: never run on a team host or in CI, no pinned revision (against AC-25.2), and it serves only the zero-shot checkpoint that failed OD-15; Apple Silicon runs through PyTorch MPS instead. CC-015 item (2) narrows accordingly. No clinical rule, threshold, triage level, consent scope or data policy changed. | Drafted by Claude Code | Pending |
 | 0.17 | 2026-11-15 | T1.4 status updated: API and web Dockerfiles, nginx same-origin proxy and a manual Azure Container Apps deploy (UAE North) added and smoke-tested on the hosted URL. Deployment record and lessons learned in `specs/azure-container.md`, including the HTTP 426 fix (`proxy_http_version 1.1`) and open items. Not deploy-on-merge: AC-01.4, TC-01.4 and OD-05 remain open. No requirement, clinical rule, threshold, triage level, consent scope or data policy changed. | Drafted by Claude Code | Pending |
 | 0.16 | 2026-11-15 | Added RF-27 identifier blocking and redaction before a model call (AC-27.1 to AC-27.8, T4.12, TC-27.1 to TC-27.7, OD-19, CC-018); API design input checks and redaction step; reason code `TEXT_CONTAINS_IDENTIFIER`; response field `redacted_types`; audit fields `redactions`, `redaction_count`. Data policy change: needs Security review. No clinical rule, threshold or triage level changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
 | 0.15 | 2026-11-14 | AC-25.13 adds author `MODEL_DRAFTED_UNREVIEWED` and the `--allow-unreviewed` flag, so draft rows are never labelled as reviewed. T4.11 implemented; fitted scorecard recorded in the ratchet log (0.87, zero unsafe, below OD-15). | Drafted by Claude Code | Pending |
@@ -33,7 +35,35 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 ## Change-control records
 
-Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), CC-017 with version 0.13, and CC-018 with version 0.16.
+Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), CC-017 with version 0.13, CC-018 with version 0.16, and CC-019 and CC-020 with version 0.19.
+
+### CC-020 Offline LLM-as-judge on synthetic explanations
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Nothing implemented. |
+| **Reason** | RF-23 scores explanations by validator pass or fail only. Whether a passing explanation is grounded and plainly worded is not measured. The Evaluation Harness deck recommends a rubric judge checked against human labels. |
+| **Change** | An offline script under `eval/` that sends synthetic explanations and passages to the configured Azure OpenAI deployment with a rubric, after a calibration gate of 0.80 agreement with fixed labels (AC-23.15). |
+| **Data policy** | Synthetic text only, through the already configured provider (CC-011). Never runs in a patient session. |
+| **Clinical content** | None; the rubric restates existing rules (no diagnosis, no probability, stay on the released step). A judge score is not clinical validation. |
+| **Tests** | TC-23.15 |
+| **Approver** | Pending (Tech Lead + QA) |
+| **Version** | Spec 0.19 |
+
+### CC-019 Patient-held visit summary
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Nothing implemented. |
+| **Reason** | Returning users repeat every answer, and the reviewer cannot see what changed since an earlier visit. Server-side memory would need an account or a retention policy the BRD has not decided (BR-18, TBD-04, TBD-19). |
+| **Evidence** | BRD persona "Patient returning with results"; FR-21 longitudinal comparison (P2); ProtonX Memories deck (fact, episodic and summary memory; summarisation drift as the main risk, which is why the summary holds structured answers, not model text). |
+| **Change** | (1) A user-initiated export of structured answers and lab values in the existing upload format, excluding emergency-screen concepts, psychosocial items and progress. (2) An optional `summary_of` block in the upload schema. (3) Code-computed `changes_since_summary` for the reviewer. (4) `SUMMARY_EXPORTED` audit with counts. |
+| **Data policy** | The server keeps nothing new. The file leaves the server only to the user who asked for it, over the existing patient session. A re-uploaded file is the user's claim (`USER_UPLOADED`, unverified). |
+| **Clinical content** | None. No model judges improvement; changes are listed, not interpreted. |
+| **Affected journeys** | J1 to J5 at the summary page (export) and the upload start (import). |
+| **Tests** | TC-28.1 to TC-28.7 |
+| **Approver** | Pending (Product + Security; Legal for the privacy note) |
+| **Version** | Spec 0.19 |
 
 ### CC-018 Identifier blocking and redaction before a model call
 

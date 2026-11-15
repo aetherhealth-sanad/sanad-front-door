@@ -47,6 +47,7 @@ class Action(StrEnum):
     READ_QUESTIONS = "READ_QUESTIONS"
     READ_REPORT = "READ_REPORT"
     READ_TRACKING = "READ_TRACKING"
+    EXPORT_SUMMARY = "EXPORT_SUMMARY"  # RF-28
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,8 @@ ACTION_RULES: dict[Action, ActionRule] = {
     Action.SELECT_EVIDENCE: ActionRule((A.ASSESSMENT,), INTAKE_STATES),
     Action.ASSESS: ActionRule((A.ASSESSMENT,), INTAKE_STATES),
     Action.READ_QUESTIONS: ActionRule((A.ASSESSMENT,), INTAKE_STATES),
+    # RF-28: the user's own answers, in any state, while assessment consent holds.
+    Action.EXPORT_SUMMARY: ActionRule((A.ASSESSMENT,), None),
     # PENDING is allowed so that a repeat tap returns the same request (AC-07.4).
     Action.SEND_FOR_REVIEW: ActionRule(
         (A.ASSESSMENT, A.CLINICIAN_REVIEW), frozenset({S.ASSESSING, S.PENDING_CLINICIAN_REVIEW})

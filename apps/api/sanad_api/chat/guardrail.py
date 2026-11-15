@@ -81,6 +81,12 @@ def check(text: str) -> InputReason | None:
     return None
 
 
+def contains_identifier(text: str) -> bool:
+    """Contact details, ID numbers or addresses anywhere in the text (input or model output)."""
+    scan = _DATE.sub(" ", text)
+    return any(p.search(scan) for p in (_EMAIL, _LONG_NUMBER, _IDENTIFIER, _ADDRESS))
+
+
 def redact(text: str) -> Redaction:
     """AC-27.3: full dates become [DATE] and names [NAME]; everything else is kept."""
     found: list[str] = []
