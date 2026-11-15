@@ -95,7 +95,7 @@ The API limits new cases and logins per client IP (`sanad_api/auth/rate_limit.py
 - **The Azure CLI uses its own `.dockerignore` parser.** We confirmed the exclusions by running the CLI's own packing function locally and listing the archive. No `.env`, `.env.*`, `*.db`, `node_modules`, `.venv` or `.git` entries were included. One difference from Docker: `**/.DS_Store` did not match the file at the repository root, so `.dockerignore` also lists `.DS_Store`. Re-run that check if you change `.dockerignore`.
 - `az acr build` builds `linux/amd64` in Azure, so the Apple Silicon development Mac needed neither local Docker nor `--platform` flags.
 - The Mock staff passwords were generated on the developer's machine into `apps/api/.env.azure-demo`. That file is readable only by its owner, ignored by Git and excluded from the upload. The passwords are stored as Container Apps secrets referenced with `secretref:` and were never printed or pasted into a chat. Never reuse `run.sh`'s local default password for a hosted demo.
-- Secrets are Container Apps secrets, **not Key Vault**. The Azure service guide (§7) asks for managed identity and Key Vault; this deploy covers only the first.
+- Secrets are Container Apps secrets, **not Key Vault**. The Azure service guide (§7) asks for managed identity and Key Vault; this deploy covers only the first. Steps to move them: [azure-key-vault.md](azure-key-vault.md).
 
 ### 2.7 Image tags and `/version`
 
@@ -155,7 +155,7 @@ Against AC-01.4 and the Azure service guide's §7 checklist:
 | Emergency page works offline after the first load (AC-05.4) | Not tested in a browser on the hosted URL. |
 | Mock labels visible, consent-negative requests rejected, emergency rules work with optional services off (azure-service-guide §7) | Not checked on the hosted URL. The pytest suite covers the API behaviour; the hosted UI needs a manual pass. |
 | Interactive API docs (`/api/docs`, `/api/openapi.json`) | **Publicly reachable.** Uncomment the two `return 404` lines in the nginx template to hide them (azure-service-guide §3). |
-| Secrets in Key Vault | Not done; Container Apps secrets are used (§2.6). |
+| Secrets in Key Vault | Not done; Container Apps secrets are used (§2.6). Step-by-step guide, not yet run: [azure-key-vault.md](azure-key-vault.md). |
 | Log retention and log content review | 30 days is the workspace default, not a reviewed choice. API logs have not been reviewed for content in Azure. |
 | Health probes | No custom probes. `/version` is not used as a readiness probe yet. |
 | Durable storage | None. SQLite in the container, one replica (§2.1). PostgreSQL is not validated (azure-service-guide §3). |

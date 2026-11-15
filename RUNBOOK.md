@@ -330,7 +330,7 @@ WEB=$(az containerapp show -g $RG -n sanad-web --query properties.configuration.
 echo "https://$WEB"
 ```
 
-Keep the two passwords somewhere safe; they are the Mock Reviewer and Mock Facility sign-ins for the hosted demo.
+Keep the two passwords somewhere safe; they are the Mock Reviewer and Mock Facility sign-ins for the hosted demo. To keep them in Azure Key Vault instead, follow [specs/azure-key-vault.md](specs/azure-key-vault.md).
 
 **Check the deploy:**
 
