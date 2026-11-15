@@ -101,6 +101,7 @@ class Settings:
     decision_min_prob: float = 0.80  # TECH_TBD, set from the RF-23 scorecard
     laya_engine: str = "checkpoint"  # checkpoint or vegaml (AC-25.11, CC-017)
     laya_calibration: Path | None = None  # a save_calibration directory; vegaml only
+    hosted: bool = False  # AC-21.13: a hosted deployment refuses API-key auth
 
     @classmethod
     def from_env(cls, env_file: Path | None = None) -> Settings:
@@ -144,6 +145,7 @@ class Settings:
             laya_device=_str(env, "SANAD_LAYA_DEVICE"),
             decision_min_prob=_float(env, "SANAD_DECISION_MIN_PROB", cls.decision_min_prob),
             laya_engine=_str(env, "SANAD_LAYA_ENGINE") or cls.laya_engine,
+            hosted=(_str(env, "SANAD_HOSTED") or "").lower() in {"1", "true", "yes", "on"},
             laya_calibration=(
                 Path(cal) if (cal := _str(env, "SANAD_LAYA_CALIBRATION")) else None
             ),

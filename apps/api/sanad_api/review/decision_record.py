@@ -49,6 +49,20 @@ def facts_used(views: Mapping[str, ConceptView], concept_codes: Iterable[str]) -
     return out
 
 
+LIMITING = {"UNKNOWN", "NOT_ASKED", "DECLINED", "CONFLICTING"}
+
+
+def limitations(views: Mapping[str, ConceptView], concept_codes: Iterable[str]) -> list[dict]:
+    """AC-24.5: what the draft could not rest on. A concept with no view was never asked."""
+    out = []
+    for code in dict.fromkeys(concept_codes):
+        view = views.get(code)
+        state = view.state.value if view is not None else "NOT_ASKED"
+        if state in LIMITING:
+            out.append({"concept_code": code, "state": state})
+    return out
+
+
 def _model_runs(db: Session, case_id: str) -> list[dict[str, Any]]:
     rows = (
         db.query(AuditEvent)
@@ -121,6 +135,10 @@ def build(
             for e in content["evidence"]
         ],
         "model_runs": _model_runs(db, case_id),
+        "limitations": limitations(
+            ctx.views, [q.concept_code for q in catalogues.questions.questions]
+        ),
+        "rules_approval_status": proposal["approval_status"],
         "report_hash": draft.report_hash,
         "built_at": now,
     }

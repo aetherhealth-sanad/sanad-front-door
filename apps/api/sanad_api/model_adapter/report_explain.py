@@ -21,6 +21,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from sanad_api.catalogues import Passage
+from sanad_api.chat.guardrail import contains_identifier
 from sanad_api.config import Settings
 from sanad_api.model_adapter.port import ModelRequest, ModelResult, ModelStatus, TaskEnvelope
 from sanad_api.vocab import TriageAction
@@ -65,7 +66,13 @@ BLOCKED_PATTERNS = (
     r"\b(cannot|can't|can not|unable to|won't be able to)\s+(have|father)\b",
     r"\bprescri",
     r"\bcure",
+    # AC-22.11: certainty about the person (draft, CLINICAL_TBD).
+    r"\byou (have|are suffering from)\b",
+    r"\bdefinitely\b",
+    r"\bguarantee",
 )
+PLACEHOLDER = re.compile(r"\[(NAME|DATE)\]")
+OUTPUT_POLICY = "OUTPUT_POLICY_BLOCKED"  # counted apart from schema failures (AC-22.11)
 
 # Cues for each next step. A sentence may not carry a cue for a step other than the released one.
 STEP_CUES: dict[TriageAction, tuple[str, ...]] = {
@@ -212,7 +219,12 @@ def validate(result: ModelResult, sent_ids: Sequence[str], action: TriageAction)
             return _fail(INVALID)
         if not ids or len(set(ids)) != len(ids) or not set(ids) <= allowed:
             return _fail(INVALID)
-        if _matches(text, BLOCKED_PATTERNS) or _matches(text, other_cues):
-            return _fail(INVALID)
+        if (
+            _matches(text, BLOCKED_PATTERNS)
+            or _matches(text, other_cues)
+            or contains_identifier(text)
+            or PLACEHOLDER.search(text)
+        ):
+            return _fail(OUTPUT_POLICY)
         sentences.append({"text": text, "passage_ids": list(ids)})
     return Explanation(tuple(sentences), None)

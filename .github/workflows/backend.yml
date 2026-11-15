@@ -28,4 +28,4 @@ jobs:
       - name: Run Ruff
         run: ruff check sanad_api tests
       - name: Model evaluation harness in replay mode (no key, no network; RF-23)
-        run: python ../../eval/run_model_eval.py --out "$RUNNER_TEMP/scorecard"
+        run: python ../../eval/run_model_eval.py --out "$RUNNER_TEMP/scorecard" --baseline ../../eval/baseline/replay.json

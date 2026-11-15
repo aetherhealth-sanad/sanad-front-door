@@ -312,13 +312,18 @@ def test_tc_22_6_the_model_request_holds_codes_and_passages_only(
     ],
 )
 def test_tc_22_7_invalid_model_output_falls_back(
-    curated: Api, fake: FakeAdapter, bad: ModelResult
+    curated: Api, fake: FakeAdapter, bad: ModelResult, request: pytest.FixtureRequest
 ) -> None:
     patient = curated.approved()
     fake.replies.append(bad)
     body = explain(patient).json()
     assert body["outcome"] == "FALLBACK"
-    assert body["reason_code"] == "MODEL_OUTPUT_INVALID"
+    # AC-22.11: wording and wrong-step blocks are policy blocks, counted apart from schema faults.
+    policy = {"diagnosis", "infertility", "percentage", "cannot-have-children",
+              "other-step-emergency", "other-step-primary-care"}
+    case_id = request.node.callspec.id
+    expected = "OUTPUT_POLICY_BLOCKED" if case_id in policy else "MODEL_OUTPUT_INVALID"
+    assert body["reason_code"] == expected
     assert body["sentences"] == []
     assert body["fallback_text"] == patient.report().json()["why_next_step"]
 

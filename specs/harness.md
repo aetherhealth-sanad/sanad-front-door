@@ -228,6 +228,8 @@ Every failure becomes a rule or a test. New failures found with a real model go 
 | 2026-11-15 | Synthetic probes reached the model unchanged: a name ("my name is John Smith"), a street address, "born 12/03/1990" and "MRN 123456"; the guardrail only blocked email addresses and seven-digit numbers | RF-27: block ID numbers with a keyword and street addresses, redact names and full dates in the task builder, `pii_leaks` limit 0 in the runner (IE-032 to IE-037) |
 | 2026-11-15 | Writing RF-27, a full date with `-` or `.` ("2024-01-15", "12.03.1990") was blocked as a phone number before it could be redacted | `check()` ignores full dates when counting long numbers; regression test in TC-27.2 |
 | 2026-11-15 | Live with the fitted local Laya, "I quit on [DATE]" (redacted from a full date) abstained, so the user got the buttons; the fitted rows hold no placeholders | Safe fallback, no change now; add rows with `[NAME]` and `[DATE]` when the rows are reviewed (OD-18) |
+| 2026-11-15 | Explanation blocks for diagnosis wording or a wrong next step shared `MODEL_OUTPUT_INVALID` with schema faults, so they could not be counted | AC-22.11: `OUTPUT_POLICY_BLOCKED`, plus certainty, identifier and placeholder checks; RE-004 to RE-008 updated |
+| 2026-11-15 | Jailbreak families from the ProtonX Security deck (roleplay, fiction, Base64, reverse psychology) had no cases | IE-038 to IE-041; live Azure 4/4 fell back. Scorecards now gate against `eval/baseline/replay.json` (AC-23.12) |
 | 2026-11-14 | An adapter exception in one route could escape as a 500 | `run_safely`, shared by every model route, returns `UNAVAILABLE` with `ADAPTER_ERROR` |
 
 ## Considered and deferred (v0.2)

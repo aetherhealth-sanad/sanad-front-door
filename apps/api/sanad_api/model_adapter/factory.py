@@ -66,6 +66,10 @@ def _azure_openai(settings: Settings) -> ModelAdapter:
         raise ModelConfigError(str(error)) from error
 
     api_key: str | Callable[[], str]
+    if settings.hosted and settings.azure_openai_auth != "entra_id":
+        raise ModelConfigError(
+            "SANAD_HOSTED=true needs SANAD_AZURE_OPENAI_AUTH=entra_id; API keys are for local use"
+        )
     if settings.azure_openai_auth == "api_key":
         if not settings.azure_openai_api_key:
             raise ModelConfigError(
