@@ -19,6 +19,8 @@ server {
     # Same-origin API. Host must be the API app's name, or the Container Apps router returns 404.
     location ~ ^/(api/|version$) {
         proxy_pass http://${API_HOST};
+        # nginx defaults to HTTP/1.0 upstream; the Container Apps router rejects it with 426.
+        proxy_http_version 1.1;
         proxy_set_header Host ${API_HOST};
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto https;
