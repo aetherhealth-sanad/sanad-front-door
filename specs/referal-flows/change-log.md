@@ -13,8 +13,9 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
-| 0.18 | 2026-11-15 | Harness hardening from the ProtonX reference review: AC-21.13 (hosted deployments refuse API-key auth), AC-22.11 (`OUTPUT_POLICY_BLOCKED`, certainty, identifier and placeholder checks on explanations; wording `CLINICAL_TBD`, amends CC-013), AC-23.11 to AC-23.15 (jailbreak cases, drift gate, policy cards, reviewer metrics panel, offline LLM-as-judge), AC-24.5 (`limitations`), RF-28 patient-held visit summary (AC-28.1 to AC-28.7), OD-20, CC-019, CC-020, T4.13 to T4.16, matching TC rows. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
-| 0.17 | 2026-11-15 | Dropped the `laya-mlx` backend from RF-25: AC-25.1 and TC-25.2 now name the `laya` (PyTorch) runtime only; `SANAD_LAYA_BACKEND` removed. Reason: never run on a team host or in CI, no pinned revision (against AC-25.2), and it serves only the zero-shot checkpoint that failed OD-15; Apple Silicon runs through PyTorch MPS instead. CC-015 item (2) narrows accordingly. No clinical rule, threshold, triage level, consent scope or data policy changed. | Drafted by Claude Code | Pending |
+| 0.19 | 2026-11-15 | Harness hardening from the ProtonX reference review: AC-21.13 (hosted deployments refuse API-key auth), AC-22.11 (`OUTPUT_POLICY_BLOCKED`, certainty, identifier and placeholder checks on explanations; wording `CLINICAL_TBD`, amends CC-013), AC-23.11 to AC-23.15 (jailbreak cases, drift gate, policy cards, reviewer metrics panel, offline LLM-as-judge), AC-24.5 (`limitations`), RF-28 patient-held visit summary (AC-28.1 to AC-28.7), OD-20, CC-019, CC-020, T4.13 to T4.16, matching TC rows. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
+| 0.18 | 2026-11-15 | Dropped the `laya-mlx` backend from RF-25: AC-25.1 and TC-25.2 now name the `laya` (PyTorch) runtime only; `SANAD_LAYA_BACKEND` removed. Reason: never run on a team host or in CI, no pinned revision (against AC-25.2), and it serves only the zero-shot checkpoint that failed OD-15; Apple Silicon runs through PyTorch MPS instead. CC-015 item (2) narrows accordingly. No clinical rule, threshold, triage level, consent scope or data policy changed. | Drafted by Claude Code | Pending |
+| 0.17 | 2026-11-15 | T1.4 status updated: API and web Dockerfiles, nginx same-origin proxy and a manual Azure Container Apps deploy (UAE North) added and smoke-tested on the hosted URL. Deployment record and lessons learned in `specs/azure-container.md`, including the HTTP 426 fix (`proxy_http_version 1.1`) and open items. Not deploy-on-merge: AC-01.4, TC-01.4 and OD-05 remain open. No requirement, clinical rule, threshold, triage level, consent scope or data policy changed. | Drafted by Claude Code | Pending |
 | 0.16 | 2026-11-15 | Added RF-27 identifier blocking and redaction before a model call (AC-27.1 to AC-27.8, T4.12, TC-27.1 to TC-27.7, OD-19, CC-018); API design input checks and redaction step; reason code `TEXT_CONTAINS_IDENTIFIER`; response field `redacted_types`; audit fields `redactions`, `redaction_count`. Data policy change: needs Security review. No clinical rule, threshold or triage level changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
 | 0.15 | 2026-11-14 | AC-25.13 adds author `MODEL_DRAFTED_UNREVIEWED` and the `--allow-unreviewed` flag, so draft rows are never labelled as reviewed. T4.11 implemented; fitted scorecard recorded in the ratchet log (0.87, zero unsafe, below OD-15). | Drafted by Claude Code | Pending |
 | 0.14 | 2026-11-14 | AC-25.11 amended before any code: the decision key is the label family (`YN_TIME`, `YN`, `CHOICE:<options>`), not the catalogue question ID, which the task payload does not carry and which would need over 500 rows. TC-25.10 and CC-017 updated to match. | Drafted by Claude Code | Pending |
@@ -34,7 +35,7 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 ## Change-control records
 
-Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), CC-017 with version 0.13, CC-018 with version 0.16, and CC-019 and CC-020 with version 0.18.
+Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), CC-017 with version 0.13, CC-018 with version 0.16, and CC-019 and CC-020 with version 0.19.
 
 ### CC-020 Offline LLM-as-judge on synthetic explanations
 
@@ -47,7 +48,7 @@ Each proposal below changes or extends a parent document, so it needs an approve
 | **Clinical content** | None; the rubric restates existing rules (no diagnosis, no probability, stay on the released step). A judge score is not clinical validation. |
 | **Tests** | TC-23.15 |
 | **Approver** | Pending (Tech Lead + QA) |
-| **Version** | Spec 0.18 |
+| **Version** | Spec 0.19 |
 
 ### CC-019 Patient-held visit summary
 
@@ -62,7 +63,7 @@ Each proposal below changes or extends a parent document, so it needs an approve
 | **Affected journeys** | J1 to J5 at the summary page (export) and the upload start (import). |
 | **Tests** | TC-28.1 to TC-28.7 |
 | **Approver** | Pending (Product + Security; Legal for the privacy note) |
-| **Version** | Spec 0.18 |
+| **Version** | Spec 0.19 |
 
 ### CC-018 Identifier blocking and redaction before a model call
 
