@@ -1,0 +1,29 @@
+# Build context for apps/api/Dockerfile and apps/web/Dockerfile (both built from the repo root).
+# `az acr build` uploads this context to Azure, so keep secrets and local data out of it.
+# Secrets and local state
+**/.env
+**/.env.*
+apps/api/.env
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+# Dependencies, caches and build output
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.egg-info
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+apps/web/dist
+**/.DS_Store
+.DS_Store
+.git
+# Not used by either image
+apps/mobile
+apps/knowledge
+docs
+slide
+specs
+eval
+*.pdf
