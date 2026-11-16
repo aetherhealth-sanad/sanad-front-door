@@ -373,11 +373,17 @@ def test_tc_27_8_a_field_printed_twice_is_not_chosen(lab: LabCatalogue) -> None:
 def test_tc_27_9_u1_unconfirmed_values_do_not_reach_the_rules(api: Api, lab: LabCatalogue) -> None:
     """A report with a concentration of 0 would raise the draft LAB_EQUALS signal if it were
     used. Stored from the draft it is unconfirmed, so the assessment ignores it."""
-    report = with_changes(Report(), values={**Report().values, "concentration": "0"})
+    # Keep the synthetic report internally consistent for the new cross-field check.
+    report = with_changes(
+        Report(), values={**Report().values, "concentration": "0", "total_count": "0"}
+    )
     draft = run(render_pdf(report), lab)
     patient = api.assessing()
     stored = []
-    for body in to_observation_inputs(draft):
+    # A reviewed-field selection is mandatory: OCR alone must export nothing.
+    assert to_observation_inputs(draft) == []
+    reviewed = {f.field_id for f in draft.fields if f.target_test_code is not None}
+    for body in to_observation_inputs(draft, reviewed_field_ids=reviewed):
         response = patient.observe(**body)
         assert response.status_code == 201, response.text
         stored.append(response.json())
