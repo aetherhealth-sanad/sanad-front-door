@@ -11,9 +11,9 @@ spool sensitive content to a temporary disk file before the handler is called.
 from __future__ import annotations
 
 import shutil
-from threading import Lock
 from functools import lru_cache
 from importlib.util import find_spec
+from threading import Lock
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
@@ -50,7 +50,9 @@ def _local_engine() -> OcrEngine:
     return DisabledOcr()
 
 
-def _extract_in_worker(document: bytes, catalogue: Any, today: Any, limits: Limits) -> dict[str, Any]:
+def _extract_in_worker(
+    document: bytes, catalogue: Any, today: Any, limits: Limits
+) -> dict[str, Any]:
     # OCR is CPU-heavy: never block the async event loop that serves emergency endpoints.
     with _OCR_LOCK:
         draft = extract(document, catalogue, today, engine=_local_engine(), limits=limits)
@@ -78,7 +80,9 @@ async def read_synthetic_lab_report(
     async for chunk in request.stream():
         size += len(chunk)
         if size > limits.max_bytes:
-            raise ApiError(413, ErrorCode.VALIDATION_FAILED, [RejectReason.DOCUMENT_TOO_LARGE.value])
+            raise ApiError(
+                413, ErrorCode.VALIDATION_FAILED, [RejectReason.DOCUMENT_TOO_LARGE.value]
+            )
         chunks.append(chunk)
     if not size:
         raise ApiError(422, ErrorCode.VALIDATION_FAILED, [RejectReason.DOCUMENT_UNREADABLE.value])
