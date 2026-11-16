@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as RPointerEvent } from 'react';
 import { api, setPendingUploadFile, type SampleProfile } from '../api/client';
+import { Scene } from '../components/Scene';
 
 interface StartScreenProps {
   onCaseCreated: (caseId: string, route: string) => void;
@@ -42,98 +43,168 @@ const SAMPLE_UPLOAD_TEMPLATE = {
   ],
 };
 
-const CLINICAL_BENCHMARKS = {
-  concentration: {
-    title: 'Sperm Concentration',
-    threshold: '16 Million / mL',
-    unit: 'M/mL',
-    whoStandard: 'WHO 6th Edition (5th centile reference threshold)',
-    clinicalContext: 'Evaluates the density of spermatozoa per millilitre of semen. Values below 16 M/mL warrant a repeat analysis after 2 to 3 weeks.',
-    fillPercent: 78,
+/* What leaves this tab: the privacy ledger */
+const LEDGER = [
+  {
+    item: 'Your name',
+    status: 'Never asked',
+    tone: 'never',
+    detail: 'There is no sign-up, no account and no name field anywhere in the flow.',
   },
-  motility: {
-    title: 'Total Motility (PR + NP)',
-    threshold: '42%',
-    unit: '%',
-    whoStandard: 'WHO 6th Edition progressive + non-progressive motion',
-    clinicalContext: 'Measures the proportion of active swimming cells. Progressive movement is critical for natural migration through cervical mucus.',
-    fillPercent: 84,
+  {
+    item: 'Phone or email',
+    status: 'Never asked',
+    tone: 'never',
+    detail: 'Sanad has no contact field and no outbound email or SMS client.',
   },
-  volume: {
-    title: 'Ejaculate Volume',
-    threshold: '1.4 mL',
-    unit: 'mL',
-    whoStandard: 'WHO 6th Edition lower reference limit',
-    clinicalContext: 'Secreted primarily by seminal vesicles (approx. 65%) and the prostate gland. Reflects patency of the ejaculatory ducts.',
-    fillPercent: 70,
+  {
+    item: 'Camera or photos of you',
+    status: 'Never used',
+    tone: 'never',
+    detail: 'No camera prompt, no video and no face or emotion analysis.',
   },
-};
+  {
+    item: 'Your answers',
+    status: 'This session only',
+    tone: 'session',
+    detail: 'Stored against a temporary session token. Ending the session or Quick exit clears it from this tab.',
+  },
+  {
+    item: 'A referral',
+    status: 'Only if you say yes',
+    tone: 'gated',
+    detail: 'Needs your consent, a reviewer approval and a server-side policy check. Facilities are invented (Mock) and nothing is sent to a real clinic.',
+  },
+] as const;
 
-const WORKFLOW_STEPS = [
+/* The session path */
+const PATH = [
   {
-    id: 'safety',
-    title: 'Acute Safety Check',
-    subtitle: 'Red flag exclusion',
-    badge: 'Immediate triage',
-    description: 'We screen for acute symptoms first. If severe pain, trauma, or infection is reported, emergency guidance is delivered instantly without waiting for a questionnaire.',
-    clinicalFocus: 'Excludes testicular torsion, severe epididymo-orchitis, and acute scrotal trauma.',
-    image: '/assets/images/real_emergency_triage.jpg',
-    alt: 'Immediate safety triage in modern emergency department',
+    key: 'consent',
+    label: 'Consent',
+    title: 'You choose what this session may do',
+    body: 'Each permission is shown separately and can be withdrawn later. Without assessment consent, the questions do not open.',
+    note: 'Checked on the server at every action, not just in the browser.',
   },
   {
-    id: 'intake',
-    title: 'Discreet Health History',
-    subtitle: 'Lifestyle & exposures',
-    badge: 'Private flow',
-    description: 'Answer simple questions regarding conception timeline, thermal exposure (hot saunas, laptop on lap), and previous health history at your own pace.',
-    clinicalFocus: 'Identifies reversible scrotal hyperthermia and timeline eligibility for formal investigation.',
-    image: '/assets/images/real_patient_peace_of_mind.jpg',
-    alt: 'Private confidential consultation',
+    key: 'safety',
+    label: 'Safety check',
+    title: 'Warning signs are checked first',
+    body: 'A few questions about sudden pain, injury or swelling with fever come before anything else. If one applies, urgent guidance opens straight away.',
+    note: 'Draft rules · CLINICAL_TBD. Urgent guidance works offline and without consent.',
   },
   {
-    id: 'labs',
-    title: 'WHO 2021 Benchmark',
-    subtitle: 'Standard lab metrics',
-    badge: 'Laboratory standards',
-    description: 'If you have a semen analysis, compare your parameters against official WHO 6th edition thresholds with clear explanations and no alarming jargon.',
-    clinicalFocus: 'Benchmarks volume, concentration, total count, progressive motility, and morphology.',
-    image: '/assets/images/real_clinical_lab.jpg',
-    alt: 'Modern clinical lab diagnostics',
+    key: 'questions',
+    label: 'Questions',
+    title: 'Answer at your own pace',
+    body: '"Not sure" and "Prefer not to say" are real answers. They stay recorded as they are and are never treated as "no".',
+    note: 'Unknown stays unknown.',
   },
   {
-    id: 'sharing',
-    title: 'You Control Sharing',
-    subtitle: 'Care navigation',
-    badge: 'Patient sovereignty',
-    description: 'Your report stays on your device. Nothing leaves your browser or transfers to any doctor unless you explicitly choose to connect.',
-    clinicalFocus: 'Local ephemeral session with zero commercial ad trackers or third-party tracking.',
-    image: '/assets/images/real_doctor_consultation.jpg',
-    alt: 'Compassionate doctor consultation',
+    key: 'review',
+    label: 'Review',
+    title: 'See exactly what was recorded',
+    body: 'Every fact sits in one list with where it came from: you, a sample file, or a lab value you typed. Edit anything before you submit.',
+    note: 'Lab values are stored as entered. Units are never converted.',
   },
-];
+  {
+    key: 'summary',
+    label: 'Summary',
+    title: 'A summary to take to a professional',
+    body: 'A plain-language overview of what you shared and what may be worth discussing. It is not a diagnosis and gives no personal probability.',
+    note: 'Research prototype, not a medical device.',
+  },
+  {
+    key: 'referral',
+    label: 'Next step',
+    title: 'Optional, simulated referral',
+    body: 'If you want, you can ask for a referral to an invented service. A simulated reviewer looks at it first. Every part of this step is labelled Mock.',
+    note: 'No real provider, clinic or hospital is connected.',
+  },
+] as const;
+
+/* A lab report, read slowly */
+const REPORT_ROWS = [
+  {
+    code: 'VOLUME',
+    label: 'Semen volume',
+    value: '2.4',
+    unit: 'mL',
+    explain: 'How much fluid the sample contained. Collection details, such as days since last ejaculation, can change it.',
+  },
+  {
+    code: 'CONC',
+    label: 'Sperm concentration',
+    value: '11.5',
+    unit: 'million/mL',
+    explain: 'How many sperm cells are in each millilitre. Results often vary between samples, which is why labs may ask for a repeat.',
+  },
+  {
+    code: 'MOT',
+    label: 'Total motility',
+    value: '-',
+    unit: '%',
+    explain: 'The share of cells that are moving. A dash means the value was not reported, and Sanad keeps it as "not reported".',
+  },
+  {
+    code: 'PR',
+    label: 'Progressive motility',
+    value: '-',
+    unit: '%',
+    explain: 'The share of cells moving forward. Many reports list it separately from total motility.',
+  },
+  {
+    code: 'MORPH',
+    label: 'Normal forms',
+    value: '-',
+    unit: '%',
+    explain: 'The share of cells with a typical shape under the microscope. Labs use different methods, so compare like with like.',
+  },
+] as const;
+
+const PROMISES = [
+  ['Tell you what you have.', 'No diagnosis, no personal probability, no verdict from a single habit, BMI or lab value.'],
+  ['Turn "not sure" into "no".', 'Unknown, declined and not-asked answers stay exactly that, and never count as low risk.'],
+  ['Make waiting the price of safety.', 'Warning-sign rules run before everything else, and urgent guidance never sits behind consent.'],
+  ['Dress up a simulation.', 'Every simulated reviewer, facility and referral is marked Mock, on screen and in the data.'],
+  ['Assume anything about your life.', 'Nothing here assumes marriage, religion or plans for children.'],
+] as const;
 
 const FAQS = [
   {
-    question: 'Do you ask for my name, phone number, or identity?',
-    answer:
-      'Never. Sanad is anonymous by design. You do not need to register, provide an email address, or give a phone number. All session tokens are temporary and run privately in your browser.',
+    q: 'Do you ask for my name, phone number or identity?',
+    a: 'No. There is no registration, email or phone field. The session runs on a temporary token in this browser tab.',
   },
   {
-    question: 'Does this service provide a medical diagnosis?',
-    answer:
-      'No. Sanad is an informational research prototype. It helps you organize your health facts, compare lab values to reference standards, and prepare for a meaningful discussion with a licensed healthcare professional.',
+    q: 'Is this a diagnosis?',
+    a: 'No. Sanad is a research prototype. It helps you organise what you know and prepare for a conversation with a licensed professional. It does not diagnose and gives no personal probability.',
   },
   {
-    question: 'What if I am experiencing pain or an emergency?',
-    answer:
-      'If you experience sudden severe testicular pain, injury, or swelling with fever, tap Urgent Help at the top right immediately. Emergency care information is saved directly to your device and works even without internet.',
+    q: 'What if I am in pain right now?',
+    a: 'If you have sudden severe testicular pain, an injury, or painful swelling with fever, open Urgent help at the top of the page. That page is saved to this device and works without a connection.',
   },
   {
-    question: 'How do I erase my session immediately if I need to leave?',
-    answer:
-      'Click Quick Exit in the top navigation bar at any moment. It will instantly wipe all answers, clear stored session tokens from your browser, and redirect you to a neutral blank page.',
+    q: 'How do I leave quickly?',
+    a: 'Press Quick exit at the top right. It clears the page and this session from the tab, then opens a neutral website.',
   },
-];
+  {
+    q: 'Who sees my answers?',
+    a: 'Only this session. A simulated reviewer sees a case only if you consent to a referral. Reviewers, facilities and referrals in this prototype are all Mock.',
+  },
+] as const;
+
+type StartMode = 'blank' | 'sample' | 'upload';
+
+function Kicker({ children, tone = 'light' }: { children: React.ReactNode; tone?: 'light' | 'dark' }) {
+  const color = tone === 'dark' ? 'text-[#A9B3AC]' : 'text-[#8A8C84]';
+  const bar = tone === 'dark' ? 'bg-[#A9B3AC]' : 'bg-[#8A8C84]';
+  return (
+    <p className={`font-mono text-[11px] tracking-[0.08em] uppercase ${color} flex items-center gap-2`}>
+      <span className={`inline-block w-5 h-px ${bar}`} aria-hidden="true" />
+      {children}
+    </p>
+  );
+}
 
 export const StartScreen: React.FC<StartScreenProps> = ({
   onCaseCreated,
@@ -143,17 +214,63 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   const [samplesUnavailable, setSamplesUnavailable] = useState(false);
   const [selectedFixture, setSelectedFixture] = useState<string>('J1-001');
   const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'ar'>('en');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<StartMode | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showTechAppendix, setShowTechAppendix] = useState<boolean>(false);
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [activeBenchmark, setActiveBenchmark] = useState<'concentration' | 'motility' | 'volume'>('concentration');
-  const [activeWorkflowIndex, setActiveWorkflowIndex] = useState<number>(0);
 
-  // Statistics metric slider state (matching Ordiva image 2 & 3)
-  const [slider1, setSlider1] = useState(82);
-  const [slider2, setSlider2] = useState(94);
-  const [slider3, setSlider3] = useState(76);
+  const [openLedger, setOpenLedger] = useState<number | null>(3);
+  const [activeStep, setActiveStep] = useState(0);
+  const [activeRow, setActiveRow] = useState(1);
+  const [activeFaq, setActiveFaq] = useState(0);
+  const [startMode, setStartMode] = useState<StartMode>('blank');
+  const [showAppendix, setShowAppendix] = useState(false);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const heroRef = useRef<HTMLElement | null>(null);
+  const progressRef = useRef<HTMLDivElement | null>(null);
+
+  // Scroll progress hairline (transform only, no re-render)
+  useEffect(() => {
+    const el = progressRef.current;
+    if (!el) return;
+    const frame = { id: 0 };
+    const update = () => {
+      frame.id = 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      el.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max) : 0})`;
+    };
+    const onScroll = () => {
+      if (!frame.id) frame.id = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame.id) cancelAnimationFrame(frame.id);
+    };
+  }, []);
+
+  // Warm light that follows the pointer across the hero
+  const onHeroMove = (e: RPointerEvent<HTMLElement>) => {
+    if (e.pointerType === 'touch') return;
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
+  };
+
+  // Gentle tilt for the privacy ledger card
+  const onTilt = (e: RPointerEvent<HTMLElement>) => {
+    if (e.pointerType === 'touch') return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    e.currentTarget.style.setProperty('--rx', `${(-y * 4).toFixed(2)}deg`);
+    e.currentTarget.style.setProperty('--ry', `${(x * 5).toFixed(2)}deg`);
+  };
+  const onTiltEnd = (e: RPointerEvent<HTMLElement>) => {
+    e.currentTarget.style.setProperty('--rx', '0deg');
+    e.currentTarget.style.setProperty('--ry', '0deg');
+  };
 
   useEffect(() => {
     api
@@ -167,47 +284,51 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       .catch(() => setSamplesUnavailable(true));
   }, []);
 
-  const handleLaunchSample = async (fixtureIdOverride?: string) => {
-    const fixtureToUse = fixtureIdOverride || selectedFixture;
-    if (!fixtureToUse) {
-      setError('Select an example profile before continuing.');
+  const persistAndContinue = (
+    res: { session_token: string; case_id: string; state: { route: string } },
+    mode: 'SAMPLE' | 'UPLOAD' | 'BLANK',
+    fixtureId?: string,
+  ) => {
+    sessionStorage.setItem('sanad_session_token', res.session_token);
+    sessionStorage.setItem('sanad_case_id', res.case_id);
+    sessionStorage.setItem('sanad_case_start_mode', mode);
+    if (fixtureId) sessionStorage.setItem('sanad_case_fixture_id', fixtureId);
+    onCaseCreated(res.case_id, res.state.route);
+  };
+
+  const handleLaunchSample = async () => {
+    if (!selectedFixture) {
+      setError('Pick an example profile before continuing.');
       return;
     }
     setError(null);
-    setLoading(true);
+    setLoading('sample');
     try {
-      const res = await api.createCase('SAMPLE', fixtureToUse, preferredLanguage);
-      sessionStorage.setItem('sanad_session_token', res.session_token);
-      sessionStorage.setItem('sanad_case_id', res.case_id);
-      sessionStorage.setItem('sanad_case_start_mode', 'SAMPLE');
-      sessionStorage.setItem('sanad_case_fixture_id', fixtureToUse);
-      onCaseCreated(res.case_id, res.state.route);
+      const res = await api.createCase('SAMPLE', selectedFixture, preferredLanguage);
+      persistAndContinue(res, 'SAMPLE', selectedFixture);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create sample case.');
+      setError(err instanceof Error ? err.message : 'Could not start the sample case.');
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
   const handleStartBlank = async () => {
     setError(null);
-    setLoading(true);
+    setLoading('blank');
     try {
       const res = await api.createCase('BLANK', undefined, preferredLanguage);
-      sessionStorage.setItem('sanad_session_token', res.session_token);
-      sessionStorage.setItem('sanad_case_id', res.case_id);
-      sessionStorage.setItem('sanad_case_start_mode', 'BLANK');
-      onCaseCreated(res.case_id, res.state.route);
+      persistAndContinue(res, 'BLANK');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create blank case.');
+      setError(err instanceof Error ? err.message : 'Could not start a new session.');
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
   const handleUploadTemplateAndLaunch = async () => {
     setError(null);
-    setLoading(true);
+    setLoading('upload');
     try {
       const blob = new Blob([JSON.stringify(SAMPLE_UPLOAD_TEMPLATE, null, 2)], {
         type: 'application/json',
@@ -217,768 +338,726 @@ export const StartScreen: React.FC<StartScreenProps> = ({
       });
       setPendingUploadFile(file);
       const res = await api.createCase('UPLOAD', undefined, preferredLanguage);
-      sessionStorage.setItem('sanad_session_token', res.session_token);
-      sessionStorage.setItem('sanad_case_id', res.case_id);
-      sessionStorage.setItem('sanad_case_start_mode', 'UPLOAD');
-      onCaseCreated(res.case_id, res.state.route);
+      persistAndContinue(res, 'UPLOAD');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create upload case.');
+      setError(err instanceof Error ? err.message : 'Could not start the upload case.');
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
-  const currentBenchmark = CLINICAL_BENCHMARKS[activeBenchmark];
-  const activeStep = WORKFLOW_STEPS[activeWorkflowIndex];
+  const handleChosenStart = () => {
+    if (startMode === 'blank') void handleStartBlank();
+    else if (startMode === 'sample') void handleLaunchSample();
+    else void handleUploadTemplateAndLaunch();
+  };
+
+  const onTabKey = (e: KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    let next = idx;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (idx + 1) % PATH.length;
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (idx - 1 + PATH.length) % PATH.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = PATH.length - 1;
+    else return;
+    e.preventDefault();
+    setActiveStep(next);
+    tabRefs.current[next]?.focus();
+  };
+
+  const step = PATH[activeStep];
+  const row = REPORT_ROWS[activeRow];
+  const busy = loading !== null;
+
+  const scrollToStart = () =>
+    document.getElementById('start')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (
-    <div className="w-full bg-white relative font-sans">
-      {/* ── Ambient Floating Aurora Orbs ── */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 opacity-30">
-        <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] rounded-full bg-[#1A7AFF]/20 blur-3xl aurora-orb-1" />
-        <div className="absolute top-1/3 right-4 w-[540px] h-[540px] rounded-full bg-[#0048C8]/25 blur-3xl aurora-orb-2" />
+    <div className="w-full relative">
+      <div className="scroll-progress" aria-hidden="true">
+        <div ref={progressRef} />
       </div>
-
-      {/* ── Header Sub-Nav Bar (Full Width Edge-to-Edge) ── */}
-      <div className="w-full border-b border-[#E2ECF8] px-6 sm:px-12 lg:px-16 xl:px-24 py-3.5 flex flex-wrap items-center justify-between gap-4 bg-white/95 backdrop-blur-md sticky top-14 sm:top-16 z-30">
-        {/* Left Pill Tag */}
-        <div className="flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase bg-[#FFF0F4] border border-[#FFCCD8] text-[#E11D48]">
-            <span className="w-2 h-2 rounded-full bg-[#E11D48] glow-pulse" />
-            CLINICAL / 001
-          </div>
-          <span className="hidden sm:inline-block text-xs font-mono text-[#829AB8]">
-            WHO 2021 REFERENCE · DRAFT
-          </span>
-        </div>
-
-        {/* Center Quick Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-[#4A6588]">
-          <a href="#who-standard" className="hover:text-[#0052FF] transition-colors">
-            Reference Values
-          </a>
-          <a href="#workflow-process" className="hover:text-[#0052FF] transition-colors">
-            Process
-          </a>
-          <a href="#clinical-statistics" className="hover:text-[#0052FF] transition-colors">
-            The Statistics
-          </a>
-          <a href="#clinical-laboratory" className="hover:text-[#0052FF] transition-colors">
-            Laboratory Science
-          </a>
-          <a href="#faq-section" className="hover:text-[#0052FF] transition-colors">
-            Privacy
-          </a>
-        </nav>
-
-        {/* Right Action Controls */}
-        <div className="flex items-center gap-2.5">
-          {/* Language Switcher */}
-          <div className="flex items-center bg-[#F1F5F9] rounded-full p-0.5 border border-[#CBD5E1] text-[11px] font-mono">
-            <button
-              type="button"
-              onClick={() => setPreferredLanguage('en')}
-              className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
-                preferredLanguage === 'en' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
-              }`}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreferredLanguage('ar')}
-              className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
-                preferredLanguage === 'ar' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
-              }`}
-            >
-              العربية
-            </button>
-          </div>
-
-          <span
-            role="status"
-            className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#F6F9FF] border border-[#E2ECF8] text-[#4A6588]"
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${emergencyCacheReady ? 'bg-[#10B981]' : 'bg-[#F59E0B]'}`} />
-            {emergencyCacheReady ? 'Offline ready' : 'Caching...'}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => void handleStartBlank()}
-            disabled={loading}
-            className="px-4 py-1.5 text-xs font-bold rounded-full bg-[#0052FF] text-white hover:bg-[#0042D0] active:scale-[0.98] transition-all shadow-sm cursor-pointer"
-          >
-            Start Assessment →
-          </button>
-        </div>
-      </div>
-
-      {/* ── HERO SECTION: Full-Bleed Royal Blue Typography + Real Medical Specialist ── */}
-      <section className="w-full bg-white bg-tech-grid relative px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 py-12 lg:py-20 border-b border-[#E2ECF8]">
-        {/* Technical corner crosshairs */}
-        <span className="absolute top-6 left-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
-        <span className="absolute top-6 right-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
-        <span className="absolute bottom-6 left-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
-        <span className="absolute bottom-6 right-6 font-mono text-sm text-[#829AB8] select-none pointer-events-none">+</span>
-
-        <div className="w-full max-w-[1700px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-
-          {/* ── Left Column: Giant Blue Title & Controls ── */}
-          <div className="lg:col-span-7 space-y-7">
-            {/* Technical Category Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0052FF]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0052FF]" />
-              ANDROLOGY INTELLIGENCE & EVALUATION
+      {/* HERO */}
+      <section
+        ref={heroRef}
+        onPointerMove={onHeroMove}
+        className="hero-light relative w-full px-4 sm:px-8 lg:px-12 overflow-hidden"
+        aria-labelledby="hero-title"
+      >
+        <svg className="hero-trace" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 150 H300 L340 150 L370 60 L410 190 L440 110 L470 150 H760 L790 150 L815 95 L845 170 L870 150 H1200" />
+        </svg>
+        <div className="max-w-[1240px] mx-auto pt-10 sm:pt-16 lg:pt-20 pb-14 lg:pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10">
+          <div className="lg:col-span-7 lg:pr-6">
+            <div className="animate-reveal-1 flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Kicker>Research prototype · synthetic data only</Kicker>
+              <span role="status" className="font-mono text-[11px] text-[#575C55] inline-flex items-center gap-1.5">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${emergencyCacheReady ? 'bg-[#3F7D5C]' : 'bg-[#B8860B] bio-pulse-soft'}`}
+                  aria-hidden="true"
+                />
+                {emergencyCacheReady ? 'Urgent guidance saved for offline use' : 'Saving urgent guidance for offline use…'}
+              </span>
             </div>
 
-            {/* Massive Blue Headline matching reference */}
-            <h1 className="text-4xl sm:text-5xl lg:text-[62px] font-black tracking-tight text-[#0052FF] leading-[1.04] text-balance">
-              THE FUTURE OF
-              <br />
-              MEN'S REPRODUCTIVE
-              <br />
-              HEALTH IS CONFIDENTIAL
+            <h1
+              id="hero-title"
+              className="font-serif text-[46px] leading-[0.98] sm:text-[68px] lg:text-[88px] text-[#1A1F1C] mt-6 tracking-[-0.025em]"
+            >
+              {['A', 'private', 'first', 'step', 'for'].map((w, i) => (
+                <span key={w}>
+                  <span className="word" style={{ ['--i' as string]: i }}>
+                    <span>{w}</span>
+                  </span>{' '}
+                </span>
+              ))}
+              <span className="word" style={{ ['--i' as string]: 5 }}>
+                <span>
+                  <em className="italic text-[#1F4D3F]">men's</em>
+                </span>
+              </span>{' '}
+              <span className="word" style={{ ['--i' as string]: 6 }}>
+                <span>
+                  <em className="italic text-[#1F4D3F]">health</em>.
+                </span>
+              </span>
             </h1>
 
-            {/* Sub-headline */}
-            <p className="text-base sm:text-lg text-[#4A6588] max-w-2xl leading-relaxed text-pretty">
-              Every mechanism, biomarker threshold, and clinical interaction is designed to support the flow of private male health without judgment. Draft rules reference the WHO 2021 manual and are not yet approved by a clinician.
+            <p className="animate-reveal-3 mt-6 text-[17px] sm:text-lg leading-relaxed text-[#575C55] max-w-[34rem]">
+              Sort out what you know, check for warning signs first, and leave with a summary you can take to a
+              professional. No account, no name, nothing sent anywhere unless you ask.
             </p>
 
-            {/* Error Banner */}
             {error && (
-              <div className="p-3.5 bg-[#FEF3F2] border border-[#FECDCA] rounded-xl text-xs text-[#B42318] flex items-center justify-between gap-3">
+              <div
+                role="alert"
+                className="mt-6 max-w-[34rem] px-4 py-3 rounded-lg bg-[#FBEDEA] border border-[#F0C9C2] text-sm text-[#8F1D17] flex items-start justify-between gap-3"
+              >
                 <span>{error}</span>
-                <button type="button" onClick={() => setError(null)} className="font-bold underline cursor-pointer">Dismiss</button>
+                <button
+                  type="button"
+                  onClick={() => setError(null)}
+                  className="font-mono text-xs underline underline-offset-2 shrink-0 cursor-pointer"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
 
-            {/* Action Buttons matching reference style */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="animate-reveal-4 mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
               <button
                 type="button"
-                disabled={loading}
+                disabled={busy}
                 onClick={() => void handleStartBlank()}
-                className="px-7 py-3.5 rounded-full text-sm font-bold bg-[#0052FF] text-white hover:bg-[#0042D0] active:scale-[0.97] transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                className="btn-pill-primary px-6 text-[15px]"
               >
-                {loading ? (
-                  <span className="flex items-center gap-2">
+                {loading === 'blank' ? (
+                  <>
                     <span className="spinner spinner-sm spinner-white" />
-                    Initializing...
-                  </span>
+                    Opening a session…
+                  </>
                 ) : (
                   <>
-                    <span>Start Assessment</span>
-                    <span className="text-base">→</span>
+                    Begin privately
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </>
                 )}
               </button>
-
-              <a
-                href="#who-standard"
-                className="px-6 py-3.5 rounded-full text-sm font-bold bg-white text-[#07215A] border border-[#CBD5E1] hover:border-[#0052FF] hover:text-[#0052FF] active:scale-[0.97] transition-all shadow-sm flex items-center gap-2 cursor-pointer"
-              >
-                <span>Explore WHO Standard</span>
-                <span className="text-xs text-[#0052FF]">▷</span>
-              </a>
+              <button type="button" onClick={scrollToStart} className="ink-link text-[15px] font-medium cursor-pointer">
+                Other ways to start
+              </button>
             </div>
 
-            {/* Sample Case Fast Switcher Pill */}
-            <div className="p-4 rounded-2xl bg-[#F6F9FF] border border-[#E2ECF8] max-w-xl space-y-2.5">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="font-semibold text-[#07215A]">Instant Test With Synthetic Cases:</span>
-                <span className="text-[#829AB8]">
-                  {samplesUnavailable ? 'Client fallback' : `${samples.length} cases available`}
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {samples.slice(0, 4).map(s => (
+            <div className="animate-reveal-5 mt-8 flex items-center gap-3">
+              <span id="lang-label" className="font-mono text-[11px] text-[#8A8C84]">
+                Session language
+              </span>
+              <div
+                role="radiogroup"
+                aria-labelledby="lang-label"
+                className="inline-flex p-0.5 rounded-lg border border-[#D6D0C2] bg-[#FBFAF6]"
+              >
+                {([
+                  ['en', 'English'],
+                  ['ar', 'العربية'],
+                ] as const).map(([code, label]) => (
                   <button
-                    key={s.fixture_id}
+                    key={code}
                     type="button"
-                    onClick={() => void handleLaunchSample(s.fixture_id)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-white border border-[#CBD5E1] text-[#4A6588] hover:border-[#0052FF] hover:text-[#0052FF] cursor-pointer transition-colors"
+                    role="radio"
+                    aria-checked={preferredLanguage === code}
+                    onClick={() => setPreferredLanguage(code)}
+                    lang={code}
+                    className={`px-3 py-1 rounded-md text-[13px] transition-colors cursor-pointer ${
+                      preferredLanguage === code ? 'bg-[#1A1F1C] text-[#F4F1EA]' : 'text-[#575C55] hover:text-[#1A1F1C]'
+                    }`}
                   >
-                    {s.fixture_id}: {s.title}
+                    {label}
                   </button>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => void handleUploadTemplateAndLaunch()}
-                  className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-[#EBF3FF] border border-[#BCD8FE] text-[#0052FF] hover:bg-[#DCEBFE] cursor-pointer transition-colors"
-                >
-                  + Upload Profile JSON
-                </button>
-              </div>
-            </div>
-
-            {/* Bottom Meta Row matching Image 1 */}
-            <div className="pt-8 border-t border-[#E2ECF8] flex items-end justify-between text-xs font-mono text-[#829AB8]">
-              {/* Bottom-left: SCROLL DOWN with capsule icon */}
-              <div className="flex items-center gap-2">
-                <span className="font-bold tracking-wider text-[#4A6588]">SCROLL DOWN</span>
-                <div className="w-4 h-6 rounded-full border-2 border-[#829AB8] flex items-start justify-center p-0.5">
-                  <span className="w-1 h-1.5 rounded-full bg-[#0052FF] animate-bounce" />
-                </div>
-              </div>
-
-              {/* Bottom-right: Vertical steps */}
-              <div className="text-right space-y-0.5">
-                <span className="text-[10px] text-[#07215A] font-bold block">
-                  DATA & TRACEABILITY <span className="text-[#E11D48]">●</span>
-                </span>
-                <span className="block text-[10px] text-[#4A6588]">PREPARE</span>
-                <span className="block text-[10px] text-[#4A6588]">EVALUATE</span>
-                <span className="block text-[10px] text-[#0052FF] font-bold">NAVIGATE</span>
               </div>
             </div>
           </div>
 
-          {/* ── Right Column: Authentic Medical Doctor & Consultation Focal Point ── */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-2xl bg-white group transition-transform duration-500 ease-out hover:scale-[1.01]">
-              <img
-                src="/assets/images/real_doctor_consultation.jpg"
-                alt="Stock photo: a doctor talking with a patient (illustration only)"
-                className="w-full h-[400px] sm:h-[480px] lg:h-[530px] object-cover block"
+          {/* 3D stage */}
+          <div className="lg:col-span-5 animate-reveal-3">
+            <div className="hero-stage relative h-[380px] sm:h-[460px] lg:h-[580px]">
+              <Scene
+                kind="hero"
+                label="A rotating double helix with glass spheres drifting around it. Drag to turn it, tap to send a ripple of light along it."
+                className="absolute inset-0"
               />
+              <span className="stage-tick tl" aria-hidden="true" />
+              <span className="stage-tick tr" aria-hidden="true" />
+              <span className="stage-tick bl" aria-hidden="true" />
+              <span className="stage-tick br" aria-hidden="true" />
+              <p className="pointer-events-none absolute bottom-4 left-5 right-5 flex items-center justify-between font-mono text-[11px] text-[#8A8C84]">
+                <span>Drag to turn · tap to play</span>
+                <span>Illustration</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-              {/* Floating Badge: Top Right */}
-              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#BAD6FE] shadow-lg flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
-                <span className="text-xs font-mono font-bold text-[#07215A]">MOCK · DRAFT RULES, CLINICAL_TBD</span>
+      {/* URGENT RULE */}
+      <section aria-label="Urgent help" className="w-full border-y border-[#F0C9C2] bg-[#FBEDEA]">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-8 lg:px-12 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p className="text-[15px] text-[#1A1F1C] flex items-start sm:items-center gap-3">
+            <span className="mt-1.5 sm:mt-0 w-2 h-2 rounded-full bg-[#B3261E] shrink-0" aria-hidden="true" />
+            <span>
+              Sudden severe testicular pain, an injury, or painful swelling with fever?
+              <span className="text-[#575C55]"> Don't wait for a questionnaire.</span>
+            </span>
+          </p>
+          <a href="/urgent.html" className="btn-pill-ruby px-4 text-sm no-underline self-start sm:self-auto whitespace-nowrap">
+            Open urgent guidance
+          </a>
+        </div>
+      </section>
+
+      {/* CHAPTER 1: THE KEY STAYS WITH YOU */}
+      <section className="w-full px-4 sm:px-8 lg:px-12" aria-labelledby="ledger-heading">
+        <div className="max-w-[1240px] mx-auto py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          <div className="lg:col-span-5">
+            <Kicker>Chapter 1 · The key stays with you</Kicker>
+            <h2 id="ledger-heading" className="font-serif text-4xl sm:text-5xl text-[#1A1F1C] mt-4 leading-[1.02]">
+              What leaves this tab.
+            </h2>
+            <p className="mt-5 text-[#575C55] leading-relaxed max-w-[38ch]">
+              Almost nothing, and only when you say so. Open the lock, then read the ledger line by line.
+            </p>
+            <div className="hero-stage relative mt-8 h-[300px] sm:h-[340px]">
+              <Scene
+                kind="vault"
+                label="A padlock that opens as you hover over it. Tap it to open or close it."
+                className="absolute inset-0"
+              />
+              <p className="pointer-events-none absolute bottom-3 left-4 font-mono text-[11px] text-[#8A8C84]">Hover or tap the lock</p>
+            </div>
+          </div>
+          {/* Ledger card */}
+          <aside className="lg:col-span-7 tilt-scene" aria-labelledby="ledger-title" onPointerMove={onTilt} onPointerLeave={onTiltEnd}>
+            <div className="relative tilt-card">
+              <div
+                className="absolute inset-0 translate-x-2 translate-y-2 rounded-[14px] border border-[#D6D0C2] bg-[#EFEBE2]"
+                aria-hidden="true"
+              />
+              <div className="relative index-card overflow-hidden">
+                <div className="px-5 pt-4 pb-3 flex items-baseline justify-between border-b border-[#E4DFD3]">
+                  <h2 id="ledger-title" className="font-serif text-2xl text-[#1A1F1C]">
+                    What leaves this tab
+                  </h2>
+                  <span className="font-mono text-[11px] text-[#8A8C84]">tap a line</span>
+                </div>
+                <ul className="divide-y divide-[#E4DFD3]">
+                  {LEDGER.map((entry, idx) => {
+                    const open = openLedger === idx;
+                    return (
+                      <li key={entry.item}>
+                        <button
+                          type="button"
+                          aria-expanded={open}
+                          onClick={() => setOpenLedger(open ? null : idx)}
+                          className="w-full px-5 py-3.5 flex items-center justify-between gap-4 text-left cursor-pointer hover:bg-[#F7F5EF] transition-colors"
+                        >
+                          <span className="flex items-center gap-3">
+                            <span className="font-mono text-[11px] text-[#8A8C84] tabular w-4">
+                              {String(idx + 1).padStart(2, '0')}
+                            </span>
+                            <span className="text-[15px] text-[#1A1F1C]">{entry.item}</span>
+                          </span>
+                          <span
+                            className={`font-mono text-[11px] px-2 py-0.5 rounded border whitespace-nowrap ${
+                              entry.tone === 'never'
+                                ? 'border-[#D6D0C2] text-[#575C55]'
+                                : entry.tone === 'session'
+                                ? 'border-[#C8D6CC] bg-[#E8EFEA] text-[#1F4D3F]'
+                                : 'border-[#E8D9B5] bg-[#FBF3E0] text-[#8A5A00]'
+                            }`}
+                          >
+                            {entry.status}
+                          </span>
+                        </button>
+                        <div className={`accordion-grid ${open ? 'is-open' : ''}`}>
+                          <div className="accordion-grid-inner">
+                            <p className="px-5 pb-4 pl-12 text-sm text-[#575C55] leading-relaxed">{entry.detail}</p>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="px-5 py-3 bg-[#F7F5EF] border-t border-[#E4DFD3] font-mono text-[11px] text-[#8A8C84]">
+                  Enforced on the server, not by hiding buttons
+                </div>
               </div>
+            </div>
+          </aside>
+        </div>
+      </section>
 
-              {/* Floating Specialty Badge: Top Left */}
-              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-lg flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#0052FF]" />
-                <span className="text-[11px] font-mono font-bold">ILLUSTRATION · NOT A REAL NETWORK</span>
-              </div>
+      {/* SESSION PATH */}
+      <section className="w-full px-4 sm:px-8 lg:px-12" aria-labelledby="path-title">
+        <div className="max-w-[1240px] mx-auto py-20 lg:py-28">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-end mb-10 lg:mb-14">
+            <div className="lg:col-span-6">
+              <Kicker>How a session moves</Kicker>
+              <h2 id="path-title" className="font-serif text-4xl sm:text-5xl text-[#1A1F1C] mt-4 leading-[1.02]">
+                Six steps. You can stop after any of them.
+              </h2>
+            </div>
+            <p className="lg:col-span-5 lg:col-start-8 text-[#575C55] leading-relaxed">
+              Nothing advances on its own. Use the list, or the arrow keys, to see what each step does and what it
+              deliberately doesn't do.
+            </p>
+          </div>
 
-              {/* Floating Doctor Profile Card: Bottom */}
-              <div className="absolute bottom-4 left-4 right-4 bg-[#07215A]/95 backdrop-blur-md p-4 rounded-2xl border border-white/20 text-white shadow-xl flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 shrink-0">
-                    <img
-                      src="/assets/images/medical_doctor_avatar.jpg"
-                      alt="Simulated reviewer avatar"
-                      className="w-full h-full object-cover"
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+            <div
+              role="tablist"
+              aria-orientation="vertical"
+              aria-label="Session steps"
+              className="lg:col-span-4 flex lg:flex-col overflow-x-auto no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0 gap-1.5 lg:gap-0 lg:border-l lg:border-[#D6D0C2]"
+            >
+              {PATH.map((s, idx) => {
+                const selected = idx === activeStep;
+                return (
+                  <button
+                    key={s.key}
+                    ref={el => {
+                      tabRefs.current[idx] = el;
+                    }}
+                    role="tab"
+                    id={`path-tab-${s.key}`}
+                    aria-selected={selected}
+                    aria-controls="path-panel"
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => setActiveStep(idx)}
+                    onKeyDown={e => onTabKey(e, idx)}
+                    className={`relative shrink-0 text-left cursor-pointer transition-colors px-4 py-3 lg:pl-6 rounded-lg lg:rounded-none border lg:border-0 ${
+                      selected
+                        ? 'bg-[#FBFAF6] border-[#1A1F1C] lg:bg-transparent text-[#1A1F1C]'
+                        : 'border-[#E4DFD3] text-[#8A8C84] hover:text-[#1A1F1C]'
+                    }`}
+                  >
+                    <span
+                      className={`hidden lg:block absolute -left-px top-0 bottom-0 w-[2px] transition-transform duration-300 origin-top bg-[#1A1F1C] ${
+                        selected ? 'scale-y-100' : 'scale-y-0'
+                      }`}
+                      aria-hidden="true"
                     />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-white block">
-                      Simulated reviewer (Mock)
+                    <span className="flex items-baseline gap-3">
+                      <span className="font-mono text-[11px] tabular">{String(idx + 1).padStart(2, '0')}</span>
+                      <span className={`text-[15px] lg:text-lg whitespace-nowrap ${selected ? 'font-medium' : ''}`}>{s.label}</span>
                     </span>
-                    <span className="text-[10px] font-mono text-[#9EC8FF] block">
-                      Demo staff role, not a real clinician
+                  </button>
+                );
+              })}
+            </div>
+
+            <div id="path-panel" role="tabpanel" aria-labelledby={`path-tab-${step.key}`} className="lg:col-span-8">
+              <div key={step.key} className="workflow-step-enter index-card p-6 sm:p-10 min-h-[320px] flex flex-col">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="font-mono text-[11px] text-[#8A8C84]">
+                    Step {activeStep + 1} of {PATH.length}
+                  </span>
+                  {step.key === 'referral' && (
+                    <span className="tag" data-mock="true">
+                      Mock
                     </span>
+                  )}
+                  {step.key === 'safety' && <span className="tag">CLINICAL_TBD</span>}
+                </div>
+                <h3 className="font-serif text-3xl sm:text-4xl text-[#1A1F1C] mt-5 leading-tight max-w-[22ch]">
+                  {step.title}
+                </h3>
+                <p className="mt-4 text-[#575C55] leading-relaxed max-w-[52ch]">{step.body}</p>
+                <div className="mt-auto pt-8">
+                  <div className="flex gap-1.5 mb-4" aria-hidden="true">
+                    {PATH.map((p, i) => (
+                      <span
+                        key={p.key}
+                        className={`h-[3px] flex-1 rounded-full transition-colors duration-300 ${
+                          i <= activeStep ? 'bg-[#1A1F1C]' : 'bg-[#E4DFD3]'
+                        }`}
+                      />
+                    ))}
                   </div>
-                </div>
-                <span className="text-[11px] font-mono font-bold text-[#10B981] bg-[#10B981]/20 px-2.5 py-1 rounded-full border border-[#10B981]/40 shrink-0">
-                  Mock
-                </span>
-              </div>
-            </div>
-
-            {/* Subtitle Annotation beside image */}
-            <div className="flex items-center justify-between text-xs text-[#829AB8] font-mono mt-3 px-1">
-              <span>CONFIDENTIAL ANDROLOGY CONSULTATION</span>
-              <span>FIG 01.1 / CLINICAL INTERACTION</span>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── 3-COLUMN FEATURE CARDS (Full Width Edge-to-Edge) ── */}
-      <section className="w-full bg-white border-b border-[#E2ECF8]">
-        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24">
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#E2ECF8]">
-            {/* Card 1 */}
-            <div className="py-8 md:py-10 md:pr-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
-              <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
-              <h3 className="text-base font-bold text-[#07215A]">
-                Precision Evaluation
-              </h3>
-              <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
-                Accurate, guideline-grounded evaluation across sperm concentration, total motility, and morphological characteristics against WHO standards.
-              </p>
-            </div>
-
-            {/* Card 2 */}
-            <div className="py-8 md:py-10 md:px-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
-              <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
-              <h3 className="text-base font-bold text-[#07215A]">
-                Dual Privacy Gate
-              </h3>
-              <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
-                Consent, user role, and case state verified on the server before every action. Disabling a button is never relied upon as a clinical security control.
-              </p>
-            </div>
-
-            {/* Card 3 */}
-            <div className="py-8 md:py-10 md:pl-8 space-y-3 hover:bg-[#F8FAFC] transition-colors relative">
-              <span className="font-mono text-xs text-[#0052FF] font-bold">+</span>
-              <h3 className="text-base font-bold text-[#07215A]">
-                Real-World Care Navigation
-              </h3>
-              <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
-                Simulated (Mock) referral flow with invented facilities. No real clinic, laboratory or specialist is connected.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── THE STATISTICS SECTION (Full Width Edge-to-Edge) ── */}
-      <section id="clinical-statistics" className="w-full bg-[#F8FAFC] border-b border-[#E2ECF8] py-16 sm:py-24">
-        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-10">
-          <div>
-            <span className="text-xs font-mono font-bold text-[#E11D48] tracking-wider uppercase">
-              ● THE NUMBERS
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0052FF] tracking-tight mt-1">
-              The Statistics
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left Metrics (10x, 99.8%, 21.8M) */}
-            <div className="lg:col-span-5 space-y-8">
-              <div>
-                <span className="text-4xl sm:text-5xl font-black text-[#07215A] tracking-tight">10x</span>
-                <p className="text-xs sm:text-sm text-[#4A6588] font-medium mt-0.5">
-                  Faster Pre-Consultation Triage & Preparation
-                </p>
-              </div>
-
-              <div>
-                <span className="text-4xl sm:text-5xl font-black text-[#07215A] tracking-tight">99.8%</span>
-                <p className="text-xs sm:text-sm text-[#4A6588] font-medium mt-0.5">
-                  Clinical Rule Conformance across 170 Test Cases
-                </p>
-              </div>
-
-              <div>
-                <span className="text-4xl sm:text-5xl font-black text-[#07215A] tracking-tight">21.8M</span>
-                <p className="text-xs sm:text-sm text-[#4A6588] font-medium mt-0.5">
-                  WHO 6th Edition reference values used as draft thresholds (CLINICAL_TBD)
-                </p>
-              </div>
-            </div>
-
-            {/* Right Interactive Progress Sliders */}
-            <div className="lg:col-span-7 space-y-7 p-7 sm:p-9 bg-white rounded-3xl border border-[#E2ECF8] shadow-sm">
-              {/* Slider 1: Blue */}
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-xs font-mono">
-                  <span className="font-bold text-[#07215A]">Sperm Concentration (WHO Benchmark)</span>
-                  <span className="font-bold text-[#0062FF]">{slider1}% Optimal</span>
-                </div>
-                <div className="stat-slider-track cursor-pointer" onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-                  setSlider1(Math.max(10, Math.min(100, pct)));
-                }}>
-                  <div className="stat-slider-fill-blue" style={{ width: `${slider1}%` }}>
-                    <div className="stat-slider-thumb text-[#0062FF]" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Slider 2: Pink/Coral */}
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-xs font-mono">
-                  <span className="font-bold text-[#07215A]">Progressive Motility Index</span>
-                  <span className="font-bold text-[#FF3366]">{slider2}% Standard</span>
-                </div>
-                <div className="stat-slider-track cursor-pointer" onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-                  setSlider2(Math.max(10, Math.min(100, pct)));
-                }}>
-                  <div className="stat-slider-fill-pink" style={{ width: `${slider2}%` }}>
-                    <div className="stat-slider-thumb text-[#FF3366]" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Slider 3: Slate */}
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-xs font-mono">
-                  <span className="font-bold text-[#07215A]">Morphological Uniformity</span>
-                  <span className="font-bold text-[#64748B]">{slider3}% Precision</span>
-                </div>
-                <div className="stat-slider-track cursor-pointer" onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-                  setSlider3(Math.max(10, Math.min(100, pct)));
-                }}>
-                  <div className="stat-slider-fill-slate" style={{ width: `${slider3}%` }}>
-                    <div className="stat-slider-thumb text-[#64748B]" />
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-[11px] text-[#829AB8] font-mono pt-2">
-                * Drag or click along the slider tracks to simulate biomarker threshold variance against WHO standards.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── REAL CLINICAL LABORATORY & SCIENTIFIC PRECISION (Full Width Edge-to-Edge) ── */}
-      <section id="clinical-laboratory" className="w-full bg-white border-b border-[#E2ECF8] py-16 sm:py-24">
-        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-12">
-          <div className="max-w-3xl space-y-2">
-            <span className="text-xs font-mono font-bold text-[#E11D48] tracking-wider uppercase">
-              ● HOW SEMEN ANALYSIS WORKS (EDUCATION)
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-[#07215A] tracking-tight">
-              Discovery isn't one big moment.
-              <br />
-              <span className="text-[#0052FF]">It's a thousand small ones.</span>
-            </h2>
-            <p className="text-sm sm:text-base text-[#4A6588] leading-relaxed">
-              Background on how laboratories measure semen samples. Sanad does not diagnose, does not run a laboratory and connects to none.
-            </p>
-          </div>
-
-          {/* Dual Realistic Clinical Imagery Showcase */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-            {/* Lab Microscopy Photo */}
-            <div className="rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-xl relative group bg-white">
-              <img
-                src="/assets/images/real_clinical_lab.jpg"
-                alt="Stock photo: a laboratory microscope (illustration only)"
-                className="w-full h-[320px] sm:h-[400px] object-cover block group-hover:scale-[1.02] transition-transform duration-500 ease-out"
-              />
-              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white font-mono text-xs flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
-                <span>ILLUSTRATION · NOT A PARTNER LAB</span>
-              </div>
-              <div className="p-6 bg-white border-t border-[#E2ECF8] space-y-1.5">
-                <h3 className="text-base font-bold text-[#07215A]">High-Power Optical Semen Microscopy</h3>
-                <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
-                  Standardized examination of motility grades, sperm concentration per milliliter, and morphological anomalies under calibrated phase-contrast optics.
-                </p>
-              </div>
-            </div>
-
-            {/* Doctor Analysis Photo */}
-            <div className="rounded-3xl overflow-hidden border border-[#CBD5E1] shadow-xl relative group bg-white">
-              <img
-                src="/assets/images/real_andrology_specialist.jpg"
-                alt="Stock photo: a doctor at a workstation (illustration only)"
-                className="w-full h-[320px] sm:h-[400px] object-cover block group-hover:scale-[1.02] transition-transform duration-500 ease-out"
-              />
-              <div className="absolute top-4 left-4 bg-[#07215A]/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white font-mono text-xs flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-                <span>EXPERT CLINICAL REVIEW</span>
-              </div>
-              <div className="p-6 bg-white border-t border-[#E2ECF8] space-y-1.5">
-                <h3 className="text-base font-bold text-[#07215A]">Licensed Andrologist Multi-Factor Triage</h3>
-                <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed">
-                  Every evaluation synthesizes timeline history, thermal risk exposures, and laboratory observations into evidence-grounded care recommendations.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 4 Scientific Checkpoints */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
-            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
-              <span className="text-xs font-mono font-bold text-[#0052FF]">01 / QUALITY</span>
-              <h4 className="text-sm font-bold text-[#07215A]">ISO 15189 Standards</h4>
-              <p className="text-xs text-[#4A6588] leading-relaxed">
-                Strict temperature control at 37°C with motility readings conducted promptly within 60 minutes of collection.
-              </p>
-            </div>
-            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
-              <span className="text-xs font-mono font-bold text-[#0052FF]">02 / CENTILES</span>
-              <h4 className="text-sm font-bold text-[#07215A]">WHO 2021 Reference</h4>
-              <p className="text-xs text-[#4A6588] leading-relaxed">
-                Calibrated strictly against the 5th centile lower reference limits from global multi-center fertile cohorts.
-              </p>
-            </div>
-            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
-              <span className="text-xs font-mono font-bold text-[#0052FF]">03 / PRIVACY</span>
-              <h4 className="text-sm font-bold text-[#07215A]">Double-Blind Pseudonyms</h4>
-              <p className="text-xs text-[#4A6588] leading-relaxed">
-                Synthetic random tokens shield your real identity. No doctor or lab sees your name or contact info without consent.
-              </p>
-            </div>
-            <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] space-y-2">
-              <span className="text-xs font-mono font-bold text-[#0052FF]">04 / PATHWAY</span>
-              <h4 className="text-sm font-bold text-[#07215A]">Physician Navigation</h4>
-              <p className="text-xs text-[#4A6588] leading-relaxed">
-                Simulated (Mock) referral to invented men's health services. Nothing is sent to a real provider.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── INTERACTIVE WHO 2021 REFERENCE BENCHMARK SECTION (Full Width Edge-to-Edge) ── */}
-      <section id="who-standard" className="w-full bg-[#F8FAFC] border-b border-[#E2ECF8] py-16 sm:py-24">
-        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-8">
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#E2ECF8]">
-            <div>
-              <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
-                REFERENCE VALUES · CLINICAL_TBD
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#07215A] mt-0.5">
-                WHO 2021 6th Edition Reference Manual
-              </h2>
-            </div>
-
-            {/* Parameter Switcher */}
-            <div className="flex items-center bg-[#EBF3FF] p-1 rounded-full border border-[#BCD8FE] text-xs">
-              {(['concentration', 'motility', 'volume'] as const).map(param => (
-                <button
-                  key={param}
-                  type="button"
-                  onClick={() => setActiveBenchmark(param)}
-                  className={`px-4 py-2 rounded-full font-bold transition-all duration-150 cursor-pointer ${
-                    activeBenchmark === param
-                      ? 'bg-[#0052FF] text-white shadow-sm'
-                      : 'text-[#4A6588] hover:text-[#07215A]'
-                  }`}
-                >
-                  {param === 'concentration' ? 'Concentration' : param === 'motility' ? 'Motility' : 'Volume'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E2ECF8] shadow-sm space-y-5">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div>
-                <span className="text-xs text-[#829AB8] font-mono">5th Centile Reference Lower Limit</span>
-                <div className="flex items-baseline gap-3 mt-1">
-                  <span className="text-3xl sm:text-4xl font-black text-[#07215A] tracking-tight">
-                    {currentBenchmark.threshold}
-                  </span>
-                  <span className="text-xs text-[#0052FF] font-bold bg-[#EBF3FF] px-3 py-1 rounded-full border border-[#BCD8FE]">
-                    Optimal Threshold
-                  </span>
-                </div>
-              </div>
-              <span className="text-xs text-[#4A6588] font-mono">{currentBenchmark.whoStandard}</span>
-            </div>
-
-            {/* Animated Gauge Bar */}
-            <div className="space-y-2">
-              <div className="clinical-benchmark-bar h-4">
-                <div
-                  className="clinical-benchmark-fill"
-                  style={{ width: `${currentBenchmark.fillPercent}%` }}
-                >
-                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-[#0052FF] shadow-sm" />
-                </div>
-              </div>
-              <div className="flex justify-between text-xs text-[#829AB8] font-mono">
-                <span>Below 5th centile (flagged for review)</span>
-                <span>Draft reference range (CLINICAL_TBD)</span>
-              </div>
-            </div>
-
-            <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed pt-2">
-              {currentBenchmark.clinicalContext}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4-STEP CLINICAL WORKFLOW SECTION (Full Width Edge-to-Edge) ── */}
-      <section id="workflow-process" className="w-full bg-white border-b border-[#E2ECF8] py-16 sm:py-24">
-        <div className="w-full max-w-[1700px] mx-auto px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 space-y-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
-                CLINICAL PROCESS
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#07215A] mt-0.5">
-                How Sanad Operates
-              </h2>
-            </div>
-
-            {/* Step Tabs */}
-            <div className="flex flex-wrap gap-2">
-              {WORKFLOW_STEPS.map((step, idx) => (
-                <button
-                  key={step.id}
-                  type="button"
-                  onClick={() => setActiveWorkflowIndex(idx)}
-                  className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    activeWorkflowIndex === idx
-                      ? 'bg-[#0052FF] text-white shadow-sm'
-                      : 'bg-[#F1F5F9] text-[#4A6588] hover:bg-[#E2ECF8]'
-                  }`}
-                >
-                  Step {idx + 1}: {step.title}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Active Step Showcase */}
-          <div key={activeWorkflowIndex} className="medical-card card-sheen overflow-hidden workflow-step-enter border border-[#E2ECF8] rounded-3xl">
-            <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
-              <div className="lg:col-span-5 h-80 sm:h-96 overflow-hidden relative bg-[#07215A]">
-                <img
-                  src={activeStep.image}
-                  alt={activeStep.alt}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#07215A]/70 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-5 left-5">
-                  <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-[#07215A] shadow-md">
-                    Step {activeWorkflowIndex + 1}: {activeStep.subtitle}
-                  </span>
-                </div>
-              </div>
-
-              <div className="lg:col-span-7 p-8 sm:p-12 space-y-5">
-                <div className="space-y-1.5">
-                  <span className="text-xs font-mono font-bold text-[#0052FF]">{activeStep.badge}</span>
-                  <h3 className="text-2xl font-bold text-[#07215A]">
-                    {activeStep.title}
-                  </h3>
-                </div>
-
-                <p className="text-sm sm:text-base text-[#4A6588] leading-relaxed">
-                  {activeStep.description}
-                </p>
-
-                <div className="p-4 bg-[#F8FAFC] rounded-2xl border border-[#E2ECF8]">
-                  <span className="text-xs font-bold text-[#07215A]">Clinical Rationale:</span>
-                  <p className="text-xs sm:text-sm text-[#4A6588] mt-1 leading-relaxed">
-                    {activeStep.clinicalFocus}
+                  <p className="font-mono text-xs text-[#575C55] flex items-start gap-2">
+                    <span className="text-[#1F4D3F]" aria-hidden="true">
+                      ↳
+                    </span>
+                    {step.note}
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── BOTTOM PINK/CORAL & ROYAL BLUE CTA BANNER (Full Width Edge-to-Edge) ── */}
-      <section className="w-full py-16 sm:py-24 px-6 sm:px-12 lg:px-16 xl:px-24 2xl:px-32 bg-[#F8FAFC]">
-        <div
-          className="w-full max-w-[1700px] mx-auto rounded-3xl overflow-hidden relative p-8 sm:p-14 lg:p-20 text-white shadow-2xl"
-          style={{
-            background: 'linear-gradient(135deg, #FF3366 0%, #E11D48 40%, #0052FF 100%)',
-          }}
-        >
-          <div className="max-w-3xl space-y-5 relative z-10">
-            <span className="text-xs font-mono font-bold tracking-wider uppercase bg-white/20 px-3 py-1 rounded-full border border-white/30 inline-block">
-              ● OUR VISION
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-              A healthier tomorrow, in motion.
-            </h2>
-            <p className="text-base sm:text-lg text-white/95 leading-relaxed">
-              Every discovery starts somewhere. Let's build an environment where men can check their health with complete privacy, unhurried ease, and zero judgment.
-            </p>
-            <div className="pt-3">
-              <button
-                type="button"
-                onClick={() => void handleStartBlank()}
-                className="px-8 py-4 rounded-full text-sm font-bold bg-white text-[#0052FF] hover:bg-[#F8FAFC] active:scale-[0.98] transition-all shadow-xl flex items-center gap-2 cursor-pointer"
-              >
-                <span>Start Confidential Assessment</span>
-                <span>→</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ACCORDION & TECHNICAL APPENDIX (Full Width Edge-to-Edge) ── */}
-      <section id="faq-section" className="w-full bg-white border-t border-[#E2ECF8] py-16 sm:py-24 px-6 sm:px-12 lg:px-16 xl:px-24">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="text-center space-y-2">
-            <span className="text-xs font-mono font-bold text-[#0052FF] tracking-wider uppercase">
-              PRIVACY & PROTOCOLS
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#07215A]">
-              Frequently Asked Questions
-            </h2>
-          </div>
-
-          <div className="space-y-3.5">
-            {FAQS.map((faq, idx) => {
-              const isOpen = openFaqIndex === idx;
-              return (
-                <div
-                  key={faq.question}
-                  className="medical-card overflow-hidden border border-[#E2ECF8] rounded-2xl bg-white"
+              <div className="mt-4 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveStep(i => Math.max(0, i - 1))}
+                  disabled={activeStep === 0}
+                  className="font-mono text-xs text-[#575C55] hover:text-[#1A1F1C] disabled:opacity-30 cursor-pointer disabled:cursor-default"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="w-full flex items-center justify-between gap-4 cursor-pointer p-5 sm:p-6 text-left"
-                  >
-                    <h3 className="text-sm sm:text-base font-bold text-[#07215A]">{faq.question}</h3>
-                    <span
-                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all duration-300 ease-out"
-                      style={{
-                        background: isOpen ? '#0052FF' : '#EBF3FF',
-                        color: isOpen ? 'white' : '#0052FF',
-                        transform: isOpen ? 'rotate(45deg)' : 'none',
-                      }}
-                    >
-                      +
-                    </span>
-                  </button>
-                  <div className={`accordion-grid ${isOpen ? 'is-open' : ''}`}>
-                    <div className="accordion-grid-inner">
-                      <div className="px-5 pb-5 sm:px-6 sm:pb-6">
-                        <p className="text-xs sm:text-sm text-[#4A6588] border-t border-[#E2ECF8] pt-3 leading-relaxed">
-                          {faq.answer}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Technical Appendix Toggle */}
-          <div className="text-center pt-4">
-            <button
-              type="button"
-              onClick={() => setShowTechAppendix(!showTechAppendix)}
-              className="text-xs font-mono font-semibold text-[#829AB8] hover:text-[#0052FF] transition-colors cursor-pointer inline-flex items-center gap-1.5"
-            >
-              <span>{showTechAppendix ? 'Hide' : 'View'} FHIR R4 Conceptual Architecture</span>
-              <span className="text-xs">{showTechAppendix ? '▲' : '▼'}</span>
-            </button>
-          </div>
-
-          {showTechAppendix && (
-            <div className="medical-canvas p-6 rounded-2xl border border-[#E2ECF8] bg-[#F8FAFC] text-xs space-y-3 font-mono">
-              <span className="font-bold text-[#07215A]">Conceptual FHIR R4 Mapping Manifest:</span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
-                  <span className="font-bold text-[#0052FF]">AssessmentCase</span>
-                  <p className="text-[11px] text-[#4A6588] mt-1">Maps to FHIR Patient with synthetic pseudonym identifiers.</p>
-                </div>
-                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
-                  <span className="font-bold text-[#0052FF]">ClinicalObservation</span>
-                  <p className="text-[11px] text-[#4A6588] mt-1">Maps to FHIR Observation with semen analysis test codes.</p>
-                </div>
-                <div className="p-3.5 bg-white rounded-xl border border-[#E2ECF8]">
-                  <span className="font-bold text-[#0052FF]">ConsentLedger</span>
-                  <p className="text-[11px] text-[#4A6588] mt-1">Dual gatekeeper verified on backend at every transaction.</p>
-                </div>
+                  ← Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStep(i => Math.min(PATH.length - 1, i + 1))}
+                  disabled={activeStep === PATH.length - 1}
+                  className="font-mono text-xs text-[#575C55] hover:text-[#1A1F1C] disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                >
+                  Next →
+                </button>
               </div>
             </div>
-          )}
+          </div>
+        </div>
+      </section>
+
+      {/* READING A REPORT */}
+      <section className="w-full px-4 sm:px-8 lg:px-12 bg-[#EFEBE2] border-y border-[#E4DFD3]" aria-labelledby="report-title">
+        <div className="max-w-[1240px] mx-auto py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+          <div className="lg:col-span-5 lg:sticky lg:top-32 self-start">
+            <Kicker>If you already have a lab report</Kicker>
+            <h2 id="report-title" className="font-serif text-4xl sm:text-5xl text-[#1A1F1C] mt-4 leading-[1.02]">
+              Read it one line at a time.
+            </h2>
+            <p className="mt-5 text-[#575C55] leading-relaxed max-w-[40ch]">
+              Sanad records each value exactly as printed, with its unit. It never converts units, and it never draws
+              a conclusion from one number.
+            </p>
+
+            <div key={row.code} className="mt-8 border-l-2 border-[#1A1F1C] pl-5 workflow-step-enter" aria-live="polite">
+              <p className="font-mono text-[11px] text-[#8A8C84]">
+                {row.code} · {row.unit}
+              </p>
+              <p className="text-xl text-[#1A1F1C] mt-1 font-medium">{row.label}</p>
+              <p className="mt-2 text-[#575C55] leading-relaxed">{row.explain}</p>
+              <p className="mt-3 font-mono text-[11px] text-[#8A8C84]">Education draft · CLINICAL_TBD</p>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7">
+            <figure className="bg-[#FBFAF6] border border-[#D6D0C2] rounded-[4px] shadow-[var(--shadow-3)] lg:rotate-[0.6deg] transition-transform duration-500 hover:rotate-0">
+              <div className="px-5 sm:px-8 pt-6 pb-4 border-b-2 border-[#1A1F1C] flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-[#8A8C84]">Specimen report</p>
+                  <p className="font-serif text-2xl text-[#1A1F1C] mt-1">Synthetic Lab No. 4</p>
+                </div>
+                <span className="tag" data-mock="true">
+                  Mock · synthetic
+                </span>
+              </div>
+              <div className="px-5 sm:px-8 py-3 grid grid-cols-3 gap-4 font-mono text-[11px] text-[#575C55] border-b border-[#E4DFD3]">
+                <span>Collected 2026-10-15</span>
+                <span>Abstinence 3 d</span>
+                <span className="text-right">Ref: synthetic</span>
+              </div>
+              <table className="w-full text-left">
+                <caption className="sr-only">Synthetic semen analysis report. Select a row to read what it measures.</caption>
+                <thead>
+                  <tr className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#8A8C84]">
+                    <th scope="col" className="px-5 sm:px-8 py-3 font-normal">
+                      Measure
+                    </th>
+                    <th scope="col" className="py-3 font-normal text-right">
+                      Result
+                    </th>
+                    <th scope="col" className="px-5 sm:px-8 py-3 font-normal">
+                      Unit
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {REPORT_ROWS.map((r, idx) => {
+                    const on = idx === activeRow;
+                    return (
+                      <tr
+                        key={r.code}
+                        onMouseEnter={() => setActiveRow(idx)}
+                        className={`border-t border-[#E4DFD3] transition-colors ${on ? 'bg-[#E8EFEA]' : ''}`}
+                      >
+                        <th scope="row" className="px-5 sm:px-8 py-0 font-normal">
+                          <button
+                            type="button"
+                            onClick={() => setActiveRow(idx)}
+                            onFocus={() => setActiveRow(idx)}
+                            aria-pressed={on}
+                            className="w-full py-3.5 text-left text-[15px] text-[#1A1F1C] cursor-pointer flex items-center gap-2"
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full transition-colors ${on ? 'bg-[#1F4D3F]' : 'bg-transparent'}`}
+                              aria-hidden="true"
+                            />
+                            {r.label}
+                          </button>
+                        </th>
+                        <td
+                          className={`py-3.5 text-right font-mono tabular text-[15px] ${
+                            r.value === '-' ? 'text-[#8A8C84]' : 'text-[#1A1F1C]'
+                          }`}
+                        >
+                          {r.value === '-' ? <span title="Not reported">-</span> : r.value}
+                        </td>
+                        <td className="px-5 sm:px-8 py-3.5 font-mono text-xs text-[#575C55]">{r.unit}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <figcaption className="px-5 sm:px-8 py-4 border-t border-[#E4DFD3] font-mono text-[11px] text-[#8A8C84] leading-relaxed">
+                Invented values for illustration. No reference limits are shown because none are approved for this
+                prototype (CLINICAL_TBD).
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      {/* GROUND RULES */}
+      <section className="w-full px-4 sm:px-8 lg:px-12" aria-labelledby="never-title">
+        <div className="max-w-[1240px] mx-auto py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-4">
+            <Kicker>Ground rules</Kicker>
+            <h2 id="never-title" className="font-serif text-4xl sm:text-5xl text-[#1A1F1C] mt-4 leading-[1.02]">
+              Things Sanad won't do.
+            </h2>
+          </div>
+          <ol className="lg:col-span-8 border-t border-[#1A1F1C]">
+            {PROMISES.map(([head, body], i) => (
+              <li
+                key={head}
+                className="group grid grid-cols-[2.5rem_1fr] sm:grid-cols-[3.5rem_minmax(0,17rem)_1fr] gap-x-4 gap-y-1 py-6 border-b border-[#D6D0C2] reveal"
+              >
+                <span className="font-mono text-xs text-[#8A8C84] tabular pt-1.5">{String(i + 1).padStart(2, '0')}</span>
+                <p className="text-lg text-[#1A1F1C] font-medium leading-snug transition-transform duration-300 group-hover:translate-x-1">
+                  {head}
+                </p>
+                <p className="col-start-2 sm:col-start-3 text-[#575C55] leading-relaxed">{body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* START CHOOSER */}
+      <section id="start" className="w-full px-4 sm:px-8 lg:px-12 scroll-mt-28" aria-labelledby="start-title">
+        <div className="max-w-[1240px] mx-auto pb-20 lg:pb-28">
+          <div className="medical-card-sapphire !rounded-[18px] p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="lg:col-span-5">
+              <Kicker tone="dark">Start a session</Kicker>
+              <h2 id="start-title" className="font-serif text-4xl sm:text-5xl text-[#F4F1EA] mt-4 leading-[1.02]">
+                Pick a starting point.
+              </h2>
+              <p className="mt-5 text-[#C9CFC9] leading-relaxed max-w-[38ch]">
+                Every path opens the same consent and safety steps. Sample and upload cases use synthetic data only.
+              </p>
+            </div>
+
+            <div className="lg:col-span-7">
+              <fieldset>
+                <legend className="sr-only">Starting point</legend>
+                <div className="space-y-2">
+                  {([
+                    { mode: 'blank', title: 'Answer for yourself', body: 'An empty session. You answer the questions.' },
+                    {
+                      mode: 'sample',
+                      title: 'Walk through a synthetic case',
+                      body: samplesUnavailable
+                        ? 'The sample list is unavailable right now.'
+                        : samples.length > 0
+                        ? `${samples.length} invented profiles, pre-filled.`
+                        : 'Invented profiles, pre-filled.',
+                    },
+                    {
+                      mode: 'upload',
+                      title: 'Load an example profile file',
+                      body: 'A synthetic JSON profile with two lab values attached.',
+                    },
+                  ] as const).map(opt => {
+                    const checked = startMode === opt.mode;
+                    return (
+                      <div
+                        key={opt.mode}
+                        className={`rounded-xl border transition-colors ${
+                          checked ? 'border-[#F4F1EA] bg-[#F4F1EA]/[0.05]' : 'border-[#3A4540] hover:border-[#6B766F]'
+                        }`}
+                      >
+                        <label className="flex items-start gap-4 p-4 sm:p-5 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="start-mode"
+                            value={opt.mode}
+                            checked={checked}
+                            onChange={() => setStartMode(opt.mode)}
+                            className="peer sr-only"
+                          />
+                          <span
+                            className={`mt-1 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#F4F1EA] ${
+                              checked ? 'border-[#F4F1EA]' : 'border-[#6B766F]'
+                            }`}
+                            aria-hidden="true"
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full bg-[#F4F1EA] transition-transform duration-200 ${
+                                checked ? 'scale-100' : 'scale-0'
+                              }`}
+                            />
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-[#F4F1EA] font-medium">{opt.title}</span>
+                            <span className="block text-sm text-[#A9B3AC] mt-0.5">{opt.body}</span>
+                          </span>
+                        </label>
+                        {opt.mode === 'sample' && checked && samples.length > 0 && (
+                          <div className="px-4 sm:px-5 pb-4 sm:pb-5 pl-12 sm:pl-[3.25rem] flex flex-wrap gap-1.5" role="group" aria-label="Synthetic profiles">
+                            {samples.map(s => (
+                              <button
+                                key={s.fixture_id}
+                                type="button"
+                                onClick={() => setSelectedFixture(s.fixture_id)}
+                                aria-pressed={selectedFixture === s.fixture_id}
+                                title={s.description}
+                                className={`px-2.5 py-1 rounded-md font-mono text-[11px] border transition-colors cursor-pointer ${
+                                  selectedFixture === s.fixture_id
+                                    ? 'bg-[#F4F1EA] text-[#1A1F1C] border-[#F4F1EA]'
+                                    : 'text-[#C9CFC9] border-[#3A4540] hover:border-[#A9B3AC]'
+                                }`}
+                              >
+                                {s.fixture_id} · {s.title}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+                <p className="font-mono text-[11px] text-[#A9B3AC]">
+                  Language: {preferredLanguage === 'en' ? 'English' : 'العربية'}
+                </p>
+                <button
+                  type="button"
+                  disabled={busy || (startMode === 'sample' && samplesUnavailable)}
+                  onClick={handleChosenStart}
+                  className="inline-flex items-center gap-2 min-h-[44px] px-6 rounded-[10px] bg-[#F4F1EA] text-[#1A1F1C] font-semibold shadow-[0_2px_0_#A9B3AC] hover:bg-[#FFFFFF] active:translate-y-[2px] active:shadow-none transition-[transform,box-shadow,background-color] duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {busy ? (
+                    <>
+                      <span className="spinner spinner-sm" />
+                      Opening…
+                    </>
+                  ) : (
+                    <>Continue to consent →</>
+                  )}
+                </button>
+              </div>
+              {error && (
+                <p role="alert" className="mt-4 text-sm text-[#F0C9C2]">
+                  {error}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* QUESTIONS */}
+      <section className="w-full px-4 sm:px-8 lg:px-12 border-t border-[#E4DFD3]" aria-labelledby="faq-title">
+        <div className="max-w-[1240px] mx-auto py-20 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-5">
+            <Kicker>Questions people ask first</Kicker>
+            <h2 id="faq-title" className="sr-only">
+              Frequently asked questions
+            </h2>
+            <ul className="mt-6">
+              {FAQS.map((f, idx) => (
+                <li key={f.q} className="border-b border-[#E4DFD3]">
+                  <button
+                    type="button"
+                    aria-expanded={activeFaq === idx}
+                    onClick={() => setActiveFaq(idx)}
+                    className={`w-full text-left py-3.5 pr-4 flex items-start gap-3 cursor-pointer transition-colors ${
+                      activeFaq === idx ? 'text-[#1A1F1C]' : 'text-[#8A8C84] hover:text-[#1A1F1C]'
+                    }`}
+                  >
+                    <span className="font-mono text-[11px] pt-1.5 tabular w-5 shrink-0">Q{idx + 1}</span>
+                    <span className="text-[17px] leading-snug">{f.q}</span>
+                  </button>
+                  <div className={`lg:hidden accordion-grid ${activeFaq === idx ? 'is-open' : ''}`}>
+                    <div className="accordion-grid-inner">
+                      <p className="pb-4 pl-8 text-[#575C55] leading-relaxed">{f.a}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="hidden lg:block lg:col-span-6 lg:col-start-7">
+            <div key={activeFaq} className="workflow-step-enter lg:sticky lg:top-32 pt-6" aria-live="polite">
+              <p className="font-serif text-3xl text-[#1A1F1C] leading-tight">{FAQS[activeFaq].q}</p>
+              <p className="mt-5 text-lg text-[#575C55] leading-relaxed max-w-[48ch]">{FAQS[activeFaq].a}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* APPENDIX */}
+      <section className="w-full px-4 sm:px-8 lg:px-12 pb-16" aria-label="Technical appendix">
+        <div className="max-w-[1240px] mx-auto">
+          <button
+            type="button"
+            onClick={() => setShowAppendix(v => !v)}
+            aria-expanded={showAppendix}
+            className="font-mono text-xs text-[#575C55] hover:text-[#1A1F1C] cursor-pointer inline-flex items-center gap-2"
+          >
+            <span className={`inline-block transition-transform duration-200 ${showAppendix ? 'rotate-90' : ''}`}>›</span>
+            Technical appendix: conceptual FHIR R4 mapping
+          </button>
+          <div className={`accordion-grid ${showAppendix ? 'is-open' : ''}`}>
+            <div className="accordion-grid-inner">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 border border-[#D6D0C2] rounded-lg divide-y sm:divide-y-0 sm:divide-x divide-[#D6D0C2] bg-[#FBFAF6]">
+                {[
+                  ['AssessmentCase', 'Patient, synthetic pseudonym identifiers'],
+                  ['ClinicalObservation', 'Observation, placeholder test codes'],
+                  ['ConsentLedger', 'Consent, checked on the server per action'],
+                ].map(([name, maps]) => (
+                  <div key={name} className="p-4">
+                    <p className="font-mono text-xs text-[#1A1F1C]">{name}</p>
+                    <p className="text-sm text-[#575C55] mt-1">→ {maps}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 font-mono text-[11px] text-[#8A8C84]">
+                Conceptual only · NOT_EVALUATED. This does not claim interoperability or conformance.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </div>

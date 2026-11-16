@@ -225,7 +225,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                 option ? { choice: 'ANSWERED', value: option.value } : null,
               );
             }}
-            className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+            className="w-full px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
           >
             <option value="">Choose an answer or leave not asked</option>
             {question.options.map((option, index) => (
@@ -246,7 +246,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                     temporal_status: (event.target.value || undefined) as DraftAnswer['temporal_status'],
                   })
                 }
-                className="w-full px-4 py-2.5 rounded-xl border border-[#BCD8FE] bg-[#EBF3FF] text-sm font-semibold text-[#0050CC] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#C8D6CC] bg-[#E8EFEA] text-sm font-semibold text-[#163A2F] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
               >
                 <option value="">Choose current or past</option>
                 {question.temporal_options.map(option => (
@@ -279,7 +279,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
           )
         }
         placeholder={question.unit ? `Value (${question.unit})` : 'Enter a value'}
-        className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+        className="w-full px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
       />
     );
   };
@@ -288,17 +288,17 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   return (
     <div className="w-full space-y-6">
       {/* Top Banner & View Switcher */}
-      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E2ECF8] pb-5">
+      <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E4DFD3] pb-5">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <MockBadge label={`MOCK INTAKE QUESTIONS · ${catalogue?.approval_status ?? 'CLINICAL_TBD'}`} />
-              <span className="text-xs text-[#64748B]">Screening, not diagnosis</span>
+              <span className="text-xs text-[#575C55]">Screening, not diagnosis</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
-              Intake Questions
+            <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F1C] tracking-tight">
+              Questions
             </h1>
-            <p className="text-sm text-[#475467] mt-1 leading-relaxed">
+            <p className="text-sm text-[#575C55] mt-1 leading-relaxed">
               Draft questions, not approved by a clinician. Not sure and Prefer not to say are always valid answers and never mean low risk.
             </p>
           </div>
@@ -315,7 +315,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
               <button
                 type="button"
                 onClick={onOpenLab}
-                className="px-4 py-2 rounded-full text-xs font-semibold text-[#0050CC] bg-[#EBF3FF] hover:bg-[#D9E9FF] border border-[#BCD8FE] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
+                className="px-4 py-2 rounded-full text-xs font-semibold text-[#163A2F] bg-[#E8EFEA] hover:bg-[#D9E9FF] border border-[#C8D6CC] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
               >
                 + Add lab values
               </button>
@@ -324,21 +324,21 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
         </div>
 
         {error && (
-          <div role="alert" className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-xs font-semibold">
+          <div role="alert" className="p-4 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-xs font-semibold">
             {error}
           </div>
         )}
       </div>
 
       {loadingCatalogue ? (
-        <div className="medical-card bg-white p-12 text-center text-sm text-[#64748B] rounded-2xl shadow-sm">
-          <div className="inline-block w-6 h-6 border-2 border-[#0066EE] border-t-transparent rounded-full animate-spin mb-3" />
+        <div className="medical-card bg-[#FBFAF6] p-12 text-center text-sm text-[#575C55] rounded-2xl shadow-sm">
+          <div className="inline-block w-6 h-6 border-2 border-[#1F4D3F] border-t-transparent rounded-full animate-spin mb-3" />
           <p>Loading catalogue...</p>
         </div>
       ) : (
         <form onSubmit={handleProceedToReview} className="space-y-6">
-          <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-6">
-            <h2 className="text-base font-bold text-[#0F172A] border-b border-[#E2ECF8] pb-3">
+          <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-6">
+            <h2 className="text-base font-bold text-[#1A1F1C] border-b border-[#E4DFD3] pb-3">
               Clinical Questions
             </h2>
 
@@ -351,20 +351,20 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                   <div
                     key={question.question_id}
                     className={`p-5 rounded-2xl border transition-[background-color,border-color,box-shadow] duration-160 ease-[var(--ease-out)] ${
-                      isConflict ? 'border-[#FEDF89] bg-[#FFFAEB]' : 'border-[#E2ECF8] bg-[#FBFDFF] hover:border-[#BCD8FE]'
+                      isConflict ? 'border-[#FEDF89] bg-[#FFFAEB]' : 'border-[#E4DFD3] bg-[#FBFAF6] hover:border-[#C8D6CC]'
                     } space-y-3.5`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <span className="text-xs text-[#64748B] font-medium">
+                        <span className="text-xs text-[#575C55] font-medium">
                           Question {index + 1} of {catalogue.questions.length}
                           {question.blocking && ' · Core required'}
                         </span>
-                        <p className="text-sm font-bold text-[#0F172A] leading-snug">
+                        <p className="text-sm font-bold text-[#1A1F1C] leading-snug">
                           {question.text}
                         </p>
                         {question.reason && (
-                          <p className="text-xs text-[#475467] leading-relaxed">
+                          <p className="text-xs text-[#575C55] leading-relaxed">
                             {question.reason}
                           </p>
                         )}
@@ -379,7 +379,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
 
                     {renderQuestionInput(question)}
 
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#F1F5F9]">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#EFECE4]">
                       <button
                         type="button"
                         onClick={() =>
@@ -387,8 +387,8 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                         }
                         className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                           current?.choice === 'NOT_SURE'
-                            ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
-                            : 'bg-white text-[#475467] border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                            ? 'bg-[#1F4D3F] text-white border-[#1F4D3F] shadow-xs'
+                            : 'bg-[#FBFAF6] text-[#575C55] border-[#D6D0C2] hover:bg-[#F7F5EF]'
                         }`}
                       >
                         Not sure
@@ -401,8 +401,8 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                         }
                         className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                           current?.choice === 'PREFER_NOT_TO_ANSWER'
-                            ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
-                            : 'bg-white text-[#475467] border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                            ? 'bg-[#1F4D3F] text-white border-[#1F4D3F] shadow-xs'
+                            : 'bg-[#FBFAF6] text-[#575C55] border-[#D6D0C2] hover:bg-[#F7F5EF]'
                         }`}
                       >
                         Prefer not to answer
@@ -412,7 +412,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                         <button
                           type="button"
                           onClick={() => setAnswer(question.question_id, null)}
-                          className="text-xs font-semibold text-[#94A3B8] hover:text-[#0F172A] underline cursor-pointer ml-1"
+                          className="text-xs font-semibold text-[#8A8C84] hover:text-[#1A1F1C] underline cursor-pointer ml-1"
                         >
                           Clear
                         </button>
@@ -426,20 +426,20 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
 
           {/* Optional Psychosocial Questions */}
           {psychQuestions.length > 0 && (
-            <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-5">
+            <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-5">
               <div>
-                <h2 className="text-base font-bold text-[#0F172A]">
+                <h2 className="text-base font-bold text-[#1A1F1C]">
                   Wellbeing Context (Optional)
                 </h2>
-                <p className="text-xs text-[#64748B] mt-1">
+                <p className="text-xs text-[#575C55] mt-1">
                   Up to three optional questions about how you have been. Self-reported context only, never used for triage.
                 </p>
               </div>
 
               <div className="space-y-4">
                 {psychQuestions.map(question => (
-                  <div key={question.question_id} className="p-5 rounded-2xl border border-[#E2ECF8] bg-[#FBFDFF] space-y-3">
-                    <p className="text-sm font-semibold text-[#0F172A]">
+                  <div key={question.question_id} className="p-5 rounded-2xl border border-[#E4DFD3] bg-[#FBFAF6] space-y-3">
+                    <p className="text-sm font-semibold text-[#1A1F1C]">
                       {question.draft_text}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -453,8 +453,8 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
                             }
                             className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                               psychAnswers[question.question_id] === stateKey
-                                ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
-                                : 'bg-white text-[#475467] border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                                ? 'bg-[#1F4D3F] text-white border-[#1F4D3F] shadow-xs'
+                                : 'bg-[#FBFAF6] text-[#575C55] border-[#D6D0C2] hover:bg-[#F7F5EF]'
                             }`}
                           >
                             {stateKey === 'KNOWN_POSITIVE'
@@ -475,15 +475,15 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
           )}
 
           {/* Submit / Proceed to Review CTA */}
-          <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-[#475467] leading-relaxed">
+          <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-[#575C55] leading-relaxed">
               When ready, proceed to review what Sanad has recorded before submitting.
             </p>
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-pill-primary w-full sm:w-auto px-7 py-3.5 rounded-full font-bold text-sm text-white shadow-md cursor-pointer flex items-center justify-center gap-2"
+              className="btn-pill-primary w-full sm:w-auto px-7 py-3.5 rounded-full font-bold text-sm text-white shadow-[var(--shadow-1)] cursor-pointer flex items-center justify-center gap-2"
             >
               <span>{loading ? 'Saving answers...' : 'Proceed to Review Profile'}</span>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

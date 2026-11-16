@@ -13,7 +13,7 @@ export const LoadingView: React.FC<LoadingViewProps> = ({
 }) => {
   if (variant === 'inline') {
     return (
-      <div className="flex items-center gap-3 py-4 text-xs font-medium text-[#4A6588]">
+      <div className="flex items-center gap-3 py-4 text-xs font-medium text-[#575C55]">
         <div className="spinner spinner-sm" />
         <span>{title}</span>
       </div>
@@ -65,19 +65,19 @@ export const LoadingView: React.FC<LoadingViewProps> = ({
 
               {/* Step 2 (Middle Tier - Medium Periwinkle) */}
               <rect x="26" y="30" width="128" height="22" rx="8" fill="#93C5FD" />
-              <rect x="52" y="30" width="76" height="22" fill="#60A5FA" opacity="0.5" />
+              <rect x="52" y="30" width="76" height="22" fill="#2E6B57" opacity="0.5" />
 
               {/* Step 3 (Bottom Tier Base - Solid Sapphire Blue) */}
-              <rect x="10" y="56" width="160" height="24" rx="9" fill="#0066EE" />
-              <rect x="38" y="56" width="104" height="24" fill="#0050D0" opacity="0.3" />
+              <rect x="10" y="56" width="160" height="24" rx="9" fill="#1F4D3F" />
+              <rect x="38" y="56" width="104" height="24" fill="#163A2F" opacity="0.3" />
             </svg>
           </div>
         </div>
 
         {/* Title & Subtitle */}
         <div className="space-y-1.5 max-w-sm mx-auto">
-          <h3 className="text-lg font-extrabold text-[#07215A] tracking-tight">{title}</h3>
-          <p className="text-xs text-[#829AB8] leading-relaxed">{subtitle}</p>
+          <h3 className="text-lg font-semibold text-[#1A1F1C] tracking-tight">{title}</h3>
+          <p className="text-xs text-[#8A8C84] leading-relaxed">{subtitle}</p>
         </div>
       </div>
     );
@@ -88,23 +88,23 @@ export const LoadingView: React.FC<LoadingViewProps> = ({
     return (
       <div className="medical-card p-6 max-w-lg mx-auto my-8 space-y-5">
         {/* Search Bar Capsule */}
-        <div className="h-11 rounded-full bg-[#F8FAFC] border border-[#E2ECF8] flex items-center px-4 gap-2.5">
-          <span className="text-[#94A3B8] text-sm">🔍</span>
-          <span className="text-xs text-[#94A3B8]">Search a Specialist or Lab...</span>
+        <div className="h-11 rounded-full bg-[#F7F5EF] border border-[#E4DFD3] flex items-center px-4 gap-2.5">
+          <span className="text-[#8A8C84] text-sm">🔍</span>
+          <span className="text-xs text-[#8A8C84]">Search a Specialist or Lab...</span>
         </div>
 
         {/* Filter Chips */}
         <div className="flex items-center gap-2">
-          <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#E0EDFF] text-[#0066EE]">
+          <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#E8EFEA] text-[#1F4D3F]">
             All
           </span>
-          <span className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#829AB8] border border-[#E2ECF8]">
+          <span className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#8A8C84] border border-[#E4DFD3]">
             Urology
           </span>
-          <span className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#829AB8] border border-[#E2ECF8]">
+          <span className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#8A8C84] border border-[#E4DFD3]">
             Lab and Hormone
           </span>
-          <span className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#829AB8] border border-[#E2ECF8]">
+          <span className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#8A8C84] border border-[#E4DFD3]">
             Lifestyle
           </span>
         </div>
@@ -130,14 +130,14 @@ export const LoadingView: React.FC<LoadingViewProps> = ({
       {/* Bio-medical glowing ring & logo icon */}
       <div className="relative flex items-center justify-center">
         <div
-          className="absolute w-20 h-20 rounded-full bg-[#0062FF]/10 animate-ping"
+          className="absolute w-20 h-20 rounded-full bg-[#1F4D3F]/10 animate-ping"
           style={{ animationDuration: '2.5s' }}
         />
         <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+          className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-[var(--shadow-2)]"
           style={{
-            background: 'linear-gradient(145deg, #1A7AFF 0%, #0048C8 100%)',
-            boxShadow: '0 8px 24px -4px rgba(0,98,255,0.4), 0 1px 2px rgba(255,255,255,0.3) inset',
+            background: 'linear-gradient(145deg, #2E6B57 0%, #163A2F 100%)',
+            boxShadow: '0 8px 24px -4px rgba(31,77,63,0.4), 0 1px 2px rgba(255,255,255,0.3) inset',
           }}
         >
           <span className="bio-pulse-soft">س</span>
@@ -146,9 +146,9 @@ export const LoadingView: React.FC<LoadingViewProps> = ({
 
       {/* Title & subtitle with dot pulse */}
       <div className="space-y-1.5 max-w-sm">
-        <h3 className="text-base font-bold text-[#07215A] tracking-tight">{title}</h3>
-        <p className="text-xs text-[#829AB8] leading-relaxed">{subtitle}</p>
-        <div className="dot-pulse flex gap-1 justify-center text-[#0062FF] pt-1">
+        <h3 className="text-base font-bold text-[#1A1F1C] tracking-tight">{title}</h3>
+        <p className="text-xs text-[#8A8C84] leading-relaxed">{subtitle}</p>
+        <div className="dot-pulse flex gap-1 justify-center text-[#1F4D3F] pt-1">
           <span />
           <span />
           <span />
@@ -174,7 +174,7 @@ export const LoadingView: React.FC<LoadingViewProps> = ({
   }
 
   return (
-    <div className="medical-card overflow-hidden bg-white/90 backdrop-blur-sm border border-[#E2ECF8] shadow-sm max-w-md mx-auto my-8">
+    <div className="medical-card overflow-hidden bg-[#FBFAF6]/90 backdrop-blur-sm border border-[#E4DFD3] shadow-sm max-w-md mx-auto my-8">
       {content}
     </div>
   );

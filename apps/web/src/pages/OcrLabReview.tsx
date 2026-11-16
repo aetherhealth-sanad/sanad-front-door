@@ -71,10 +71,10 @@ export const OcrLabReview: React.FC<Props> = ({ caseId, onUseField }) => {
     && field.unit !== null && field.target_test_code !== null;
 
   return (
-    <section className="medical-card bg-white border border-[#BCD8FE] p-5 sm:p-6 rounded-2xl space-y-4" aria-label="Synthetic lab OCR review">
+    <section className="medical-card bg-[#FBFAF6] border border-[#C8D6CC] p-5 sm:p-6 rounded-2xl space-y-4" aria-label="Synthetic lab OCR review">
       <div>
-        <h2 className="font-bold text-[#0F172A]">Read a synthetic lab report (OCR prototype)</h2>
-        <p className="text-xs text-[#475467] mt-1">
+        <h2 className="font-bold text-[#1A1F1C]">Read a synthetic lab report (OCR prototype)</h2>
+        <p className="text-xs text-[#575C55] mt-1">
           Only reports marked SYNTHETIC / SYN- are supported. PDF, PNG, JPEG up to 5 MB.
           The file is read in memory; no observation is created from OCR alone.
           Never upload real patient data.
@@ -104,31 +104,31 @@ export const OcrLabReview: React.FC<Props> = ({ caseId, onUseField }) => {
           Clear preview
         </button>
       </div>
-      {error && <p role="alert" className="text-xs text-[#B42318]">{error}</p>}
+      {error && <p role="alert" className="text-xs text-[#8F1D17]">{error}</p>}
       {draft?.status === 'REJECTED' && (
-        <p role="alert" className="text-xs text-[#B42318]">
+        <p role="alert" className="text-xs text-[#8F1D17]">
           Report rejected: {draft.reason}. A local OCR engine may be needed for scanned pages.
         </p>
       )}
       {draft?.status === 'EXTRACTED' && (
         <div className="space-y-4">
-          <p className="text-xs text-[#475467]">
+          <p className="text-xs text-[#575C55]">
             {draft.fields.length} fields read · {draft.ocr_engine ?? 'PDF text layer'} · Every field is unconfirmed.
             Select one clean value at a time to prefill the manual form, then save and separately confirm it.
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2 max-h-96 overflow-auto" aria-label="OCR extracted fields">
               {draft.fields.map(field => (
-                <div key={field.field_id} className="rounded-xl border border-[#E2ECF8] p-3 space-y-1.5">
+                <div key={field.field_id} className="rounded-xl border border-[#E4DFD3] p-3 space-y-1.5">
                   <div className="text-xs font-bold">{labelOf(field.field_id)}</div>
-                  <div className="text-sm text-[#0F172A] break-words">
+                  <div className="text-sm text-[#1A1F1C] break-words">
                     {field.value ?? 'Not readable'} {field.unit ?? ''}
                   </div>
-                  <div className="text-xs text-[#64748B] break-words">Printed: {field.raw_text ?? 'not found'}</div>
-                  {field.bbox && <div className="text-xs text-[#64748B]">
+                  <div className="text-xs text-[#575C55] break-words">Printed: {field.raw_text ?? 'not found'}</div>
+                  {field.bbox && <div className="text-xs text-[#575C55]">
                     Source page {field.bbox.page}, position ({field.bbox.x}, {field.bbox.y})
                   </div>}
-                  <div className="text-xs text-[#475467]">
+                  <div className="text-xs text-[#575C55]">
                     {field.status} · OCR score {field.scores.ocr.toFixed(2)}
                   </div>
                   {field.flags.length > 0 && <div className="text-xs text-[#B54708] font-semibold">
@@ -148,25 +148,25 @@ export const OcrLabReview: React.FC<Props> = ({ caseId, onUseField }) => {
                           });
                         }
                       }}
-                      className="rounded-full border border-[#0066EE] text-[#0050CC] px-3 py-1.5 text-xs font-bold disabled:opacity-40"
+                      className="rounded-full border border-[#1F4D3F] text-[#163A2F] px-3 py-1.5 text-xs font-bold disabled:opacity-40"
                     >
                       Prefill manual entry
                     </button>
                   )}
-                  {!field.target_test_code && <p className="text-xs text-[#64748B]">
+                  {!field.target_test_code && <p className="text-xs text-[#575C55]">
                     Read only: no approved target test code in the current lab catalogue.
                   </p>}
                 </div>
               ))}
             </div>
             {previewUrl && (
-              <div className="rounded-xl border border-[#E2ECF8] overflow-hidden bg-[#F8FAFC]">
+              <div className="rounded-xl border border-[#E4DFD3] overflow-hidden bg-[#F7F5EF]">
                 {selectedFile?.type === 'application/pdf' || selectedFile?.name.toLowerCase().endsWith('.pdf') ? (
                   <iframe title="Local synthetic report preview" src={previewUrl} className="w-full h-96" />
                 ) : (
                   <img src={previewUrl} alt="Local synthetic report preview" className="w-full max-h-96 object-contain" />
                 )}
-                <p className="p-2 text-xs text-[#64748B]">Preview stays in this browser session. Bounding-box overlay is not yet implemented.</p>
+                <p className="p-2 text-xs text-[#575C55]">Preview stays in this browser session. Bounding-box overlay is not yet implemented.</p>
               </div>
             )}
           </div>

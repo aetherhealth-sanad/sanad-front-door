@@ -58,22 +58,22 @@ export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
               <span
                 className="text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded-full"
                 style={{
-                  background: isReady ? '#ECFDF5' : '#EBF4FF',
-                  color: isReady ? '#065F46' : '#0048C8',
-                  border: `1px solid ${isReady ? '#A7F3D0' : '#BAD6FE'}`,
+                  background: isReady ? '#E8EFEA' : '#E8EFEA',
+                  color: isReady ? '#065F46' : '#163A2F',
+                  border: `1px solid ${isReady ? '#A7F3D0' : '#C8D6CC'}`,
                 }}
               >
                 {isReady ? 'Complete' : 'Processing'}
               </span>
-              <span className="text-[10px] font-mono text-[#829AB8]">
+              <span className="text-[10px] font-mono text-[#8A8C84]">
                 Not a diagnosis
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-extrabold text-[#07215A] tracking-tight">
-              {isReady ? 'Assessment Complete' : 'Analysing your answers…'}
+            <h1 className="text-2xl sm:text-3xl font-semibold text-[#1A1F1C] tracking-tight">
+              {isReady ? 'Summary ready' : 'Analysing your answers…'}
             </h1>
-            <p className="text-xs text-[#829AB8] font-mono">
+            <p className="text-xs text-[#8A8C84] font-mono">
               Ref: {caseId.slice(0, 8).toUpperCase()} · Rev {revision}
             </p>
           </div>
@@ -84,14 +84,14 @@ export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
               {/* Track */}
               <circle
                 cx="24" cy="24" r="20"
-                stroke="#E2ECF8"
+                stroke="#E4DFD3"
                 strokeWidth="3"
                 strokeLinecap="round"
               />
               {/* Fill */}
               <circle
                 cx="24" cy="24" r="20"
-                stroke={isReady ? '#10B981' : '#0062FF'}
+                stroke={isReady ? '#3F7D5C' : '#1F4D3F'}
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeDasharray={circumference}
@@ -103,7 +103,7 @@ export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
             <div className="absolute inset-0 flex items-center justify-center">
               {isReady ? (
                 <svg
-                  className="w-5 h-5 text-[#10B981]"
+                  className="w-5 h-5 text-[#3F7D5C]"
                   style={{ animation: 'completePop 0.4s var(--ease-spring) both' }}
                   viewBox="0 0 20 20" fill="currentColor"
                 >
@@ -120,11 +120,11 @@ export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
         <div
           className="rounded-2xl p-5 space-y-3"
           style={{
-            background: 'linear-gradient(145deg, #F4F8FF 0%, #FAFCFF 100%)',
-            border: '1px solid #E2ECF8',
+            background: 'linear-gradient(145deg, #F7F5EF 0%, #FBFAF6 100%)',
+            border: '1px solid #E4DFD3',
           }}
         >
-          <p className="text-[11px] font-mono font-bold text-[#829AB8] uppercase tracking-wider mb-1">
+          <p className="text-[11px] font-mono font-bold text-[#8A8C84] uppercase tracking-wider mb-1">
             Assessment stages
           </p>
 
@@ -147,10 +147,10 @@ export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
                   className={`
                     w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300
                     ${isReady || (done && !active)
-                      ? 'bg-[#10B981] text-white'
+                      ? 'bg-[#3F7D5C] text-white'
                       : active
-                      ? 'bg-[#EBF4FF] border-2 border-[#0062FF]'
-                      : 'bg-[#E2ECF8]'
+                      ? 'bg-[#E8EFEA] border-2 border-[#1F4D3F]'
+                      : 'bg-[#E4DFD3]'
                     }
                   `}
                 >
@@ -159,17 +159,17 @@ export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
                       <path d="M10 3L5 8.5 2 5.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                     </svg>
                   ) : active ? (
-                    <span className="w-2 h-2 rounded-full bg-[#0062FF] bio-pulse-soft" />
+                    <span className="w-2 h-2 rounded-full bg-[#1F4D3F] bio-pulse-soft" />
                   ) : null}
                 </div>
 
-                <span className={`text-xs font-medium ${done ? 'text-[#07215A]' : 'text-[#829AB8]'}`}>
+                <span className={`text-xs font-medium ${done ? 'text-[#1A1F1C]' : 'text-[#8A8C84]'}`}>
                   {stage.label}
                 </span>
 
                 {active && (
                   <span className="ml-auto">
-                    <span className="dot-pulse flex gap-0.5 text-[#0062FF]">
+                    <span className="dot-pulse flex gap-0.5 text-[#1F4D3F]">
                       <span style={{ width: 4, height: 4 }} />
                       <span style={{ width: 4, height: 4 }} />
                       <span style={{ width: 4, height: 4 }} />
@@ -182,18 +182,18 @@ export const SubmitReceiptScreen: React.FC<SubmitReceiptScreenProps> = ({
         </div>
 
         {/* ── Privacy notes ── */}
-        <div className="space-y-2 text-xs text-[#829AB8] leading-relaxed">
+        <div className="space-y-2 text-xs text-[#8A8C84] leading-relaxed">
           <div className="flex items-start gap-2">
-            <span className="mt-0.5 w-1 h-1 rounded-full bg-[#829AB8] shrink-0" />
-            <span><strong className="text-[#4A6588]">Emergency first.</strong> Severe warning signs are always checked before any summary.</span>
+            <span className="mt-0.5 w-1 h-1 rounded-full bg-[#8A8C84] shrink-0" />
+            <span><strong className="text-[#575C55]">Emergency first.</strong> Severe warning signs are always checked before any summary.</span>
           </div>
           <div className="flex items-start gap-2">
-            <span className="mt-0.5 w-1 h-1 rounded-full bg-[#829AB8] shrink-0" />
-            <span><strong className="text-[#4A6588]">Unknown stays unknown.</strong> Unanswered items remain clearly uncertain - never assumed normal.</span>
+            <span className="mt-0.5 w-1 h-1 rounded-full bg-[#8A8C84] shrink-0" />
+            <span><strong className="text-[#575C55]">Unknown stays unknown.</strong> Unanswered items remain clearly uncertain - never assumed normal.</span>
           </div>
           <div className="flex items-start gap-2">
-            <span className="mt-0.5 w-1 h-1 rounded-full bg-[#829AB8] shrink-0" />
-            <span><strong className="text-[#4A6588]">Private session.</strong> Nothing has been sent anywhere. This runs locally on your device.</span>
+            <span className="mt-0.5 w-1 h-1 rounded-full bg-[#8A8C84] shrink-0" />
+            <span><strong className="text-[#575C55]">Private session.</strong> Nothing has been sent anywhere. This runs locally on your device.</span>
           </div>
         </div>
 

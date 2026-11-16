@@ -118,19 +118,19 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
           isConflict
             ? 'border-[#FEDF89] bg-[#FFFAEB]'
             : state.confirmed
-            ? 'border-[#BCD8FE] bg-[#F2F7FF]'
-            : 'border-[#E2ECF8] bg-[#FBFDFF]'
+            ? 'border-[#C8D6CC] bg-[#F7F5EF]'
+            : 'border-[#E4DFD3] bg-[#FBFAF6]'
         } space-y-2.5`}
       >
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-xs text-[#64748B] leading-tight font-medium">{title}</p>
+            <p className="text-xs text-[#575C55] leading-tight font-medium">{title}</p>
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className="text-sm sm:text-base font-bold text-[#0F172A]">
+              <span className="text-sm sm:text-base font-bold text-[#1A1F1C]">
                 {recordedValueText}
               </span>
               {temporalStatus && (
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#EBF3FF] text-[#0050CC] font-semibold border border-[#BCD8FE]">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#E8EFEA] text-[#163A2F] font-semibold border border-[#C8D6CC]">
                   {temporalStatus === 'PAST' ? 'Past history' : 'Current'}
                 </span>
               )}
@@ -143,8 +143,8 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
               onClick={() => toggleConfirm(id)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                 state.confirmed
-                  ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
-                  : 'bg-white text-[#1E293B] border-[#CBD5E1] hover:border-[#0066EE] hover:bg-[#EBF3FF] hover:text-[#0050CC]'
+                  ? 'bg-[#1F4D3F] text-white border-[#1F4D3F] shadow-xs'
+                  : 'bg-[#FBFAF6] text-[#1A1F1C] border-[#D6D0C2] hover:border-[#1F4D3F] hover:bg-[#E8EFEA] hover:text-[#163A2F]'
               }`}
             >
               {state.confirmed ? '✓ Confirmed' : 'Confirm'}
@@ -156,7 +156,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                 state.notSure
                   ? 'bg-[#B54708] text-white border-[#B54708] shadow-xs'
-                  : 'bg-white text-[#64748B] border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                  : 'bg-[#FBFAF6] text-[#575C55] border-[#D6D0C2] hover:bg-[#F7F5EF]'
               }`}
             >
               {state.notSure ? '? Not sure' : 'Not sure'}
@@ -166,7 +166,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
               <button
                 type="button"
                 onClick={onEdit}
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#1E293B] bg-white border border-[#CBD5E1] hover:border-[#0066EE] hover:bg-[#F8FAFC] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
+                className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#1A1F1C] bg-[#FBFAF6] border border-[#D6D0C2] hover:border-[#1F4D3F] hover:bg-[#F7F5EF] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
               >
                 Edit
               </button>
@@ -174,7 +174,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#64748B] pt-2 border-t border-[#F1F5F9]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#575C55] pt-2 border-t border-[#EFECE4]">
           <span>Source: {sourceText}</span>
           <span>•</span>
           <span>Status: {state.confirmed ? 'Confirmed as recorded by you' : state.notSure ? 'Uncertain' : 'Unconfirmed'}</span>
@@ -188,19 +188,19 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
   return (
     <div className="w-full space-y-6">
       {/* Title & Screen Header */}
-      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-3">
+      <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+          <span className="text-xs font-mono font-bold text-[#1F4D3F] bg-[#E8EFEA] px-2.5 py-0.5 rounded-full border border-[#C8D6CC]">
             PRE-SUBMISSION CHECK
           </span>
-          <span className="text-xs text-[#64748B]">Screening, not diagnosis</span>
-          <span className="text-[#CBD5E1]">|</span>
-          <span className="text-xs text-[#94A3B8] font-medium">Ref: {caseId.slice(0, 16)}...</span>
+          <span className="text-xs text-[#575C55]">Screening, not diagnosis</span>
+          <span className="text-[#D6D0C2]">|</span>
+          <span className="text-xs text-[#8A8C84] font-medium">Ref: {caseId.slice(0, 16)}...</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
-          Review My Health Profile
+        <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F1C] tracking-tight">
+          Review what was recorded
         </h1>
-        <p className="text-sm text-[#475467] leading-relaxed">
+        <p className="text-sm text-[#575C55] leading-relaxed">
           Please confirm what Sanad recorded for your session before submitting for assessment processing.
           Your confirmation verifies that Sanad captured what you meant. It is not clinical verification.
           Unknown answers are always accepted and will never be treated as negative.
@@ -222,7 +222,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
 
       {/* Missing Required Information Banner */}
       {unAnsweredBlocking.length > 0 && (
-        <div className="p-5 rounded-2xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] space-y-2">
+        <div className="p-5 rounded-2xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] space-y-2">
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm">Incomplete Core Questions</span>
           </div>
@@ -232,7 +232,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
           <button
             type="button"
             onClick={onReturnToQuestions}
-            className="text-xs font-semibold text-[#D92D20] hover:underline cursor-pointer"
+            className="text-xs font-semibold text-[#B3261E] hover:underline cursor-pointer"
           >
             Answer needed questions now →
           </button>
@@ -240,12 +240,12 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
       )}
 
       {/* Section 1: Basic Context */}
-      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
-        <h2 className="text-base font-bold text-[#0F172A] border-b border-[#E2ECF8] pb-3">
+      <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-4">
+        <h2 className="text-base font-bold text-[#1A1F1C] border-b border-[#E4DFD3] pb-3">
           1. Basic Context
         </h2>
         {contextItems.length === 0 ? (
-          <p className="text-xs text-[#94A3B8]">No basic context questions in this catalogue.</p>
+          <p className="text-xs text-[#8A8C84]">No basic context questions in this catalogue.</p>
         ) : (
           <div className="space-y-3">
             {contextItems.map(q => {
@@ -265,12 +265,12 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
       </div>
 
       {/* Section 2: Reproductive Concern & Health History */}
-      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
-        <h2 className="text-base font-bold text-[#0F172A] border-b border-[#E2ECF8] pb-3">
+      <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-4">
+        <h2 className="text-base font-bold text-[#1A1F1C] border-b border-[#E4DFD3] pb-3">
           2. Reproductive Concern and Health History
         </h2>
         {historyItems.length === 0 ? (
-          <p className="text-xs text-[#94A3B8]">No health history items recorded.</p>
+          <p className="text-xs text-[#8A8C84]">No health history items recorded.</p>
         ) : (
           <div className="space-y-3">
             {historyItems.map(q => {
@@ -290,12 +290,12 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
       </div>
 
       {/* Section 3: Medications & Treatments */}
-      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
-        <h2 className="text-base font-bold text-[#0F172A] border-b border-[#E2ECF8] pb-3">
+      <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-4">
+        <h2 className="text-base font-bold text-[#1A1F1C] border-b border-[#E4DFD3] pb-3">
           3. Medications and Treatments
         </h2>
         {medicationItems.length === 0 ? (
-          <p className="text-xs text-[#94A3B8]">No medication questions in this catalogue.</p>
+          <p className="text-xs text-[#8A8C84]">No medication questions in this catalogue.</p>
         ) : (
           <div className="space-y-3">
             {medicationItems.map(q => {
@@ -315,12 +315,12 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
       </div>
 
       {/* Section 4: Lifestyle Factors */}
-      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
-        <h2 className="text-base font-bold text-[#0F172A] border-b border-[#E2ECF8] pb-3">
+      <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-4">
+        <h2 className="text-base font-bold text-[#1A1F1C] border-b border-[#E4DFD3] pb-3">
           4. Lifestyle Factors
         </h2>
         {lifestyleItems.length === 0 ? (
-          <p className="text-xs text-[#94A3B8]">No lifestyle items recorded.</p>
+          <p className="text-xs text-[#8A8C84]">No lifestyle items recorded.</p>
         ) : (
           <div className="space-y-3">
             {lifestyleItems.map(q => {
@@ -340,16 +340,16 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
       </div>
 
       {/* Section 5: Measurements and Lab Values (J3 Observations) */}
-      <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
-        <div className="flex items-center justify-between border-b border-[#E2ECF8] pb-3">
-          <h2 className="text-base font-bold text-[#0F172A]">
+      <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-4">
+        <div className="flex items-center justify-between border-b border-[#E4DFD3] pb-3">
+          <h2 className="text-base font-bold text-[#1A1F1C]">
             5. Measurements and Lab Results (Optional)
           </h2>
           {onOpenLab && (
             <button
               type="button"
               onClick={onOpenLab}
-              className="text-xs font-semibold text-[#0066EE] hover:underline cursor-pointer"
+              className="text-xs font-semibold text-[#1F4D3F] hover:underline cursor-pointer"
             >
               + Add / edit lab values
             </button>
@@ -357,13 +357,13 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
         </div>
 
         {observations.length === 0 ? (
-          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] text-xs text-[#64748B] space-y-3">
+          <div className="p-5 rounded-2xl bg-[#F7F5EF] border border-[#E4DFD3] text-xs text-[#575C55] space-y-3">
             <p>No lab test observations recorded for this session.</p>
             {onOpenLab && (
               <button
                 type="button"
                 onClick={onOpenLab}
-                className="px-4 py-1.5 rounded-full bg-white border border-[#BCD8FE] text-xs font-semibold text-[#0050CC] hover:bg-[#EBF3FF] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
+                className="px-4 py-1.5 rounded-full bg-[#FBFAF6] border border-[#C8D6CC] text-xs font-semibold text-[#163A2F] hover:bg-[#E8EFEA] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
               >
                 Add lab values now
               </button>
@@ -388,11 +388,11 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
 
       {/* Section 6: Optional Wellbeing Context */}
       {psychQuestions.length > 0 && (
-        <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-4">
-          <h2 className="text-base font-bold text-[#0F172A] border-b border-[#E2ECF8] pb-3">
+        <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-4">
+          <h2 className="text-base font-bold text-[#1A1F1C] border-b border-[#E4DFD3] pb-3">
             6. Wellbeing Context (Optional Self-Reports)
           </h2>
-          <p className="text-xs text-[#64748B]">
+          <p className="text-xs text-[#575C55]">
             Self-reported context only. These responses are never used for clinical triage rules.
           </p>
           <div className="space-y-3">
@@ -411,31 +411,31 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
 
       {/* Error Alert */}
       {error && (
-        <div role="alert" className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold">
+        <div role="alert" className="p-4 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-sm font-semibold">
           {error}
         </div>
       )}
 
       {/* Final Acknowledgment & Submit Assessment Panel */}
-      <div className="medical-card bg-gradient-to-br from-white to-[#F8FAFC] p-6 sm:p-8 rounded-2xl border border-[#BCD8FE] shadow-lg space-y-5">
+      <div className="medical-card bg-gradient-to-br from-[#FBFAF6] to-[#F7F5EF] p-6 sm:p-8 rounded-2xl border border-[#C8D6CC] shadow-[var(--shadow-2)] space-y-5">
         <div className="space-y-2">
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={acknowledged}
               onChange={e => setAcknowledged(e.target.checked)}
-              className="mt-0.5 h-5 w-5 rounded-md border-[#CBD5E1] text-[#0066EE] focus:ring-[#0066EE]"
+              className="mt-0.5 h-5 w-5 rounded-md border-[#D6D0C2] text-[#1F4D3F] focus:ring-[#1F4D3F]"
             />
-            <span className="text-sm font-semibold text-[#0F172A] leading-snug">
+            <span className="text-sm font-semibold text-[#1A1F1C] leading-snug">
               I have reviewed the information above to the best of my knowledge.
             </span>
           </label>
-          <p className="text-xs text-[#64748B] pl-8">
+          <p className="text-xs text-[#575C55] pl-8">
             This acknowledgment confirms that the recorded items match what you provided. It does not warrant medical certainty.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-[#E2ECF8]">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-[#E4DFD3]">
           <button
             type="button"
             onClick={onReturnToQuestions}
@@ -448,7 +448,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
             type="button"
             disabled={!acknowledged || isSubmitting}
             onClick={onSubmitAssessment}
-            className={`btn-pill-primary px-8 py-3.5 rounded-full text-sm font-bold text-white shadow-md flex items-center justify-center gap-2 ${
+            className={`btn-pill-primary px-8 py-3.5 rounded-full text-sm font-bold text-white shadow-[var(--shadow-1)] flex items-center justify-center gap-2 ${
               acknowledged && !isSubmitting
                 ? 'cursor-pointer'
                 : 'opacity-50 cursor-not-allowed'
@@ -470,7 +470,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
           </button>
         </div>
 
-        <p className="text-[11px] text-[#64748B] leading-relaxed">
+        <p className="text-[11px] text-[#575C55] leading-relaxed">
           <strong>Important:</strong> Submitting sends this data to Sanad for internal rule evaluation only.
           It does not send your information to a doctor, clinic, or third party.
         </p>

@@ -27,7 +27,7 @@ const SCOPE_DISPLAY_CONFIG: Record<
     subtitle:
       'Evaluates your health answers and optional lab tests to provide tailored guidance in this private session.',
     renderIcon: () => (
-      <svg className="w-5 h-5 text-[#0066EE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-5 h-5 text-[#1F4D3F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
       </svg>
     ),
@@ -38,7 +38,7 @@ const SCOPE_DISPLAY_CONFIG: Record<
     subtitle:
       'Allows a simulated healthcare reviewer to check your draft assessment and provide feedback.',
     renderIcon: () => (
-      <svg className="w-5 h-5 text-[#0066EE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-5 h-5 text-[#1F4D3F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     ),
@@ -48,7 +48,7 @@ const SCOPE_DISPLAY_CONFIG: Record<
     subtitle:
       'Prepares a referral summary for partner facilities if you wish to explore follow-up medical care.',
     renderIcon: () => (
-      <svg className="w-5 h-5 text-[#0066EE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-5 h-5 text-[#1F4D3F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
       </svg>
     ),
@@ -224,30 +224,25 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
     <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-6 sm:py-10">
       <div className="medical-canvas p-6 sm:p-10 lg:p-12">
         {/* Header */}
-        <div className="mb-8 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="mb-8 pb-6 border-b border-[#E4DFD3] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
-              Privacy & Information Boundaries
+            <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F1C] tracking-tight">
+              What this session may do
             </h1>
-            <p className="text-[#4A6588] text-sm sm:text-base leading-relaxed max-w-2xl">
+            <p className="text-[#575C55] text-sm sm:text-base leading-relaxed max-w-2xl">
               Choose exactly how your session information is used. You remain in full control: all optional permissions start disabled, no real personal identifiers (name, phone, or national ID) are ever recorded, and data is only processed for this private session.
             </p>
           </div>
-          <img
-            src="/assets/images/real_patient_peace_of_mind.jpg"
-            alt="Confidential Patient Session"
-            className="w-24 h-24 rounded-2xl object-cover border-2 border-[#BCD8FE] shadow-sm shrink-0 hidden sm:block"
-          />
         </div>
 
         {loadingCopy && (
           <div className="space-y-4 my-6">
-            <div className="flex items-center gap-2 text-xs font-medium text-[#0062FF]">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#1F4D3F]">
               <div className="spinner spinner-sm" />
               <span>Loading privacy settings & consent scopes…</span>
             </div>
             {[1, 2, 3].map(i => (
-              <div key={i} className="p-4 sm:p-5 rounded-2xl border border-[#E2ECF8] bg-white space-y-3">
+              <div key={i} className="p-4 sm:p-5 rounded-2xl border border-[#E4DFD3] bg-[#FBFAF6] space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl skeleton shrink-0" />
                   <div className="flex-1 space-y-2">
@@ -265,7 +260,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         {error && (
           <div
             role="alert"
-            className="mb-6 p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-medium"
+            className="mb-6 p-4 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-sm font-medium"
           >
             {error}
           </div>
@@ -274,9 +269,9 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         {statusNotice && !error && (
           <div
             role="status"
-            className="mb-6 p-3.5 rounded-xl bg-[#F0F7FF] border border-[#BCD8FE] text-[#0066EE] text-xs font-medium flex items-center gap-2"
+            className="mb-6 p-3.5 rounded-xl bg-[#E8EFEA] border border-[#C8D6CC] text-[#1F4D3F] text-xs font-medium flex items-center gap-2"
           >
-            <svg className="w-4 h-4 text-[#0066EE] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-4 h-4 text-[#1F4D3F] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{statusNotice}</span>
@@ -284,23 +279,23 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         )}
 
         {/* Quick Presets */}
-        <div className="mb-6 p-4 rounded-2xl bg-[#F8FAFD] border border-[#E2ECF8]">
+        <div className="mb-6 p-4 rounded-2xl bg-[#F7F5EF] border border-[#E4DFD3]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <span className="text-xs font-semibold text-[#072254]">
+            <span className="text-xs font-semibold text-[#1A1F1C]">
               Quick Setup Options:
             </span>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => applyPreset('assessment_only')}
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#0066EE] text-white hover:bg-[#0055CC] transition-colors shadow-xs cursor-pointer active:scale-[0.98]"
+                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#1F4D3F] text-white hover:bg-[#0055CC] transition-colors shadow-xs cursor-pointer active:scale-[0.98]"
               >
                 Health Assessment (Essential)
               </button>
               <button
                 type="button"
                 onClick={() => applyPreset('education')}
-                className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-[#4A6588] border border-[#E2ECF8] hover:bg-[#F8FAFD] transition-colors cursor-pointer active:scale-[0.98]"
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-[#FBFAF6] text-[#575C55] border border-[#E4DFD3] hover:bg-[#F7F5EF] transition-colors cursor-pointer active:scale-[0.98]"
               >
                 Education Only (All Off)
               </button>
@@ -310,21 +305,21 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
 
         {/* Upload Mode File Selector */}
         {isUploadMode && (
-          <div className="mb-6 p-5 rounded-2xl bg-[#F8FAFD] border border-[#BCD8FE] space-y-2">
+          <div className="mb-6 p-5 rounded-2xl bg-[#F7F5EF] border border-[#C8D6CC] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#0066EE]">
+              <span className="text-xs font-bold text-[#1F4D3F]">
                 Synthetic Profile Upload
               </span>
             </div>
             {uploadFile ? (
-              <p className="text-xs text-[#072254]">
+              <p className="text-xs text-[#1A1F1C]">
                 File ready to apply: <strong>{uploadFile.name}</strong> ({uploadFile.size} bytes)
               </p>
             ) : (
               <div className="space-y-2">
                 <label
                   htmlFor="consent-upload-input"
-                  className="block text-xs font-semibold text-[#072254]"
+                  className="block text-xs font-semibold text-[#1A1F1C]"
                 >
                   Select test profile JSON to apply after consent:
                 </label>
@@ -337,7 +332,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
                     setUploadFile(file);
                     setPendingUploadFile(file);
                   }}
-                  className="w-full text-xs border border-[#E2ECF8] p-2 bg-white rounded-xl"
+                  className="w-full text-xs border border-[#E4DFD3] p-2 bg-[#FBFAF6] rounded-xl"
                 />
               </div>
             )}
@@ -354,7 +349,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
               title: scopeItem.scope.replace(/_/g, ' '),
               subtitle: scopeItem.used_for,
               renderIcon: () => (
-                <svg className="w-5 h-5 text-[#0066EE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-5 h-5 text-[#1F4D3F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               ),
@@ -366,45 +361,45 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
                 key={scopeItem.scope}
                 className={`p-4 sm:p-5 rounded-2xl border transition-[background-color,border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] ${
                   isLocked
-                    ? 'bg-[#FAFBFD] border-[#E2ECF8] opacity-75'
+                    ? 'bg-[#F7F5EF] border-[#E4DFD3] opacity-75'
                     : isEnabled
-                    ? 'bg-[#F0F7FF] border-[#0066EE] shadow-xs'
-                    : 'bg-white border-[#E2ECF8] hover:border-[#BCD8FE]'
+                    ? 'bg-[#E8EFEA] border-[#1F4D3F] shadow-xs'
+                    : 'bg-[#FBFAF6] border-[#E4DFD3] hover:border-[#C8D6CC]'
                 }`}
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-[#BCD8FE] flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                    <div className="w-10 h-10 rounded-xl bg-[#FBFAF6] border border-[#C8D6CC] flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                       {meta.renderIcon()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-base font-bold text-[#072254]">
+                        <h2 className="text-base font-bold text-[#1A1F1C]">
                           {meta.title}
                         </h2>
                         {meta.required && (
-                          <span className="text-[11px] font-semibold text-[#0066EE] bg-[#EBF3FF] px-2 py-0.5 rounded-full">
+                          <span className="text-[11px] font-semibold text-[#1F4D3F] bg-[#E8EFEA] px-2 py-0.5 rounded-full">
                             Core
                           </span>
                         )}
                         {isLocked && (
-                          <span className="text-[10px] font-medium text-[#829AB8] bg-[#F1F5F9] px-2 py-0.5 rounded-full border border-[#E2ECF8]">
+                          <span className="text-[10px] font-medium text-[#8A8C84] bg-[#EFECE4] px-2 py-0.5 rounded-full border border-[#E4DFD3]">
                             Requires Health Assessment
                           </span>
                         )}
                       </div>
-                      <p className="text-xs sm:text-sm text-[#4A6588] leading-relaxed mt-1">
+                      <p className="text-xs sm:text-sm text-[#575C55] leading-relaxed mt-1">
                         {meta.subtitle}
                       </p>
 
                       <button
                         type="button"
                         onClick={() => toggleDetails(scopeItem.scope)}
-                        className="text-[11px] font-medium text-[#0066EE] hover:underline mt-2 inline-flex items-center gap-1 cursor-pointer"
+                        className="text-[11px] font-medium text-[#1F4D3F] hover:underline mt-2 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <span>{isDetailsOpen ? 'Hide coverage details' : 'Show coverage details'}</span>
                         <svg
-                          className={`w-3.5 h-3.5 text-[#0066EE] transition-transform duration-160 ease-[var(--ease-out)] ${
+                          className={`w-3.5 h-3.5 text-[#1F4D3F] transition-transform duration-160 ease-[var(--ease-out)] ${
                             isDetailsOpen ? 'rotate-180' : ''
                           }`}
                           fill="none"
@@ -427,16 +422,16 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
                       aria-label={`${isEnabled ? 'Disable' : 'Enable'} ${meta.title}`}
                       onClick={() => handleToggle(scopeItem.scope)}
                       className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors duration-160 ease-[var(--ease-out)] p-0.5 active:scale-[0.96] ${
-                        isEnabled ? 'bg-[#0066EE]' : 'bg-[#CBD5E1]'
+                        isEnabled ? 'bg-[#1F4D3F]' : 'bg-[#D6D0C2]'
                       } ${isLocked ? 'cursor-not-allowed opacity-60' : ''}`}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-xs transition-transform duration-160 ease-[var(--ease-out)] ${
+                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-[#FBFAF6] shadow-xs transition-transform duration-160 ease-[var(--ease-out)] ${
                           isEnabled ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
                     </button>
-                    <span className={`text-[11px] font-medium ${isEnabled ? 'text-[#0066EE]' : 'text-[#829AB8]'}`}>
+                    <span className={`text-[11px] font-medium ${isEnabled ? 'text-[#1F4D3F]' : 'text-[#8A8C84]'}`}>
                       {isEnabled ? 'Enabled' : 'Off'}
                     </span>
                   </div>
@@ -444,12 +439,12 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
 
                 {/* Collapsible Coverage Details */}
                 {isDetailsOpen && (
-                  <div className="mt-4 pt-3 border-t border-[#E2ECF8] space-y-2 text-xs text-[#4A6588] bg-white/60 p-3 rounded-xl">
+                  <div className="mt-4 pt-3 border-t border-[#E4DFD3] space-y-2 text-xs text-[#575C55] bg-[#FBFAF6]/60 p-3 rounded-xl">
                     <p>
-                      <strong className="text-[#072254]">Information covered:</strong> {scopeItem.data_covered}
+                      <strong className="text-[#1A1F1C]">Information covered:</strong> {scopeItem.data_covered}
                     </p>
                     <p>
-                      <strong className="text-[#072254]">Who sees it:</strong> {scopeItem.who_sees_it}
+                      <strong className="text-[#1A1F1C]">Who sees it:</strong> {scopeItem.who_sees_it}
                     </p>
                     {!isEnabled && (
                       <p className="text-[#B54708]">
@@ -469,11 +464,11 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
             <button
               type="button"
               onClick={() => setShowInactive(!showInactive)}
-              className="text-xs text-[#829AB8] hover:text-[#072254] inline-flex items-center gap-1.5 cursor-pointer font-medium"
+              className="text-xs text-[#8A8C84] hover:text-[#1A1F1C] inline-flex items-center gap-1.5 cursor-pointer font-medium"
             >
               <span>{showInactive ? 'Hide disabled permissions' : 'Show disabled permissions (Partner sharing, Research)'}</span>
               <svg
-                className={`w-3.5 h-3.5 text-[#829AB8] transition-transform duration-160 ease-[var(--ease-out)] ${
+                className={`w-3.5 h-3.5 text-[#8A8C84] transition-transform duration-160 ease-[var(--ease-out)] ${
                   showInactive ? 'rotate-180' : ''
                 }`}
                 fill="none"
@@ -486,10 +481,10 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
             </button>
 
             {showInactive && (
-              <div className="mt-3 p-4 rounded-xl bg-[#F8FAFD] border border-[#E2ECF8] space-y-3">
+              <div className="mt-3 p-4 rounded-xl bg-[#F7F5EF] border border-[#E4DFD3] space-y-3">
                 {inactiveScopes.map(scopeItem => (
-                  <div key={scopeItem.scope} className="text-xs text-[#829AB8]">
-                    <span className="font-semibold text-[#4A6588] capitalize">
+                  <div key={scopeItem.scope} className="text-xs text-[#8A8C84]">
+                    <span className="font-semibold text-[#575C55] capitalize">
                       {scopeItem.scope.replace(/_/g, ' ')}
                     </span>: Permanently disabled in this release. No data is shared.
                   </div>
@@ -500,12 +495,12 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         )}
 
         {/* Action Controls */}
-        <div className="pt-6 border-t border-[#E2ECF8] flex flex-col sm:flex-row items-center gap-3">
+        <div className="pt-6 border-t border-[#E4DFD3] flex flex-col sm:flex-row items-center gap-3">
           <button
             type="button"
             disabled={loading || loadingCopy || !consentCatalogue}
             onClick={() => void handleAgree()}
-            className="btn-pill-primary w-full sm:flex-1 py-4 px-6 text-sm disabled:opacity-50 cursor-pointer shadow-md"
+            className="btn-pill-primary w-full sm:flex-1 py-4 px-6 text-sm disabled:opacity-50 cursor-pointer shadow-[var(--shadow-1)]"
           >
             {loading ? (
               <span className="flex items-center gap-2 justify-center">
@@ -529,7 +524,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
           </button>
         </div>
 
-        <p className="text-center text-[11px] text-[#829AB8] mt-4">
+        <p className="text-center text-[11px] text-[#8A8C84] mt-4">
           {isAssessmentEnabled
             ? 'Proceeding to Safety Check. All responses are kept private to this session.'
             : 'Proceeding to General Guides without recording any health answers.'}

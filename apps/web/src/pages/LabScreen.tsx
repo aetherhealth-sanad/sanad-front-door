@@ -163,20 +163,20 @@ export const LabScreen: React.FC<LabScreenProps> = ({
 
   return (
     <div className="w-full space-y-6">
-      <div className="mb-6 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="mb-6 pb-6 border-b border-[#E4DFD3] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+            <span className="text-xs font-mono font-bold text-[#1F4D3F] bg-[#E8EFEA] px-2.5 py-0.5 rounded-full border border-[#C8D6CC]">
               LAB OBSERVATIONS
             </span>
-            <span className="text-xs text-[#64748B] font-medium">
+            <span className="text-xs text-[#575C55] font-medium">
               {labCatalogue.catalogue_version}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
-            Semen Analysis Observations
+          <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F1C] tracking-tight">
+            Lab values
           </h1>
-          <p className="text-sm text-[#475467] mt-1.5 max-w-2xl leading-relaxed">
+          <p className="text-sm text-[#575C55] mt-1.5 max-w-2xl leading-relaxed">
             {labCatalogue.status_note}
           </p>
         </div>
@@ -192,7 +192,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
       {error && (
         <div
           role="alert"
-          className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
+          className="p-4 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-sm font-semibold"
         >
           {error}
         </div>
@@ -201,7 +201,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
       {notice && (
         <div
           role="status"
-          className="p-4 rounded-xl bg-[#EBF3FF] border border-[#BCD8FE] text-[#0050CC] text-sm font-semibold"
+          className="p-4 rounded-xl bg-[#E8EFEA] border border-[#C8D6CC] text-[#163A2F] text-sm font-semibold"
         >
           {notice}
         </div>
@@ -225,23 +225,18 @@ export const LabScreen: React.FC<LabScreenProps> = ({
         {/* Left 5 Cols: Add / Replace Observation Form */}
         <form
           onSubmit={handleSaveObservation}
-          className="lg:col-span-5 medical-card bg-white p-6 sm:p-7 space-y-4 rounded-2xl border border-[#E2ECF8] shadow-md"
+          className="lg:col-span-5 medical-card bg-[#FBFAF6] p-6 sm:p-7 space-y-4 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)]"
         >
-          <div className="relative h-28 rounded-xl overflow-hidden mb-2 border border-[#BCD8FE]">
-            <img
-              src="/assets/images/medical_lab_3d.jpg"
-              alt="Clinical Lab Diagnostics"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#072254]/70 via-transparent to-transparent flex items-end p-3">
+          <div className="relative h-28 rounded-xl overflow-hidden mb-2 border border-[#C8D6CC]">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1A1F1C]/70 via-transparent to-transparent flex items-end p-3">
               <span className="text-xs font-bold text-white tracking-wide">
                 Standard Semen Parameters · WHO Benchmarks
               </span>
             </div>
           </div>
 
-          <div className="pb-3 border-b border-[#E2ECF8] flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#0F172A]">
+          <div className="pb-3 border-b border-[#E4DFD3] flex items-center justify-between">
+            <h2 className="text-base font-bold text-[#1A1F1C]">
               {editingId ? 'Edit Synthetic Observation' : 'Enter Synthetic Observation'}
             </h2>
             {editingId && (
@@ -251,7 +246,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                   setEditingId(null);
                   setValueStr('');
                 }}
-                className="text-xs font-semibold underline text-[#D92D20] cursor-pointer"
+                className="text-xs font-semibold underline text-[#B3261E] cursor-pointer"
               >
                 Cancel Edit
               </button>
@@ -261,7 +256,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="lab-test-code"
-              className="block text-xs font-bold text-[#0F172A]"
+              className="block text-xs font-bold text-[#1A1F1C]"
             >
               Placeholder Test Code
             </label>
@@ -269,7 +264,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
               id="lab-test-code"
               value={testCode}
               onChange={e => handleSelectTestCode(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+              className="w-full px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
             >
               {TEST_ENTRIES.map(([code, meta]) => (
                 <option key={code} value={code}>
@@ -283,7 +278,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="lab-value"
-                className="block text-xs font-bold text-[#0F172A]"
+                className="block text-xs font-bold text-[#1A1F1C]"
               >
                 Numeric Value
               </label>
@@ -294,14 +289,14 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                 value={valueStr}
                 onChange={e => setValueStr(e.target.value)}
                 placeholder="e.g. 12.5"
-                className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
               />
             </div>
 
             <div className="space-y-1.5">
               <label
                 htmlFor="lab-unit"
-                className="block text-xs font-bold text-[#0F172A]"
+                className="block text-xs font-bold text-[#1A1F1C]"
               >
                 Unit (No Conversion)
               </label>
@@ -311,7 +306,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                 value={unit}
                 onChange={e => setUnit(e.target.value)}
                 placeholder="mL, million/mL, %"
-                className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
               />
             </div>
           </div>
@@ -320,7 +315,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="lab-date"
-                className="block text-xs font-bold text-[#0F172A]"
+                className="block text-xs font-bold text-[#1A1F1C]"
               >
                 Collection Date
               </label>
@@ -329,14 +324,14 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                 type="date"
                 value={collectedOn}
                 onChange={e => setCollectedOn(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
               />
             </div>
 
             <div className="space-y-1.5">
               <label
                 htmlFor="lab-ref"
-                className="block text-xs font-bold text-[#0F172A]"
+                className="block text-xs font-bold text-[#1A1F1C]"
               >
                 Reference Source
               </label>
@@ -344,7 +339,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                 id="lab-ref"
                 value={referenceSource}
                 onChange={e => setReferenceSource(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
               >
                 <option value="">Choose reference source...</option>
                 {labCatalogue.reference_sources.map(src => (
@@ -359,7 +354,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
           <button
             type="submit"
             disabled={submitting}
-            className="btn-pill-primary w-full py-3.5 px-4 rounded-full font-bold text-xs text-white shadow-md cursor-pointer disabled:opacity-50"
+            className="btn-pill-primary w-full py-3.5 px-4 rounded-full font-bold text-xs text-white shadow-[var(--shadow-1)] cursor-pointer disabled:opacity-50"
           >
             {submitting
               ? 'Recording...'
@@ -371,12 +366,12 @@ export const LabScreen: React.FC<LabScreenProps> = ({
 
         {/* Right 7 Cols: Recorded Observations & Confirmation Ledger */}
         <div className="lg:col-span-7 space-y-5">
-          <div className="medical-card bg-white p-6 sm:p-7 space-y-4 rounded-2xl border border-[#E2ECF8] shadow-md">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2ECF8]">
-              <h2 className="text-base font-bold text-[#0F172A]">
+          <div className="medical-card bg-[#FBFAF6] p-6 sm:p-7 space-y-4 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E4DFD3]">
+              <h2 className="text-base font-bold text-[#1A1F1C]">
                 Case Observations Ledger ({observations.length})
               </h2>
-              <span className="text-xs text-[#64748B]">
+              <span className="text-xs text-[#575C55]">
                 Unconfirmed values excluded
               </span>
             </div>
@@ -384,7 +379,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
             {loading && (
               <div className="space-y-3 py-2">
                 {[1, 2].map(i => (
-                  <div key={i} className="p-4 rounded-2xl border border-[#E2ECF8] bg-white space-y-2.5">
+                  <div key={i} className="p-4 rounded-2xl border border-[#E4DFD3] bg-[#FBFAF6] space-y-2.5">
                     <div className="skeleton h-3 w-1/3" />
                     <div className="skeleton h-6 w-1/4" />
                     <div className="skeleton h-2.5 w-1/2" />
@@ -394,11 +389,11 @@ export const LabScreen: React.FC<LabScreenProps> = ({
             )}
 
             {!loading && observations.length === 0 && (
-              <div className="p-8 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] text-center">
-                <p className="text-sm font-bold text-[#0F172A]">
+              <div className="p-8 rounded-2xl bg-[#F7F5EF] border border-[#E4DFD3] text-center">
+                <p className="text-sm font-bold text-[#1A1F1C]">
                   No lab observations recorded for this case yet.
                 </p>
-                <p className="text-xs text-[#64748B] mt-1">
+                <p className="text-xs text-[#575C55] mt-1">
                   Enter a synthetic observation on the left or proceed directly to the structured intake questions.
                 </p>
               </div>
@@ -417,21 +412,21 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                     key={obs.observation_id}
                     className={`p-4 sm:p-5 rounded-2xl border transition-[background-color,border-color,box-shadow] duration-160 ease-[var(--ease-out)] ${
                       isConfirmed
-                        ? 'bg-[#F2F7FF] border-[#BCD8FE]'
+                        ? 'bg-[#F7F5EF] border-[#C8D6CC]'
                         : hasIssues
                         ? 'bg-[#FFFAEB] border-[#FEDF89]'
-                        : 'bg-[#F8FAFC] border-[#E2ECF8]'
+                        : 'bg-[#F7F5EF] border-[#E4DFD3]'
                     }`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <span className="text-xs font-bold text-[#0F172A]">
+                        <span className="text-xs font-bold text-[#1A1F1C]">
                           {label} · {obs.test_code} · Mock
                         </span>
-                        <div className="text-lg font-extrabold text-[#0066EE] mt-0.5">
+                        <div className="text-lg font-semibold text-[#1F4D3F] mt-0.5">
                           {obs.value ?? 'NULL'} {obs.unit ?? '(no unit)'}
                         </div>
-                        <span className="block text-xs text-[#64748B] mt-1">
+                        <span className="block text-xs text-[#575C55] mt-1">
                           Source: {obs.source} · Date: {obs.collected_on ?? 'Missing'} · Ref:{' '}
                           {obs.reference_source ?? 'Missing'}
                         </span>
@@ -440,8 +435,8 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold border ${
                           isConfirmed
-                            ? 'bg-[#0066EE] text-white border-[#0066EE]'
-                            : 'bg-white text-[#64748B] border-[#CBD5E1]'
+                            ? 'bg-[#1F4D3F] text-white border-[#1F4D3F]'
+                            : 'bg-[#FBFAF6] text-[#575C55] border-[#D6D0C2]'
                         }`}
                       >
                         {obs.confirmation_status}
@@ -449,13 +444,13 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                     </div>
 
                     {hasIssues && (
-                      <div className="mt-3 p-3 rounded-xl bg-white border border-[#FEDF89] text-xs text-[#B54708]">
+                      <div className="mt-3 p-3 rounded-xl bg-[#FBFAF6] border border-[#FEDF89] text-xs text-[#B54708]">
                         <strong>Validation issues preventing confirmation (AC-15.2):</strong>{' '}
                         {obs.issues.join(', ')}
                       </div>
                     )}
 
-                    <div className="mt-3 pt-3 border-t border-[#E2ECF8] flex flex-wrap items-center gap-2">
+                    <div className="mt-3 pt-3 border-t border-[#E4DFD3] flex flex-wrap items-center gap-2">
                       {!isConfirmed && (
                         <button
                           type="button"
@@ -478,7 +473,7 @@ export const LabScreen: React.FC<LabScreenProps> = ({
                         type="button"
                         disabled={submitting}
                         onClick={() => void handleDelete(obs.observation_id)}
-                        className="px-4 py-1.5 rounded-full text-xs font-semibold text-[#D92D20] bg-white hover:bg-[#FEF3F2] border border-[#FECDCA] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
+                        className="px-4 py-1.5 rounded-full text-xs font-semibold text-[#B3261E] bg-[#FBFAF6] hover:bg-[#FBEDEA] border border-[#F0C9C2] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
                       >
                         Remove
                       </button>
@@ -488,11 +483,11 @@ export const LabScreen: React.FC<LabScreenProps> = ({
               })}
             </div>
 
-            <div className="pt-4 border-t border-[#E2ECF8] flex flex-col sm:flex-row gap-3">
+            <div className="pt-4 border-t border-[#E4DFD3] flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
                 onClick={onContinueToIntake}
-                className="btn-pill-primary flex-1 py-3.5 px-6 rounded-full font-bold text-xs text-white shadow-md cursor-pointer flex items-center justify-center gap-2"
+                className="btn-pill-primary flex-1 py-3.5 px-6 rounded-full font-bold text-xs text-white shadow-[var(--shadow-1)] cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>Continue to Context Questions</span>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

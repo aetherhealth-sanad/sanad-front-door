@@ -83,22 +83,22 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
         <div
           className="medical-canvas p-6 sm:p-8 text-center space-y-5"
           style={{
-            border: '2px solid #FFCCC7',
-            boxShadow: '0 16px 40px -10px rgba(217, 45, 32, 0.15)',
+            border: '2px solid #F0C9C2',
+            boxShadow: '0 16px 40px -10px rgba(179,38,30, 0.15)',
           }}
         >
           <div className="relative inline-block mx-auto">
-            <div className="w-16 h-16 rounded-2xl bg-[#FFF1F0] border border-[#FFCCC7] flex items-center justify-center text-2xl text-[#D92D20] shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-[#FBEDEA] border border-[#F0C9C2] flex items-center justify-center text-2xl text-[#B3261E] shadow-sm">
               🚨
             </div>
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#D92D20] bio-pulse-soft border-2 border-white" />
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#B3261E] bio-pulse-soft border-2 border-white" />
           </div>
 
           <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FFF1F0] border border-[#FFCCC7] text-[#D92D20]">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E]">
               Immediate Medical Priority
             </span>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-[#D92D20] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-[#B3261E] tracking-tight">
               Urgent Medical Evaluation Recommended
             </h1>
             <p className="text-xs sm:text-sm text-[#7A271A] leading-relaxed max-w-[46ch] mx-auto">
@@ -109,11 +109,11 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
           <div className="pt-2">
             <a
               href="/urgent.html"
-              className="btn-pill-ruby w-full py-4 px-6 text-sm no-underline inline-flex items-center justify-center gap-2 shadow-md"
+              className="btn-pill-ruby w-full py-4 px-6 text-sm no-underline inline-flex items-center justify-center gap-2 shadow-[var(--shadow-1)]"
             >
               <span>Open Emergency Care Guidance →</span>
             </a>
-            <p className="text-[11px] text-[#829AB8] mt-2">Available offline on your device at any time</p>
+            <p className="text-[11px] text-[#8A8C84] mt-2">Available offline on your device at any time</p>
           </div>
         </div>
       </div>
@@ -124,19 +124,19 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
     <div className="w-full space-y-6 animate-reveal-1">
       <div className="medical-canvas p-6 sm:p-8 lg:p-10 space-y-6">
         {/* Header */}
-        <div className="pb-5 border-b border-[#E2ECF8]">
+        <div className="pb-5 border-b border-[#E4DFD3]">
           <div className="flex flex-wrap items-center gap-2 mb-2.5">
-            <span className="font-mono text-[11px] text-[#0062FF] bg-[#EBF4FF] px-2.5 py-0.5 rounded-full border border-[#BAD6FE] font-bold">
+            <span className="font-mono text-[11px] text-[#1F4D3F] bg-[#E8EFEA] px-2.5 py-0.5 rounded-full border border-[#C8D6CC] font-bold">
               SAFETY FIRST
             </span>
-            <span className="font-mono text-[11px] text-[#829AB8]">
+            <span className="font-mono text-[11px] text-[#8A8C84]">
               {emergencyCatalogue.catalogue_version}
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#07215A] tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F1C] tracking-tight">
             Quick Health & Safety Check
           </h1>
-          <p className="text-xs sm:text-sm text-[#4A6588] mt-1.5 leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#575C55] mt-1.5 leading-relaxed">
             Before we begin, we check for acute symptoms that need immediate medical attention. Your answers are private and run locally in this session.
           </p>
         </div>
@@ -144,12 +144,12 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
         {error && (
           <div
             role="alert"
-            className="p-3.5 rounded-xl bg-[#FFF1F0] border border-[#FFCCC7] text-[#D92D20] text-xs font-medium flex items-center justify-between gap-3 animate-reveal-1"
+            className="p-3.5 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-xs font-medium flex items-center justify-between gap-3 animate-reveal-1"
           >
             <span>{error}</span>
             {checkUnavailable && (
               <a
-                className="font-mono font-bold underline text-[#D92D20] shrink-0"
+                className="font-mono font-bold underline text-[#B3261E] shrink-0"
                 href="/urgent.html"
               >
                 Emergency help
@@ -165,15 +165,15 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
               className="medical-card p-4 sm:p-5 space-y-3.5"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-[10px] font-bold text-[#0062FF] bg-[#EBF4FF] px-2 py-0.5 rounded-full">
+                <span className="font-mono text-[10px] font-bold text-[#1F4D3F] bg-[#E8EFEA] px-2 py-0.5 rounded-full">
                   Step {idx + 1} of {emergencyCatalogue.questions.length}
                 </span>
-                <span className="font-mono text-[10px] text-[#829AB8]">
+                <span className="font-mono text-[10px] text-[#8A8C84]">
                   {question.concept_code}
                 </span>
               </div>
 
-              <legend className="text-sm sm:text-base font-bold text-[#07215A] leading-snug">
+              <legend className="text-sm sm:text-base font-bold text-[#1A1F1C] leading-snug">
                 {question.text}
               </legend>
 
@@ -196,8 +196,8 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
                         cursor-pointer transition-all duration-150 ease-out active:scale-[0.98] select-none
                         min-h-[46px]
                         ${selected
-                          ? 'border-[#0062FF] bg-[#EBF4FF] font-bold text-[#07215A] shadow-xs ring-1 ring-[#0062FF]'
-                          : 'border-[#E2ECF8] bg-[#F6F9FF] hover:bg-white hover:border-[#BAD6FE] text-[#4A6588]'
+                          ? 'border-[#1F4D3F] bg-[#E8EFEA] font-bold text-[#1A1F1C] shadow-xs ring-1 ring-[#1F4D3F]'
+                          : 'border-[#E4DFD3] bg-[#F7F5EF] hover:bg-[#FBFAF6] hover:border-[#C8D6CC] text-[#575C55]'
                         }
                       `}
                     >
@@ -212,11 +212,11 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
                             [question.question_id]: value,
                           }))
                         }
-                        className="accent-[#0062FF] w-4 h-4 cursor-pointer shrink-0"
+                        className="accent-[#1F4D3F] w-4 h-4 cursor-pointer shrink-0"
                       />
                       <span className="flex-1">{label}</span>
                       {selected && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#0062FF] shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#1F4D3F] shrink-0" />
                       )}
                     </label>
                   );
@@ -230,7 +230,7 @@ export const SafetyScreen: React.FC<SafetyScreenProps> = ({ caseId, onSafetyPass
             <button
               type="submit"
               disabled={checking}
-              className="btn-pill-primary w-full py-4 px-6 text-sm font-bold shadow-lg gap-2"
+              className="btn-pill-primary w-full py-4 px-6 text-sm font-bold shadow-[var(--shadow-2)] gap-2"
             >
               {checking ? (
                 <>

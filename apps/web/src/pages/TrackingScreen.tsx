@@ -69,25 +69,20 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
 
   return (
     <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-8 sm:py-12 space-y-8">
-      <div className="mb-6 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="mb-6 pb-6 border-b border-[#E4DFD3] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+            <span className="text-xs font-mono font-bold text-[#1F4D3F] bg-[#E8EFEA] px-2.5 py-0.5 rounded-full border border-[#C8D6CC]">
               CASE JOURNEY
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
-            Case Progress & Journey Timeline
+          <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F1C] tracking-tight">
+            Case progress
           </h1>
-          <p className="text-sm sm:text-base text-[#4A6588] mt-1 leading-relaxed max-w-2xl">
+          <p className="text-sm sm:text-base text-[#575C55] mt-1 leading-relaxed max-w-2xl">
             Track each milestone of your simulated assessment and referral status. User-reported milestones are stored temporarily in this session.
           </p>
         </div>
-        <img
-          src="/assets/images/real_patient_peace_of_mind.jpg"
-          alt="Secure Case Timeline"
-          className="w-16 h-16 rounded-xl object-cover border border-[#BCD8FE] shadow-2xs hidden sm:block shrink-0"
-        />
 
         {onCloseCase && (
           <button
@@ -103,7 +98,7 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
       {error && (
         <div
           role="alert"
-          className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
+          className="p-4 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-sm font-semibold"
         >
           {error}
           <button
@@ -118,7 +113,7 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
 
       {tracking?.flag && (
         <div className="p-5 rounded-2xl bg-[#FFFAEB] border border-[#FEDF89] text-[#B54708]">
-          <span className="text-xs font-mono font-bold text-[#B54708] bg-white px-2 py-0.5 rounded-full border border-[#FEDF89]">
+          <span className="text-xs font-mono font-bold text-[#B54708] bg-[#FBFAF6] px-2 py-0.5 rounded-full border border-[#FEDF89]">
             Simulated Workflow Flag
           </span>
           <p className="text-sm mt-2">
@@ -128,13 +123,13 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
       )}
 
       {tracking && (
-        <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-6">
-          <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#E2ECF8]">
+        <section className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-6">
+          <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#E4DFD3]">
             <div>
-              <h2 className="text-base font-bold text-[#0F172A]">
+              <h2 className="text-base font-bold text-[#1A1F1C]">
                 Mock timeline
               </h2>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EBF3FF] text-[#0050CC] mt-1 inline-block">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#E8EFEA] text-[#163A2F] mt-1 inline-block">
                 STATE: {tracking.case_state}
               </span>
             </div>
@@ -152,23 +147,23 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
               {tracking.timeline.map((event, index) => (
                 <li
                   key={`${event.kind}-${event.occurred_at}-${index}`}
-                  className="relative pl-6 pb-6 border-l-2 border-[#BCD8FE] last:border-l-0 last:pb-0"
+                  className="relative pl-6 pb-6 border-l-2 border-[#C8D6CC] last:border-l-0 last:pb-0"
                 >
-                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-white border-2 border-[#0066EE]" />
+                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-[#FBFAF6] border-2 border-[#1F4D3F]" />
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-sm font-bold text-[#0F172A]">
+                    <h3 className="text-sm font-bold text-[#1A1F1C]">
                       {event.kind.replace(/_/g, ' ')}
                       {event.value ? ` · ${event.value.replace(/_/g, ' ')}` : ''}
                     </h3>
-                    <time className="text-xs text-[#94A3B8]">
+                    <time className="text-xs text-[#8A8C84]">
                       {new Date(event.occurred_at).toLocaleString()}
                     </time>
                   </div>
-                  <p className="text-xs text-[#64748B] mt-1">
+                  <p className="text-xs text-[#575C55] mt-1">
                     {event.verification_source} · Mock event
                   </p>
                   {event.mock_appointment && (
-                    <p className="text-xs font-semibold text-[#0050CC] mt-1.5 bg-[#EBF3FF] px-2.5 py-1 rounded-lg inline-block border border-[#BCD8FE]">
+                    <p className="text-xs font-semibold text-[#163A2F] mt-1.5 bg-[#E8EFEA] px-2.5 py-1 rounded-lg inline-block border border-[#C8D6CC]">
                       Mock appointment: {event.mock_appointment.label}
                     </p>
                   )}
@@ -176,18 +171,18 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-[#64748B]">
+            <p className="text-sm text-[#575C55]">
               No timeline events were returned.
             </p>
           )}
 
           {tracking.referral && (
-            <div className="mt-6 pt-4 border-t border-[#E2ECF8] flex flex-wrap items-center justify-between gap-2 text-xs text-[#64748B] bg-[#F8FAFC] p-4 rounded-xl border border-[#E2ECF8]">
+            <div className="mt-6 pt-4 border-t border-[#E4DFD3] flex flex-wrap items-center justify-between gap-2 text-xs text-[#575C55] bg-[#F7F5EF] p-4 rounded-xl border border-[#E4DFD3]">
               <span>
-                Mock referral status: <strong className="text-[#0F172A]">{tracking.referral.mock_status}</strong> ·{' '}
+                Mock referral status: <strong className="text-[#1A1F1C]">{tracking.referral.mock_status}</strong> ·{' '}
                 {tracking.referral.care_type}
               </span>
-              <span className="font-semibold text-[#0066EE]">TARGET: {tracking.referral.target_mock_facility_id}</span>
+              <span className="font-semibold text-[#1F4D3F]">TARGET: {tracking.referral.target_mock_facility_id}</span>
             </div>
           )}
         </section>

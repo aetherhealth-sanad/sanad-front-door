@@ -22,6 +22,7 @@ import { EducationScreen } from './pages/EducationScreen';
 import { ClinicianPortal } from './pages/ClinicianPortal';
 import { MockFacilityPortal } from './pages/MockFacilityPortal';
 import { StepProgress } from './components/StepProgress';
+import { StoryBanner } from './components/StoryBanner';
 import {
   SessionDashboard,
   type RecordedFactItem,
@@ -183,6 +184,7 @@ export function App() {
       return;
     }
     setPageKey(k => k + 1); // trigger re-mount for page-enter animation
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     setCurrentRoute(route || '/');
   };
 
@@ -326,7 +328,7 @@ export function App() {
     ['/safety', '/intake', '/lab', '/review', '/receipt'].includes(currentRoute);
 
   return (
-    <div className="min-h-[100dvh] bg-[#F8FAFC] flex flex-col font-sans text-[#0B1310] selection:bg-[#0062FF]/20">
+    <div className="min-h-[100dvh] bg-[#F4F1EA] flex flex-col font-sans text-[#1A1F1C]">
       {/* Main Navbar */}
       <Navbar
         currentRole={currentRole}
@@ -336,7 +338,7 @@ export function App() {
       />
 
       {/* Step Progress Indicator (Patient Flow) */}
-      {currentRole === 'patient' && (
+      {currentRole === 'patient' && currentRoute !== '/' && (
         <StepProgress
           currentRoute={currentRoute}
           onNavigate={navigateTo}
@@ -345,27 +347,18 @@ export function App() {
       )}
 
       {/* Main Content Viewport */}
-      <main className="flex-1">
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">
         {restoring && (
-          /* ── Beautiful restore loading state ── */
-          <div className="min-h-[60dvh] flex flex-col items-center justify-center px-4 py-20 gap-6">
-            <div className="relative">
-              {/* Outer glow ring */}
-              <div className="absolute inset-0 rounded-full bg-[#0062FF]/10 scale-150 animate-ping" style={{ animationDuration: '2s' }} />
-              {/* Logo mark */}
-              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0062FF] to-[#4FA8FF] text-white flex items-center justify-center font-bold text-3xl shadow-lg shadow-[#0062FF]/30">
-                س
-              </div>
-            </div>
-            <div className="text-center space-y-1.5">
-              <p className="text-sm font-semibold text-[#07215A]">Restoring your session…</p>
-              <div className="dot-pulse flex gap-1 justify-center text-[#0062FF]">
-                <span /><span /><span />
-              </div>
-            </div>
-            {/* Skeleton preview */}
-            <div className="w-full max-w-sm space-y-3 opacity-50">
-              <div className="skeleton h-4 w-3/4 mx-auto" />
+          <div className="min-h-[60dvh] flex flex-col items-center justify-center px-4 py-20 gap-5" role="status">
+            <svg width="40" height="40" viewBox="0 0 32 32" aria-hidden="true" className="bio-pulse-soft">
+              <rect width="32" height="32" rx="7" fill="#1A1F1C" />
+              <path d="M9 21.5h14" stroke="#F4F1EA" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="16" cy="13" r="4.5" fill="none" stroke="#F4F1EA" strokeWidth="2" />
+              <circle cx="16" cy="13" r="1.4" fill="#7FB59C" />
+            </svg>
+            <p className="font-serif text-2xl text-[#1A1F1C]">Picking up where you left off…</p>
+            <div className="w-full max-w-xs space-y-2.5">
+              <div className="skeleton h-3 w-3/4 mx-auto" />
               <div className="skeleton h-3 w-1/2 mx-auto" />
             </div>
           </div>
@@ -377,6 +370,16 @@ export function App() {
         {!restoring && currentRole === 'patient' && (
           /* Page transition wrapper */
           <div key={pageKey} className="page-enter">
+            {currentRoute !== '/' && caseId && (
+              <StoryBanner
+                route={currentRoute}
+                coreDone={coreDoneCount}
+                coreTotal={coreQuestions.length}
+                factCount={recordedFactsList.length}
+                labCount={observations.length}
+              />
+            )}
+
             {currentRoute === '/' && (
               <StartScreen
                 onCaseCreated={handleCaseCreated}
@@ -397,14 +400,14 @@ export function App() {
 
             {currentRoute === '/privacy' && (
               <section className="max-w-2xl mx-auto px-4 py-12">
-                <div className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md">
-                  <span className="font-mono text-xs font-bold text-[#D92D20] bg-[#FFF1F0] px-2.5 py-0.5 rounded-full border border-[#FFCCC7]">
+                <div className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)]">
+                  <span className="font-mono text-xs font-bold text-[#B3261E] bg-[#FBEDEA] px-2.5 py-0.5 rounded-full border border-[#F0C9C2]">
                     CONSENT INACTIVE
                   </span>
-                  <h1 className="text-2xl font-extrabold text-[#07215A] mt-4">
+                  <h1 className="text-2xl font-semibold text-[#1A1F1C] mt-4">
                     Assessment consent is no longer active
                   </h1>
-                  <p className="text-sm text-[#4A6588] mt-2 leading-relaxed">
+                  <p className="text-sm text-[#575C55] mt-2 leading-relaxed">
                     This case cannot continue through the assessment flow. You can close this session or start a new one.
                   </p>
                   <button
@@ -512,30 +515,29 @@ export function App() {
         )}
       </main>
 
-      {/* Footer - minimal, mobile-friendly */}
-      <footer className="border-t border-[#E2ECF8]/60 bg-white/80 backdrop-blur-sm py-5 text-xs text-[#4A6588]">
-        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-20 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-4 text-center sm:text-left">
-            <span className="font-bold text-[#07215A] text-sm">Sanad (سند)</span>
-            <span className="font-mono text-[10px] text-[#829AB8] leading-relaxed">
-              Research Prototype · Synthetic Data Only · Not a Medical Device
-            </span>
+      <footer className="border-t border-[#E4DFD3] bg-[#F4F1EA]">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-8 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 items-end">
+          <div className="space-y-1.5">
+            <p className="flex items-baseline gap-2">
+              <span className="font-serif text-xl text-[#1A1F1C]">Sanad</span>
+              <span className="text-sm text-[#8A8C84]" lang="ar">سند</span>
+            </p>
+            <p className="font-mono text-[11px] text-[#8A8C84] leading-relaxed max-w-[60ch]">
+              Research prototype by AetherHealth · Synthetic data only · Not a medical device · Rules are drafts
+              (CLINICAL_TBD)
+            </p>
           </div>
-
-          <div className="flex items-center gap-4 font-mono">
-            <a
-              href="/urgent.html"
-              className="text-[#D92D20] hover:text-[#B42318] font-bold no-underline transition-colors duration-150 flex items-center gap-1.5"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D92D20] bio-pulse-soft inline-block" />
-              Emergency Care
+          <div className="flex items-center gap-5 text-[13px]">
+            <a href="/urgent.html" className="text-[#8F1D17] no-underline inline-flex items-center gap-1.5 hover:underline underline-offset-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#B3261E]" aria-hidden="true" />
+              Urgent guidance
             </a>
             <button
               type="button"
               onClick={resetSession}
-              className="text-[#4A6588] hover:text-[#07215A] font-semibold underline cursor-pointer transition-colors duration-150"
+              className="text-[#575C55] hover:text-[#1A1F1C] underline underline-offset-4 decoration-[#D6D0C2] cursor-pointer transition-colors"
             >
-              Reset Session
+              Reset session
             </button>
           </div>
         </div>

@@ -202,29 +202,24 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
   return (
     <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-8 sm:py-12 space-y-8">
-      <div className="mb-6 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="mb-6 pb-6 border-b border-[#E4DFD3] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+              <span className="text-xs font-mono font-bold text-[#1F4D3F] bg-[#E8EFEA] px-2.5 py-0.5 rounded-full border border-[#C8D6CC]">
                 SYNTHESIS REPORT
               </span>
-              <span className="text-xs text-[#64748B] font-medium">
+              <span className="text-xs text-[#575C55] font-medium">
                 VERSION {caseState?.case_version ?? 1} · {report.review_status}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
-              Clinical Assessment Synthesis
+            <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F1C] tracking-tight">
+              Your summary
             </h1>
-            <p className="text-sm sm:text-base text-[#4A6588] mt-1 leading-relaxed max-w-2xl">
+            <p className="text-sm sm:text-base text-[#575C55] mt-1 leading-relaxed max-w-2xl">
               {report.screening_notice}
             </p>
           </div>
-          <img
-            src="/assets/images/real_andrology_specialist.jpg"
-            alt="Clinical Synthesis"
-            className="w-24 h-16 rounded-xl object-cover border border-[#BCD8FE] shadow-2xs hidden sm:block shrink-0"
-          />
         </div>
 
         {onOpenLab && caseState?.allowed_actions.includes('ENTER_OBSERVATION') && (
@@ -241,48 +236,48 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
       {error && (
         <div
           role="alert"
-          className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
+          className="p-4 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-sm font-semibold"
         >
           {error}
         </div>
       )}
 
       {/* Recorded Information, Unknown States & Observations */}
-      <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-[#E2ECF8]">
+      <section className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-6">
+        <div className="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-[#E4DFD3]">
           <div>
-            <h2 className="text-base font-bold text-[#0F172A]">
+            <h2 className="text-base font-bold text-[#1A1F1C]">
               What this draft contains
             </h2>
-            <p className="text-xs text-[#64748B] mt-1">
+            <p className="text-xs text-[#575C55] mt-1">
               {report.draft_label}
             </p>
           </div>
-          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#EBF3FF] border border-[#BCD8FE] text-[#0050CC]">
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#E8EFEA] border border-[#C8D6CC] text-[#163A2F]">
             {report.review_status}
           </span>
         </div>
 
         {report.known.length > 0 && (
           <div>
-            <h3 className="text-xs font-bold text-[#0050CC] uppercase tracking-wide mb-3">
+            <h3 className="text-xs font-bold text-[#163A2F] uppercase tracking-wide mb-3">
               Recorded Information ({report.known.length})
             </h3>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {report.known.map((fact, index) => (
                 <li
                   key={`${fact.concept_code}-${index}`}
-                  className="rounded-xl bg-[#F8FAFC] border border-[#E2ECF8] p-4 text-sm hover:border-[#BCD8FE] transition-[border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] hover:-translate-y-0.5"
+                  className="rounded-xl bg-[#F7F5EF] border border-[#E4DFD3] p-4 text-sm hover:border-[#C8D6CC] transition-[border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] hover:-translate-y-0.5"
                 >
-                  <span className="font-bold text-[#0F172A] capitalize">
+                  <span className="font-bold text-[#1A1F1C] capitalize">
                     {fact.concept_code.replace(/_/g, ' ')}
                   </span>
                   :{' '}
-                  <span className="font-semibold text-[#0050CC]">
+                  <span className="font-semibold text-[#163A2F]">
                     {String(fact.value ?? fact.verification_status)}
                     {fact.unit ? ` ${fact.unit}` : ''}
                   </span>
-                  <span className="block text-xs text-[#64748B] mt-1">
+                  <span className="block text-xs text-[#575C55] mt-1">
                     {fact.source_type} · {fact.verification_status}
                     {fact.temporal_status ? ` · ${fact.temporal_status}` : ''}
                   </span>
@@ -312,24 +307,24 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
         {report.observations.length > 0 && (
           <div>
-            <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-3">
+            <h3 className="text-xs font-bold text-[#1A1F1C] uppercase tracking-wide mb-3">
               Reported Lab Observations · Mock
             </h3>
             <ul className="space-y-2.5">
               {report.observations.map((item, index) => (
                 <li
                   key={`${item.test_code}-${index}`}
-                  className="rounded-xl bg-[#F8FAFC] border border-[#E2ECF8] p-4 text-sm flex flex-wrap items-center justify-between gap-3"
+                  className="rounded-xl bg-[#F7F5EF] border border-[#E4DFD3] p-4 text-sm flex flex-wrap items-center justify-between gap-3"
                 >
                   <div>
-                    <strong className="text-xs text-[#0F172A] font-semibold">
+                    <strong className="text-xs text-[#1A1F1C] font-semibold">
                       {item.test_code.replace(/_/g, ' ')}:
                     </strong>{' '}
-                    <span className="font-bold text-[#0050CC]">
+                    <span className="font-bold text-[#163A2F]">
                       {item.value ?? 'Unknown'}
                       {item.unit ? ` ${item.unit}` : ''}
                     </span>
-                    <span className="block text-xs text-[#64748B] mt-0.5">
+                    <span className="block text-xs text-[#575C55] mt-0.5">
                       {item.source} · {item.confirmation_status}
                       {item.collected_on ? ` · ${item.collected_on}` : ''}
                     </span>
@@ -337,8 +332,8 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                   <span
                     className={`text-xs font-semibold px-3 py-0.5 rounded-full border ${
                       item.used_in_assessment
-                        ? 'bg-[#EBF3FF] text-[#0050CC] border-[#BCD8FE]'
-                        : 'bg-white text-[#64748B] border-[#CBD5E1]'
+                        ? 'bg-[#E8EFEA] text-[#163A2F] border-[#C8D6CC]'
+                        : 'bg-[#FBFAF6] text-[#575C55] border-[#D6D0C2]'
                     }`}
                   >
                     {item.used_in_assessment ? 'USED IN DRAFT' : 'NOT USED'}
@@ -350,18 +345,18 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
         )}
 
         {report.psychosocial_context.length > 0 && (
-          <div className="p-5 rounded-2xl bg-[#F2F7FF] border border-[#BCD8FE]">
-            <h3 className="text-xs font-bold text-[#0050CC] uppercase tracking-wide">
+          <div className="p-5 rounded-2xl bg-[#F7F5EF] border border-[#C8D6CC]">
+            <h3 className="text-xs font-bold text-[#163A2F] uppercase tracking-wide">
               Optional Psychosocial Context (Excluded from Triage)
             </h3>
-            <p className="text-xs text-[#475467] mt-1.5 leading-relaxed">
+            <p className="text-xs text-[#575C55] mt-1.5 leading-relaxed">
               {report.psychosocial_context_use}
             </p>
           </div>
         )}
 
         {report.excluded_items.length > 0 && (
-          <p className="text-xs text-[#D92D20] font-semibold">
+          <p className="text-xs text-[#B3261E] font-semibold">
             Excluded from this draft: {report.excluded_items.join(', ')}
           </p>
         )}
@@ -369,13 +364,13 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
       {/* J2 Selective Evidence Controls (PUT /cases/{id}/evidence-selection) */}
       {canSelectEvidence && (
-        <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E2ECF8]">
+        <section className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E4DFD3]">
             <div>
-              <h2 className="text-base font-bold text-[#0F172A]">
+              <h2 className="text-base font-bold text-[#1A1F1C]">
                 Selective Evidence Control (J2 · RF-16)
               </h2>
-              <p className="text-xs text-[#64748B] mt-0.5">
+              <p className="text-xs text-[#575C55] mt-0.5">
                 Include or exclude optional evidence categories and regenerate the draft immediately.
               </p>
             </div>
@@ -392,13 +387,13 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
               return (
                 <div
                   key={meta.item_id}
-                  className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8] flex flex-col justify-between gap-3.5 hover:border-[#BCD8FE] transition-[border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] hover:-translate-y-0.5"
+                  className="p-4 rounded-2xl bg-[#F7F5EF] border border-[#E4DFD3] flex flex-col justify-between gap-3.5 hover:border-[#C8D6CC] transition-[border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] hover:-translate-y-0.5"
                 >
                   <div>
-                    <span className="text-[11px] font-bold text-[#0066EE]">
+                    <span className="text-[11px] font-bold text-[#1F4D3F]">
                       {meta.item_id}
                     </span>
-                    <h3 className="text-xs font-bold text-[#0F172A] mt-0.5">
+                    <h3 className="text-xs font-bold text-[#1A1F1C] mt-0.5">
                       {meta.label}
                     </h3>
                   </div>
@@ -409,7 +404,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                     className={`w-full py-2 px-3.5 rounded-full text-xs font-semibold transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
                       isExcluded
                         ? 'btn-pill-secondary'
-                        : 'bg-[#0066EE] text-white hover:bg-[#0050CC] shadow-xs'
+                        : 'bg-[#1F4D3F] text-white hover:bg-[#163A2F] shadow-xs'
                     }`}
                   >
                     {isExcluded ? 'Include in Draft' : 'Included (Click to Exclude)'}
@@ -422,18 +417,18 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
       )}
 
       {/* Draft Rule Output & Limits */}
-      <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-5">
-        <div className="pb-3 border-b border-[#E2ECF8] flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-base font-bold text-[#0F172A]">
+      <section className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] space-y-5">
+        <div className="pb-3 border-b border-[#E4DFD3] flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-base font-bold text-[#1A1F1C]">
             Draft rule output
           </h2>
-          <span className="text-xs text-[#64748B] font-medium">
+          <span className="text-xs text-[#575C55] font-medium">
             Rule version {report.rule_version} · {report.rule_approval_status}
           </span>
         </div>
 
         {report.required_statements.map((statement, index) => (
-          <p key={index} className="text-sm text-[#0F172A] leading-relaxed">
+          <p key={index} className="text-sm text-[#1A1F1C] leading-relaxed">
             {statement}
           </p>
         ))}
@@ -454,10 +449,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
         {report.evidence.length > 0 && (
           <div className="pt-2">
-            <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-2">
+            <h3 className="text-xs font-bold text-[#1A1F1C] uppercase tracking-wide mb-2">
               Evidence status
             </h3>
-            <ul className="space-y-1.5 text-xs text-[#64748B]">
+            <ul className="space-y-1.5 text-xs text-[#575C55]">
               {report.evidence.map((item, index) => (
                 <li key={`${item.claim_id}-${index}`}>
                   {item.claim_id}: {item.status}
@@ -472,8 +467,8 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
       </section>
 
       {report.next_step && (
-        <section className="medical-card-sapphire p-8 rounded-3xl space-y-4 shadow-xl">
-          <span className="text-xs font-mono font-bold text-white bg-white/20 px-3 py-1 rounded-full border border-white/30 inline-block">
+        <section className="medical-card-sapphire p-8 rounded-2xl space-y-4 shadow-[var(--shadow-2)]">
+          <span className="text-xs font-mono font-bold text-white bg-[#FBFAF6]/20 px-3 py-1 rounded-full border border-white/30 inline-block">
             RECOMMENDED NEXT STEP
           </span>
           <h2 className="text-xl sm:text-2xl font-bold text-white mt-3">
@@ -488,7 +483,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
             type="button"
             disabled={submitting}
             onClick={() => void handleStartNavigation()}
-            className="mt-4 btn-pill-primary w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm text-white shadow-lg cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+            className="mt-4 btn-pill-primary w-full sm:w-auto px-8 py-3.5 rounded-full font-bold text-sm text-white shadow-[var(--shadow-2)] cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
           >
             <span>{submitting ? 'Starting...' : 'Continue to Mock Care Navigation'}</span>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -505,10 +500,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
         </div>
       )}
 
-      <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+      <section className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)] flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-[#0F172A]">Keep a summary for your next visit</h2>
-          <p className="text-xs text-[#64748B] mt-1">
+          <h2 className="text-base font-bold text-[#1A1F1C]">Keep a summary for your next visit</h2>
+          <p className="text-xs text-[#575C55] mt-1">
             The file holds your answers to these health questions. Sanad does not keep a copy, so
             store it somewhere private. Next time, start with "Upload profile" to skip repeating
             them; you can still change any answer.
@@ -523,19 +518,19 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
               setSummaryError(err instanceof Error ? err.message : 'Download failed.'),
             );
           }}
-          className="w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold border border-[#BCD8FE] text-[#0050CC] bg-white cursor-pointer whitespace-nowrap"
+          className="w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold border border-[#C8D6CC] text-[#163A2F] bg-[#FBFAF6] cursor-pointer whitespace-nowrap"
         >
           Download my summary
         </button>
       </section>
 
       {canRequestReview && (
-        <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#BCD8FE] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <section className="medical-card bg-[#FBFAF6] p-6 sm:p-8 rounded-2xl border border-[#C8D6CC] shadow-[var(--shadow-1)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <h2 className="text-base font-bold text-[#0F172A]">
+            <h2 className="text-base font-bold text-[#1A1F1C]">
               Request Mock Reviewer Review
             </h2>
-            <p className="text-xs text-[#64748B] mt-1">
+            <p className="text-xs text-[#575C55] mt-1">
               A simulated reviewer role will review this synthetic draft. This does not represent verified clinical care.
             </p>
           </div>
@@ -543,7 +538,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
             type="button"
             disabled={submitting}
             onClick={() => void handleRequestReview()}
-            className="btn-pill-primary w-full sm:w-auto px-7 py-3 rounded-full text-xs font-bold text-white shadow-md cursor-pointer whitespace-nowrap disabled:opacity-60 flex items-center justify-center gap-2"
+            className="btn-pill-primary w-full sm:w-auto px-7 py-3 rounded-full text-xs font-bold text-white shadow-[var(--shadow-1)] cursor-pointer whitespace-nowrap disabled:opacity-60 flex items-center justify-center gap-2"
           >
             <span>{submitting ? 'Sending...' : 'Request Mock Review'}</span>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -554,7 +549,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
       )}
 
       {report.review_status === 'NOT_SENT' && !reviewGranted && (
-        <div className="rounded-2xl bg-white border border-[#E2ECF8] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm text-[#0F172A] shadow-xs">
+        <div className="rounded-2xl bg-[#FBFAF6] border border-[#E4DFD3] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm text-[#1A1F1C] shadow-xs">
           <span>
             Reviewer access was not consented to. Return to consent settings to enable this optional step.
           </span>

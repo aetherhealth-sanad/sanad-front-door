@@ -60,12 +60,12 @@ export const QuickExit: React.FC<QuickExitProps> = ({
       data-testid="quick-exit"
       onClick={handleQuickExit}
       title="Leave this page and clear this Sanad session from the tab"
-      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-[#D92D20] hover:bg-[#B42318] text-white shadow-xs transition-[transform,background-color,box-shadow] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer select-none whitespace-nowrap ${className}`}
+      className={`inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg text-[12px] font-medium bg-[#1A1F1C] hover:bg-[#000000] text-[#F4F1EA] transition-[transform,background-color] duration-150 active:translate-y-px cursor-pointer select-none whitespace-nowrap ${className}`}
     >
-      <svg className="w-3.5 h-3.5 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      <svg className="hidden sm:block w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
       </svg>
-      Quick Exit
+      Quick exit
     </button>
   );
 };

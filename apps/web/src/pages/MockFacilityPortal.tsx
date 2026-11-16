@@ -229,26 +229,26 @@ export const MockFacilityPortal: React.FC = () => {
   if (!authenticated) {
     return (
       <div className="max-w-md mx-auto px-4 py-16">
-        <div className="medical-card bg-white p-8 sm:p-10 rounded-3xl border border-[#E2ECF8] shadow-xl space-y-4">
-          <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+        <div className="medical-card bg-[#FBFAF6] p-8 sm:p-10 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-2)] space-y-4">
+          <span className="text-xs font-mono font-bold text-[#1F4D3F] bg-[#E8EFEA] px-2.5 py-0.5 rounded-full border border-[#C8D6CC]">
             FACILITY ACCESS
           </span>
-          <h1 className="text-2xl font-extrabold text-[#072254] mt-3">
+          <h1 className="text-3xl font-semibold text-[#1A1F1C] mt-3">
             Facility access
           </h1>
-          <p className="text-sm text-[#475467] leading-relaxed">
+          <p className="text-sm text-[#575C55] leading-relaxed">
             Use the seeded demo account configured for the local API. This role changes synthetic records only.
           </p>
           {error && (
             <div
               role="alert"
-              className="p-3.5 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
+              className="p-3.5 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-sm font-semibold"
             >
               {error}
             </div>
           )}
           <form onSubmit={handleLogin} className="space-y-4 pt-2">
-            <label className="block text-xs font-bold text-[#0F172A]">
+            <label className="block text-xs font-bold text-[#1A1F1C]">
               Username
               <input
                 name="username"
@@ -256,10 +256,10 @@ export const MockFacilityPortal: React.FC = () => {
                 autoComplete="username"
                 value={username}
                 onChange={event => setUsername(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                className="mt-1.5 w-full rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] px-4 py-2.5 text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
               />
             </label>
-            <label className="block text-xs font-bold text-[#0F172A]">
+            <label className="block text-xs font-bold text-[#1A1F1C]">
               Password
               <input
                 type="password"
@@ -268,13 +268,13 @@ export const MockFacilityPortal: React.FC = () => {
                 autoComplete="current-password"
                 value={password}
                 onChange={event => setPassword(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-[#CBD5E1] bg-white px-4 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                className="mt-1.5 w-full rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] px-4 py-2.5 text-sm text-[#1A1F1C] focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
               />
             </label>
             <button
               type="submit"
               disabled={loading || !username || !password}
-              className="btn-pill-primary w-full py-3.5 rounded-full text-xs font-bold text-white shadow-md cursor-pointer disabled:opacity-50 mt-2"
+              className="btn-pill-primary w-full py-3.5 rounded-full text-xs font-bold text-white shadow-[var(--shadow-1)] cursor-pointer disabled:opacity-50 mt-2"
             >
               {loading ? 'Signing in...' : 'Sign in to Mock Facility'}
             </button>
@@ -286,15 +286,15 @@ export const MockFacilityPortal: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-6 border-b border-[#E2ECF8]">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-6 border-b border-[#E4DFD3]">
         <div>
-          <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
+          <span className="text-xs font-mono font-bold text-[#1F4D3F] bg-[#E8EFEA] px-2.5 py-0.5 rounded-full border border-[#C8D6CC]">
             REFERRAL DISPATCH DESK
           </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] mt-3 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-semibold text-[#1A1F1C] mt-3 tracking-tight">
             Referral Coordination
           </h1>
-          <p className="text-sm text-[#475467] mt-1">
+          <p className="text-sm text-[#575C55] mt-1">
             Events update synthetic referral records only. They cannot verify care completion.
           </p>
         </div>
@@ -319,7 +319,7 @@ export const MockFacilityPortal: React.FC = () => {
       {error && (
         <div
           role="alert"
-          className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold"
+          className="p-4 rounded-xl bg-[#FBEDEA] border border-[#F0C9C2] text-[#B3261E] text-sm font-semibold"
         >
           {error}
         </div>
@@ -327,22 +327,22 @@ export const MockFacilityPortal: React.FC = () => {
       {notice && (
         <div
           role="status"
-          className="p-4 rounded-xl bg-[#EBF3FF] border border-[#BCD8FE] text-[#0050CC] text-sm font-semibold"
+          className="p-4 rounded-xl bg-[#E8EFEA] border border-[#C8D6CC] text-[#163A2F] text-sm font-semibold"
         >
           {notice}
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <aside className="lg:col-span-4 medical-card bg-white p-6 space-y-3.5 rounded-2xl border border-[#E2ECF8] shadow-md">
-          <h2 className="text-sm font-bold text-[#0F172A] pb-3 border-b border-[#E2ECF8]">
+        <aside className="lg:col-span-4 medical-card bg-[#FBFAF6] p-6 space-y-3.5 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)]">
+          <h2 className="text-sm font-bold text-[#1A1F1C] pb-3 border-b border-[#E4DFD3]">
             Mock referral packets ({referrals.length})
           </h2>
           {loading && (
-            <p className="text-xs text-[#64748B]">Loading...</p>
+            <p className="text-xs text-[#575C55]">Loading...</p>
           )}
           {!loading && referrals.length === 0 && (
-            <p className="text-sm text-[#64748B]">No Mock referral packets.</p>
+            <p className="text-sm text-[#575C55]">No Mock referral packets.</p>
           )}
           {referrals.map(referral => (
             <button
@@ -351,37 +351,37 @@ export const MockFacilityPortal: React.FC = () => {
               onClick={() => void selectReferral(referral.referral_id)}
               className={`w-full text-left p-4 rounded-xl border cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.985] ${
                 selectedId === referral.referral_id
-                  ? 'bg-[#F2F7FF] border-[#BCD8FE] shadow-xs'
-                  : 'bg-[#F8FAFC] border-[#E2ECF8] hover:border-[#CBD5E1]'
+                  ? 'bg-[#F7F5EF] border-[#C8D6CC] shadow-xs'
+                  : 'bg-[#F7F5EF] border-[#E4DFD3] hover:border-[#D6D0C2]'
               }`}
             >
-              <span className="block text-xs font-bold text-[#0F172A]">
+              <span className="block text-xs font-bold text-[#1A1F1C]">
                 {referral.case_code} · Mock
               </span>
-              <span className="block text-xs font-semibold text-[#0066EE] mt-1">
+              <span className="block text-xs font-semibold text-[#1F4D3F] mt-1">
                 {referral.care_type} · {referral.mock_status}
               </span>
-              <span className="block text-xs text-[#64748B] mt-1">
+              <span className="block text-xs text-[#575C55] mt-1">
                 {new Date(referral.created_at).toLocaleString()}
               </span>
             </button>
           ))}
         </aside>
 
-        <section className="lg:col-span-8 medical-card bg-white p-6 sm:p-8 space-y-6 rounded-2xl border border-[#E2ECF8] shadow-md">
+        <section className="lg:col-span-8 medical-card bg-[#FBFAF6] p-6 sm:p-8 space-y-6 rounded-2xl border border-[#E4DFD3] shadow-[var(--shadow-1)]">
           {!detail && (
-            <p className="text-sm text-[#64748B]">
+            <p className="text-sm text-[#575C55]">
               Select a Mock packet to inspect its approved summary and record an event.
             </p>
           )}
           {detail && (
             <>
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E2ECF8] pb-4">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E4DFD3] pb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-[#072254]">
+                  <h2 className="text-xl font-bold text-[#1A1F1C]">
                     {detail.snapshot?.case_code ?? detail.referral_id}
                   </h2>
-                  <p className="text-xs text-[#64748B] mt-0.5">
+                  <p className="text-xs text-[#575C55] mt-0.5">
                     {detail.snapshot?.care_type ?? 'No approved snapshot'} ·{' '}
                     {detail.mock_status}
                   </p>
@@ -390,20 +390,20 @@ export const MockFacilityPortal: React.FC = () => {
 
               {detail.snapshot && (
                 <div className="space-y-4">
-                  <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2ECF8]">
-                    <h3 className="text-xs font-bold text-[#0050CC] uppercase tracking-wide">
+                  <div className="p-5 rounded-2xl bg-[#F7F5EF] border border-[#E4DFD3]">
+                    <h3 className="text-xs font-bold text-[#163A2F] uppercase tracking-wide">
                       Approved summary · Mock
                     </h3>
-                    <p className="mt-2 text-sm text-[#0F172A] whitespace-pre-wrap leading-relaxed">
+                    <p className="mt-2 text-sm text-[#1A1F1C] whitespace-pre-wrap leading-relaxed">
                       {detail.snapshot.reviewer_summary}
                     </p>
                   </div>
                   {detail.snapshot.limits.length > 0 && (
                     <div>
-                      <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide">
+                      <h3 className="text-xs font-bold text-[#1A1F1C] uppercase tracking-wide">
                         Limits
                       </h3>
-                      <ul className="mt-2 space-y-1 text-xs text-[#64748B]">
+                      <ul className="mt-2 space-y-1 text-xs text-[#575C55]">
                         {detail.snapshot.limits.map((limit, index) => (
                           <li key={index}>{limit}</li>
                         ))}
@@ -414,19 +414,19 @@ export const MockFacilityPortal: React.FC = () => {
               )}
 
               <div>
-                <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-2.5">
+                <h3 className="text-xs font-bold text-[#1A1F1C] uppercase tracking-wide mb-2.5">
                   Mock events
                 </h3>
                 {detail.events.length === 0 ? (
-                  <p className="text-xs text-[#64748B]">No events recorded.</p>
+                  <p className="text-xs text-[#575C55]">No events recorded.</p>
                 ) : (
                   <ol className="space-y-2.5">
                     {detail.events.map(event => (
                       <li
                         key={event.event_id}
-                        className="rounded-xl bg-[#F8FAFC] border border-[#E2ECF8] p-3.5 text-xs text-[#64748B]"
+                        className="rounded-xl bg-[#F7F5EF] border border-[#E4DFD3] p-3.5 text-xs text-[#575C55]"
                       >
-                        <strong className="text-[#0F172A] font-semibold">{event.mock_status}</strong> ·{' '}
+                        <strong className="text-[#1A1F1C] font-semibold">{event.mock_status}</strong> ·{' '}
                         {new Date(event.occurred_at).toLocaleString()}
                         {event.reason_code ? ` · ${event.reason_code}` : ''} · Mock
                       </li>
@@ -436,14 +436,14 @@ export const MockFacilityPortal: React.FC = () => {
               </div>
 
               {nextEvents().length > 0 && (
-                <div className="border-t border-[#E2ECF8] pt-5 space-y-4">
-                  <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide">
+                <div className="border-t border-[#E4DFD3] pt-5 space-y-4">
+                  <h3 className="text-xs font-bold text-[#1A1F1C] uppercase tracking-wide">
                     Record next Mock event
                   </h3>
                   {nextEvents().some(
                     event => event.status === 'MOCK_APPOINTMENT_SCHEDULED',
                   ) && (
-                    <label className="block text-xs font-bold text-[#0F172A]">
+                    <label className="block text-xs font-bold text-[#1A1F1C]">
                       Mock appointment date and time
                       <input
                         type="datetime-local"
@@ -453,21 +453,21 @@ export const MockFacilityPortal: React.FC = () => {
                         onChange={event =>
                           setAppointmentTime(event.target.value)
                         }
-                        className="mt-1.5 block w-full max-w-sm rounded-xl border border-[#CBD5E1] bg-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                        className="mt-1.5 block w-full max-w-sm rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
                       />
                     </label>
                   )}
                   {nextEvents().some(
                     event => event.status === 'MOCK_REJECTED',
                   ) && (
-                    <label className="block text-xs font-bold text-[#0F172A]">
+                    <label className="block text-xs font-bold text-[#1A1F1C]">
                       Mock rejection reason
                       <select
                         value={rejectReason}
                         onChange={event =>
                           setRejectReason(event.target.value as RejectReason)
                         }
-                        className="mt-1.5 block w-full max-w-sm rounded-xl border border-[#CBD5E1] bg-white p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0066EE]"
+                        className="mt-1.5 block w-full max-w-sm rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4D3F]"
                       >
                         {rejectReasons.map(reason => (
                           <option key={reason} value={reason}>

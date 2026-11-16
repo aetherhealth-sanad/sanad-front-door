@@ -435,28 +435,28 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
   return (
     <div className="w-full space-y-4">
       {/* ── Sub-header / Mode Control Strip ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2ECF8]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E4DFD3]">
         <div>
           <div className="flex items-center gap-2">
             <MockBadge label={`MOCK QUESTIONS · ${approvalStatus}`} />
-            <span className="font-mono text-[11px] text-[#829AB8]">Screening, not diagnosis</span>
+            <span className="font-mono text-[11px] text-[#8A8C84]">Screening, not diagnosis</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#07215A] tracking-tight mt-1">
-            Clinical Health Intake
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1F1C] tracking-tight mt-1">
+            Health questions
           </h1>
         </div>
 
         <div className="flex items-center gap-2.5">
           {/* Segmented Mode Switcher */}
-          <div className="inline-flex p-1 rounded-full bg-[#EBF4FF] border border-[#BAD6FE] text-xs font-semibold shadow-2xs">
-            <span className="px-3 py-1 rounded-full bg-white text-[#0062FF] shadow-xs flex items-center gap-1.5 font-bold">
+          <div className="inline-flex p-1 rounded-full bg-[#E8EFEA] border border-[#C8D6CC] text-xs font-semibold shadow-2xs">
+            <span className="px-3 py-1 rounded-full bg-[#FBFAF6] text-[#1F4D3F] shadow-xs flex items-center gap-1.5 font-bold">
               <span>💬</span>
               <span>Chat Assistant</span>
             </span>
             <button
               type="button"
               onClick={onSwitchToForm}
-              className="px-3 py-1 rounded-full text-[#4A6588] hover:text-[#07215A] transition-colors cursor-pointer flex items-center gap-1.5"
+              className="px-3 py-1 rounded-full text-[#575C55] hover:text-[#1A1F1C] transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <span>📋</span>
               <span>Full Form</span>
@@ -491,28 +491,28 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
           {/* ── Master Conversational Assistant Card ── */}
           <section className="medical-card overflow-hidden flex flex-col" aria-label="Clinical Conversation">
             {/* ── Header Strip ── */}
-            <div className="px-5 py-4 border-b border-[#E2ECF8] bg-gradient-to-r from-white via-[#F8FAFC] to-white flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+            <div className="px-5 py-4 border-b border-[#E4DFD3] bg-gradient-to-r from-[#FBFAF6] via-[#F7F5EF] to-[#FBFAF6] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 {/* Clinical Stethoscope Icon Avatar with pulsing indicator */}
                 <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0062FF] to-[#0A3E92] flex items-center justify-center text-white shadow-sm ring-2 ring-[#EBF4FF]">
+                  <div className="w-9 h-9 rounded-lg bg-[#1A1F1C] flex items-center justify-center text-[#F4F1EA]">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#10B981] ring-2 ring-white" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#3F7D5C] ring-2 ring-[#FBFAF6]" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-bold text-[#07215A]">
+                    <h2 className="text-sm font-semibold text-[#1A1F1C] truncate">
                       {assistant?.assistant_label ?? 'Sanad Clinical Guide'}
                     </h2>
-                    <span className="font-mono text-[10px] text-[#0062FF] bg-[#EBF4FF] px-2 py-0.5 rounded-full border border-[#BAD6FE] font-semibold">
-                      Scripted AI
+                    <span className="tag !text-[10px] shrink-0">
+                      Scripted
                     </span>
                   </div>
-                  <p className="text-xs text-[#829AB8] line-clamp-1">
-                    {assistant?.assistant_note ?? 'Scripted questions from approved draft catalogue'}
+                  <p className="text-xs text-[#8A8C84] line-clamp-1">
+                    {assistant?.assistant_note ?? 'Scripted questions from a draft catalogue'}
                   </p>
                 </div>
               </div>
@@ -520,8 +520,10 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
               {/* Progress Count Badge */}
               {phase === 'questions' && queue.length > 0 && (
                 <div className="text-right shrink-0">
-                  <span className="font-mono text-xs font-bold text-[#0062FF] bg-[#EBF4FF] px-2.5 py-1 rounded-full border border-[#BAD6FE]">
-                    Question {index + 1} of {queue.length}
+                  <span className="font-mono text-[11px] text-[#1A1F1C] tabular whitespace-nowrap">
+                    <span className="hidden sm:inline">Question </span>
+                    {index + 1}
+                    <span className="text-[#8A8C84]"> / {queue.length}</span>
                   </span>
                 </div>
               )}
@@ -529,9 +531,9 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
 
             {/* ── Progress Track ── */}
             {phase === 'questions' && queue.length > 0 && (
-              <div className="w-full bg-[#EBF4FF] h-1 overflow-hidden">
+              <div className="w-full bg-[#E8EFEA] h-1 overflow-hidden">
                 <div
-                  className="bg-[#0062FF] h-full transition-all duration-300 ease-out"
+                  className="bg-[#1F4D3F] h-full transition-all duration-300 ease-out"
                   style={{ width: `${Math.round(((index + 1) / queue.length) * 100)}%` }}
                 />
               </div>
@@ -542,11 +544,11 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
               role="log"
               aria-live="polite"
               aria-label="Conversation"
-              className="px-5 py-6 space-y-4 min-h-[340px] max-h-[500px] overflow-y-auto bg-gradient-to-b from-[#FAFDFE] to-white"
+              className="px-4 sm:px-6 py-6 space-y-5 min-h-[340px] max-h-[520px] overflow-y-auto bg-[#FBFAF6]"
             >
               {phase === 'loading' && (
-                <div className="flex items-center gap-2 text-sm font-mono text-[#829AB8]">
-                  <span className="w-2 h-2 rounded-full bg-[#0062FF] glow-pulse" />
+                <div className="flex items-center gap-2 text-sm font-mono text-[#8A8C84]">
+                  <span className="w-2 h-2 rounded-full bg-[#1F4D3F] glow-pulse" />
                   <span>Loading draft catalogue questions...</span>
                 </div>
               )}
@@ -554,15 +556,17 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
               {entries.map(entry => {
                 if (entry.kind === 'assistant') {
                   return (
-                    <div key={entry.id} className="flex items-start gap-3 max-w-[90%] sm:max-w-[82%]">
-                      <div className="w-7 h-7 rounded-full bg-[#EBF4FF] border border-[#BAD6FE] text-[#0062FF] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
-                      </div>
-                      <div className="rounded-2xl rounded-tl-sm bg-white border border-[#E2ECF8] shadow-xs px-4 py-3 text-sm text-[#07215A] leading-relaxed">
+                    <div key={entry.id} className="chat-bubble-enter flex items-start gap-3 max-w-[92%] sm:max-w-[80%]">
+                      <span
+                        className="mt-1 font-mono text-[10px] uppercase tracking-[0.06em] text-[#8A8C84] w-12 shrink-0 text-right"
+                        aria-hidden="true"
+                      >
+                        Sanad
+                      </span>
+                      <p className="border-l-2 border-[#1A1F1C] pl-3 text-[15px] text-[#1A1F1C] leading-relaxed">
+                        <span className="sr-only">Sanad: </span>
                         {entry.text}
-                      </div>
+                      </p>
                     </div>
                   );
                 }
@@ -570,54 +574,54 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                 if (entry.kind === 'user') {
                   return (
                     <div key={entry.id} className="ml-auto max-w-[90%] sm:max-w-[78%] text-right space-y-1">
-                      <div className="inline-block rounded-2xl rounded-tr-sm bg-gradient-to-r from-[#0062FF] to-[#0048C8] text-white shadow-xs px-4 py-2.5 text-sm font-medium text-left break-words">
+                      <div className="chat-bubble-enter inline-block rounded-xl rounded-br-sm bg-[#1A1F1C] text-[#F4F1EA] px-4 py-2.5 text-[15px] text-left break-words">
                         {entry.text}
                       </div>
                       {entry.note && (
-                        <p className="font-mono text-[10px] text-[#829AB8] pr-1">{entry.note}</p>
+                        <p className="font-mono text-[10px] text-[#8A8C84] pr-1">{entry.note}</p>
                       )}
                     </div>
                   );
                 }
 
                 return (
-                  <div key={entry.id} className="mx-auto max-w-lg rounded-xl bg-[#F0F6FF] border border-[#BAD6FE] px-3.5 py-2 text-xs text-[#0A479D] font-mono text-center">
+                  <div key={entry.id} className="chat-bubble-enter flex items-center gap-3 font-mono text-[11px] text-[#575C55]">
+                    <span className="flex-1 h-px bg-[#E4DFD3]" aria-hidden="true" />
+                    <span className="text-center max-w-md">
                     {entry.text}
+                    </span>
+                    <span className="flex-1 h-px bg-[#E4DFD3]" aria-hidden="true" />
                   </div>
                 );
               })}
 
               {/* ── Bouncing Typing Indicator ── */}
               {busy && (
-                <div className="flex items-center gap-3 animate-in fade-in duration-150">
-                  <div className="w-7 h-7 rounded-full bg-[#EBF4FF] border border-[#BAD6FE] text-[#0062FF] flex items-center justify-center shrink-0">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div className="bg-white border border-[#E2ECF8] rounded-2xl rounded-tl-sm px-4 py-3 shadow-xs">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#0062FF] animate-bounce [animation-delay:-0.3s]" />
-                      <span className="w-2 h-2 rounded-full bg-[#0062FF] animate-bounce [animation-delay:-0.15s]" />
-                      <span className="w-2 h-2 rounded-full bg-[#0062FF] animate-bounce" />
-                    </div>
-                  </div>
+                <div className="flex items-center gap-3" role="status" aria-label="Sanad is preparing the next question">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-[#8A8C84] w-12 text-right" aria-hidden="true">
+                    Sanad
+                  </span>
+                  <span className="dot-pulse flex gap-1 text-[#1A1F1C] border-l-2 border-[#1A1F1C] pl-3 py-1.5">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
                 </div>
               )}
 
               {/* ── AI Suggestion Proposal Card ── */}
               {proposal?.proposal && proposal.produced_by && (
-                <div className="rounded-2xl border-2 border-[#0062FF] bg-[#EBF4FF] p-5 space-y-3 shadow-md animate-in fade-in duration-200">
+                <div className="chat-bubble-enter rounded-xl border border-[#1F4D3F] bg-[#E8EFEA] p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[11px] font-bold text-[#0062FF] bg-white px-2.5 py-1 rounded-full border border-[#BAD6FE] flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#0062FF] glow-pulse" />
+                    <span className="font-mono text-[11px] font-bold text-[#1F4D3F] bg-[#FBFAF6] px-2.5 py-1 rounded-full border border-[#C8D6CC] flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#1F4D3F] glow-pulse" />
                       AI SUGGESTED MATCH
                     </span>
-                    <span className="font-mono text-[10px] text-[#4A6588]">{proposal.produced_by.label}</span>
+                    <span className="font-mono text-[10px] text-[#575C55]">{proposal.produced_by.label}</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-[#4A6588]">Based on your note, did you mean:</p>
-                    <p className="text-base font-bold text-[#07215A]">
+                    <p className="text-xs text-[#575C55]">Based on your note, did you mean:</p>
+                    <p className="text-base font-bold text-[#1A1F1C]">
                       "{proposal.proposal.echo_label}"
                     </p>
                     {proposal.contradiction && proposal.contradiction.earlier.length > 0 && (
@@ -632,7 +636,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                       </div>
                     )}
                     {proposal.message && (
-                      <p className="text-xs text-[#4A6588] leading-relaxed">{proposal.message}</p>
+                      <p className="text-xs text-[#575C55] leading-relaxed">{proposal.message}</p>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2.5 pt-1">
@@ -660,7 +664,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
             </div>
 
             {/* ── Interactive Answer Deck (Bottom Controls) ── */}
-            <div className="border-t border-[#E2ECF8] bg-[#F8FAFC] p-4 sm:p-5 space-y-3.5">
+            <div className="border-t border-[#E4DFD3] bg-[#F7F5EF] p-4 sm:p-5 space-y-3.5">
               {error && (
                 <div role="alert" className="p-3 rounded-xl bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-xs font-medium">
                   {error}
@@ -704,10 +708,10 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                           type="button"
                           disabled={busy}
                           onClick={() => void saveAnswer(choice)}
-                          className="group p-3.5 rounded-xl border border-[#CBD5E1] bg-white text-[#07215A] font-semibold text-sm transition-all duration-150 hover:border-[#0062FF] hover:bg-[#EBF4FF] hover:text-[#0048C8] active:scale-[0.98] shadow-2xs cursor-pointer flex items-center justify-between gap-3 text-left disabled:opacity-50"
+                          className="group p-3.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-[#1A1F1C] font-semibold text-sm transition-all duration-150 hover:border-[#1F4D3F] hover:bg-[#E8EFEA] hover:text-[#163A2F] active:scale-[0.98] shadow-2xs cursor-pointer flex items-center justify-between gap-3 text-left disabled:opacity-50"
                         >
                           <span>{choice.label}</span>
-                          <span className="w-5 h-5 rounded-full border border-[#CBD5E1] group-hover:border-[#0062FF] group-hover:bg-[#0062FF] group-hover:text-white flex items-center justify-center text-[10px] text-transparent transition-all shrink-0">
+                          <span className="w-5 h-5 rounded-full border border-[#D6D0C2] group-hover:border-[#1F4D3F] group-hover:bg-[#1F4D3F] group-hover:text-white flex items-center justify-center text-[10px] text-transparent transition-all shrink-0">
                             ✓
                           </span>
                         </button>
@@ -728,10 +732,10 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                           value={numberText}
                           onChange={event => setNumberText(event.target.value)}
                           placeholder={current.unit ? `e.g. 24 (${current.unit})` : 'Enter value'}
-                          className="w-full px-4 py-3 rounded-xl border border-[#CBD5E1] bg-white text-[#07215A] text-sm font-medium focus:outline-none focus:border-[#0062FF] focus:ring-2 focus:ring-[#0062FF]/20 shadow-xs"
+                          className="w-full px-4 py-3 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-[#1A1F1C] text-sm font-medium focus:outline-none focus:border-[#1F4D3F] focus:ring-2 focus:ring-[#1F4D3F]/20 shadow-xs"
                         />
                         {current.unit && (
-                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-xs font-semibold text-[#829AB8] bg-[#F6F9FF] px-2 py-0.5 rounded-md border border-[#E2ECF8]">
+                          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-mono text-xs font-semibold text-[#8A8C84] bg-[#F7F5EF] px-2 py-0.5 rounded-md border border-[#E4DFD3]">
                             {current.unit}
                           </span>
                         )}
@@ -747,7 +751,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                   )}
 
                   {/* Opt-out & Skip Toolbar */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#E2ECF8]/70">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#E4DFD3]/70">
                     <div className="flex flex-wrap items-center gap-2">
                       {OPT_OUTS.map(optOut => (
                         <button
@@ -760,7 +764,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                               answer: { question_id: current.question_id, choice: optOut.choice },
                             })
                           }
-                          className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#4A6588] bg-white border border-[#CBD5E1] hover:border-[#829AB8] hover:bg-[#F1F5F9] hover:text-[#07215A] active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                          className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#575C55] bg-[#FBFAF6] border border-[#D6D0C2] hover:border-[#8A8C84] hover:bg-[#EFECE4] hover:text-[#1A1F1C] active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                         >
                           {optOut.label}
                         </button>
@@ -770,7 +774,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                       type="button"
                       disabled={busy}
                       onClick={skip}
-                      className="px-3 py-1.5 rounded-full text-xs font-semibold text-[#829AB8] hover:text-[#D92D20] hover:bg-[#FFF1F0] transition-colors cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold text-[#8A8C84] hover:text-[#B3261E] hover:bg-[#FBEDEA] transition-colors cursor-pointer disabled:opacity-50"
                     >
                       Skip question →
                     </button>
@@ -778,7 +782,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
 
                   {/* Free-text Typing Notice & Opt-in */}
                   {typingOn && assistant?.model && !typingAcknowledged && (
-                    <div className="rounded-xl border border-[#BAD6FE] bg-[#EBF4FF] p-3 text-xs text-[#0A479D] space-y-2">
+                    <div className="rounded-xl border border-[#C8D6CC] bg-[#E8EFEA] p-3 text-xs text-[#1F4D3F] space-y-2">
                       <p>{assistant.disclosure}</p>
                       <button
                         type="button"
@@ -792,10 +796,10 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
 
                   {/* Free-text Form */}
                   {typingOn && assistant?.model && typingAcknowledged && (
-                    <form onSubmit={sendTyped} className="space-y-2 pt-2 border-t border-[#E2ECF8]">
-                      <div className="flex items-center justify-between text-xs font-semibold text-[#07215A]">
+                    <form onSubmit={sendTyped} className="space-y-2 pt-2 border-t border-[#E4DFD3]">
+                      <div className="flex items-center justify-between text-xs font-semibold text-[#1A1F1C]">
                         <span>Or describe in your own words:</span>
-                        <span className="font-mono text-[11px] text-[#829AB8]">{typed.length}/{assistant.max_text_chars}</span>
+                        <span className="font-mono text-[11px] text-[#8A8C84]">{typed.length}/{assistant.max_text_chars}</span>
                       </div>
                       <div className="flex gap-2">
                         <input
@@ -806,7 +810,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                           value={typed}
                           onChange={event => setTyped(event.target.value)}
                           placeholder="Type your answer in plain English..."
-                          className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-sm focus:outline-none focus:border-[#0062FF] focus:ring-2 focus:ring-[#0062FF]/20 shadow-xs"
+                          className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-sm focus:outline-none focus:border-[#1F4D3F] focus:ring-2 focus:ring-[#1F4D3F]/20 shadow-xs"
                         />
                         <button
                           type="submit"
@@ -819,7 +823,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                           </svg>
                         </button>
                       </div>
-                      <p className="font-mono text-[10px] text-[#829AB8]">
+                      <p className="font-mono text-[10px] text-[#8A8C84]">
                         Interpreted by {assistant.model.label} to suggest an answer. You confirm before anything is saved.
                       </p>
                     </form>
@@ -830,7 +834,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
               {/* Optional Wellbeing Questions */}
               {currentWellbeing && (
                 <div className="space-y-2.5">
-                  <p className="text-xs font-semibold text-[#07215A]">Select your response:</p>
+                  <p className="text-xs font-semibold text-[#1A1F1C]">Select your response:</p>
                   <div className="flex flex-wrap gap-2" role="group" aria-label="Optional answers">
                     {WELLBEING_CHOICES.map(choice => (
                       <button
@@ -840,8 +844,8 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                         onClick={() => void answerWellbeing(choice)}
                         className={
                           choice.answer
-                            ? 'px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-[#07215A] font-semibold text-xs hover:border-[#0062FF] hover:bg-[#EBF4FF] hover:text-[#0048C8] transition-all cursor-pointer'
-                            : 'px-3.5 py-2.5 rounded-xl text-xs font-medium text-[#829AB8] hover:text-[#07215A] underline cursor-pointer'
+                            ? 'px-4 py-2.5 rounded-xl border border-[#D6D0C2] bg-[#FBFAF6] text-[#1A1F1C] font-semibold text-xs hover:border-[#1F4D3F] hover:bg-[#E8EFEA] hover:text-[#163A2F] transition-all cursor-pointer'
+                            : 'px-3.5 py-2.5 rounded-xl text-xs font-medium text-[#8A8C84] hover:text-[#1A1F1C] underline cursor-pointer'
                         }
                       >
                         {choice.label}
@@ -853,17 +857,17 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
 
               {/* Final Ready Phase */}
               {phase === 'ready' && (
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-[#EBF4FF] to-white border border-[#BAD6FE] space-y-3.5">
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-[#E8EFEA] to-[#FBFAF6] border border-[#C8D6CC] space-y-3.5">
                   <div>
-                    <h3 className="text-sm font-bold text-[#07215A]">Intake Questions Complete</h3>
-                    <p className="text-xs text-[#4A6588] mt-0.5 leading-relaxed">
+                    <h3 className="text-sm font-bold text-[#1A1F1C]">Intake Questions Complete</h3>
+                    <p className="text-xs text-[#575C55] mt-0.5 leading-relaxed">
                       All required questions have been reviewed. Check your profile with the draft rules to see your summary.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void runAssessment()}
-                    className="btn-pill-primary w-full py-3.5 text-sm font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    className="btn-pill-primary w-full py-3.5 text-sm font-bold shadow-[var(--shadow-1)] flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>Check my answers with draft rules</span>
                     <span className="font-mono">→</span>
@@ -872,8 +876,8 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
               )}
 
               {phase === 'processing' && (
-                <div className="flex items-center gap-2 p-3 text-sm font-mono text-[#0062FF]">
-                  <span className="w-2 h-2 rounded-full bg-[#0062FF] glow-pulse" />
+                <div className="flex items-center gap-2 p-3 text-sm font-mono text-[#1F4D3F]">
+                  <span className="w-2 h-2 rounded-full bg-[#1F4D3F] glow-pulse" />
                   <span>Checking your answers with draft rules...</span>
                 </div>
               )}
@@ -886,37 +890,37 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
               <button
                 type="button"
                 onClick={() => setShowRecordedDrawer(prev => !prev)}
-                className="w-full flex items-center justify-between text-xs font-bold text-[#07215A] hover:text-[#0062FF] transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between text-xs font-bold text-[#1A1F1C] hover:text-[#1F4D3F] transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2">
                   <span>📋 Answers recorded in this chat ({recorded.length})</span>
                   {coreIds.length > 0 && (
-                    <span className="font-mono text-[10px] text-[#0062FF] bg-[#EBF4FF] px-2 py-0.5 rounded-full font-semibold border border-[#BAD6FE]">
+                    <span className="font-mono text-[10px] text-[#1F4D3F] bg-[#E8EFEA] px-2 py-0.5 rounded-full font-semibold border border-[#C8D6CC]">
                       {coreDone} of {coreIds.length} required
                     </span>
                   )}
                 </span>
-                <span className="font-mono text-xs text-[#829AB8]">{showRecordedDrawer ? 'Hide ▲' : 'View recorded ▼'}</span>
+                <span className="font-mono text-xs text-[#8A8C84]">{showRecordedDrawer ? 'Hide ▲' : 'View recorded ▼'}</span>
               </button>
 
               {showRecordedDrawer && (
-                <div className="mt-3 pt-3 border-t border-[#E2ECF8] space-y-2 max-h-56 overflow-y-auto">
+                <div className="mt-3 pt-3 border-t border-[#E4DFD3] space-y-2 max-h-56 overflow-y-auto">
                   {recorded.map(item => (
                     <div
                       key={item.questionId}
-                      className="flex items-start justify-between gap-3 text-xs py-1.5 border-b border-[#F1F5F9] last:border-0"
+                      className="flex items-start justify-between gap-3 text-xs py-1.5 border-b border-[#EFECE4] last:border-0"
                     >
                       <div>
-                        <p className="text-[#829AB8] text-[11px]">{item.question}</p>
-                        <p className="font-semibold text-[#07215A]">{item.label}</p>
+                        <p className="text-[#8A8C84] text-[11px]">{item.question}</p>
+                        <p className="font-semibold text-[#1A1F1C]">{item.label}</p>
                       </div>
-                      <span className="font-mono text-[10px] text-[#4A6588] shrink-0 bg-[#F6F9FF] px-2 py-0.5 rounded border border-[#E2ECF8]">
+                      <span className="font-mono text-[10px] text-[#575C55] shrink-0 bg-[#F7F5EF] px-2 py-0.5 rounded border border-[#E4DFD3]">
                         {item.status}
                         {item.matchedByAi ? ' · AI match' : ''}
                       </span>
                     </div>
                   ))}
-                  <p className="text-[10px] text-[#829AB8] font-mono pt-1">
+                  <p className="text-[10px] text-[#8A8C84] font-mono pt-1">
                     Recorded answers update your session profile automatically.
                   </p>
                 </div>

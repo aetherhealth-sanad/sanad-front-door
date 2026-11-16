@@ -3,455 +3,302 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F4F1EA">
   <title>Sanad · Emergency Guidance</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <!-- Self-contained on purpose: no external fonts or scripts, so this page renders identically offline. -->
   <style>
     :root {
-      --bg-ambient: radial-gradient(circle at 50% -10%, rgba(120, 195, 255, 0.45) 0%, rgba(20, 95, 215, 0.2) 45%, transparent 80%),
-                    linear-gradient(155deg, #09479E 0%, #105AC2 45%, #1872E6 100%);
-      --canvas-bg: #FFFFFF;
-      --ink: #072254;
-      --navy: #0F3D7C;
-      --slate: #4A6588;
-      --muted: #829AB8;
-      --sapphire: #0066EE;
-      --sapphire-surface: #EBF3FF;
-      --sapphire-border: #BCD8FE;
-      --emergency: #D92D20;
-      --emergency-bg: #FEF3F2;
-      --emergency-border: #FECDCA;
-      --card-border: #E2ECF8;
-      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+      --paper: #F4F1EA;
+      --paper-2: #EFEBE2;
+      --sheet: #FBFAF6;
+      --ink: #1A1F1C;
+      --ink-2: #575C55;
+      --ink-3: #8A8C84;
+      --rule: #E4DFD3;
+      --rule-2: #D6D0C2;
+      --alarm: #B3261E;
+      --alarm-deep: #8F1D17;
+      --alarm-wash: #FBEDEA;
+      --alarm-line: #F0C9C2;
+      --serif: 'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
+      --sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      --ease: cubic-bezier(0.23, 1, 0.32, 1);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { background: var(--paper); }
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg-ambient);
-      background-attachment: fixed;
+      margin: 0;
+      min-height: 100dvh;
+      background: var(--paper);
       color: var(--ink);
-      line-height: 1.6;
-      padding: 24px 16px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.55;
       -webkit-font-smoothing: antialiased;
     }
-    .master-canvas {
-      width: 100%;
-      max-width: 680px;
-      margin: 20px auto 40px;
-      background: var(--canvas-bg);
-      border-radius: 28px;
-      padding: 36px 32px;
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      box-shadow: 0 25px 70px -15px rgba(2, 28, 80, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.65);
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; opacity: .35; mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .22 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
-    .header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--card-border);
+    a { color: inherit; }
+    :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+
+    .wrap { position: relative; max-width: 760px; margin: 0 auto; padding: 0 20px 56px; }
+
+    /* Top bar */
+    .bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      height: 64px;
     }
-    .brand-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .brand-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #0066EE 0%, #2589FF 100%);
-      color: #FFFFFF;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 19px;
-      box-shadow: 0 4px 12px rgba(0, 102, 238, 0.3);
-    }
-    .brand-text {
-      display: flex;
-      flex-direction: column;
-    }
-    .brand-title {
-      font-weight: 800;
-      font-size: 17px;
-      color: var(--ink);
-      letter-spacing: -0.02em;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .brand-title span {
-      color: var(--slate);
-      font-weight: 500;
-      font-size: 13px;
-    }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .brand svg { display: block; }
+    .brand-name { font-family: var(--serif); font-size: 22px; line-height: 1; letter-spacing: -0.01em; }
+    .brand-name span { font-family: var(--sans); font-size: 13px; color: var(--ink-3); margin-left: 6px; }
     .brand-sub {
-      font-size: 11px;
-      color: var(--slate);
-      font-family: 'JetBrains Mono', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--ink-3); border-left: 1px solid var(--rule-2); padding-left: 10px; margin-left: 2px;
     }
     .btn-quick-exit {
-      background: linear-gradient(135deg, #D92D20 0%, #B42318 100%);
-      color: #FFFFFF;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 9px 18px;
-      border-radius: 9999px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      box-shadow: 0 4px 14px -2px rgba(217, 45, 32, 0.4);
-      transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out), background 160ms ease;
-      font-family: 'JetBrains Mono', monospace;
+      height: 34px; padding: 0 14px; border-radius: 9px; border: 0; cursor: pointer;
+      background: var(--ink); color: var(--paper); font: 500 13px var(--sans);
+      transition: transform 150ms var(--ease), background-color 150ms;
     }
-    @media (hover: hover) and (pointer: fine) {
-      .btn-quick-exit:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(217, 45, 32, 0.5);
-        background: linear-gradient(135deg, #E5392B 0%, #C4261B 100%);
-      }
+    .btn-quick-exit:hover { background: #000; }
+    .btn-quick-exit:active { transform: translateY(1px); }
+
+    .status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 6px 0 22px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: .02em;
+      padding: 3px 9px; border: 1px solid var(--rule-2); background: var(--paper-2); border-radius: 4px; color: var(--ink);
     }
-    .btn-quick-exit:active {
-      transform: scale(0.97);
-    }
-    .badges-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .mock-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 12px;
-      border: 1px solid var(--emergency-border);
-      border-radius: 9999px;
-      background: var(--emergency-bg);
-      color: var(--emergency);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .mock-badge-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--emergency);
-      animation: pulse 1.5s infinite;
-    }
+    .tag i { width: 6px; height: 6px; background: var(--ink); transform: rotate(45deg); display: inline-block; }
     #offline-notice {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 14px;
-      border: 1px solid #FEDF89;
-      border-radius: 9999px;
-      background: #FEF0C7;
-      color: #B54708;
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 16px;
+      font-family: var(--mono); font-size: 11px; color: #8A5A00; background: #FBF3E0;
+      border: 1px solid #E8D9B5; padding: 3px 9px; border-radius: 4px;
     }
+    #offline-notice[hidden] { display: none; }
+
+    /* Alarm hero */
     .alert-card {
-      background: var(--emergency-bg);
-      border: 1px solid var(--emergency-border);
-      border-radius: 20px;
-      padding: 22px 24px;
-      margin-bottom: 24px;
+      position: relative; overflow: hidden;
+      background: var(--alarm-wash); border: 1px solid var(--alarm-line); border-radius: 16px;
+      padding: 26px 24px; display: flex; gap: 22px; align-items: flex-start;
     }
+    .alarm-mark { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+    .alarm-mark b {
+      position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--alarm); opacity: 0;
+      animation: ring 2.6s var(--ease) infinite;
+    }
+    .alarm-mark b:nth-child(2) { animation-delay: .87s; }
+    .alarm-mark b:nth-child(3) { animation-delay: 1.74s; }
+    .alarm-mark span {
+      position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%;
+      background: var(--alarm); color: #FFF8F6; font: 700 26px/1 var(--serif);
+    }
+    @keyframes ring { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(2.1); opacity: 0; } }
     .alert-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--emergency);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 6vw, 44px);
+      line-height: 1.02; letter-spacing: -0.02em; color: var(--ink); margin: 0 0 10px; text-wrap: balance;
     }
-    .alert-desc {
-      color: #7A271A;
-      font-size: 14.5px;
-      line-height: 1.55;
-      font-weight: 500;
-    }
+    .alert-desc { margin: 0; color: var(--ink-2); font-size: 16px; text-wrap: pretty; }
+
+    /* Section heading */
     .section-title {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--ink);
-      margin-bottom: 14px;
-      letter-spacing: -0.01em;
+      font-family: var(--mono); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--ink-3); margin: 42px 0 12px; display: flex; align-items: center; gap: 10px;
     }
-    .symptom-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 24px;
+    .section-title::before { content: ''; width: 20px; height: 1px; background: var(--ink-3); }
+
+    /* Warning signs (tap a card to mark it, purely visual) */
+    .symptom-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    .symptom-item { margin: 0; }
+    .symptom-btn {
+      position: relative; width: 100%; text-align: left; cursor: pointer;
+      display: grid; grid-template-columns: 32px 1fr 22px; gap: 14px; align-items: start;
+      background: var(--sheet); border: 1px solid var(--rule-2); border-radius: 12px; padding: 16px 16px 16px 14px;
+      color: var(--ink); font: inherit;
+      box-shadow: 0 1px 0 rgba(60,48,30,.04), 0 1px 2px rgba(60,48,30,.06);
+      transition: transform 160ms var(--ease), border-color 160ms, background-color 200ms, box-shadow 200ms;
     }
-    .symptom-item {
-      background: #F8FAFD;
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 14px 16px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      font-size: 14px;
-      color: var(--ink);
-      line-height: 1.5;
-      transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out), border-color 160ms ease, background-color 160ms ease;
-    }
-    @media (hover: hover) and (pointer: fine) {
-      .symptom-item:hover {
-        background: #FFFFFF;
-        border-color: #BCD8FE;
-        box-shadow: 0 4px 14px rgba(0, 102, 238, 0.08);
-        transform: translateY(-1px);
-      }
-    }
+    .symptom-btn:hover { border-color: var(--ink); }
+    .symptom-btn:active { transform: translateY(1px) scale(.995); }
     .symptom-icon {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #FEE4E2;
-      color: var(--emergency);
-      font-weight: 800;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
+      width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+      background: var(--alarm-wash); color: var(--alarm); border: 1px solid var(--alarm-line);
+      font: 700 14px/1 var(--mono); margin-top: 1px; transition: background-color 200ms, color 200ms;
     }
+    .symptom-btn strong { font-weight: 600; }
+    .symptom-text { color: var(--ink-2); }
+    .symptom-text strong { color: var(--ink); }
+    .tick {
+      width: 20px; height: 20px; margin-top: 3px; border-radius: 5px; border: 1.5px solid var(--rule-2);
+      display: grid; place-items: center; transition: background-color 180ms, border-color 180ms;
+    }
+    .tick svg { width: 12px; height: 12px; stroke: var(--paper); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 16; stroke-dashoffset: 16; transition: stroke-dashoffset 260ms var(--ease) 40ms; }
+    .symptom-btn[aria-pressed="true"] { background: var(--alarm-wash); border-color: var(--alarm); box-shadow: 0 0 0 1px var(--alarm) inset; }
+    .symptom-btn[aria-pressed="true"] .symptom-icon { background: var(--alarm); color: #FFF8F6; }
+    .symptom-btn[aria-pressed="true"] .tick { background: var(--alarm); border-color: var(--alarm); }
+    .symptom-btn[aria-pressed="true"] .tick svg { stroke-dashoffset: 0; }
+    .mark-hint { font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin: 10px 2px 0; display: flex; justify-content: space-between; gap: 12px; }
+    #marked-count { color: var(--ink); }
+
+    /* Contacts */
     .emergency-contacts-card {
-      background: linear-gradient(140deg, #13468D 0%, #0D336A 100%);
-      border-radius: 20px;
-      padding: 24px;
-      color: #FFFFFF;
-      margin-bottom: 24px;
-      box-shadow: 0 10px 30px -6px rgba(5, 25, 60, 0.35);
+      margin-top: 38px; background: #1E2622; color: var(--paper); border: 1px solid #2C3631; border-radius: 16px; padding: 26px 24px;
+      box-shadow: 0 2px 0 rgba(60,48,30,.03), 0 24px 48px -24px rgba(60,48,30,.35);
     }
-    .emergency-contacts-card h2 {
-      font-size: 17px;
-      font-weight: 800;
-      margin-bottom: 6px;
-      color: #FFFFFF;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .emergency-contacts-card p {
-      font-size: 13px;
-      color: #BCD8FE;
-      margin-bottom: 16px;
-    }
-    .emergency-numbers {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
+    .emergency-contacts-card h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; line-height: 1.05; letter-spacing: -0.015em; margin: 0 0 6px; }
+    .emergency-contacts-card p { margin: 0; color: #C9CFC9; font-size: 15px; }
+    .emergency-numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 18px; }
+    .call-wrap { position: relative; }
     .call-btn {
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      color: #FFFFFF;
-      padding: 14px 16px;
-      border-radius: 14px;
-      text-align: center;
-      text-decoration: none;
-      font-weight: 800;
-      font-size: 18px;
-      display: block;
-      transition: transform 160ms var(--ease-out), background-color 160ms ease, border-color 160ms ease;
+      display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; min-height: 120px;
+      padding: 16px; border-radius: 12px; text-decoration: none; background: var(--paper); color: var(--ink);
+      font: 400 48px/1 var(--serif); letter-spacing: -0.02em;
+      box-shadow: 0 3px 0 #A9B3AC; transition: transform 140ms var(--ease), box-shadow 140ms, background-color 150ms;
     }
-    @media (hover: hover) and (pointer: fine) {
-      .call-btn:hover {
-        background: rgba(255, 255, 255, 0.22);
-        transform: translateY(-2px);
-        border-color: #FFFFFF;
-      }
+    .call-btn span { font: 500 12px/1.3 var(--mono); letter-spacing: 0; color: var(--ink-2); }
+    .call-btn:hover { background: #fff; }
+    .call-btn:active { transform: translateY(3px); box-shadow: none; }
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px; height: 26px; padding: 0 9px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--rule-2); background: transparent; color: var(--ink-2); font: 500 11px var(--mono);
+      transition: background-color 150ms, color 150ms, border-color 150ms;
     }
-    .call-btn:active {
-      transform: scale(0.97);
-    }
-    .call-btn span {
-      display: block;
-      font-size: 11px;
-      font-weight: 500;
-      color: #EBF3FF;
-      margin-top: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .action-note {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 12px;
-      color: #EBF3FF;
-      line-height: 1.45;
-    }
-    .footer {
-      font-size: 13px;
-      color: var(--slate);
-      text-align: center;
-      padding-top: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
+    .copy-btn:hover { background: var(--paper-2); color: var(--ink); }
+    .copy-btn.done { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .action-note { border-top: 1px solid #3A4540; padding-top: 16px; color: #C9CFC9; font-size: 14px; }
+    .action-note strong { color: var(--paper); font-weight: 600; }
+
+    .footer { margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--rule-2); }
+    .footer p { margin: 0 0 16px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); line-height: 1.6; }
     .return-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 24px;
-      border-radius: 9999px;
-      border: 1.5px solid var(--sapphire);
-      color: var(--sapphire);
-      background: #FFFFFF;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 13.5px;
-      transition: transform 160ms var(--ease-out), background-color 160ms ease, border-color 160ms ease;
-      margin-top: 8px;
+      display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 10px; text-decoration: none;
+      border: 1px solid var(--rule-2); background: var(--sheet); color: var(--ink); font-weight: 500; font-size: 14px;
+      box-shadow: 0 2px 0 var(--rule); transition: transform 150ms var(--ease), border-color 150ms;
     }
-    @media (hover: hover) and (pointer: fine) {
-      .return-btn:hover {
-        background: var(--sapphire-surface);
-        transform: translateY(-1px);
-      }
-    }
-    .return-btn:active {
-      transform: scale(0.97);
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
+    .return-btn:hover { border-color: var(--ink); }
+    .return-btn:active { transform: translateY(2px); box-shadow: none; }
+
+    /* Entrance (CSS only: content is visible even if animations are off) */
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .alert-card, .symptom-item, .emergency-contacts-card, .section-title, .footer { animation: rise 460ms var(--ease) both; }
+    .symptom-item:nth-child(1) { animation-delay: 120ms; }
+    .symptom-item:nth-child(2) { animation-delay: 180ms; }
+    .symptom-item:nth-child(3) { animation-delay: 240ms; }
+    .symptom-item:nth-child(4) { animation-delay: 300ms; }
+
+    @media (max-width: 520px) {
+      .brand-sub { display: none; }
+      .alert-card { flex-direction: column; gap: 18px; padding: 22px 18px; }
+      .call-btn { font-size: 40px; min-height: 108px; }
+      .emergency-contacts-card { padding: 22px 16px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-      .btn-quick-exit, .symptom-item, .call-btn, .return-btn {
-        transform: none !important;
-      }
-    }
-    @media (max-width: 600px) {
-      .master-canvas { padding: 24px 18px; border-radius: 20px; }
-      .emergency-numbers { grid-template-columns: 1fr; }
+      *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; }
+      .alarm-mark b { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="master-canvas">
-    <div class="header-bar">
-      <div class="brand-group">
-        <div class="brand-icon">س</div>
-        <div class="brand-text">
-          <div class="brand-title">SANAD <span>سند</span></div>
-          <div class="brand-sub">Emergency Guidance</div>
-        </div>
-      </div>
-      <button class="btn-quick-exit" onclick="quickExit()" id="quick-exit-btn">
-        ✕ Quick Exit
-      </button>
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href="/" aria-label="Sanad home">
+        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="#1A1F1C"/>
+          <path d="M9 21.5h14" stroke="#F4F1EA" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="16" cy="13" r="4.5" fill="none" stroke="#F4F1EA" stroke-width="2"/>
+          <circle cx="16" cy="13" r="1.4" fill="#7FB59C"/>
+        </svg>
+        <span class="brand-name">Sanad<span lang="ar">سند</span></span>
+        <span class="brand-sub">Emergency Guidance</span>
+      </a>
+      <button class="btn-quick-exit" onclick="quickExit()" id="quick-exit-btn">Quick Exit</button>
     </div>
 
-    <div class="badges-row">
-      <div class="mock-badge">
-        <span class="mock-badge-dot"></span>
-        Mock emergency page · CLINICAL_TBD
-      </div>
+    <div class="status-row">
+      <span class="tag"><i></i>Mock emergency page · CLINICAL_TBD</span>
       <div id="offline-notice" role="status" hidden>
         Offline mode: cached for offline access
       </div>
     </div>
 
-    <div class="alert-card" style="display: flex; gap: 20px; align-items: center;">
-      <img
-        src="/assets/images/medical_urgent_care_3d.jpg"
-        alt="Emergency Care Icon"
-        style="width: 76px; height: 76px; border-radius: 18px; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 14px rgba(217, 45, 32, 0.22); border: 1px solid var(--emergency-border);"
-      />
-      <div>
-        <div class="alert-title" style="margin-bottom: 4px;">
-          Immediate Medical Attention Required
+    <main>
+      <div class="alert-card">
+        <div class="alarm-mark" aria-hidden="true"><b></b><b></b><b></b><span>!</span></div>
+        <div>
+          <h1 class="alert-title">Immediate Medical Attention Required</h1>
+          <p class="alert-desc">
+            If you are experiencing acute testicular pain, severe trauma, or signs of acute infection, do not complete an online form. Proceed to the nearest hospital emergency room immediately.
+          </p>
         </div>
-        <p class="alert-desc">
-          If you are experiencing acute testicular pain, severe trauma, or signs of acute infection, do not complete an online form. Proceed to the nearest hospital emergency room immediately.
-        </p>
       </div>
-    </div>
 
-    <h2 class="section-title">Warning Signs Requiring Emergency Care</h2>
-    <ul class="symptom-list">
-      <li class="symptom-item">
-        <span class="symptom-icon">!</span>
-        <div>
-          <strong>Sudden, severe testicular or scrotal pain:</strong> Potential testicular torsion. Requires surgical evaluation within 4 to 6 hours to preserve testicular viability.
-        </div>
-      </li>
-      <li class="symptom-item">
-        <span class="symptom-icon">!</span>
-        <div>
-          <strong>Scrotal trauma:</strong> Direct injury followed by rapid swelling, severe bruising, or difficulty urinating.
-        </div>
-      </li>
-      <li class="symptom-item">
-        <span class="symptom-icon">!</span>
-        <div>
-          <strong>Acute pain with high fever and chills:</strong> Severe infection (acute orchitis/epididymitis, urosepsis).
-        </div>
-      </li>
-      <li class="symptom-item">
-        <span class="symptom-icon">!</span>
-        <div>
-          <strong>Visible blood in urine (gross hematuria)</strong> accompanied by acute lower pelvic pain or inability to void.
-        </div>
-      </li>
-    </ul>
+      <h2 class="section-title">Warning Signs Requiring Emergency Care</h2>
+      <ul class="symptom-list">
+        <li class="symptom-item">
+          <button type="button" class="symptom-btn" aria-pressed="false">
+            <span class="symptom-icon" aria-hidden="true">!</span>
+            <span class="symptom-text"><strong>Sudden, severe testicular or scrotal pain:</strong> Potential testicular torsion. Requires surgical evaluation within 4 to 6 hours to preserve testicular viability.</span>
+            <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.5 6.5L5 9L9.5 3.5"/></svg></span>
+          </button>
+        </li>
+        <li class="symptom-item">
+          <button type="button" class="symptom-btn" aria-pressed="false">
+            <span class="symptom-icon" aria-hidden="true">!</span>
+            <span class="symptom-text"><strong>Scrotal trauma:</strong> Direct injury followed by rapid swelling, severe bruising, or difficulty urinating.</span>
+            <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.5 6.5L5 9L9.5 3.5"/></svg></span>
+          </button>
+        </li>
+        <li class="symptom-item">
+          <button type="button" class="symptom-btn" aria-pressed="false">
+            <span class="symptom-icon" aria-hidden="true">!</span>
+            <span class="symptom-text"><strong>Acute pain with high fever and chills:</strong> Severe infection (acute orchitis/epididymitis, urosepsis).</span>
+            <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.5 6.5L5 9L9.5 3.5"/></svg></span>
+          </button>
+        </li>
+        <li class="symptom-item">
+          <button type="button" class="symptom-btn" aria-pressed="false">
+            <span class="symptom-icon" aria-hidden="true">!</span>
+            <span class="symptom-text"><strong>Visible blood in urine (gross hematuria)</strong> accompanied by acute lower pelvic pain or inability to void.</span>
+            <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2.5 6.5L5 9L9.5 3.5"/></svg></span>
+          </button>
+        </li>
+      </ul>
+      <p class="mark-hint">
+        <span>Tap a sign to mark it. Nothing is saved or sent.</span>
+        <span>Marked: <b id="marked-count">0</b> / 4</span>
+      </p>
 
-    <div class="emergency-contacts-card">
-      <h2>📞 Emergency Contacts (Mock)</h2>
-      <p>Simulated services in the United Arab Emirates (UAE):</p>
-      <div class="emergency-numbers">
-        <a href="tel:998" class="call-btn">
-          998
-          <span>Ambulance (Mock)</span>
-        </a>
-        <a href="tel:999" class="call-btn">
-          999
-          <span>Police / Emergency (Mock)</span>
-        </a>
+      <div class="emergency-contacts-card">
+        <h2>Emergency Contacts (Mock)</h2>
+        <p>Simulated services in the United Arab Emirates (UAE):</p>
+        <div class="emergency-numbers">
+          <div class="call-wrap">
+            <a href="tel:998" class="call-btn">
+              998
+              <span>Ambulance (Mock)</span>
+            </a>
+            <button type="button" class="copy-btn" data-copy="998" aria-label="Copy 998">Copy</button>
+          </div>
+          <div class="call-wrap">
+            <a href="tel:999" class="call-btn">
+              999
+              <span>Police / Emergency (Mock)</span>
+            </a>
+            <button type="button" class="copy-btn" data-copy="999" aria-label="Copy 999">Copy</button>
+          </div>
+        </div>
+        <div class="action-note">
+          <strong>Outside the UAE:</strong> Call your local national emergency service number or visit the nearest acute hospital emergency department.
+        </div>
       </div>
-      <div class="action-note">
-        <strong>Outside the UAE:</strong> Call your local national emergency service number or visit the nearest acute hospital emergency department.
-      </div>
-    </div>
+    </main>
 
     <div class="footer">
       <p>
@@ -462,6 +309,7 @@
   </div>
 
   <script>
+    // Everything above is readable without this script. It only adds feedback.
     const offlineNotice = document.getElementById('offline-notice');
     function updateOfflineNotice() {
       if (offlineNotice) {
@@ -471,6 +319,29 @@
     window.addEventListener('online', updateOfflineNotice);
     window.addEventListener('offline', updateOfflineNotice);
     updateOfflineNotice();
+
+    // Visual-only marking: no storage, no network, no advice changes.
+    const markedCount = document.getElementById('marked-count');
+    document.querySelectorAll('.symptom-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        btn.setAttribute('aria-pressed', btn.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+        markedCount.textContent = document.querySelectorAll('.symptom-btn[aria-pressed="true"]').length;
+      });
+    });
+
+    document.querySelectorAll('.copy-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const number = btn.getAttribute('data-copy');
+        const finish = function () {
+          btn.textContent = 'Copied';
+          btn.classList.add('done');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1600);
+        };
+        try {
+          navigator.clipboard.writeText(number).then(finish, finish);
+        } catch (e) { finish(); }
+      });
+    });
 
     function quickExit() {
       let token = null;
