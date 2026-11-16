@@ -416,20 +416,6 @@ Automated tests are in `apps/api/tests/test_chat.py` and `apps/api/tests/test_mo
 | TC-21.13 | E | — | Chat at `/intake`: buttons, opt-outs and skip; typed proposal confirm and reject; emergency sentence replaces the page with `/urgent.html`; works at 360 px; keyboard only. Not yet automated (no Playwright suite). | S |
 | TC-21.14 | M | — | Against a real Azure deployment with synthetic text: a smoke run of J1 by typing, plus a content-filter and timeout check. Record region, deployment type, model version and abuse-monitoring status. | S |
 
-### RF-30 Contradiction check for typed chat answers (`PROPOSED`)
-
-Automated tests are in `apps/api/tests/test_chat_contradiction.py`. A fake adapter replays model output, so the tests make no network call. The oracle is the case's stored facts, a software oracle; nothing here measures how well a real model reads a message.
-
-| Test | Lvl | Block | Check | Oracle |
-|---|---|---|---|---|
-| TC-30.1 | A | B | A button "No" then a typed "now" proposal returns the earlier label and source, `VALUE_DIFFERS` and the fixed message; no fact written, version unchanged. | S |
-| TC-30.2 | A | B | Sample-profile answers give `TIME_DIFFERS`, `VALUE_DIFFERS` and `BECOMES_UNKNOWN` with `SAMPLE_FIXTURE`; a BMI of 29 equals 29.0 and 31.5 differs. | S |
-| TC-30.3 | A | B | Not asked, not sure, prefer not to answer and an equal earlier answer return no contradiction and the usual message. | S |
-| TC-30.4 | A | B | The model request for a case holding an answer equals the request for an empty case. | S |
-| TC-30.5 | A | B | Confirming replaces a same-source answer; with a sample-profile answer both are kept and the assessment returns `CONFLICTING_DATA` with the question blocking. | S |
-| TC-30.6 | A | B | The trace holds the change codes only and no label or text; a fallback has no check. | S |
-| TC-30.7 | E | — | Chat shows the earlier answer and its source next to the proposal; keyboard only, 360 px. Not yet automated (no Playwright suite). | S |
-
 ### Invariants
 
 | Test | Lvl | Block | Check | Oracle |
