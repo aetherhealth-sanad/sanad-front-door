@@ -30,6 +30,7 @@ from sanad_api.config import Settings
 from sanad_api.consent import models as _consent_models  # noqa: F401
 from sanad_api.consent.routes import router as consent_router
 from sanad_api.db import Base, make_engine, make_session_factory
+from sanad_api.document_import.routes import router as document_import_router
 from sanad_api.errors import register_error_handlers
 from sanad_api.facts import models as _fact_models  # noqa: F401
 from sanad_api.intake.routes import router as intake_router
@@ -159,6 +160,7 @@ def create_app(
         chat_router,
         navigation_router,
         observations_router,
+        document_import_router,
         psychosocial_router,
         reports_router,
         review_router,
