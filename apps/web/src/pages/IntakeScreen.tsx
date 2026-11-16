@@ -64,6 +64,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   onAssessmentComplete,
   onOpenLab,
   onNavigateToReview,
+  onAnswerRecorded,
   onSwitchToChat,
 }) => {
   const [catalogue, setCatalogue] = useState<QuestionsResponse | null>(null);
@@ -155,6 +156,15 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
 
       if (submittedAnswers.length > 0) {
         await api.submitAnswers(caseId, submittedAnswers);
+        if (onAnswerRecorded && catalogue) {
+          for (const ans of submittedAnswers) {
+            const q = catalogue.questions.find(item => item.question_id === ans.question_id);
+            if (q) {
+              const label = String(ans.value ?? ans.choice);
+              onAnswerRecorded(q, ans, label);
+            }
+          }
+        }
       }
 
       const submittedPsychosocial = psychQuestions.flatMap(question => {
@@ -274,6 +284,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
     );
   };
 
+  // Render full Form view with toggle back to Chat
   return (
     <div className="w-full space-y-6">
       {/* Top Banner & View Switcher */}
