@@ -30,6 +30,7 @@ def _is_emergency_input_path(path: str) -> bool:
         ["answers"],
         ["profile", "sample"],
         ["profile", "upload"],
+        ["profile", "document"],
     ) or action[:1] == ["observations"]
 
 

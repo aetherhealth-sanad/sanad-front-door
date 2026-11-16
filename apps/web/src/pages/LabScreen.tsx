@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, type ObservationRecord } from '../api/client';
 import labCatalogue from '../../../../catalogue/lab-tests.draft-0.1.json';
+import { OcrLabReview } from './OcrLabReview';
 
 interface LabScreenProps {
   caseId: string;
@@ -205,6 +206,20 @@ export const LabScreen: React.FC<LabScreenProps> = ({
           {notice}
         </div>
       )}
+
+      <OcrLabReview
+        caseId={caseId}
+        onUseField={({ testCode: newCode, numericValue, unit: newUnit, collectionDate }) => {
+          setEditingId(null);
+          setTestCode(newCode);
+          setValueStr(String(numericValue));
+          setUnit(newUnit);
+          setCollectedOn(collectionDate);
+          setReferenceSource('Synthetic report');
+          setError(null);
+          setNotice('OCR prefilled the manual form. Review, save, and then confirm the observation separately.');
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left 5 Cols: Add / Replace Observation Form */}

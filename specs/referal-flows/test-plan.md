@@ -416,6 +416,27 @@ Automated tests are in `apps/api/tests/test_chat.py` and `apps/api/tests/test_mo
 | TC-21.13 | E | — | Chat at `/intake`: buttons, opt-outs and skip; typed proposal confirm and reject; emergency sentence replaces the page with `/urgent.html`; works at 360 px; keyboard only. Not yet automated (no Playwright suite). | S |
 | TC-21.14 | M | — | Against a real Azure deployment with synthetic text: a smoke run of J1 by typing, plus a content-filter and timeout check. Record region, deployment type, model version and abuse-monitoring status. | S |
 
+### RF-29 OCR one synthetic lab report, T-60 (`PROPOSED`)
+
+Automated tests are in `apps/api/tests/test_lab_ocr.py`. Fixtures are in `apps/api/tests/fixtures/lab_ocr/` (stand-ins from `eval/lab_ocr/make_fixtures.py` until the T-20/T-34 package arrives). Most tests replay the text layer through a fake engine, so CI needs no OCR engine; the real-engine B1 cases are skipped when neither RapidOCR nor Tesseract is installed. The oracle is the fixtures' ground truth, a software oracle.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-29.1 | U | B | Wrong type by content, broken PDF, oversized file and too many pages are refused with a reason code. | S |
+| TC-29.2 | U | B | No banner, or an ID without `SYN-`, gives `DOCUMENT_NOT_SYNTHETIC` and no field. | S |
+| TC-29.3 | U | — | A text layer is read with no OCR call; an image-only page goes to the engine; each field records its method. | S |
+| TC-29.4 | U | B | A1: `lab_A` returns all nine fields with value, unit, raw text, box and confidence, no flag, `UNCONFIRMED`. Generated reports are read back exactly. | S |
+| TC-29.5 | U | B | B1: the T-60 baseline failures from a confident engine are flagged and `NEEDS_CONFIRMATION`; a misread in-range digit is caught by the motility total; low OCR confidence alone sets `NEEDS_CONFIRMATION`; `lab_B` (PDF and PNG) through each installed engine has no silent error. | S |
+| TC-29.6 | U | B | C1: `lab_C` gives exactly the ground-truth flags and statuses for decimal commas, missing units and the ambiguous date. | S |
+| TC-29.7 | U | B | Confidence equals the lowest of the three scores; the reader never confirms. | S |
+| TC-29.8 | U | B | Blank, missing, unreadable, duplicated, comma-ambiguous, unknown-unit and out-of-range readings, and day-first, month-first, two-digit-year and invalid dates, give the listed value and flag. | S |
+| TC-29.9 | A | B | U1: values stored from the draft are `NEEDS_USER_CONFIRMATION`; an unconfirmed concentration of 0 raises no `LAB_REPORTS_NO_SPERM`; after the user edits and confirms it, it does. Every target test code exists in the lab catalogue with the canonical unit. | S |
+| TC-29.10 | U | B | Instruction-like lines in the report leave the draft identical. | S |
+| TC-29.11 | U | B | Log capture at DEBUG holds none of the report's text or values. | S |
+| TC-29.12 | U, C | B | No engine: scans give `OCR_UNAVAILABLE`, text PDFs work; the emergency modules do not import the reader. | S |
+| TC-29.13 | U | — | E1: the run result has `run_id`, commit SHA, label, `n`, layouts and A1/B1/C1; silent errors come first in the Markdown. Fixture hashes match `ground_truth.json`. | S |
+| TC-29.14 | A, E | — | Waits for T4.19: endpoint guard (401, 404, 403, 409), no write, no stored file, audit codes only; T-33 screen, cleared at session end and Quick Exit, no browser storage. Not written. | S |
+
 ### RF-30 Contradiction check for typed chat answers (`PROPOSED`)
 
 Automated tests are in `apps/api/tests/test_chat_contradiction.py`. A fake adapter replays model output, so the tests make no network call. The oracle is the case's stored facts, a software oracle; nothing here measures how well a real model reads a message.
