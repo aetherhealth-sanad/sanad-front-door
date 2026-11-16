@@ -91,7 +91,9 @@ def test_api_requires_patient_auth_and_never_writes_observations(api: Api) -> No
     assert {f["status"] for f in body["fields"]} <= {"UNCONFIRMED", "NEEDS_CONFIRMATION"}
     assert response.headers["cache-control"] == "no-store"
     assert patient.get(patient.path("/observations")).json()["observations"] == []
-    unauthorized = api.client.post(path, content=document, headers={"Content-Type": "application/pdf"})
+    unauthorized = api.client.post(
+        path, content=document, headers={"Content-Type": "application/pdf"}
+    )
     assert unauthorized.status_code in {401, 403}
 
 
