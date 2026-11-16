@@ -207,7 +207,9 @@ def _check_motility_sum(fields: list[LabField], catalogue: LabCatalogue) -> list
     ]
 
 
-def _check_total_count_consistency(fields: list[LabField], catalogue: LabCatalogue) -> list[LabField]:
+def _check_total_count_consistency(
+    fields: list[LabField], catalogue: LabCatalogue
+) -> list[LabField]:
     """Cross-check three values from *one* synthetic report; never derive an observation.
 
     The catalogue uses million/mL, mL and million/ejaculate, so multiplication needs no
