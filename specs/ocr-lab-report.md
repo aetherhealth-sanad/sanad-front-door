@@ -55,7 +55,7 @@ Four fields have no lab catalogue code yet. They are read and shown for confirma
 | S3 Synthetic | Banner on every page, `SYN-` report ID | `DOCUMENT_NOT_SYNTHETIC` |
 | S4 Rows | Cells grouped into rows by position. A skewed page is straightened first: in box coordinates for RapidOCR, in the image for Tesseract. | `DOCUMENT_LAYOUT_NOT_RECOGNISED` |
 | S5 Fields | A row whose first cell is a known label belongs to that field | A field not found gets `VALUE_MISSING` |
-| S6 Parse | One clean number and a known unit spelling, or one date; plausibility bounds; PR + NP + IM total | Flags (§4) |
+| S6 Parse | One clean number and a known unit spelling, or one date; plausibility bounds; PR + NP + IM total; total count cross-check | Flags (§4) |
 | S7 Status | `NEEDS_CONFIRMATION` when confidence is below the threshold or any flag is set; otherwise `UNCONFIRMED` | |
 
 Code: `apps/api/sanad_api/document_import/` (`intake`, `text_layer`, `ocr`, `prepare`, `rapid_ocr`, `tesseract_ocr`, `layout`, `fields`, `parse`, `extract`, `model`).
@@ -104,17 +104,38 @@ The threshold is 0.90 (`TECH_TBD`, OD-24). Below it the field gets `OCR_CONFIDEN
 | `VALUE_UNREADABLE` | text that is not one number or date: `2..5`, `n/a`, `<2` |
 | `UNIT_UNRECOGNISED` | a unit that is not a known spelling: `mt`, `1076/mL`, `10°6` |
 | `DATE_INVALID` | `2026-13-45` |
-| `MOTILITY_SUM_MISMATCH` | PR + NP + IM differs from 100 by more than 1. Catches a misread digit that is in range and confident. No value is computed. |
+| `MOTILITY_SUM_MISMATCH` | PR + NP + IM differs from 100 by more than 1. Catches a misread digit that is in range and confident. No value is corrected. |
+| `TOTAL_COUNT_MISMATCH` | A single synthetic report prints `total_count` that differs from `volume × concentration` by more than `max(1 million, 5% of expected count)` when all three clean canonical-unit values are present. Flags all three; no value is corrected. Tolerance is `TECH_TBD`. |
 
 The plausibility bounds catch reading errors such as a lost decimal point. They are wide on purpose (volume 0–20 mL, pH 0–14, concentration 0–1000 million/mL, total 0–5000 million, percentages 0–100). They are **not** reference limits, and they are `TECH_TBD` until BA reviews them.
 
 **Unit spellings** map to one canonical spelling with no numeric change: `10^6/mL`, `x10^6/mL`, `×10^6/mL` and `million/mL` are all `million/mL`. This answers the unit question in OD-22 for the reader; BA still needs to confirm the list.
 
-## 5. Storage and screens (T4.19, waits for CC-021)
+## 5. Integration and screens (T4.19, incremental implementation)
 
-The reader writes nothing. `to_observation_inputs(draft)` turns the fields that have a lab catalogue code into `POST /cases/{id}/observations` bodies. The client sends them only after the user has reviewed them on the lab-entry screen (T-33). They are stored as `NEEDS_USER_CONFIRMATION`, and the user confirms each one through the existing confirm endpoint (RF-15), which also needs a reference source. TC-29.9 shows an unconfirmed value of 0 does not raise the draft `LAB_EQUALS` signal, and does once confirmed.
+The **read-only** `POST /api/cases/{id}/profile/document` endpoint now accepts raw PDF/PNG/JPEG
+bytes (not a multipart upload). The session requires patient authentication, active `assessment`
+consent and an allowed intake state. A maximum 5 MiB body is read in memory; file content is
+never logged or persisted by the OCR endpoint. The PDF text layer is used when available;
+optional local RapidOCR or Tesseract handles scans. OCR is run outside the async event loop.
+Only synthetic-banner reports with a `SYN-` report ID are supported; this marker is a demo
+restriction, **not proof of de-identification**. Real patient documents must not be uploaded.
 
-Still to build: the read-only `POST /cases/{id}/profile/document` endpoint and its audit event, the T-33 screen with the bounding-box highlight, and the temporary-file handling of T-60 requirement 9 (in memory only, cleared at session end and Quick Exit, no `localStorage` or IndexedDB).
+`LabScreen.tsx` includes an OCR review panel: select a synthetic file, inspect extracted
+fields and a browser-only preview, then **prefill one clean field at a time** in the existing
+manual observation form. Prefilling writes nothing. The user separately saves the observation
+(held at `NEEDS_USER_CONFIRMATION`) and confirms through the existing RF-15 server endpoint.
+No field, including one with a high confidence score, is auto-confirmed. Flagged, unreadable,
+unit-unsupported, or non-mapped values cannot prefill the form. Ambiguous/missing dates prevent
+prefilling until the user resolves the date with manual entry. `to_observation_inputs()` is also
+fail-closed: it exports nothing unless passed `reviewed_field_ids`; even then only unflagged
+values with a clear collection date can be prepared.
+
+**Still open:** T-33 drawing a precise bounding-box highlight on the preview, the independent
+clinical approval of units, threshold and catalogue entries, robust privacy/security testing,
+and validation on independent report layouts. Browser object URLs are revoked when the preview
+is cleared or the component unmounts; there is no persistent browser file storage. Full
+production retention and regulatory review have not been done.
 
 ## 6. Fixtures and evaluation
 
