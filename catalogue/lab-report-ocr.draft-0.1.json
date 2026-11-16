@@ -9,10 +9,18 @@
   "report_id_prefix": "SYN-",
   "date_field": {
     "field_id": "collection_date",
-    "labels": ["Collection date", "Date of collection", "Collected"]
+    "labels": [
+      "Collection date",
+      "Date of collection",
+      "Collected"
+    ]
   },
   "motility_sum": {
-    "field_ids": ["progressive_motility", "non_progressive_motility", "immotile"],
+    "field_ids": [
+      "progressive_motility",
+      "non_progressive_motility",
+      "immotile"
+    ],
     "total": 100,
     "tolerance": 1,
     "status": "TECH_TBD",
@@ -21,16 +29,24 @@
   "fields": [
     {
       "field_id": "volume",
-      "labels": ["Volume", "Semen volume"],
+      "labels": [
+        "Volume",
+        "Semen volume"
+      ],
       "canonical_unit": "mL",
-      "unit_spellings": ["mL", "ml"],
+      "unit_spellings": [
+        "mL",
+        "ml"
+      ],
       "plausible_min": 0,
       "plausible_max": 20,
       "target_test_code": "VOLUME_PLACEHOLDER"
     },
     {
       "field_id": "ph",
-      "labels": ["pH"],
+      "labels": [
+        "pH"
+      ],
       "canonical_unit": null,
       "unit_spellings": [],
       "plausible_min": 0,
@@ -39,57 +55,114 @@
     },
     {
       "field_id": "concentration",
-      "labels": ["Sperm concentration", "Concentration"],
+      "labels": [
+        "Sperm concentration",
+        "Concentration"
+      ],
       "canonical_unit": "million/mL",
-      "unit_spellings": ["million/mL", "10^6/mL", "x10^6/mL", "×10^6/mL", "10⁶/mL", "x10⁶/mL", "×10⁶/mL", "M/mL"],
+      "unit_spellings": [
+        "million/mL",
+        "10^6/mL",
+        "x10^6/mL",
+        "×10^6/mL",
+        "10⁶/mL",
+        "x10⁶/mL",
+        "×10⁶/mL",
+        "M/mL"
+      ],
       "plausible_min": 0,
       "plausible_max": 1000,
       "target_test_code": "CONCENTRATION_PLACEHOLDER"
     },
     {
       "field_id": "total_count",
-      "labels": ["Total sperm count", "Total count", "Total sperm number"],
+      "labels": [
+        "Total sperm count",
+        "Total count",
+        "Total sperm number"
+      ],
       "canonical_unit": "million",
-      "unit_spellings": ["million", "10^6", "x10^6", "×10^6", "10⁶", "10^6/ejaculate", "x10^6/ejaculate", "million/ejaculate"],
+      "unit_spellings": [
+        "million",
+        "10^6",
+        "x10^6",
+        "×10^6",
+        "10⁶",
+        "10^6/ejaculate",
+        "x10^6/ejaculate",
+        "million/ejaculate"
+      ],
       "plausible_min": 0,
       "plausible_max": 5000,
       "target_test_code": null
     },
     {
       "field_id": "progressive_motility",
-      "labels": ["Progressive motility (PR)", "Progressive motility", "PR"],
+      "labels": [
+        "Progressive motility (PR)",
+        "Progressive motility",
+        "PR"
+      ],
       "canonical_unit": "%",
-      "unit_spellings": ["%"],
+      "unit_spellings": [
+        "%"
+      ],
       "plausible_min": 0,
       "plausible_max": 100,
       "target_test_code": "PROGRESSIVE_MOTILITY_PLACEHOLDER"
     },
     {
       "field_id": "non_progressive_motility",
-      "labels": ["Non-progressive motility (NP)", "Non-progressive motility", "NP"],
+      "labels": [
+        "Non-progressive motility (NP)",
+        "Non-progressive motility",
+        "NP"
+      ],
       "canonical_unit": "%",
-      "unit_spellings": ["%"],
+      "unit_spellings": [
+        "%"
+      ],
       "plausible_min": 0,
       "plausible_max": 100,
       "target_test_code": null
     },
     {
       "field_id": "immotile",
-      "labels": ["Immotile (IM)", "Immotile", "IM"],
+      "labels": [
+        "Immotile (IM)",
+        "Immotile",
+        "IM"
+      ],
       "canonical_unit": "%",
-      "unit_spellings": ["%"],
+      "unit_spellings": [
+        "%"
+      ],
       "plausible_min": 0,
       "plausible_max": 100,
       "target_test_code": null
     },
     {
       "field_id": "normal_forms",
-      "labels": ["Normal forms", "Normal morphology"],
+      "labels": [
+        "Normal forms",
+        "Normal morphology"
+      ],
       "canonical_unit": "%",
-      "unit_spellings": ["%"],
+      "unit_spellings": [
+        "%"
+      ],
       "plausible_min": 0,
       "plausible_max": 100,
       "target_test_code": "MORPHOLOGY_PLACEHOLDER"
     }
-  ]
+  ],
+  "total_count_consistency": {
+    "volume_field_id": "volume",
+    "concentration_field_id": "concentration",
+    "total_field_id": "total_count",
+    "absolute_tolerance_million": 1.0,
+    "relative_tolerance": 0.05,
+    "status": "TECH_TBD",
+    "note": "Check only three values in the same synthetic report with recognized canonical units. Tolerance is engineering-only, not clinically approved. Never auto-correct or infer a missing total."
+  }
 }
