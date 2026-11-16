@@ -6,6 +6,7 @@ import {
   type QuestionsResponse,
   type QuestionItem,
 } from '../api/client';
+import { MockBadge } from '../components/MockBadge';
 import { ChatIntake } from './ChatIntake';
 
 interface IntakeScreenProps {
@@ -63,6 +64,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   onAssessmentComplete,
   onOpenLab,
   onNavigateToReview,
+  onAnswerRecorded,
   onSwitchToChat,
 }) => {
   const [catalogue, setCatalogue] = useState<QuestionsResponse | null>(null);

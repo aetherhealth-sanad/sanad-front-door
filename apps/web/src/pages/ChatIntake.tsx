@@ -141,6 +141,7 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
   onAssessmentComplete,
   onSwitchToForm,
   onOpenLab,
+  onNavigateToReview,
   onAnswerSaved,
   onAnswerRecorded,
 }) => {
