@@ -119,19 +119,24 @@ def decode_value(fact: Fact) -> Value | None:
     return decoded
 
 
+class DiscrepancyKind(StrEnum):
+    """Reason active facts cannot be safely collapsed to a single answer."""
+
+    NONE = "NONE"
+    VALUE_CONFLICT = "VALUE_CONFLICT"
+    TEMPORAL_CLARIFICATION = "TEMPORAL_CLARIFICATION"
+
+
 @dataclass(frozen=True)
 class ConceptView:
     concept_code: str
     state: FieldState
     current: tuple[Fact, ...]
     known: tuple[Fact, ...]
+    discrepancy_kind: DiscrepancyKind = DiscrepancyKind.NONE
 
     def values(self) -> list[Value]:
         return [v for v in (decode_value(f) for f in self.known) if v is not None]
-
-
-def _identity(fact: Fact) -> tuple[str, str | None, str | None]:
-    return (fact.state, fact.value_json, fact.temporal_status)
 
 
 def build_view(concept_code: str, facts: Sequence[Fact]) -> ConceptView:
@@ -139,13 +144,24 @@ def build_view(concept_code: str, facts: Sequence[Fact]) -> ConceptView:
     if not current:
         return ConceptView(concept_code, FieldState.NOT_ASKED, (), ())
     known = tuple(f for f in current if f.state in KNOWN_STATES)
+    discrepancy_kind = DiscrepancyKind.NONE
     if known:
-        conflicting = len({_identity(f) for f in known}) > 1
-        state = FieldState.CONFLICTING if conflicting else FieldState(known[0].state)
+        # Disagreement about the value/polarity is distinct from a difference in time context.
+        # A temporal-only difference is not evidence of a clinical contradiction, but without
+        # event/effective dates it must still be clarified before assessment can proceed.
+        if len({(f.state, f.value_json) for f in known}) > 1:
+            discrepancy_kind = DiscrepancyKind.VALUE_CONFLICT
+        elif len({f.temporal_status for f in known}) > 1:
+            discrepancy_kind = DiscrepancyKind.TEMPORAL_CLARIFICATION
+        state = (
+            FieldState.CONFLICTING
+            if discrepancy_kind is not DiscrepancyKind.NONE
+            else FieldState(known[0].state)
+        )
     else:
         latest = max(current, key=lambda f: (f.recorded_at, f.id or 0))
         state = FieldState(latest.state)
-    return ConceptView(concept_code, state, current, known)
+    return ConceptView(concept_code, state, current, known, discrepancy_kind)
 
 
 def build_views(facts: Sequence[Fact], concept_codes: Iterable[str]) -> dict[str, ConceptView]:

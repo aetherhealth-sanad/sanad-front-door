@@ -437,6 +437,20 @@ Automated tests are in `apps/api/tests/test_lab_ocr.py`. Fixtures are in `apps/a
 | TC-29.13 | U | — | E1: the run result has `run_id`, commit SHA, label, `n`, layouts and A1/B1/C1; silent errors come first in the Markdown. Fixture hashes match `ground_truth.json`. | S |
 | TC-29.14 | A, E | — | Waits for T4.19: endpoint guard (401, 404, 403, 409), no write, no stored file, audit codes only; T-33 screen, cleared at session end and Quick Exit, no browser storage. Not written. | S |
 
+### RF-30 Contradiction check for typed chat answers (`PROPOSED`)
+
+Automated tests are in `apps/api/tests/test_chat_contradiction.py`. A fake adapter replays model output, so the tests make no network call. The oracle is the case's stored facts, a software oracle; nothing here measures how well a real model reads a message.
+
+| Test | Lvl | Block | Check | Oracle |
+|---|---|---|---|---|
+| TC-30.1 | A | B | A button "No" then a typed "now" proposal returns the earlier label and source, `VALUE_DIFFERS` and the fixed message; no fact written, version unchanged. | S |
+| TC-30.2 | A | B | Sample-profile answers give `TIME_DIFFERS`, `VALUE_DIFFERS` and `BECOMES_UNKNOWN` with `SAMPLE_FIXTURE`; a BMI of 29 equals 29.0 and 31.5 differs. | S |
+| TC-30.3 | A | B | Not asked, not sure, prefer not to answer and an equal earlier answer return no contradiction and the usual message. | S |
+| TC-30.4 | A | B | The model request for a case holding an answer equals the request for an empty case. | S |
+| TC-30.5 | A | B | Confirming replaces a same-source answer; with a sample-profile answer both are kept and the assessment returns `CONFLICTING_DATA` with the question blocking. | S |
+| TC-30.6 | A | B | The trace holds the change codes only and no label or text; a fallback has no check. | S |
+| TC-30.7 | E | — | Chat shows the earlier answer and its source next to the proposal; keyboard only, 360 px. Not yet automated (no Playwright suite). | S |
+
 ### Invariants
 
 | Test | Lvl | Block | Check | Oracle |

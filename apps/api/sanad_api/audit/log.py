@@ -88,6 +88,7 @@ ALLOWED_DETAILS: dict[AuditType, frozenset[str]] = {
             "output_tokens",
             "redactions",  # RF-27: sorted type codes, never a value
             "redaction_count",
+            "contradiction",  # RF-30: sorted change codes, never a value or label
         }
     ),
 }

@@ -620,6 +620,17 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
                     <p className="text-base font-bold text-[#07215A]">
                       "{proposal.proposal.echo_label}"
                     </p>
+                    {proposal.contradiction && proposal.contradiction.earlier.length > 0 && (
+                      // RF-30 (DRAFT copy): name the earlier answer and where it came from, never which is right.
+                      <div role="note" className="mt-2 p-3 rounded-xl bg-[#FFFBEB] border border-[#B45309] text-[#78350F] text-sm space-y-1">
+                        {proposal.contradiction.earlier.map((item, index) => (
+                          <p key={index}>
+                            Earlier answer{SOURCE_LABELS[item.source_type] ? ` (${SOURCE_LABELS[item.source_type]})` : ''}:{' '}
+                            <strong>{item.echo_label}</strong>
+                          </p>
+                        ))}
+                      </div>
+                    )}
                     {proposal.message && (
                       <p className="text-xs text-[#4A6588] leading-relaxed">{proposal.message}</p>
                     )}

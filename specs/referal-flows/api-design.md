@@ -75,7 +75,7 @@ The gate (§6.7) runs after checks 1 to 3, so a caller without access never sees
 | `POST /cases/{id}/answers` | Save answers and field states | Patient | T2.2 | AC-06.2, AC-06.3, AC-06.6 |
 | `POST /cases/{id}/assess` | Gatekeeper, signals, floor, draft | Patient | T2.3 to T2.5 | AC-06.5, AC-11.1, AC-11.5, AC-11.6 |
 | `GET /chat/assistant` | Assistant labels, whether typing is on, provider and disclosure | Public | T4.5 | AC-21.10 |
-| `POST /cases/{id}/chat/interpret` | Typed text for one intake question: emergency, correction, proposal or fallback. Writes no fact. | Patient | T4.5 | AC-21.1 to AC-21.9 |
+| `POST /cases/{id}/chat/interpret` | Typed text for one intake question: emergency, correction, proposal or fallback, with any contradiction of an earlier answer. Writes no fact. | Patient | T4.5, T4.20 | AC-21.1 to AC-21.9, AC-30.1 to AC-30.6 |
 | `GET /cases/{id}/report` | Patient view of the draft or released result | Patient | T2.5 | AC-11.2 to AC-11.4, AC-08.9 |
 | `POST /cases/{id}/report/explanation` | Optional plain-language rewording of the released next step, citing team-curated passages, or the static text as a fallback. Writes nothing to the case. | Patient | T4.6 | AC-22.5 to AC-22.10 |
 | `POST /cases/{id}/review-requests` | The send button | Patient | T2.6 | AC-07.2 to AC-07.6 |
@@ -799,6 +799,16 @@ Order of work, each step only if the previous one did not answer:
 6. `disclosure_version` must match, otherwise 422 `VALIDATION_FAILED` `DISCLOSURE_NOT_ACKNOWLEDGED`.
 7. RF-27 redaction: the task builder replaces names with `[NAME]` and full dates with `[DATE]` before the payload is built. The response carries `redacted_types` (`NAME`, `DATE`; empty when none) and never a redacted value.
 8. The `intake.extract.v1` task runs through the adapter, then the validator. The result is `PROPOSAL` or `FALLBACK` with one of `ABSTAIN_OUT_OF_SCOPE`, `ABSTAIN_UNCLEAR`, `MODEL_UNAVAILABLE`, `MODEL_CONTENT_FILTERED`, `MODEL_REFUSED` or `MODEL_OUTPUT_INVALID`.
+9. RF-30 contradiction check (`PROPOSED`, CC-022): for a `PROPOSAL`, the server compares the validated proposal with the case's current known facts for the same concept. When one or more differ, the response carries `contradiction` and `message` reads "This is different from an earlier answer. Check which one is right. Nothing changes until you confirm." Otherwise `contradiction` is `null`.
+
+```json
+"contradiction": {
+  "question_id": "Q-STEROID-USE",
+  "earlier": [{"echo_label": "Yes, in the past", "source_type": "SAMPLE_FIXTURE", "change": "TIME_DIFFERS"}]
+}
+```
+
+`change` is `VALUE_DIFFERS` (another yes/no, option or number), `TIME_DIFFERS` (the same yes, current against past) or `BECOMES_UNKNOWN` (a known answer against not sure or prefer not to answer). `echo_label` comes from catalogue labels. The `MODEL_TASK_RUN` entry adds `contradiction` with the sorted change codes only when there is one. The earlier answer is never sent to the model.
 
 ```json
 {

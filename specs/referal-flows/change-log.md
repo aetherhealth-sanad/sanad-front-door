@@ -13,6 +13,7 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 | Version | Date | Change | Author | Reviewed by |
 |---|---|---|---|---|
+| 0.21 | 2026-11-15 | Added RF-30 contradiction check for typed chat answers (AC-30.1 to AC-30.7, T4.20, TC-30.1 to TC-30.7, OD-27, CC-022, API design §6.13 step 9). Added `sanad_api/chat/contradiction.py`, the `contradiction` field in the interpret response, the `contradiction` audit detail and the chat display. No model input, consent scope, clinical rule, triage level, concept code or case state changed; `POST /answers` is unchanged. **Order of work:** code and tests were written in the same branch as the spec, not after review. | Drafted by Claude Code for Hoàng | Pending (Tech Lead, Product) |
 | 0.20 | 2026-11-15 | Added RF-29 OCR one synthetic lab report (task brief T-60, GitHub issue #103): AC-29.1 to AC-29.14, T4.17 to T4.19, TC-29.1 to TC-29.14, R18, OD-21 to OD-26, CC-021 and the design `specs/ocr-lab-report.md`. Added `sanad_api/document_import` (text layer, local RapidOCR and Tesseract adapters, the six T-60 flags and five more, three-score confidence), `catalogue/lab-report-ocr.draft-0.1.json` (labels, unit spellings and wide plausibility bounds, `TECH_TBD`, no reference limits), stand-in fixtures `lab_A`, `lab_B` and `lab_C` with ground truth, and an evaluation runner with `run_id` and commit SHA. No endpoint, model call, lab catalogue code, consent scope, clinical rule or case state was added. Renumbered on merge with main: drafted as RF-27, CC-017, OD-18 to OD-23 and T4.11 to T4.13, which main now uses for other work. **Order of work:** code and tests were written before spec review, on the owner's request, and T-60 says to start after T-36 and T-46. Fixtures are stand-ins until the T-20/T-34 package arrives. | Drafted by Claude Code for Hoàng | Pending (Tech Lead, Product, Security) |
 | 0.19 | 2026-11-15 | Harness hardening from the ProtonX reference review: AC-21.13 (hosted deployments refuse API-key auth), AC-22.11 (`OUTPUT_POLICY_BLOCKED`, certainty, identifier and placeholder checks on explanations; wording `CLINICAL_TBD`, amends CC-013), AC-23.11 to AC-23.15 (jailbreak cases, drift gate, policy cards, reviewer metrics panel, offline LLM-as-judge), AC-24.5 (`limitations`), RF-28 patient-held visit summary (AC-28.1 to AC-28.7), OD-20, CC-019, CC-020, T4.13 to T4.16, matching TC rows. No clinical rule, threshold, triage level or consent scope changed. **Order of work:** spec only; no code written. | Drafted by Claude Code | Pending |
 | 0.18 | 2026-11-15 | Dropped the `laya-mlx` backend from RF-25: AC-25.1 and TC-25.2 now name the `laya` (PyTorch) runtime only; `SANAD_LAYA_BACKEND` removed. Reason: never run on a team host or in CI, no pinned revision (against AC-25.2), and it serves only the zero-shot checkpoint that failed OD-15; Apple Silicon runs through PyTorch MPS instead. CC-015 item (2) narrows accordingly. No clinical rule, threshold, triage level, consent scope or data policy changed. | Drafted by Claude Code | Pending |
@@ -36,7 +37,20 @@ Records changes to the [product spec](product-spec.md), [implementation plan](im
 
 ## Change-control records
 
-Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), CC-017 with version 0.13, CC-018 with version 0.16, CC-019 and CC-020 with version 0.19, and CC-021 with version 0.20.
+Each proposal below changes or extends a parent document, so it needs an approver. CC-001 to CC-008 were opened with version 0.1, CC-009 with version 0.2, CC-010 with version 0.3, CC-011 and CC-012 with version 0.6, CC-016 with version 0.7 (CC-013 to CC-015 are reserved by RF-22 to RF-25 on a parallel branch), CC-017 with version 0.13, CC-018 with version 0.16, CC-019 and CC-020 with version 0.19, and CC-021 with version 0.20, and CC-022 with version 0.21.
+
+### CC-022 Contradiction check for typed chat answers
+
+| Field | Value |
+|---|---|
+| **Status** | `PROPOSED`, approval pending. Code and API tests exist. |
+| **Reason** | The Tech Lead asked for contradiction detection on patient profiles, with `ad-kat/clinical-contradiction-detector` as a reference. Today a confirmed chat proposal silently replaces an earlier same-source answer, so a user who said "No" and then typed "I use them now" is never told the two differ. |
+| **Evidence** | PRD-FR-05 (conflicts are never resolved by picking a value), PRD-FR-17, PRD-AC-08, PRD-AC-26 (self-report against an older record: both kept, flagged), MIC-AC-03 (`PAST` returned as `CURRENT` must be caught). Existing same-field `CONFLICTING` state (AC-06.3, AC-15.6). |
+| **Change** | Extend the RF-21 interpret response with `contradiction` and a fixed message, and the `MODEL_TASK_RUN` audit entry with change codes. The comparison runs on the server after the validator. The model input is unchanged. No consent scope, clinical rule, triage level, concept code, case state or answer endpoint changes. Different fields are not compared (OD-27). |
+| **Affected journeys** | J1 and J3 when the chat is used with a provider enabled |
+| **Tests** | TC-30.1 to TC-30.7 |
+| **Approver** | Pending (Tech Lead + Product). OD-27 is open. |
+| **Version** | Spec 0.21 |
 
 ### CC-021 OCR one synthetic lab report
 
