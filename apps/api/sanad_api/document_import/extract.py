@@ -3,8 +3,9 @@
 Order of work: type and size (S1), text source (S2), synthetic marker (S3), rows (S4), field
 lookup by label (S5), parsing and plausibility (S6), status (S7). Each stage fails closed.
 
-The function only reads. It writes nothing, logs nothing and keeps nothing. It never computes a
-value from other values and never corrects what it read. Every field it returns is unconfirmed,
+The function only reads. It writes nothing, logs nothing and keeps nothing. It uses arithmetic
+only to check consistency; it never derives a replacement or corrects what it read.
+Every field it returns is unconfirmed,
 and the rules engine reads confirmed values only (T-60 requirements 4 and 5).
 """
 
@@ -80,6 +81,7 @@ def extract(
     fields = [_field(spec, found.get(spec.field_id, []), today) for spec in catalogue.fields]
     fields.append(_field(catalogue.date_field, found.get(catalogue.date_field.field_id, []), today))
     fields = _check_motility_sum(fields, catalogue)
+    fields = _check_total_count_consistency(fields, catalogue)
     fields = [_with_status(item, confidence_threshold) for item in fields]
     used_ocr = any(page.method is Method.OCR for page in pages)
     return LabDraft(
@@ -190,7 +192,7 @@ def _box(found: _Found) -> Box:
 
 def _check_motility_sum(fields: list[LabField], catalogue: LabCatalogue) -> list[LabField]:
     """Flags PR, NP and IM when all three were read and they do not make the total. It only
-    adds a flag; it never changes or computes a value."""
+    adds a flag; it never changes or infers a replacement observation."""
     rule = catalogue.motility_sum
     parts = [item for item in fields if item.field_id in rule.field_ids]
     values = [item.value for item in parts]
@@ -201,6 +203,38 @@ def _check_motility_sum(fields: list[LabField], catalogue: LabCatalogue) -> list
         return fields
     return [
         _add_flag(item, Flag.MOTILITY_SUM_MISMATCH) if item.field_id in rule.field_ids else item
+        for item in fields
+    ]
+
+
+def _check_total_count_consistency(
+    fields: list[LabField], catalogue: LabCatalogue
+) -> list[LabField]:
+    """Cross-check three values from *one* synthetic report; never derive an observation.
+
+    The catalogue uses million/mL, mL and million/ejaculate, so multiplication needs no
+    conversion. We skip incomplete or suspect inputs: the separate flags already explain why
+    those measurements require manual review. A mismatch flags all three as potentially wrong,
+    because the extractor cannot know which printed value is mistaken.
+    """
+    rule = catalogue.total_count_consistency
+    by_id = {field.field_id: field for field in fields}
+    ids = (rule.volume_field_id, rule.concentration_field_id, rule.total_field_id)
+    if any(field_id not in by_id for field_id in ids):
+        return fields
+    volume, concentration, reported = (by_id[field_id] for field_id in ids)
+    expected_units = ("mL", "million/mL", "million")
+    for item, unit in zip((volume, concentration, reported), expected_units, strict=True):
+        if item.flags or item.unit != unit or not isinstance(item.value, float):
+            return fields
+        if not (0 <= item.value < float("inf")):
+            return fields
+    expected = volume.value * concentration.value
+    tolerance = max(rule.absolute_tolerance_million, expected * rule.relative_tolerance)
+    if abs(reported.value - expected) <= tolerance:
+        return fields
+    return [
+        _add_flag(item, Flag.TOTAL_COUNT_MISMATCH) if item.field_id in ids else item
         for item in fields
     ]
 
@@ -222,18 +256,47 @@ def _with_status(item: LabField, threshold: float) -> LabField:
     return replace(item, flags=tuple(dict.fromkeys(flags)), status=status)
 
 
-def to_observation_inputs(draft: LabDraft) -> list[dict[str, Any]]:
-    """The fields the lab catalogue has a code for, as `POST /observations` bodies. The client
-    sends them only after the user has reviewed them on the lab-entry screen (T-33); they are
-    stored as NEEDS_USER_CONFIRMATION and reach the rules only once confirmed (RF-15)."""
-    collected = next((f.value for f in draft.fields if f.field_id == "collection_date"), None)
-    return [
-        {
-            "test_code": item.target_test_code,
-            "value": item.value,
-            "unit": item.unit,
-            "collected_on": collected if isinstance(collected, str) else None,
-        }
-        for item in draft.fields
-        if item.target_test_code is not None
-    ]
+def to_observation_inputs(
+    draft: LabDraft, *, reviewed_field_ids: set[str] | frozenset[str] | None = None
+) -> list[dict[str, Any]]:
+    """Prepare only EXPLICITLY reviewed clean fields for existing observation endpoints.
+
+    This helper never confirms a value and never writes to the DB. Without an explicit
+    reviewed field selection it exports nothing. A flagged/unreadable field cannot be silently
+    submitted by OCR; the user can instead correct it through the manual lab form. The
+    existing API must separately receive a user's confirm action after creating an observation.
+    """
+    if draft.status is not Status.EXTRACTED or not reviewed_field_ids:
+        return []
+    allowed = {f.field_id for f in draft.fields if f.target_test_code is not None}
+    requested = set(reviewed_field_ids)
+    if not requested <= allowed:
+        raise ValueError("OCR_UNSUPPORTED_FIELD_SELECTION")
+    date_field = next((f for f in draft.fields if f.field_id == "collection_date"), None)
+    if (
+        date_field is None
+        or date_field.flags
+        or not isinstance(date_field.value, str)
+        or date_field.status is not FieldStatus.UNCONFIRMED
+    ):
+        raise ValueError("OCR_COLLECTION_DATE_NEEDS_REVIEW")
+    result: list[dict[str, Any]] = []
+    for item in draft.fields:
+        if item.field_id not in requested:
+            continue
+        if (
+            item.flags
+            or item.status is not FieldStatus.UNCONFIRMED
+            or not isinstance(item.value, float)
+            or item.unit is None
+        ):
+            raise ValueError("OCR_FIELD_NEEDS_MANUAL_REVIEW")
+        result.append(
+            {
+                "test_code": item.target_test_code,
+                "value": item.value,
+                "unit": item.unit,
+                "collected_on": date_field.value,
+            }
+        )
+    return result

@@ -131,6 +131,15 @@ export interface InterpretResponse {
   message: string;
   /** RF-27: what was hidden before the model saw the text; never the hidden value. */
   redacted_types?: ('DATE' | 'NAME')[];
+  /** RF-30: earlier answers that confirming the proposal would contradict. Labels come from the catalogue. */
+  contradiction?: {
+    question_id: string;
+    earlier: {
+      echo_label: string;
+      source_type: 'PATIENT_REPORTED' | 'SAMPLE_FIXTURE' | 'USER_UPLOADED' | 'USER_ENTERED' | string;
+      change: 'VALUE_DIFFERS' | 'TIME_DIFFERS' | 'BECOMES_UNKNOWN';
+    }[];
+  } | null;
   proposal: {
     question_id: string;
     choice: IntakeAnswer['choice'];
@@ -179,6 +188,31 @@ export interface TriageProposal {
   rule_ids: string[];
   rule_version: string;
   approval_status: string;
+}
+
+/** T-60: read-only OCR response. All fields remain unconfirmed; never auto-post observations. */
+export interface OcrLabField {
+  field_id: string;
+  value: number | string | null;
+  unit: string | null;
+  raw_text: string | null;
+  bbox: { page: number; x: number; y: number; width: number; height: number } | null;
+  confidence: number;
+  scores: { ocr: number; parse: number; plausibility: number };
+  flags: string[];
+  status: 'UNCONFIRMED' | 'NEEDS_CONFIRMATION';
+  method: 'TEXT_LAYER' | 'OCR' | null;
+  target_test_code: string | null;
+}
+
+export interface OcrLabDraft {
+  status: 'EXTRACTED' | 'REJECTED';
+  reason: string | null;
+  is_synthetic: boolean;
+  extractor_version: string;
+  catalogue_version: string;
+  ocr_engine: string | null;
+  fields: OcrLabField[];
 }
 
 export interface ObservationRecord {
@@ -469,6 +503,12 @@ export const api = {
     request<EvidenceSelectionResponse>(`/cases/${caseId}/evidence-selection`, {
       method: 'PUT',
       body: JSON.stringify({ items }),
+    }),
+  readLabReport: (caseId: string, file: File) =>
+    request<OcrLabDraft>(`/cases/${caseId}/profile/document`, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
     }),
   getObservations: (caseId: string) =>
     request<{ observations: ObservationRecord[] }>(`/cases/${caseId}/observations`),

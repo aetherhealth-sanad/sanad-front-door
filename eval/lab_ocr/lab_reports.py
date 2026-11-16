@@ -72,16 +72,19 @@ def random_report(seed: int) -> Report:
     pr = rng.randint(0, 80)
     np_ = rng.randint(0, 100 - pr)
     day = date(2026, 1, 1) + timedelta(days=rng.randint(0, 280))
+    volume = f"{rng.randint(0, 7)}.{rng.randint(0, 9)}"
+    concentration = rng.choice(
+        [str(rng.randint(0, 180)), f"{rng.randint(0, 90)}.{rng.randint(1, 9)}"]
+    )
+    total = f"{float(volume) * float(concentration):.1f}"  # synthetic fixture only
     return Report(
         report_id=f"SYN-LAB-G-{seed:04d}",
         collection_date=day.isoformat(),
         values={
-            "volume": f"{rng.randint(0, 7)}.{rng.randint(0, 9)}",
+            "volume": volume,
             "ph": f"{rng.randint(6, 8)}.{rng.randint(0, 9)}",
-            "concentration": rng.choice(
-                [str(rng.randint(0, 180)), f"{rng.randint(0, 90)}.{rng.randint(1, 9)}"]
-            ),
-            "total_count": str(rng.randint(0, 600)),
+            "concentration": concentration,
+            "total_count": total,
             "progressive_motility": str(pr),
             "non_progressive_motility": str(np_),
             "immotile": str(100 - pr - np_),

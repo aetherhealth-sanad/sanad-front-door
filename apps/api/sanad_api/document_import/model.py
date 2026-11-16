@@ -51,6 +51,7 @@ class Flag(StrEnum):
     UNIT_UNRECOGNISED = "UNIT_UNRECOGNISED"  # "25 mt", "x1076/mL"
     DATE_INVALID = "DATE_INVALID"  # "2026-13-45"
     MOTILITY_SUM_MISMATCH = "MOTILITY_SUM_MISMATCH"  # PR + NP + IM does not make the total
+    TOTAL_COUNT_MISMATCH = "TOTAL_COUNT_MISMATCH"  # total != volume x concentration
 
 
 @dataclass(frozen=True)

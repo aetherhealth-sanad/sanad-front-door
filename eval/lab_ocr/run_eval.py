@@ -225,11 +225,13 @@ def run(generated: int) -> dict[str, Any]:
                     )
             print(f"generated report {seed + 1}/{generated} done", file=sys.stderr)
 
+    commit_sha = git("rev-parse", "HEAD")
     results: dict[str, Any] = {
         "run_id": f"lab-ocr-{datetime.now(UTC):%Y%m%dT%H%M%S}-{uuid.uuid4().hex[:8]}",
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "commit_sha": git("rev-parse", "HEAD"),
-        "working_tree_clean": git("status", "--porcelain") == "",
+        "commit_sha": commit_sha or "UNAVAILABLE_SOURCE_ARCHIVE",
+        "source_revision_status": "GIT_COMMIT" if commit_sha else "UNVERSIONED_ARCHIVE",
+        "working_tree_clean": bool(commit_sha) and git("status", "--porcelain") == "",
         "label": LABEL,
         "label_source": truth["label_source"],
         "fixture_provenance": truth["provenance"],
