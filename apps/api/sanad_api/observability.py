@@ -179,6 +179,93 @@ class LangfuseTelemetry:
         except Exception:
             logger.warning("Langfuse policy metadata update failed; API behavior is unchanged")
 
+    @staticmethod
+    @contextmanager
+    def model_generation(
+        *,
+        task_id: str,
+        provider: str,
+        model_id: str,
+        prompt_version: str,
+        schema_version: str,
+    ) -> Iterator[Any | None]:
+        """Record a content-free Langfuse generation span for token/cost tracking."""
+        span = _current_span.get()
+        if span is None:
+            yield None
+            return
+        safe_task = task_id if _SAFE_CODE.fullmatch(task_id) else "model.task"
+        safe_provider = provider if _SAFE_CODE.fullmatch(provider) else "unknown"
+        safe_model = model_id if _SAFE_CODE.fullmatch(model_id) else "unknown"
+        safe_prompt = prompt_version if _SAFE_CODE.fullmatch(prompt_version) else "unversioned"
+        safe_schema = schema_version if _SAFE_CODE.fullmatch(schema_version) else "unversioned"
+        try:
+            manager = span.start_as_current_observation(
+                as_type="generation",
+                name=safe_task,
+                model=safe_model,
+                version=safe_prompt,
+                metadata={
+                    "model.provider": safe_provider,
+                    "model.schema_version": safe_schema,
+                },
+            )
+            gen = manager.__enter__()
+        except Exception:
+            logger.warning("Langfuse generation span start failed; API behavior is unchanged")
+            yield None
+            return
+        call_error: tuple[Any, Any, Any] | None = None
+        try:
+            yield gen
+        except BaseException:
+            call_error = sys.exc_info()
+            raise
+        finally:
+            try:
+                manager.__exit__(*(call_error or (None, None, None)))
+            except Exception:
+                logger.warning("Langfuse generation span end failed; API behavior is unchanged")
+
+    @staticmethod
+    def finish_model_generation(
+        gen: Any | None,
+        *,
+        status: str,
+        attempts: int,
+        elapsed_ms: int,
+        input_tokens: int | None = None,
+        output_tokens: int | None = None,
+        error_code: str | None = None,
+    ) -> None:
+        if gen is None:
+            return
+        safe_status = status if _SAFE_CODE.fullmatch(status) else "UNKNOWN"
+        safe_error = (
+            error_code if isinstance(error_code, str) and _SAFE_CODE.fullmatch(error_code) else None
+        )
+        usage_details: dict[str, int] = {}
+        if input_tokens is not None:
+            usage_details["input"] = max(0, int(input_tokens))
+        if output_tokens is not None:
+            usage_details["output"] = max(0, int(output_tokens))
+        metadata: dict[str, Any] = {
+            "model.status": safe_status,
+            "model.attempts": max(0, int(attempts)),
+            "model.elapsed_ms": max(0, int(elapsed_ms)),
+        }
+        if safe_error is not None:
+            metadata["model.error_code"] = safe_error
+        try:
+            gen.update(
+                usage_details=usage_details or None,
+                level="DEFAULT" if safe_status == "OK" else "ERROR",
+                status_message=safe_error,
+                metadata=metadata,
+            )
+        except Exception:
+            logger.warning("Langfuse generation metadata update failed; API behavior is unchanged")
+
     def shutdown(self) -> None:
         if self._client is None:
             return
