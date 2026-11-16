@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Protocol
 
+from sanad_api.observability import LangfuseTelemetry
+
 
 class ModelStatus(StrEnum):
     OK = "OK"
@@ -73,8 +75,25 @@ class ModelAdapter(Protocol):
 
 def run_safely(adapter: ModelAdapter, request: ModelRequest) -> ModelResult:
     """An adapter bug must fail closed to the task's fallback, and must not log the request."""
-    try:
-        return adapter.complete_json(request)
-    except Exception as error:  # any failure means "no model result"
-        logging.getLogger("sanad.model").error("model adapter failed: %s", type(error).__name__)
-        return ModelResult(ModelStatus.UNAVAILABLE, None, 0, 0, "ADAPTER_ERROR")
+    with LangfuseTelemetry.model_generation(
+        task_id=request.envelope.task_id,
+        provider=adapter.provider,
+        model_id=adapter.model_id,
+        prompt_version=request.envelope.prompt_version,
+        schema_version=request.envelope.schema_version,
+    ) as gen:
+        try:
+            result = adapter.complete_json(request)
+        except Exception as error:  # any failure means "no model result"
+            logging.getLogger("sanad.model").error("model adapter failed: %s", type(error).__name__)
+            result = ModelResult(ModelStatus.UNAVAILABLE, None, 0, 0, "ADAPTER_ERROR")
+        LangfuseTelemetry.finish_model_generation(
+            gen,
+            status=result.status.value,
+            attempts=result.attempts,
+            elapsed_ms=result.elapsed_ms,
+            input_tokens=result.input_tokens,
+            output_tokens=result.output_tokens,
+            error_code=result.error_code,
+        )
+        return result
