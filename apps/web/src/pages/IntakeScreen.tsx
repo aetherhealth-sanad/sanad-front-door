@@ -6,7 +6,6 @@ import {
   type QuestionsResponse,
   type QuestionItem,
 } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
 import { ChatIntake } from './ChatIntake';
 
 interface IntakeScreenProps {
@@ -63,7 +62,6 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
   onAnswerRecorded,
   onSwitchToChat,
 }) => {
-  const [view, setView] = useState<'chat' | 'form'>('chat');
   const [catalogue, setCatalogue] = useState<QuestionsResponse | null>(null);
   const [psychQuestions, setPsychQuestions] = useState<PsychosocialQuestion[]>([]);
   const [draftAnswers, setDraftAnswers] = useState<Record<string, DraftAnswer>>({});
@@ -153,6 +151,15 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
 
       if (submittedAnswers.length > 0) {
         await api.submitAnswers(caseId, submittedAnswers);
+        if (onAnswerRecorded && catalogue) {
+          for (const ans of submittedAnswers) {
+            const q = catalogue.questions.find(item => item.question_id === ans.question_id);
+            if (q) {
+              const label = String(ans.value ?? ans.choice);
+              onAnswerRecorded(q, ans, label);
+            }
+          }
+        }
       }
 
       const submittedPsychosocial = psychQuestions.flatMap(question => {
@@ -272,20 +279,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
     );
   };
 
-  // If in Chat view, render ChatIntake with toggle to Form
-  if (view === 'chat') {
-    return (
-      <ChatIntake
-        caseId={caseId}
-        onNavigateToReview={onNavigateToReview || (() => handleProceedToReview({ preventDefault: () => {} } as React.FormEvent))}
-        onSwitchToForm={() => setView('form')}
-        onOpenLab={onOpenLab}
-        onAnswerSaved={onAnswerRecorded}
-      />
-    );
-  }
-
-  // Otherwise, render full Form view with toggle back to Chat
+  // Render full Form view with toggle back to Chat
   return (
     <div className="w-full space-y-6">
       {/* Top Banner & View Switcher */}
@@ -309,7 +303,7 @@ const IntakeForm: React.FC<IntakeFormProps> = ({
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={() => setView('chat')}
+              onClick={onSwitchToChat}
               className="btn-pill-primary px-4 py-2 rounded-full text-xs font-semibold cursor-pointer shadow-xs"
             >
               Switch to assistant chat
