@@ -53,6 +53,16 @@ class MotilitySum(_Frozen):
     note: str
 
 
+class TotalCountConsistency(_Frozen):
+    volume_field_id: str
+    concentration_field_id: str
+    total_field_id: str
+    absolute_tolerance_million: float
+    relative_tolerance: float
+    status: str
+    note: str
+
+
 class LabCatalogue(_Frozen):
     catalogue_id: Literal["lab-report-ocr"]
     catalogue_version: str
@@ -64,6 +74,7 @@ class LabCatalogue(_Frozen):
     report_id_prefix: str
     date_field: DateFieldDef
     motility_sum: MotilitySum
+    total_count_consistency: TotalCountConsistency
     fields: tuple[FieldDef, ...]
 
     @property
