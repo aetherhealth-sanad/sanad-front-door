@@ -129,6 +129,8 @@ export interface InterpretResponse {
   outcome: 'EMERGENCY_GUIDANCE' | 'NEEDS_CORRECTION' | 'PROPOSAL' | 'FALLBACK';
   reason_code: string | null;
   message: string;
+  /** RF-27: what was hidden before the model saw the text; never the hidden value. */
+  redacted_types?: ('DATE' | 'NAME')[];
   proposal: {
     question_id: string;
     choice: IntakeAnswer['choice'];
@@ -392,6 +394,38 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
+export interface ModelRunTask {
+  task_id: string;
+  calls: number;
+  by_status: Record<string, number>;
+  by_outcome: Record<string, number>;
+  budget_refusals: number;
+  attempts_mean: number | null;
+  latency_ms: { p50: number | null; p95: number | null };
+  tokens: { input: number; output: number };
+}
+
+export interface ModelRunsSummary {
+  observed_scope: string;
+  synthetic_demo: boolean;
+  tasks: ModelRunTask[];
+}
+
+/** RF-28: fetches the user's summary file and hands it to the browser as a download. */
+async function downloadSummary(caseId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/cases/${caseId}/summary-file`, {
+    headers: getAuthHeader('patient'),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}: the summary could not be prepared.`);
+  const name = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1];
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name ?? 'sanad-summary.json';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 const patientPost = <T>(path: string, body?: unknown) =>
   request<T>(path, { method: 'POST', ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
 
@@ -455,6 +489,7 @@ export const api = {
   savePsychosocial: (caseId: string, answers: PsychosocialAnswer[]) =>
     request(`/cases/${caseId}/psychosocial`, { method: 'PUT', body: JSON.stringify({ answers }) }),
   getReport: (caseId: string) => request<ReportData>(`/cases/${caseId}/report`),
+  downloadSummary,
   requestReview: (caseId: string, case_version: number) =>
     patientPost<{ review_request_id: string; is_mock: boolean; state: CaseState }>(`/cases/${caseId}/review-requests`, { case_version }),
   startNavigation: (caseId: string) => patientPost<CaseState>(`/cases/${caseId}/navigation/start`),
@@ -491,6 +526,7 @@ export const api = {
     request(`/reviews/${caseId}/decision`, { method: 'POST', body: JSON.stringify(decision) }, 'staff'),
   getFacilityReferrals: () => request<{ is_mock: boolean; referrals: Array<{ referral_id: string; case_code: string; care_type: string; mock_status: string; created_at: string; is_mock: boolean }> }>('/mock-facility/referrals', {}, 'staff'),
   getNavigationFunnel: () => request<NavigationFunnel>('/evaluation/navigation-funnel', {}, 'staff'),
+  getModelRuns: () => request<ModelRunsSummary>('/evaluation/model-runs', {}, 'staff'),
   getFacilityReferral: (referralId: string) => request<{
     referral_id: string; mock_status: string; is_mock: boolean;
     snapshot: { case_code: string; care_type: string; reviewer_summary: string; limits: string[] } | null;

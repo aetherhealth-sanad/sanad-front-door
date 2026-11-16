@@ -1,6 +1,6 @@
 # Sanad – MCP context, pgvector evidence and Mock booking calendar v0.2
 
-Nov 7, 2026 · Status: **`PROPOSED`, `TECH_TBD`** · Not implemented · Needs change control before any code · Target MCP revision: **`2026-07-28`**
+Nov 7, 2026 · Status: **`PROPOSED`, `TECH_TBD`** · Bounded Mode A code is present in the working tree; formal change control, Tech review and acceptance remain pending · Target MCP revision: **`2026-07-28`**
 
 This document describes three related pieces:
 
@@ -929,6 +929,11 @@ Per [AGENTS.md](../AGENTS.md), the specs change first.
 7. **Azure guide.** It keeps AI Search out of scope. Hosted Postgres with the pgvector extension would be a deployment candidate only (`TECH_TBD`).
 
 Proposed tasks:
+
+Current implementation covers T5.1's empty manifest and topic vocabulary, T5.2's separate-database
+schema/roles (without deployment orchestration), and T5.5's strict stdio server/tool manifest. T5.3
+offline ingestion and T5.4 report citation verification are not implemented. No source is approved,
+and the MCP server returns no evidence until an approved manifest and matching active index exist.
 
 | Task | Scope | Depends on |
 |---|---|---|

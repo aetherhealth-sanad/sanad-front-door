@@ -9,6 +9,7 @@ apps/api/.venv/
 *.sqlite
 *.sqlite3
 
+# Local environment files (keep .env.example tracked)
 # Dependencies & Build artifacts
 node_modules/
 .expo/
@@ -24,3 +25,6 @@ web-build/
 .agents/
 .agents-backup*/
 skills-lock.json
+
+# Model evaluation scorecards (RF-23); synthetic results, kept out of Git
+eval/out/

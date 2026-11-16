@@ -141,7 +141,6 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
   onAssessmentComplete,
   onSwitchToForm,
   onOpenLab,
-  onNavigateToReview,
   onAnswerSaved,
   onAnswerRecorded,
 }) => {
@@ -330,6 +329,11 @@ export const ChatIntake: React.FC<ChatIntakeProps> = ({
       if (result.outcome === 'EMERGENCY_GUIDANCE' || result.state.route === '/urgent.html') {
         window.location.replace('/urgent.html');
         return;
+      }
+      const hidden = (result.redacted_types ?? []).map(t => (t === 'NAME' ? 'a name' : 'a date'));
+      if (hidden.length) {
+        // RF-27, AC-27.6 (DRAFT copy): say what was hidden, never what it was.
+        push({ kind: 'notice', text: `We hid ${hidden.join(' and ')} before checking your answer.` });
       }
       if (result.outcome === 'PROPOSAL' && result.proposal) {
         setProposal(result);

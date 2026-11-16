@@ -42,9 +42,21 @@ def _str(env: Mapping[str, str], name: str) -> str | None:
     return env.get(name) or None
 
 
+def _float(env: Mapping[str, str], name: str, default: float) -> float:
+    raw = _str(env, name)
+    return float(raw) if raw else default
+
+
 def _int(env: Mapping[str, str], name: str, default: int) -> int:
     raw = env.get(name, "")
     return int(raw) if raw else default
+
+
+def _bool_env(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 @dataclass(frozen=True)
@@ -64,6 +76,11 @@ class Settings:
     mock_facility_password: str | None = field(default=None, repr=False)
     cases_per_minute_per_ip: int = 30
     logins_per_minute_per_ip: int = 10
+    # Observability is explicitly opt-in; never infer enablement from credentials alone.
+    langfuse_enabled: bool = False
+    langfuse_base_url: str | None = None
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
     # T4.5, CC-011: the model adapter is off unless an operator turns it on. "disabled" makes
     # no network call. "azure_openai" sends typed chat text to the configured Azure resource.
     model_provider: str = "disabled"
@@ -76,6 +93,15 @@ class Settings:
     model_timeout_ms: int = 12_000
     model_max_attempts: int = 2
     model_max_completion_tokens: int = 800
+    model_max_calls_per_case: int = 20  # RF-23 AC-23.7, TECH_TBD
+    # RF-25, CC-015: local decision model. Only read when SANAD_MODEL_PROVIDER=laya_local.
+    laya_model: str = "convaiinnovations/laya"
+    laya_revision: str | None = None  # a pinned commit SHA; required for laya_local
+    laya_device: str | None = None  # None lets laya choose (CUDA, MPS, XPU, then CPU)
+    decision_min_prob: float = 0.80  # TECH_TBD, set from the RF-23 scorecard
+    laya_engine: str = "checkpoint"  # checkpoint or vegaml (AC-25.11, CC-017)
+    laya_calibration: Path | None = None  # a save_calibration directory; vegaml only
+    hosted: bool = False  # AC-21.13: a hosted deployment refuses API-key auth
 
     @classmethod
     def from_env(cls, env_file: Path | None = None) -> Settings:
@@ -111,4 +137,20 @@ class Settings:
             model_max_completion_tokens=_int(
                 env, "SANAD_MODEL_MAX_COMPLETION_TOKENS", cls.model_max_completion_tokens
             ),
+            model_max_calls_per_case=_int(
+                env, "SANAD_MODEL_MAX_CALLS_PER_CASE", cls.model_max_calls_per_case
+            ),
+            laya_model=_str(env, "SANAD_LAYA_MODEL") or cls.laya_model,
+            laya_revision=_str(env, "SANAD_LAYA_REVISION"),
+            laya_device=_str(env, "SANAD_LAYA_DEVICE"),
+            decision_min_prob=_float(env, "SANAD_DECISION_MIN_PROB", cls.decision_min_prob),
+            laya_engine=_str(env, "SANAD_LAYA_ENGINE") or cls.laya_engine,
+            hosted=(_str(env, "SANAD_HOSTED") or "").lower() in {"1", "true", "yes", "on"},
+            laya_calibration=(
+                Path(cal) if (cal := _str(env, "SANAD_LAYA_CALIBRATION")) else None
+            ),
+            langfuse_enabled=_bool_env("SANAD_LANGFUSE_ENABLED"),
+            langfuse_base_url=os.environ.get("LANGFUSE_BASE_URL") or None,
+            langfuse_public_key=os.environ.get("LANGFUSE_PUBLIC_KEY") or None,
+            langfuse_secret_key=os.environ.get("LANGFUSE_SECRET_KEY") or None,
         )

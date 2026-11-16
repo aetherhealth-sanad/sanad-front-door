@@ -8,7 +8,9 @@ start-up instead of surfacing mid-journey.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -27,8 +29,12 @@ MOCK_DIRECTORY_FILE = "catalogue/mock-directory-0.1.json"
 UPLOAD_SCHEMA_FILE = "schemas/upload-profile.schema.json"
 FIXTURES_DIR = "data/synthetic/assessments"
 FIXTURE_MANIFEST_FILE = "data/synthetic/fixture-manifest.v0.4.json"
+PASSAGES_FILE = "knowledge/passages.v0.1.json"
+MAX_EXCERPT_CHARS = 600
 
 SAFETY_RESPONSES = frozenset({"YES", "NO", "NOT_SURE", "PREFER_NOT_TO_ANSWER"})
+
+logger = logging.getLogger("sanad.catalogues")
 
 
 class CatalogueError(ValueError):
@@ -94,7 +100,30 @@ class EmergencyTextCatalogue(_Frozen):
 class EvidenceRef(_Frozen):
     source_id: str
     version: str
-    verification: Literal["VERIFIED", "PENDING"]
+    # TEAM_CURATED (RF-22): chosen by the team, not reviewed by a clinician. Never VERIFIED.
+    verification: Literal["VERIFIED", "PENDING", "TEAM_CURATED"]
+    passage_id: str | None = None
+    content_sha256: str | None = None
+
+
+class Passage(_Frozen):
+    passage_id: str
+    source_id: str
+    source_version: str
+    title: str
+    locator: str
+    url: str
+    license: str
+    excerpt: str
+    content_sha256: str
+    review_status: Literal["TEAM_CURATED"]
+
+
+class PassageCatalogue(_Frozen):
+    catalogue_id: Literal["evidence-passages"]
+    catalogue_version: str
+    status_note: str
+    passages: tuple[Passage, ...]
 
 
 class TriageRule(_Frozen):
@@ -293,6 +322,12 @@ class Catalogues:
     # Intake concepts and emergency concepts together, and every question an answer may cite.
     concepts: dict[str, ConceptDef]
     answerable: dict[str, QuestionDef]
+    passages: PassageCatalogue
+    # Passages whose excerpt still matches its hash (AC-22.1). Others are ignored.
+    usable_passages: dict[str, Passage]
+
+    def passage(self, passage_id: str) -> Passage | None:
+        return self.usable_passages.get(passage_id)
 
     @property
     def emergency_concepts(self) -> frozenset[str]:
@@ -317,6 +352,7 @@ def load_catalogues(repo_root: Path) -> Catalogues:
     mock_directory = MockDirectory.model_validate(read_json(repo_root / MOCK_DIRECTORY_FILE))
     upload_schema: dict[str, Any] = read_json(repo_root / UPLOAD_SCHEMA_FILE)
     fixture_manifest = FixtureManifest.model_validate(read_json(repo_root / FIXTURE_MANIFEST_FILE))
+    passages = PassageCatalogue.model_validate(read_json(repo_root / PASSAGES_FILE))
 
     yes_no = (AnswerOption(value=True, label="Yes"), AnswerOption(value=False, label="No"))
     concepts = dict(questions.concepts)
@@ -354,9 +390,29 @@ def load_catalogues(repo_root: Path) -> Catalogues:
         fixture_manifest=fixture_manifest,
         concepts=concepts,
         answerable=answerable,
+        passages=passages,
+        usable_passages=_usable_passages(passages),
     )
     _check_consistency(catalogues)
     return catalogues
+
+
+def _usable_passages(catalogue: PassageCatalogue) -> dict[str, Passage]:
+    """A passage whose excerpt no longer matches its hash is logged and left out. It never
+    stops start-up: the claim it backs falls back to insufficient evidence (AC-22.1)."""
+    usable: dict[str, Passage] = {}
+    for passage in catalogue.passages:
+        _require(passage.passage_id not in usable, f"{passage.passage_id}: duplicate passage")
+        _require(
+            len(passage.excerpt) <= MAX_EXCERPT_CHARS,
+            f"{passage.passage_id}: excerpt longer than {MAX_EXCERPT_CHARS} characters",
+        )
+        digest = hashlib.sha256(passage.excerpt.encode("utf-8")).hexdigest()
+        if digest != passage.content_sha256:
+            logger.warning("passage %s ignored: excerpt hash mismatch", passage.passage_id)
+            continue
+        usable[passage.passage_id] = passage
+    return usable
 
 
 def _load_samples(fixtures_dir: Path) -> dict[str, Sample]:
@@ -435,6 +491,11 @@ def _check_consistency(c: Catalogues) -> None:
 
 
 def _check_triage_rule(rule: TriageRule, c: Catalogues, question_ids: set[str]) -> None:
+    for ref in rule.evidence_refs:
+        _require(
+            ref.verification != "TEAM_CURATED" or bool(ref.passage_id and ref.content_sha256),
+            f"{rule.rule_id}: a TEAM_CURATED ref needs passage_id and content_sha256",
+        )
     if rule.kind in ("FACT_STATE", "BMI_CONTEXT"):
         _require(rule.concept_code in c.concepts, f"{rule.rule_id}: unknown concept")
     for question_id in rule.context_question_ids:
