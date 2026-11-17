@@ -1061,3 +1061,47 @@
     filter: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PRINT STYLES - Printable Screening Summary (Bug 1)
+   ═══════════════════════════════════════════════════════════ */
+
+@media print {
+  html,
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+    min-height: auto !important;
+  }
+
+  header,
+  nav,
+  footer:not(.sanad-print-section),
+  button,
+  .no-print,
+  #quick-exit-button,
+  [data-testid="quick-exit"],
+  [data-testid="urgent-link"],
+  [data-testid="urgent-banner"] {
+    display: none !important;
+  }
+
+  .sanad-print-summary {
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+  }
+
+  .sanad-print-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 16pt;
+  }
+}
