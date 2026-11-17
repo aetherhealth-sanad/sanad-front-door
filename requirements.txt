@@ -1,0 +1,12 @@
+fastapi>=0.115
+sqlalchemy>=2.0.30
+pydantic>=2.7
+jsonschema>=4.22
+python-multipart>=0.0.9
+python-dotenv>=1.0
+psycopg[binary]>=3.2
+openai>=3.40,<4
+azure-identity>=1.17
+azure-keyvault-secrets>=4.8
+langfuse>=5,<6
+
