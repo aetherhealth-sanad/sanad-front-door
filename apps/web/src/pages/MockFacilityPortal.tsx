@@ -342,7 +342,13 @@ export const MockFacilityPortal: React.FC = () => {
             <p className="text-xs text-[#64748B]">Loading...</p>
           )}
           {!loading && referrals.length === 0 && (
-            <p className="text-sm text-[#64748B]">No Mock referral packets.</p>
+            <div className="space-y-1">
+              <p className="text-sm text-[#64748B]">No Mock referral packets.</p>
+              <p className="text-xs text-[#94A3B8]">
+                A packet appears after a Mock reviewer approves the case and the patient taps
+                &ldquo;Create Mock referral&rdquo;. Use Refresh to check again.
+              </p>
+            </div>
           )}
           {referrals.map(referral => (
             <button
