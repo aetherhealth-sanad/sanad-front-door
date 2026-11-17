@@ -528,7 +528,13 @@ export const ClinicianPortal: React.FC = () => {
             <p className="text-xs text-[#64748B]">Loading queue...</p>
           )}
           {!loading && queue.length === 0 && (
-            <p className="text-sm text-[#64748B]">No pending Mock cases.</p>
+            <div className="space-y-1">
+              <p className="text-sm text-[#64748B]">No pending Mock cases.</p>
+              <p className="text-xs text-[#94A3B8]">
+                A case appears here after the patient taps &ldquo;Send to care facility (Mock)&rdquo; on
+                their result and allows the Mock review. Use Refresh to check again.
+              </p>
+            </div>
           )}
           {queue.map(item => (
             <button

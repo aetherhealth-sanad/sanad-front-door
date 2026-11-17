@@ -142,7 +142,6 @@ export const StartScreen: React.FC<StartScreenProps> = ({
   const [samples, setSamples] = useState<SampleProfile[]>([]);
   const [samplesUnavailable, setSamplesUnavailable] = useState(false);
   const [selectedFixture, setSelectedFixture] = useState<string>('J1-001');
-  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'ar'>('en');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTechAppendix, setShowTechAppendix] = useState<boolean>(false);
@@ -176,7 +175,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
     setError(null);
     setLoading(true);
     try {
-      const res = await api.createCase('SAMPLE', fixtureToUse, preferredLanguage);
+      const res = await api.createCase('SAMPLE', fixtureToUse);
       sessionStorage.setItem('sanad_session_token', res.session_token);
       sessionStorage.setItem('sanad_case_id', res.case_id);
       sessionStorage.setItem('sanad_case_start_mode', 'SAMPLE');
@@ -193,7 +192,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
     setError(null);
     setLoading(true);
     try {
-      const res = await api.createCase('BLANK', undefined, preferredLanguage);
+      const res = await api.createCase('BLANK');
       sessionStorage.setItem('sanad_session_token', res.session_token);
       sessionStorage.setItem('sanad_case_id', res.case_id);
       sessionStorage.setItem('sanad_case_start_mode', 'BLANK');
@@ -216,7 +215,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({
         type: 'application/json',
       });
       setPendingUploadFile(file);
-      const res = await api.createCase('UPLOAD', undefined, preferredLanguage);
+      const res = await api.createCase('UPLOAD');
       sessionStorage.setItem('sanad_session_token', res.session_token);
       sessionStorage.setItem('sanad_case_id', res.case_id);
       sessionStorage.setItem('sanad_case_start_mode', 'UPLOAD');
@@ -273,28 +272,6 @@ export const StartScreen: React.FC<StartScreenProps> = ({
 
         {/* Right Action Controls */}
         <div className="flex items-center gap-2.5">
-          {/* Language Switcher */}
-          <div className="flex items-center bg-[#F1F5F9] rounded-full p-0.5 border border-[#CBD5E1] text-[11px] font-mono">
-            <button
-              type="button"
-              onClick={() => setPreferredLanguage('en')}
-              className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
-                preferredLanguage === 'en' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
-              }`}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreferredLanguage('ar')}
-              className={`px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
-                preferredLanguage === 'ar' ? 'bg-[#0052FF] text-white shadow-xs' : 'text-[#4A6588]'
-              }`}
-            >
-              العربية
-            </button>
-          </div>
-
           <span
             role="status"
             className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#F6F9FF] border border-[#E2ECF8] text-[#4A6588]"

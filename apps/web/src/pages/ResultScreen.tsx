@@ -5,9 +5,15 @@ import {
   api,
   type CaseConsentRecord,
   type CaseState,
+  type ConsentCatalogue,
   type ReportData,
 } from '../api/client';
-import { buildReadableSummary } from './summaryModel';
+import { buildReadableSummary, normalizeConsentDecisions } from './summaryModel';
+
+// RF-07 (AC-07.1): label and helper text are fixed by the product spec.
+const SEND_TO_FACILITY_LABEL = 'Send to care facility (Mock)';
+const SEND_TO_FACILITY_HELPER =
+  'A reviewer at a mock facility checks this first. Nothing goes to a real clinic.';
 
 interface ResultScreenProps {
   caseId: string;
@@ -53,6 +59,9 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [updatingEvidence, setUpdatingEvidence] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // AC-07.2: just-in-time request for the clinician_review scope.
+  const [askingReviewConsent, setAskingReviewConsent] = useState(false);
+  const [consentCatalogue, setConsentCatalogue] = useState<ConsentCatalogue | null>(null);
 
   useEffect(() => {
     const handleQuickExit = () => {
@@ -138,6 +147,52 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
     }
   };
 
+  const handleSendToFacility = async () => {
+    if (consent?.scopes.clinician_review?.granted === true) {
+      await handleRequestReview();
+      return;
+    }
+    // AC-07.2: without the scope, ask for it and explain it. Nothing is sent yet.
+    setError(null);
+    setAskingReviewConsent(true);
+    if (!consentCatalogue) {
+      api.getCurrentConsent().then(setConsentCatalogue).catch(() => setConsentCatalogue(null));
+    }
+  };
+
+  const handleAllowReviewAndSend = async () => {
+    if (!consent) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const current: Record<string, boolean> = {};
+      for (const [scope, grant] of Object.entries(consent.scopes)) {
+        current[scope] = grant.granted;
+      }
+      const updated = await api.updateCaseConsent(
+        caseId,
+        consentCatalogue?.consent_version ?? consent.consent_version,
+        normalizeConsentDecisions(
+          { ...current, clinician_review: true },
+          consentCatalogue?.scopes,
+        ),
+      );
+      setConsent(updated);
+      const version =
+        updated.state?.case_version ?? (await api.getCaseState(caseId)).case_version;
+      const result = await api.requestReview(caseId, version);
+      setAskingReviewConsent(false);
+      onProceedToReferral(result.state.route);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'The review request was not recorded.',
+      );
+      await loadReport();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleStartNavigation = async () => {
     setSubmitting(true);
     setError(null);
@@ -207,11 +262,12 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
     );
   }
 
-  const reviewGranted = consent?.scopes.clinician_review?.granted === true;
-  const canRequestReview =
+  // AC-07.1 / AC-07.6: shown whenever the current draft can be sent. The clinician_review
+  // scope is checked on tap (AC-07.2) and again by the server (AC-07.3).
+  const canSendToFacility =
     report.review_status === 'NOT_SENT' &&
-    reviewGranted &&
     caseState?.allowed_actions.includes('SEND_FOR_REVIEW');
+  const reviewScopeText = consentCatalogue?.scopes.find(s => s.scope === 'clinician_review');
   const canSelectEvidence = caseState?.allowed_actions.includes('SELECT_EVIDENCE');
 
   const presentConcepts = new Set([
@@ -298,6 +354,101 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
         >
           {error}
         </div>
+      )}
+
+      {canSendToFacility && (
+        <section
+          data-testid="send-to-facility"
+          className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#BCD8FE] shadow-md space-y-5"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2 py-0.5 rounded-full border border-[#BCD8FE]">
+                NEXT STEP · MOCK
+              </span>
+              <h2 className="text-base font-bold text-[#0F172A] mt-2">
+                {SEND_TO_FACILITY_LABEL}
+              </h2>
+              <p className="text-xs text-[#64748B] mt-1">{SEND_TO_FACILITY_HELPER}</p>
+            </div>
+            {!askingReviewConsent && (
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => void handleSendToFacility()}
+                className="btn-pill-primary w-full sm:w-auto px-7 py-3 rounded-full text-xs font-bold text-white shadow-md cursor-pointer whitespace-nowrap disabled:opacity-60"
+              >
+                {submitting ? 'Sending...' : SEND_TO_FACILITY_LABEL}
+              </button>
+            )}
+          </div>
+
+          {askingReviewConsent && (
+            <div
+              role="dialog"
+              aria-labelledby="review-consent-title"
+              className="rounded-xl border border-[#FEDF89] bg-[#FFFAEB] p-5 space-y-3 text-sm text-[#0F172A]"
+            >
+              <h3 id="review-consent-title" className="font-bold">
+                Allow a Mock reviewer to check your draft?
+              </h3>
+              <p className="text-xs text-[#475467]">
+                Sending needs the optional consent{' '}
+                <span className="font-mono">clinician_review</span>. It is off unless you turn it on.
+              </p>
+              {reviewScopeText ? (
+                <dl className="grid gap-2 text-xs sm:grid-cols-2">
+                  <div>
+                    <dt className="font-semibold">What is shared</dt>
+                    <dd className="text-[#475467]">{reviewScopeText.data_covered}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold">What it is used for</dt>
+                    <dd className="text-[#475467]">{reviewScopeText.used_for}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold">Who sees it</dt>
+                    <dd className="text-[#475467]">{reviewScopeText.who_sees_it}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold">If you say no</dt>
+                    <dd className="text-[#475467]">{reviewScopeText.if_off}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="text-xs text-[#475467]">Loading the consent details…</p>
+              )}
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={submitting || !reviewScopeText}
+                  onClick={() => void handleAllowReviewAndSend()}
+                  className="btn-pill-primary px-5 py-2.5 rounded-full text-xs font-bold text-white cursor-pointer disabled:opacity-60"
+                >
+                  {submitting ? 'Sending...' : 'Allow and send (Mock)'}
+                </button>
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => setAskingReviewConsent(false)}
+                  className="btn-pill-secondary px-5 py-2.5 rounded-full text-xs font-semibold cursor-pointer"
+                >
+                  Not now
+                </button>
+                {onOpenConsent && (
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={onOpenConsent}
+                    className="text-xs font-semibold text-[#0050CC] underline cursor-pointer sm:ml-auto"
+                  >
+                    All consent settings
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
       )}
 
       {/* Recorded Information, Unknown States & Observations */}
@@ -598,46 +749,6 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
         </div>
       </section>
 
-      {canRequestReview && (
-        <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#BCD8FE] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <h2 className="text-base font-bold text-[#0F172A]">
-              Request Mock Reviewer Review
-            </h2>
-            <p className="text-xs text-[#64748B] mt-1">
-              A simulated reviewer role will review this synthetic draft. This does not represent verified clinical care.
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={() => void handleRequestReview()}
-            className="btn-pill-primary w-full sm:w-auto px-7 py-3 rounded-full text-xs font-bold text-white shadow-md cursor-pointer whitespace-nowrap disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            <span>{submitting ? 'Sending...' : 'Request Mock Review'}</span>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </button>
-        </section>
-      )}
-
-      {report.review_status === 'NOT_SENT' && !reviewGranted && (
-        <div className="rounded-2xl bg-white border border-[#E2ECF8] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm text-[#0F172A] shadow-xs">
-          <span>
-            Reviewer access was not consented to. Return to consent settings to enable this optional step.
-          </span>
-          {onOpenConsent && (
-            <button
-              type="button"
-              onClick={onOpenConsent}
-              className="btn-pill-secondary px-5 py-2.5 rounded-full text-xs font-semibold cursor-pointer whitespace-nowrap"
-            >
-              Open Consent Settings
-            </button>
-          )}
-        </div>
-      )}
       </div>
 
       {showPrintView && (
