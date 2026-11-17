@@ -21,15 +21,14 @@ interface ConsentScreenProps {
   onConsentComplete: (route: string) => void;
 }
 
-const SCOPE_DISPLAY_CONFIG: Record<
-  string,
-  {
-    title: string;
-    subtitle: string;
-    renderIcon: () => React.ReactNode;
-    required?: boolean;
-  }
-> = {
+interface ScopeDisplayMeta {
+  title: string;
+  subtitle: string;
+  renderIcon: () => React.ReactNode;
+  required?: boolean;
+}
+
+const SCOPE_DISPLAY_CONFIG: Record<string, ScopeDisplayMeta> = {
   assessment: {
     title: 'Health Assessment & Safety',
     subtitle:
@@ -525,9 +524,10 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
             const isEnabled = Boolean(summary.decisions[scopeItem.scope]);
             const isChildScope = scopeItem.scope !== 'assessment';
             const isLocked = isChildScope && !isAssessmentEnabled;
-            const meta = SCOPE_DISPLAY_CONFIG[scopeItem.scope] || {
+            const meta: ScopeDisplayMeta = SCOPE_DISPLAY_CONFIG[scopeItem.scope] || {
               title: scopeItem.scope.replace(/_/g, ' '),
               subtitle: scopeItem.used_for,
+              required: false,
               renderIcon: () => (
                 <svg className="w-5 h-5 text-[#0066EE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
