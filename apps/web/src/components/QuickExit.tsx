@@ -17,8 +17,14 @@ export const QuickExit: React.FC<QuickExitProps> = ({
       /* Storage can be unavailable in restricted browser modes. */
     }
 
-    // Clear the rendered page and in-memory form/upload state before any network request.
+    // Clear the rendered page and in-memory form/upload/print state before any network request.
     clearPendingUploadFile();
+    try {
+      window.dispatchEvent(new CustomEvent('sanad:quick-exit'));
+      document.title = 'Sanad';
+    } catch {
+      /* Ignore event dispatch errors in restricted environments. */
+    }
     document.getElementById('root')?.replaceChildren();
 
     const appKeys = [

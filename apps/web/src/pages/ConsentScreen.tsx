@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   api,
   clearPendingUploadFile,
@@ -7,6 +7,14 @@ import {
   type ConsentCatalogue,
   type ConsentScope,
 } from '../api/client';
+import { UrgentLink } from '../components/UrgentLink';
+import {
+  createDefaultConsentDecisions,
+  describeConsentSummary,
+  mapConsentErrorToUserMessage,
+  normalizeConsentDecisions,
+  PLAIN_CONNECTION_ERROR,
+} from './summaryModel';
 
 interface ConsentScreenProps {
   caseId: string;
@@ -34,7 +42,7 @@ const SCOPE_DISPLAY_CONFIG: Record<
     required: true,
   },
   clinician_review: {
-    title: 'Specialist Review (Simulated)',
+    title: 'Specialist Review (Simulated · Mock)',
     subtitle:
       'Allows a simulated healthcare reviewer to check your draft assessment and provide feedback.',
     renderIcon: () => (
@@ -44,9 +52,9 @@ const SCOPE_DISPLAY_CONFIG: Record<
     ),
   },
   provider_share: {
-    title: 'Care Referral & Booking (Simulated)',
+    title: 'Care Referral & Booking (Simulated · Mock)',
     subtitle:
-      'Prepares a referral summary for partner facilities if you wish to explore follow-up medical care.',
+      'Prepares a mock referral summary for simulated partner facilities if you wish to explore follow-up care.',
     renderIcon: () => (
       <svg className="w-5 h-5 text-[#0066EE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -61,7 +69,9 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
 }) => {
   const [scopesConfig, setScopesConfig] = useState<ConsentScope[]>([]);
   const [consentCatalogue, setConsentCatalogue] = useState<ConsentCatalogue | null>(null);
-  const [selectedScopes, setSelectedScopes] = useState<Record<string, boolean>>({});
+  const [selectedScopes, setSelectedScopes] = useState<Record<string, boolean>>(() =>
+    createDefaultConsentDecisions('assessment_only'),
+  );
   const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
   const [showInactive, setShowInactive] = useState(false);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
@@ -69,8 +79,54 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [loadingCopy, setLoadingCopy] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState(false);
 
-  const isUploadMode = sessionStorage.getItem('sanad_case_start_mode') === 'UPLOAD';
+  const assessmentBtnRef = useRef<HTMLButtonElement | null>(null);
+  const educationBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const isUploadMode =
+    typeof sessionStorage !== 'undefined' &&
+    sessionStorage.getItem('sanad_case_start_mode') === 'UPLOAD';
+
+  const fetchConsentData = useCallback(async () => {
+    try {
+      const [catalogue, current] = await Promise.all([
+        api.getCurrentConsent(),
+        api.getCaseConsent(caseId),
+      ]);
+      setConsentCatalogue(catalogue);
+      setScopesConfig(catalogue.scopes);
+      setError(null);
+      setConnectionError(false);
+
+      const grantValues = Object.values(current.scopes);
+      const hasPriorDecision = grantValues.some(
+        g => g.granted || g.captured_at !== null || g.revoked_at !== null,
+      );
+      if (hasPriorDecision) {
+        const fromServer = Object.fromEntries(
+          Object.entries(current.scopes).map(([key, value]) => [key, value.granted]),
+        );
+        setSelectedScopes(normalizeConsentDecisions(fromServer, catalogue.scopes));
+      } else {
+        setSelectedScopes(prev => normalizeConsentDecisions(prev, catalogue.scopes));
+      }
+    } catch (err: unknown) {
+      const mapped = mapConsentErrorToUserMessage(err);
+      console.warn(mapped.errorCode);
+      setError(mapped.userMessage);
+      setConnectionError(true);
+    } finally {
+      setLoadingCopy(false);
+    }
+  }, [caseId]);
+
+  const handleTryAgain = () => {
+    setLoadingCopy(true);
+    setError(null);
+    setConnectionError(false);
+    void fetchConsentData();
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -79,14 +135,28 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         if (!mounted) return;
         setConsentCatalogue(catalogue);
         setScopesConfig(catalogue.scopes);
-        setSelectedScopes(
-          Object.fromEntries(
-            Object.entries(current.scopes).map(([key, value]) => [key, value.granted]),
-          ),
+        setError(null);
+        setConnectionError(false);
+
+        const grantValues = Object.values(current.scopes);
+        const hasPriorDecision = grantValues.some(
+          g => g.granted || g.captured_at !== null || g.revoked_at !== null,
         );
+        if (hasPriorDecision) {
+          const fromServer = Object.fromEntries(
+            Object.entries(current.scopes).map(([key, value]) => [key, value.granted]),
+          );
+          setSelectedScopes(normalizeConsentDecisions(fromServer, catalogue.scopes));
+        } else {
+          setSelectedScopes(prev => normalizeConsentDecisions(prev, catalogue.scopes));
+        }
       })
-      .catch((err: Error) => {
-        if (mounted) setError(err.message || 'Consent information is unavailable.');
+      .catch((err: unknown) => {
+        if (!mounted) return;
+        const mapped = mapConsentErrorToUserMessage(err);
+        console.warn(mapped.errorCode);
+        setError(mapped.userMessage);
+        setConnectionError(true);
       })
       .finally(() => {
         if (mounted) setLoadingCopy(false);
@@ -104,42 +174,54 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
       const willEnable = !prev[scopeName];
 
       if (scopeName === 'assessment' && !willEnable) {
-        // Toggling assessment off: automatically turn off all dependent scopes
-        const next: Record<string, boolean> = {};
-        for (const k of Object.keys(prev)) next[k] = false;
-        setStatusNotice('Turned off optional review and referral because health assessment was disabled.');
-        return next;
+        setStatusNotice(
+          'Turned off optional review and referral because health assessment was disabled.',
+        );
+        return createDefaultConsentDecisions('education');
       }
 
       if (scopeName !== 'assessment' && willEnable && !prev.assessment) {
-        // Explicit consent: do NOT auto-enable assessment without user's explicit action
-        setStatusNotice('Please enable Health Assessment first before selecting this optional service.');
+        setStatusNotice(
+          'Please enable Health Assessment first before selecting this optional service.',
+        );
         return prev;
       }
 
-      return {
-        ...prev,
-        [scopeName]: willEnable,
-      };
+      return normalizeConsentDecisions(
+        {
+          ...prev,
+          [scopeName]: willEnable,
+        },
+        scopesConfig,
+      );
     });
   };
 
   const applyPreset = (preset: 'assessment_only' | 'education') => {
-    setError(null);
-    if (preset === 'assessment_only') {
-      setSelectedScopes({
-        assessment: true,
-        clinician_review: false,
-        provider_share: false,
-      });
-      setStatusNotice('Enabled private health assessment. Optional sharing permissions remain disabled by default.');
-    } else {
-      setSelectedScopes({
-        assessment: false,
-        clinician_review: false,
-        provider_share: false,
-      });
-      setStatusNotice('All permissions disabled. You will proceed to general health guides only.');
+    setStatusNotice(
+      preset === 'assessment_only'
+        ? 'Enabled private health assessment. Optional sharing permissions remain off by default.'
+        : 'All permissions turned off. You will proceed to general health education only.',
+    );
+    setSelectedScopes(
+      normalizeConsentDecisions(createDefaultConsentDecisions(preset), scopesConfig),
+    );
+  };
+
+  const handlePresetKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentPreset: 'assessment_only' | 'education',
+  ) => {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      event.preventDefault();
+      const nextPreset =
+        currentPreset === 'assessment_only' ? 'education' : 'assessment_only';
+      applyPreset(nextPreset);
+      if (nextPreset === 'assessment_only') {
+        assessmentBtnRef.current?.focus();
+      } else {
+        educationBtnRef.current?.focus();
+      }
     }
   };
 
@@ -150,29 +232,72 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
     }));
   };
 
-  const handleAgree = async () => {
+  const handleDeclineToEducation = async () => {
     setLoading(true);
     setError(null);
     setStatusNotice(null);
     try {
-      if (!consentCatalogue) {
-        throw new Error('Consent configuration is unavailable. Please refresh the page.');
+      if (consentCatalogue && !connectionError) {
+        const allDeclined = normalizeConsentDecisions(
+          createDefaultConsentDecisions('education'),
+          scopesConfig,
+        );
+        const result = await api.updateCaseConsent(
+          caseId,
+          consentCatalogue.consent_version,
+          allDeclined,
+        );
+        onConsentComplete(result.state?.route || '/education');
+        return;
       }
-      const startMode = sessionStorage.getItem('sanad_case_start_mode');
-      if (selectedScopes.assessment && startMode === 'UPLOAD' && !uploadFile) {
-        throw new Error('Please select a synthetic JSON profile file to upload before continuing.');
-      }
+    } catch {
+      console.warn('SANAD_ERR_EDUCATION_FALLBACK');
+    } finally {
+      setLoading(false);
+    }
+    // General education records no health answers, so it stays reachable when the API is down.
+    onConsentComplete('/education');
+  };
 
+  const handlePrimaryAction = async () => {
+    const decisions = normalizeConsentDecisions(selectedScopes, scopesConfig);
+
+    // When "Education only" is selected, proceed to general education (even if API is unreachable).
+    if (!decisions.assessment) {
+      await handleDeclineToEducation();
+      return;
+    }
+
+    // Assessment requires saving consent on the server first.
+    if (connectionError || !consentCatalogue) {
+      setError(PLAIN_CONNECTION_ERROR);
+      setConnectionError(true);
+      return;
+    }
+
+    if (isUploadMode && !uploadFile) {
+      setError('Please select a synthetic JSON profile file to upload before continuing.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setStatusNotice(null);
+    try {
       const result = await api.updateCaseConsent(
         caseId,
         consentCatalogue.consent_version,
-        selectedScopes,
+        decisions,
       );
 
       let route =
-        result.state?.route || (selectedScopes.assessment ? '/safety' : '/education');
+        result.state?.route || (decisions.assessment ? '/safety' : '/education');
 
-      if (selectedScopes.assessment && result.state?.allowed_actions.includes('LOAD_PROFILE')) {
+      if (decisions.assessment && result.state?.allowed_actions.includes('LOAD_PROFILE')) {
+        const startMode =
+          typeof sessionStorage !== 'undefined'
+            ? sessionStorage.getItem('sanad_case_start_mode')
+            : null;
         if (startMode === 'SAMPLE') {
           const profileState = await api.applySampleProfile(caseId);
           route = profileState.route;
@@ -185,32 +310,12 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
 
       onConsentComplete(route);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to record consent. Please retry.',
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDecline = async () => {
-    setLoading(true);
-    setError(null);
-    setStatusNotice(null);
-    try {
-      if (!consentCatalogue) throw new Error('Consent configuration is unavailable.');
-      const allDeclined: Record<string, boolean> = {};
-      for (const s of scopesConfig) allDeclined[s.scope] = false;
-      const result = await api.updateCaseConsent(
-        caseId,
-        consentCatalogue.consent_version,
-        allDeclined,
-      );
-      onConsentComplete(result.state?.route || '/education');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Could not decline consent.');
+      const mapped = mapConsentErrorToUserMessage(err);
+      console.warn(mapped.errorCode);
+      setError(mapped.userMessage);
+      if (mapped.isConnectionError) {
+        setConnectionError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -218,26 +323,40 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
 
   const activeScopes = scopesConfig.filter(s => s.used_in_this_flow !== false);
   const inactiveScopes = scopesConfig.filter(s => s.used_in_this_flow === false);
-  const isAssessmentEnabled = !!selectedScopes.assessment;
+  const summary = describeConsentSummary(selectedScopes, scopesConfig);
+  const isAssessmentEnabled = Boolean(summary.decisions.assessment);
+
+  const isAssessmentBlockedByConnection =
+    isAssessmentEnabled && (loadingCopy || connectionError || !consentCatalogue);
+  const isAssessmentBlockedByUpload =
+    isAssessmentEnabled && isUploadMode && !uploadFile;
+  const isPrimaryDisabled =
+    loading || isAssessmentBlockedByConnection || isAssessmentBlockedByUpload;
+
+  const primaryDisabledReason = isAssessmentBlockedByConnection
+    ? 'Waiting for the connection'
+    : isAssessmentBlockedByUpload
+    ? 'Select a synthetic profile JSON file above to continue'
+    : null;
 
   return (
     <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-6 sm:py-10">
       <div className="medical-canvas p-6 sm:p-10 lg:p-12">
-        {/* Header */}
-        <div className="mb-8 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        {/* Header — no stock photo or broken image */}
+        <div className="mb-8 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] tracking-tight">
               Privacy & Information Boundaries
             </h1>
             <p className="text-[#4A6588] text-sm sm:text-base leading-relaxed max-w-2xl">
-              Choose exactly how your session information is used. You remain in full control: all optional permissions start disabled, no real personal identifiers (name, phone, or national ID) are ever recorded, and data is only processed for this private session.
+              Choose how your information is used in this session. Optional sharing permissions
+              start off by default, and Sanad does not ask for your name, phone number, or national
+              ID. Synthetic data only.
             </p>
           </div>
-          <img
-            src="/assets/images/real_patient_peace_of_mind.jpg"
-            alt="Confidential Patient Session"
-            className="w-24 h-24 rounded-2xl object-cover border-2 border-[#BCD8FE] shadow-sm shrink-0 hidden sm:block"
-          />
+          <div className="flex items-center gap-2 shrink-0">
+            <UrgentLink />
+          </div>
         </div>
 
         {loadingCopy && (
@@ -246,28 +365,33 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
               <div className="spinner spinner-sm" />
               <span>Loading privacy settings & consent scopes…</span>
             </div>
-            {[1, 2, 3].map(i => (
-              <div key={i} className="p-4 sm:p-5 rounded-2xl border border-[#E2ECF8] bg-white space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl skeleton shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="skeleton h-4 w-1/3" />
-                    <div className="skeleton h-3 w-3/4" />
-                  </div>
-                  <div className="w-12 h-6 rounded-full skeleton shrink-0" />
-                </div>
-              </div>
-            ))}
           </div>
         )}
 
-        {/* Status or Error Notifications */}
+        {/* Friendly Error Alert with Try Again & Urgent Help */}
         {error && (
           <div
             role="alert"
-            className="mb-6 p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-medium"
+            data-testid="consent-error-alert"
+            className="mb-6 p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#B42318] text-sm font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3"
           >
-            {error}
+            <span>{error}</span>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="button"
+                data-testid="consent-try-again"
+                onClick={handleTryAgain}
+                className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#D92D20] text-white hover:bg-[#B42318] transition-colors cursor-pointer"
+              >
+                Try again
+              </button>
+              <a
+                href="/urgent.html"
+                className="px-3.5 py-1.5 rounded-full text-xs font-bold text-[#D92D20] bg-white border border-[#FECDCA] hover:bg-[#FEE4E2] no-underline"
+              >
+                Urgent Help
+              </a>
+            </div>
           </div>
         )}
 
@@ -283,28 +407,79 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
           </div>
         )}
 
-        {/* Quick Presets */}
-        <div className="mb-6 p-4 rounded-2xl bg-[#F8FAFD] border border-[#E2ECF8]">
+        {/* Quick Setup Options + Plain-Language Scope Breakdown */}
+        <div className="mb-6 p-5 rounded-2xl bg-[#F8FAFD] border border-[#E2ECF8] space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span className="text-xs font-semibold text-[#072254]">
               Quick Setup Options:
             </span>
-            <div className="flex flex-wrap items-center gap-2">
+            <div
+              role="group"
+              aria-label="Quick Setup Options"
+              className="flex flex-wrap items-center gap-2.5"
+            >
               <button
+                ref={assessmentBtnRef}
                 type="button"
+                data-testid="preset-health-assessment"
+                aria-pressed={isAssessmentEnabled}
                 onClick={() => applyPreset('assessment_only')}
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#0066EE] text-white hover:bg-[#0055CC] transition-colors shadow-xs cursor-pointer active:scale-[0.98]"
+                onKeyDown={e => handlePresetKeyDown(e, 'assessment_only')}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
+                  isAssessmentEnabled
+                    ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
+                    : 'bg-white text-[#072254] border-[#CBD5E1] hover:bg-[#F1F5F9]'
+                }`}
               >
-                Health Assessment (Essential)
+                {isAssessmentEnabled && <span aria-hidden="true">✓</span>}
+                <span>Health Assessment (Essential)</span>
               </button>
               <button
+                ref={educationBtnRef}
                 type="button"
+                data-testid="preset-education-only"
+                aria-pressed={!isAssessmentEnabled}
                 onClick={() => applyPreset('education')}
-                className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-[#4A6588] border border-[#E2ECF8] hover:bg-[#F8FAFD] transition-colors cursor-pointer active:scale-[0.98]"
+                onKeyDown={e => handlePresetKeyDown(e, 'education')}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
+                  !isAssessmentEnabled
+                    ? 'bg-[#0066EE] text-white border-[#0066EE] shadow-xs'
+                    : 'bg-white text-[#072254] border-[#CBD5E1] hover:bg-[#F1F5F9]'
+                }`}
               >
-                Education Only (All Off)
+                {!isAssessmentEnabled && <span aria-hidden="true">✓</span>}
+                <span>Education only (All Off)</span>
               </button>
             </div>
+          </div>
+
+          {/* Plain-words list of what is on and off for the current choice */}
+          <div
+            data-testid="consent-scope-summary"
+            className="pt-3 border-t border-[#E2ECF8] text-xs text-[#334155] space-y-1.5"
+          >
+            <p>
+              <strong className="text-[#072254]">Turned on for this choice:</strong>{' '}
+              {summary.enabledScopes.length > 0
+                ? summary.enabledScopes.map(item => item.label).join(', ')
+                : 'None — general education only (no health answers recorded)'}
+            </p>
+            <p>
+              <strong className="text-[#072254]">Turned off by default:</strong>{' '}
+              {summary.disabledScopes.map(item => item.label).join(', ')}
+            </p>
+            <ul className="sr-only" aria-label="Consent scope states">
+              {Object.entries(summary.decisions).map(([scopeKey, enabled]) => (
+                <li
+                  key={scopeKey}
+                  data-testid={`scope-state-${scopeKey}`}
+                  data-scope={scopeKey}
+                  data-enabled={String(enabled)}
+                >
+                  {scopeKey}: {enabled ? 'on' : 'off'}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
@@ -347,7 +522,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         {/* Active Scopes Cards */}
         <div className="space-y-3.5 mb-8">
           {activeScopes.map(scopeItem => {
-            const isEnabled = !!selectedScopes[scopeItem.scope];
+            const isEnabled = Boolean(summary.decisions[scopeItem.scope]);
             const isChildScope = scopeItem.scope !== 'assessment';
             const isLocked = isChildScope && !isAssessmentEnabled;
             const meta = SCOPE_DISPLAY_CONFIG[scopeItem.scope] || {
@@ -359,7 +534,7 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
                 </svg>
               ),
             };
-            const isDetailsOpen = !!expandedDetails[scopeItem.scope];
+            const isDetailsOpen = Boolean(expandedDetails[scopeItem.scope]);
 
             return (
               <div
@@ -500,39 +675,53 @@ export const ConsentScreen: React.FC<ConsentScreenProps> = ({
         )}
 
         {/* Action Controls */}
-        <div className="pt-6 border-t border-[#E2ECF8] flex flex-col sm:flex-row items-center gap-3">
-          <button
-            type="button"
-            disabled={loading || loadingCopy || !consentCatalogue}
-            onClick={() => void handleAgree()}
-            className="btn-pill-primary w-full sm:flex-1 py-4 px-6 text-sm disabled:opacity-50 cursor-pointer shadow-md"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2 justify-center">
-                <span className="spinner spinner-sm spinner-white" />
-                <span>Saving Preferences…</span>
-              </span>
-            ) : isAssessmentEnabled ? (
-              'Save Preferences & Continue →'
-            ) : (
-              'Continue to Health Education →'
-            )}
-          </button>
+        <div className="pt-6 border-t border-[#E2ECF8] flex flex-col items-center gap-3">
+          <div className="w-full flex flex-col sm:flex-row items-center gap-3">
+            <button
+              type="button"
+              data-testid="consent-primary-button"
+              disabled={isPrimaryDisabled}
+              onClick={() => void handlePrimaryAction()}
+              className={`w-full sm:flex-1 py-4 px-6 rounded-full text-sm font-bold transition-colors ${
+                isPrimaryDisabled
+                  ? 'bg-[#CBD5E1] text-[#475467] cursor-not-allowed'
+                  : 'bg-[#0066EE] text-white hover:bg-[#0055CC] shadow-md cursor-pointer'
+              }`}
+            >
+              {loading
+                ? 'Saving preferences…'
+                : isAssessmentEnabled
+                ? 'Continue to health assessment'
+                : 'Continue to general education'}
+            </button>
 
-          <button
-            type="button"
-            disabled={loading || loadingCopy || !consentCatalogue}
-            onClick={() => void handleDecline()}
-            className="btn-pill-secondary w-full sm:w-auto py-3.5 px-6 text-xs cursor-pointer"
-          >
-            Skip to General Education
-          </button>
+            {isAssessmentEnabled && (
+              <button
+                type="button"
+                data-testid="skip-to-education"
+                disabled={loading}
+                onClick={() => void handleDeclineToEducation()}
+                className="py-3 px-4 text-xs font-semibold text-[#0050CC] hover:text-[#003E99] underline cursor-pointer whitespace-nowrap"
+              >
+                Skip to general education
+              </button>
+            )}
+          </div>
+
+          {primaryDisabledReason && (
+            <p
+              data-testid="primary-button-disabled-reason"
+              className="text-xs font-medium text-[#B54708]"
+            >
+              {primaryDisabledReason}
+            </p>
+          )}
         </div>
 
         <p className="text-center text-[11px] text-[#829AB8] mt-4">
           {isAssessmentEnabled
-            ? 'Proceeding to Safety Check. All responses are kept private to this session.'
-            : 'Proceeding to General Guides without recording any health answers.'}
+            ? 'Proceeding to Safety Check. Your answers stay in this session.'
+            : 'Proceeding to General Education without recording any health answers.'}
         </p>
       </div>
     </div>

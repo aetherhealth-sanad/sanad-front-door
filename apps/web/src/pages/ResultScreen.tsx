@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { LoadingView } from '../components/LoadingView';
 import {
   api,
@@ -6,6 +7,7 @@ import {
   type CaseState,
   type ReportData,
 } from '../api/client';
+import { buildReadableSummary } from './summaryModel';
 
 interface ResultScreenProps {
   caseId: string;
@@ -47,9 +49,26 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   const [caseState, setCaseState] = useState<CaseState | null>(null);
   const [loading, setLoading] = useState(true);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [showPrintView, setShowPrintView] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [updatingEvidence, setUpdatingEvidence] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleQuickExit = () => {
+      setShowPrintView(false);
+      setReport(null);
+      try {
+        document.title = 'Sanad';
+      } catch {
+        /* Ignore title errors in restricted environments. */
+      }
+    };
+    window.addEventListener('sanad:quick-exit', handleQuickExit);
+    return () => {
+      window.removeEventListener('sanad:quick-exit', handleQuickExit);
+    };
+  }, []);
 
   const loadReport = async () => {
     setLoading(true);
@@ -200,8 +219,42 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
     ...report.unknown.map(u => u.concept_code),
   ]);
 
+  const readableSummary = buildReadableSummary(report);
+
+  const handleOpenPrintSummary = () => {
+    setSummaryError(null);
+    const previousTitle = typeof document !== 'undefined' ? document.title : 'Sanad';
+    try {
+      if (typeof document !== 'undefined') {
+        document.title = `sanad-summary-${readableSummary.sessionDate}`;
+      }
+      flushSync(() => {
+        setShowPrintView(true);
+      });
+    } catch {
+      setShowPrintView(true);
+    }
+    if (typeof window !== 'undefined' && typeof window.print === 'function') {
+      try {
+        window.print();
+      } finally {
+        if (typeof document !== 'undefined') {
+          document.title = previousTitle || 'Sanad';
+        }
+      }
+    }
+  };
+
+  const handleClosePrintSummary = () => {
+    setShowPrintView(false);
+    if (typeof document !== 'undefined') {
+      document.title = 'Sanad';
+    }
+  };
+
   return (
     <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 py-8 sm:py-12 space-y-8">
+      <div className="no-print space-y-8">
       <div className="mb-6 pb-6 border-b border-[#E2ECF8] flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -505,28 +558,44 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
         </div>
       )}
 
-      <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h2 className="text-base font-bold text-[#0F172A]">Keep a summary for your next visit</h2>
-          <p className="text-xs text-[#64748B] mt-1">
-            The file holds your answers to these health questions. Sanad does not keep a copy, so
-            store it somewhere private. Next time, start with "Upload profile" to skip repeating
-            them; you can still change any answer.
-          </p>
-          {summaryError && <p className="text-xs text-[#B54708] mt-1">{summaryError}</p>}
+      <section className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#E2ECF8] shadow-md space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <h2 className="text-base font-bold text-[#0F172A]">Keep a summary for your next visit</h2>
+            <p className="text-xs text-[#64748B] leading-relaxed">
+              Open a printable summary you can read, print, or save as a PDF to show a doctor.
+              Sanad builds this summary in your browser and does not store a server copy.
+            </p>
+            {summaryError && <p className="text-xs text-[#B54708] mt-1">{summaryError}</p>}
+          </div>
+          <button
+            type="button"
+            data-testid="download-summary-pdf"
+            onClick={handleOpenPrintSummary}
+            className="btn-pill-primary w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold text-white shadow-md cursor-pointer whitespace-nowrap"
+          >
+            Download my summary (PDF)
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setSummaryError(null);
-            api.downloadSummary(caseId).catch(err =>
-              setSummaryError(err instanceof Error ? err.message : 'Download failed.'),
-            );
-          }}
-          className="w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold border border-[#BCD8FE] text-[#0050CC] bg-white cursor-pointer whitespace-nowrap"
-        >
-          Download my summary
-        </button>
+
+        <div className="pt-4 border-t border-[#E2ECF8] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <p className="text-[#64748B]">
+            For &ldquo;Upload profile&rdquo; on a future visit — this technical file is not meant to be read.
+          </p>
+          <button
+            type="button"
+            data-testid="download-summary-json"
+            onClick={() => {
+              setSummaryError(null);
+              api.downloadSummary(caseId).catch(err =>
+                setSummaryError(err instanceof Error ? err.message : 'Download failed.'),
+              );
+            }}
+            className="text-xs font-semibold text-[#0050CC] hover:text-[#003E99] underline cursor-pointer text-left sm:text-right whitespace-nowrap"
+          >
+            Save my answers to reuse next time (.json)
+          </button>
+        </div>
       </section>
 
       {canRequestReview && (
@@ -568,6 +637,140 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
             </button>
           )}
         </div>
+      )}
+      </div>
+
+      {showPrintView && (
+        <article
+          data-testid="printable-summary"
+          aria-label="Sanad screening summary"
+          className="sanad-print-summary bg-white text-[#0F172A] p-6 sm:p-10 rounded-2xl border border-[#CBD5E1] shadow-lg space-y-6"
+        >
+          <div className="no-print flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#E2ECF8]">
+            <span className="text-xs font-semibold text-[#475467]">
+              Print-friendly preview · File name: <code className="font-mono">{readableSummary.pdfFileName}</code>
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleOpenPrintSummary}
+                className="btn-pill-primary px-4 py-2 rounded-full text-xs font-bold text-white cursor-pointer"
+              >
+                Print / Save as PDF
+              </button>
+              <button
+                type="button"
+                data-testid="close-print-summary"
+                onClick={handleClosePrintSummary}
+                className="btn-pill-secondary px-4 py-2 rounded-full text-xs font-semibold cursor-pointer"
+              >
+                Close summary
+              </button>
+            </div>
+          </div>
+
+          <header className="sanad-print-section pb-4 border-b border-[#CBD5E1] space-y-1">
+            <h1 className="text-2xl font-extrabold text-[#0F172A]">
+              {readableSummary.title}
+            </h1>
+            <p className="text-sm text-[#334155]">
+              Session date: {readableSummary.sessionDate}
+            </p>
+            <p className="text-sm font-bold text-[#0F172A]">
+              {readableSummary.screeningNotice}
+            </p>
+            <p className="text-xs font-semibold text-[#475467]">
+              {readableSummary.prototypeNotice}
+            </p>
+          </header>
+
+          <section className="sanad-print-section space-y-3">
+            <h2 className="text-lg font-bold text-[#0F172A]">What you told us</h2>
+            {readableSummary.whatYouToldUs.length === 0 ? (
+              <p className="text-sm text-[#334155]">No health questions were answered in this session.</p>
+            ) : (
+              <ul className="space-y-2 text-sm text-[#0F172A]">
+                {readableSummary.whatYouToldUs.map((item, idx) => (
+                  <li key={idx} className="py-1.5 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                    <span className="font-semibold">{item.question}</span>
+                    <span className="text-[#1E293B]">
+                      <strong>{item.answer}</strong>{' '}
+                      <span className="text-xs text-[#475467]">({item.status})</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {readableSummary.observations.length > 0 && (
+              <div className="pt-2 space-y-2">
+                <h3 className="text-sm font-bold text-[#0F172A]">
+                  Reported lab values (Mock)
+                </h3>
+                <ul className="space-y-1.5 text-sm text-[#0F172A]">
+                  {readableSummary.observations.map((obs, idx) => (
+                    <li key={idx} className="py-1 border-b border-[#E2E8F0]">
+                      <span className="font-semibold">{obs.label}:</span>{' '}
+                      <strong>{obs.valueText}</strong> —{' '}
+                      <span className="text-xs text-[#475467]">{obs.statusText}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+
+          <section className="sanad-print-section space-y-2">
+            <h2 className="text-lg font-bold text-[#0F172A]">
+              What your numbers mean, and what is unclear
+            </h2>
+            {readableSummary.whatNumbersMeanAndUnclear.map((line, idx) => (
+              <p key={idx} className="text-sm text-[#1E293B] leading-relaxed">
+                {line}
+              </p>
+            ))}
+          </section>
+
+          <section className="sanad-print-section space-y-2">
+            <h2 className="text-lg font-bold text-[#0F172A]">Your allowed next step</h2>
+            <p className="text-sm font-semibold text-[#0F172A] leading-relaxed">
+              {readableSummary.allowedNextStep}
+            </p>
+          </section>
+
+          <section className="sanad-print-section space-y-2">
+            <h2 className="text-lg font-bold text-[#0F172A]">Limits and sources</h2>
+            {readableSummary.limits.length > 0 && (
+              <ul className="list-disc pl-5 space-y-1 text-sm text-[#1E293B]">
+                {readableSummary.limits.map((lim, idx) => (
+                  <li key={idx}>{lim}</li>
+                ))}
+              </ul>
+            )}
+            <div className="pt-1 space-y-1">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-[#475467]">
+                Cited sources
+              </h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-[#1E293B]">
+                {readableSummary.sources.map((src, idx) => (
+                  <li key={idx}>{src}</li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          <footer className="sanad-print-section pt-4 border-t border-[#CBD5E1] text-sm text-[#0F172A] space-y-1">
+            <p className="font-bold text-[#B42318]">
+              {readableSummary.emergencyText}
+            </p>
+            <p className="text-xs text-[#334155]">
+              Emergency guidance (Mock):{' '}
+              <a href={readableSummary.emergencyHref} className="underline text-[#0050CC]">
+                {readableSummary.emergencyHref}
+              </a>
+            </p>
+          </footer>
+        </article>
       )}
     </div>
   );
