@@ -1,13 +1,5 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import { MockBadge } from '../components/MockBadge';
-import { SimulationBanner } from '../components/SimulationBanner';
-import {
-  facilityNextEvents,
-  MOCK_APPOINTMENT_LABEL,
-  MOCK_FACILITY_BANNER,
-  type FacilityEventStatus,
-} from './reviewFlowModel';
 
 type ReferralItem = {
   referral_id: string;
@@ -31,14 +23,16 @@ type ReferralDetail = {
     event_id: string;
     mock_status: string;
     reason_code: string | null;
-    mock_appointment: { starts_at: string; label: string } | null;
     occurred_at: string;
-    verification_source?: string;
-    verification_status?: string;
     is_mock: boolean;
   }>;
 };
-type EventStatus = FacilityEventStatus;
+type EventStatus =
+  | 'MOCK_RECEIVED'
+  | 'MOCK_ACCEPTED'
+  | 'MOCK_REJECTED'
+  | 'MOCK_APPOINTMENT_SCHEDULED'
+  | 'MOCK_CLOSED';
 type RejectReason =
   | 'NO_CAPACITY'
   | 'SERVICE_NOT_OFFERED'
@@ -67,6 +61,17 @@ export const MockFacilityPortal: React.FC = () => {
   const [appointmentTime, setAppointmentTime] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const expired = () => {
+      setAuthenticated(false);
+      setError('Staff session expired. Please sign in again.');
+      setReferrals([]);
+      setDetail(null);
+    };
+    window.addEventListener('sanad-staff-session-expired', expired);
+    return () => window.removeEventListener('sanad-staff-session-expired', expired);
+  }, []);
   const [notice, setNotice] = useState<string | null>(null);
 
   const loadReferrals = async () => {
@@ -173,7 +178,29 @@ export const MockFacilityPortal: React.FC = () => {
     }
   };
 
-  const nextEvents = () => facilityNextEvents(detail?.mock_status);
+  const nextEvents = (): Array<{ status: EventStatus; label: string }> => {
+    switch (detail?.mock_status) {
+      case 'MOCK_SENT':
+        return [{ status: 'MOCK_RECEIVED', label: 'Record Mock receipt' }];
+      case 'MOCK_RECEIVED':
+        return [
+          { status: 'MOCK_ACCEPTED', label: 'Accept Mock referral' },
+          { status: 'MOCK_REJECTED', label: 'Reject Mock referral' },
+        ];
+      case 'MOCK_ACCEPTED':
+        return [
+          {
+            status: 'MOCK_APPOINTMENT_SCHEDULED',
+            label: 'Schedule Mock appointment',
+          },
+          { status: 'MOCK_CLOSED', label: 'Close Mock workflow' },
+        ];
+      case 'MOCK_APPOINTMENT_SCHEDULED':
+        return [{ status: 'MOCK_CLOSED', label: 'Close Mock workflow' }];
+      default:
+        return [];
+    }
+  };
 
   const emitEvent = async (status: EventStatus) => {
     if (!detail) return;
@@ -212,14 +239,13 @@ export const MockFacilityPortal: React.FC = () => {
 
   if (!authenticated) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 space-y-4">
-        <SimulationBanner text={MOCK_FACILITY_BANNER} />
+      <div className="max-w-md mx-auto px-4 py-16">
         <div className="medical-card bg-white p-8 sm:p-10 rounded-3xl border border-[#E2ECF8] shadow-xl space-y-4">
           <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
-            MOCK FACILITY ACCESS
+            FACILITY ACCESS
           </span>
           <h1 className="text-2xl font-extrabold text-[#072254] mt-3">
-            Mock facility access
+            Facility access
           </h1>
           <p className="text-sm text-[#475467] leading-relaxed">
             Use the seeded demo account configured for the local API. This role changes synthetic records only.
@@ -274,10 +300,10 @@ export const MockFacilityPortal: React.FC = () => {
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 pb-6 border-b border-[#E2ECF8]">
         <div>
           <span className="text-xs font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2.5 py-0.5 rounded-full border border-[#BCD8FE]">
-            MOCK FACILITY CONSOLE
+            REFERRAL DISPATCH DESK
           </span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#072254] mt-3 tracking-tight">
-            Referral Coordination · Mock
+            Referral Coordination
           </h1>
           <p className="text-sm text-[#475467] mt-1">
             Events update synthetic referral records only. They cannot verify care completion.
@@ -300,8 +326,6 @@ export const MockFacilityPortal: React.FC = () => {
           </button>
         </div>
       </header>
-
-      <SimulationBanner text={MOCK_FACILITY_BANNER} />
 
       {error && (
         <div
@@ -332,10 +356,8 @@ export const MockFacilityPortal: React.FC = () => {
             <div className="space-y-1">
               <p className="text-sm text-[#64748B]">No Mock referral packets.</p>
               <p className="text-xs text-[#94A3B8]">
-                A packet appears after a Mock reviewer approves the case, the approved next step uses a
-                referral (primary care, specialist or priority review), and the patient allows Mock
-                sharing (<span className="font-mono">provider_share</span>) and taps &ldquo;Create Mock
-                referral&rdquo;. Use Refresh to check again.
+                A packet appears after a Mock reviewer approves the case and the patient taps
+                &ldquo;Create Mock referral&rdquo;. Use Refresh to check again.
               </p>
             </div>
           )}
@@ -373,8 +395,7 @@ export const MockFacilityPortal: React.FC = () => {
             <>
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E2ECF8] pb-4">
                 <div>
-                  <MockBadge label="MOCK REFERRAL PACKET" />
-                  <h2 className="text-xl font-bold text-[#072254] mt-2">
+                  <h2 className="text-xl font-bold text-[#072254]">
                     {detail.snapshot?.case_code ?? detail.referral_id}
                   </h2>
                   <p className="text-xs text-[#64748B] mt-0.5">
@@ -383,12 +404,6 @@ export const MockFacilityPortal: React.FC = () => {
                   </p>
                 </div>
               </div>
-
-              {!detail.snapshot && detail.mock_status === 'MOCK_WITHDRAWN' && (
-                <p className="text-xs text-[#475467]">
-                  The patient withdrew Mock sharing, so the approved summary is hidden.
-                </p>
-              )}
 
               {detail.snapshot && (
                 <div className="space-y-4">
@@ -430,15 +445,7 @@ export const MockFacilityPortal: React.FC = () => {
                       >
                         <strong className="text-[#0F172A] font-semibold">{event.mock_status}</strong> ·{' '}
                         {new Date(event.occurred_at).toLocaleString()}
-                        {event.reason_code ? ` · ${event.reason_code}` : ''} ·{' '}
-                        {event.verification_source ?? 'SIMULATED'} ·{' '}
-                        {event.verification_status ?? 'UNVERIFIED'} · Mock
-                        {event.mock_appointment && (
-                          <span className="block mt-1 text-[#0F172A]">
-                            {event.mock_appointment.label || MOCK_APPOINTMENT_LABEL}:{' '}
-                            {new Date(event.mock_appointment.starts_at).toLocaleString()}
-                          </span>
-                        )}
+                        {event.reason_code ? ` · ${event.reason_code}` : ''} · Mock
                       </li>
                     ))}
                   </ol>
@@ -454,7 +461,7 @@ export const MockFacilityPortal: React.FC = () => {
                     event => event.status === 'MOCK_APPOINTMENT_SCHEDULED',
                   ) && (
                     <label className="block text-xs font-bold text-[#0F172A]">
-                      {MOCK_APPOINTMENT_LABEL}: date and time
+                      Mock appointment date and time
                       <input
                         type="datetime-local"
                         name="appointment_time"

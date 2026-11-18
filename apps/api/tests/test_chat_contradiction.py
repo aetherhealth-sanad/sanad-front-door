@@ -196,9 +196,10 @@ def test_tc_30_5_confirming_replaces_a_chat_or_form_answer_and_keeps_another_sou
         ("PATIENT_REPORTED", "CURRENT"),
         ("SAMPLE_FIXTURE", "PAST"),
     ]
-    # Both are kept, so the field reads CONFLICTING and blocks until the user resolves it.
+    # Same value with PAST/CURRENT is unresolved temporal context, not a value conflict.
     assessed = sampled.assess().json()
-    assert assessed["gatekeeper_status"] == "CONFLICTING_DATA"
+    assert assessed["gatekeeper_status"] == "NEEDS_INFORMATION"
+    assert "Q-STEROID-USE" in assessed["blocking_question_ids"]
     assert STEROID in assessed["blocking_question_ids"]
 
 

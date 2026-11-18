@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import {
-  type QuestionItem,
+  type PatientReviewProfile,
+  type PatientReviewItem,
+  type IntakeAnswer,
   type ObservationRecord,
   type PsychosocialQuestion,
 } from '../api/client';
 
 export interface FactReviewState {
   confirmed: boolean;
-  notSure: boolean;
 }
 
 interface ReviewProfileScreenProps {
   caseId: string;
-  questions: QuestionItem[];
-  answers: Record<string, { choice: string; value?: boolean | number | string | null; temporal_status?: string | null; label: string; source?: string }>;
+  profile: PatientReviewProfile | null;
+  profileError?: string | null;
+  onRetryProfile?: () => void;
+  onCorrectAnswer: (answer: IntakeAnswer) => Promise<void>;
   observations?: ObservationRecord[];
   psychQuestions?: PsychosocialQuestion[];
   psychAnswers?: Record<string, string>;
@@ -53,8 +56,10 @@ function categorizeQuestion(questionId: string, conceptCode: string = ''): strin
 
 export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
   caseId,
-  questions,
-  answers,
+  profile,
+  profileError = null,
+  onRetryProfile,
+  onCorrectAnswer,
   observations = [],
   psychQuestions = [],
   psychAnswers = {},
@@ -67,38 +72,89 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
 }) => {
   const [factStates, setFactStates] = useState<Record<string, FactReviewState>>({});
   const [acknowledged, setAcknowledged] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [editTemporal, setEditTemporal] = useState('');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const toggleConfirm = (id: string) => {
     setFactStates(prev => ({
       ...prev,
       [id]: {
         confirmed: !prev[id]?.confirmed,
-        notSure: false,
       },
     }));
   };
 
-  const toggleNotSure = (id: string) => {
-    setFactStates(prev => ({
-      ...prev,
-      [id]: {
-        confirmed: false,
-        notSure: !prev[id]?.notSure,
-      },
-    }));
+  // The saved profile is authoritative; only the explicit versioned correction API
+  // may replace active facts. Checklist marks remain local to this screen.
+  const reviewItems = profile?.items ?? [];
+  const contextItems = reviewItems.filter(q => categorizeQuestion(q.question_id, q.concept_code) === 'context');
+  const historyItems = reviewItems.filter(q => categorizeQuestion(q.question_id, q.concept_code) === 'history');
+  const medicationItems = reviewItems.filter(q => categorizeQuestion(q.question_id, q.concept_code) === 'medications');
+  const lifestyleItems = reviewItems.filter(q => categorizeQuestion(q.question_id, q.concept_code) === 'lifestyle');
+  const conflictingQuestions = reviewItems.filter(q => q.discrepancy_kind !== 'NONE');
+
+  const factSummary = (item: PatientReviewItem) => {
+    if (!item.facts.length) return 'Not answered';
+    return item.facts.map(f => {
+      const value = f.state === 'UNKNOWN' ? 'Not sure'
+        : f.state === 'DECLINED' ? 'Prefer not to answer'
+        : String(f.value ?? 'Not recorded');
+      return `${value}${f.unit ? ` ${f.unit}` : ''}${f.temporal_status ? ` (${f.temporal_status})` : ''}`;
+    }).join(' | ');
+  };
+  const factSources = (item: PatientReviewItem) =>
+    item.facts.length ? [...new Set(item.facts.map(f => f.source_type))].join(', ') : 'Not recorded';
+
+  const saveReviewAnswer = async (answer: IntakeAnswer) => {
+    setSavingId(answer.question_id);
+    setSaveError(null);
+    try {
+      await onCorrectAnswer(answer);
+      setEditingId(null);
+      setAcknowledged(false);
+      setFactStates({});
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Could not save the correction.');
+      onRetryProfile?.();
+    } finally {
+      setSavingId(null);
+    }
   };
 
-  // Group questions into sections
-  const contextItems = questions.filter(q => categorizeQuestion(q.question_id) === 'context');
-  const historyItems = questions.filter(q => categorizeQuestion(q.question_id) === 'history');
-  const medicationItems = questions.filter(q => categorizeQuestion(q.question_id) === 'medications');
-  const lifestyleItems = questions.filter(q => categorizeQuestion(q.question_id) === 'lifestyle');
+  const saveEdited = (item: PatientReviewItem) => {
+    let value: boolean | number | string;
+    if (item.answer_type === 'BOOLEAN') value = editValue === 'true';
+    else if (item.answer_type === 'INTEGER' || item.answer_type === 'NUMBER') {
+      value = Number(editValue);
+      if (!editValue.trim() || !Number.isFinite(value)) {
+        setSaveError('Enter a valid number before saving.');
+        return;
+      }
+    } else value = editValue;
+    if (editValue === '') {
+      setSaveError('Choose or enter a value.');
+      return;
+    }
+    const temporal_status = value === true && item.temporal_options.length
+      ? (editTemporal as 'PAST' | 'CURRENT') || null : null;
+    if (value === true && item.temporal_options.length && !temporal_status) {
+      setSaveError('Select whether this is past or current.');
+      return;
+    }
+    void saveReviewAnswer({question_id: item.question_id, choice: 'ANSWERED', value,
+      temporal_status});
+  };
 
-  // Check for conflicts and blocking items
-  const conflictingQuestions = questions.filter(q => q.conflicting_values && q.conflicting_values.length > 0);
-  const unAnsweredBlocking = questions.filter(
-    q => q.blocking && (!answers[q.question_id] || answers[q.question_id].choice === 'NOT_ASKED')
-  );
+  const beginEdit = (item: PatientReviewItem) => {
+    setSaveError(null);
+    const current = item.facts[item.facts.length - 1];
+    setEditValue(current?.value == null ? '' : String(current.value));
+    setEditTemporal(current?.temporal_status ?? '');
+    setEditingId(item.question_id);
+  };
 
   const renderFactRow = (
     id: string,
@@ -107,9 +163,10 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
     sourceText: string,
     temporalStatus?: string | null,
     onEdit?: () => void,
-    isConflict?: boolean
+    isConflict?: boolean,
+    item?: PatientReviewItem
   ) => {
-    const state = factStates[id] || { confirmed: false, notSure: false };
+    const state = factStates[id] || { confirmed: false };
 
     return (
       <div
@@ -147,25 +204,21 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
                   : 'bg-white text-[#1E293B] border-[#CBD5E1] hover:border-[#0066EE] hover:bg-[#EBF3FF] hover:text-[#0050CC]'
               }`}
             >
-              {state.confirmed ? '✓ Confirmed' : 'Confirm'}
+              {state.confirmed ? '✓ Reviewed' : 'Mark reviewed'}
             </button>
 
-            <button
-              type="button"
-              onClick={() => toggleNotSure(id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-[background-color,border-color,color,box-shadow,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97] cursor-pointer ${
-                state.notSure
-                  ? 'bg-[#B54708] text-white border-[#B54708] shadow-xs'
-                  : 'bg-white text-[#64748B] border-[#CBD5E1] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              {state.notSure ? '? Not sure' : 'Not sure'}
-            </button>
+            {item && (
+              <button type="button" disabled={savingId !== null}
+                onClick={() => void saveReviewAnswer({ question_id: id, choice: 'NOT_SURE' })}
+                className="px-3.5 py-1.5 rounded-full text-xs font-semibold border bg-white text-[#B54708] border-[#CBD5E1] hover:bg-[#FFFAEB] disabled:opacity-40">
+                {savingId === id ? 'Saving…' : 'Save as Not sure'}
+              </button>
+            )}
 
             {onEdit && (
               <button
                 type="button"
-                onClick={onEdit}
+                onClick={() => item ? beginEdit(item) : onEdit?.()}
                 className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#1E293B] bg-white border border-[#CBD5E1] hover:border-[#0066EE] hover:bg-[#F8FAFC] cursor-pointer transition-[background-color,border-color,transform] duration-160 ease-[var(--ease-out)] active:scale-[0.97]"
               >
                 Edit
@@ -174,10 +227,47 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
           </div>
         </div>
 
+        {item && editingId === id && (
+          <div className="p-3 border rounded-xl bg-white space-y-2">
+            <label className="block text-xs font-semibold" htmlFor={`edit-${id}`}>Revised answer</label>
+            {item.answer_type === 'BOOLEAN' || item.answer_type === 'SINGLE_CHOICE' ? (
+              <select id={`edit-${id}`} value={editValue} onChange={e => setEditValue(e.target.value)}
+                className="block w-full p-2 border rounded-md text-sm">
+                <option value="">Select…</option>
+                {(item.options.length ? item.options : [
+                  {value: true, label: 'Yes'}, {value: false, label: 'No'},
+                ]).map(option => (
+                  <option key={String(option.value)} value={String(option.value)}>{option.label}</option>
+                ))}
+              </select>
+            ) : (
+              <input id={`edit-${id}`} type="number" value={editValue}
+                onChange={e => setEditValue(e.target.value)}
+                step={item.answer_type === 'INTEGER' ? '1' : 'any'}
+                className="block w-full p-2 border rounded-md text-sm" />
+            )}
+            {item.temporal_options.length > 0 && editValue === 'true' && (
+              <select aria-label="Time context" value={editTemporal}
+                onChange={e => setEditTemporal(e.target.value)}
+                className="block w-full p-2 border rounded-md text-sm">
+                <option value="">Select past/current…</option>
+                {item.temporal_options.map(opt => (
+                  <option key={String(opt.value)} value={String(opt.value)}>{opt.label}</option>
+                ))}
+              </select>
+            )}
+            <div className="flex gap-2">
+              <button type="button" disabled={savingId !== null} onClick={() => saveEdited(item)}
+                className="btn-pill-primary px-4 py-2 text-xs">Save revised answer</button>
+              <button type="button" onClick={() => setEditingId(null)}
+                className="btn-pill-secondary px-4 py-2 text-xs">Cancel</button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#64748B] pt-2 border-t border-[#F1F5F9]">
           <span>Source: {sourceText}</span>
           <span>•</span>
-          <span>Status: {state.confirmed ? 'Confirmed as recorded by you' : state.notSure ? 'Uncertain' : 'Unconfirmed'}</span>
+          <span>Status: {state.confirmed ? 'Reviewed on this screen' : 'Not reviewed on this screen'}</span>
           <span>•</span>
           <span>Verification: Unverified</span>
         </div>
@@ -185,6 +275,19 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
     );
   };
 
+  if (!profile) {
+    return (
+      <section role="status" className="p-6 rounded-xl bg-white border space-y-3">
+        <h2 className="font-bold">Saved profile is not available yet</h2>
+        <p className="text-sm">{profileError || 'Loading the information saved in your session…'}</p>
+        {profileError && onRetryProfile && (
+          <button type="button" className="btn-pill-secondary px-4 py-2" onClick={onRetryProfile}>
+            Retry loading profile
+          </button>
+        )}
+      </section>
+    );
+  }
   return (
     <div className="w-full space-y-6">
       {/* Title & Screen Header */}
@@ -201,8 +304,8 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
           Review My Health Profile
         </h1>
         <p className="text-sm text-[#475467] leading-relaxed">
-          Please confirm what Sanad recorded for your session before submitting for assessment processing.
-          Your confirmation verifies that Sanad captured what you meant. It is not clinical verification.
+          Review the values stored by Sanad. "Mark reviewed" is only a checklist marker;
+          only "Save revised answer" and "Save as Not sure" update the backend. Nothing here is clinical verification.
           Unknown answers are always accepted and will never be treated as negative.
         </p>
       </div>
@@ -215,19 +318,19 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
           </div>
           <p className="text-xs leading-relaxed">
             More than one answer was recorded for {conflictingQuestions.length} item(s) across your profile and questionnaire.
-            Please review each item below; your confirmed selection will resolve the record.
+            Review each item below; use Edit to submit a revised answer. A checklist mark does not resolve the discrepancy.
           </p>
         </div>
       )}
 
       {/* Missing Required Information Banner */}
-      {unAnsweredBlocking.length > 0 && (
+      {reviewItems.length > 0 && reviewItems.some(q => q.state === 'NOT_ASKED') && (
         <div className="p-5 rounded-2xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] space-y-2">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-sm">Incomplete Core Questions</span>
+            <span className="font-bold text-sm">Unanswered Profile Questions</span>
           </div>
           <p className="text-xs leading-relaxed">
-            {unAnsweredBlocking.length} core question(s) are needed for a full summary. You may still submit for a limited assessment, or return to answer them.
+Some profile questions have not been answered. The backend will determine whether more information is required; you can enter or revise answers here.
           </p>
           <button
             type="button"
@@ -249,15 +352,15 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
         ) : (
           <div className="space-y-3">
             {contextItems.map(q => {
-              const ans = answers[q.question_id];
               return renderFactRow(
                 q.question_id,
                 q.text,
-                ans ? ans.label : 'Not answered',
-                ans?.source || 'Intake questionnaire',
-                ans?.temporal_status,
+                factSummary(q),
+                factSources(q),
+                q.facts.length === 1 ? q.facts[0].temporal_status : null,
                 () => onEditQuestion(q.question_id),
-                q.conflicting_values && q.conflicting_values.length > 0
+                q.discrepancy_kind !== 'NONE',
+                q
               );
             })}
           </div>
@@ -274,15 +377,15 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
         ) : (
           <div className="space-y-3">
             {historyItems.map(q => {
-              const ans = answers[q.question_id];
               return renderFactRow(
                 q.question_id,
                 q.text,
-                ans ? ans.label : 'Not answered',
-                ans?.source || 'Intake questionnaire',
-                ans?.temporal_status,
+                factSummary(q),
+                factSources(q),
+                q.facts.length === 1 ? q.facts[0].temporal_status : null,
                 () => onEditQuestion(q.question_id),
-                q.conflicting_values && q.conflicting_values.length > 0
+                q.discrepancy_kind !== 'NONE',
+                q
               );
             })}
           </div>
@@ -299,15 +402,15 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
         ) : (
           <div className="space-y-3">
             {medicationItems.map(q => {
-              const ans = answers[q.question_id];
               return renderFactRow(
                 q.question_id,
                 q.text,
-                ans ? ans.label : 'Not answered',
-                ans?.source || 'Intake questionnaire',
-                ans?.temporal_status,
+                factSummary(q),
+                factSources(q),
+                q.facts.length === 1 ? q.facts[0].temporal_status : null,
                 () => onEditQuestion(q.question_id),
-                q.conflicting_values && q.conflicting_values.length > 0
+                q.discrepancy_kind !== 'NONE',
+                q
               );
             })}
           </div>
@@ -324,15 +427,15 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
         ) : (
           <div className="space-y-3">
             {lifestyleItems.map(q => {
-              const ans = answers[q.question_id];
               return renderFactRow(
                 q.question_id,
                 q.text,
-                ans ? ans.label : 'Not answered',
-                ans?.source || 'Intake questionnaire',
-                ans?.temporal_status,
+                factSummary(q),
+                factSources(q),
+                q.facts.length === 1 ? q.facts[0].temporal_status : null,
                 () => onEditQuestion(q.question_id),
-                q.conflicting_values && q.conflicting_values.length > 0
+                q.discrepancy_kind !== 'NONE',
+                q
               );
             })}
           </div>
@@ -409,6 +512,11 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
         </div>
       )}
 
+      {saveError && (
+        <div role="alert" className="p-4 rounded-xl bg-[#FFFAEB] border border-[#FEDF89] text-sm text-[#B54708]">
+          {saveError} Check the latest saved profile and try again.
+        </div>
+      )}
       {/* Error Alert */}
       {error && (
         <div role="alert" className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] text-[#D92D20] text-sm font-semibold">
@@ -431,7 +539,7 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
             </span>
           </label>
           <p className="text-xs text-[#64748B] pl-8">
-            This acknowledgment confirms that the recorded items match what you provided. It does not warrant medical certainty.
+            This acknowledgment is for this screen only. To change an answer, select Edit and save your correction here. "Save as Not sure" updates the stored fact. It does not verify the data medically.
           </p>
         </div>
 
@@ -446,10 +554,10 @@ export const ReviewProfileScreen: React.FC<ReviewProfileScreenProps> = ({
 
           <button
             type="button"
-            disabled={!acknowledged || isSubmitting}
+            disabled={!acknowledged || isSubmitting || savingId !== null || editingId !== null || Boolean(saveError)}
             onClick={onSubmitAssessment}
             className={`btn-pill-primary px-8 py-3.5 rounded-full text-sm font-bold text-white shadow-md flex items-center justify-center gap-2 ${
-              acknowledged && !isSubmitting
+              acknowledged && !isSubmitting && savingId === null && editingId === null && !saveError
                 ? 'cursor-pointer'
                 : 'opacity-50 cursor-not-allowed'
             }`}

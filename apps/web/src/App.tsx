@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
   api,
+  ApiRequestError,
+  type PatientReviewProfile,
   clearPendingUploadFile,
   type QuestionItem,
   type ObservationRecord,
@@ -32,6 +34,11 @@ export function App() {
   const [currentRole, setCurrentRole] = useState<'patient' | 'clinician' | 'facility'>('patient');
   const [currentRoute, setCurrentRoute] = useState<string>('/');
   const [restoring, setRestoring] = useState(() => Boolean(sessionStorage.getItem('sanad_case_id')));
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [restoreAttempt, setRestoreAttempt] = useState(0);
+  const [reviewProfile, setReviewProfile] = useState<PatientReviewProfile | null>(null);
+  const [reviewProfileError, setReviewProfileError] = useState<string | null>(null);
+  const [reviewRefresh, setReviewRefresh] = useState(0);
   // Track route changes for page transitions
   const [pageKey, setPageKey] = useState(0);
   const [emergencyCacheReady, setEmergencyCacheReady] = useState(false);
@@ -73,17 +80,21 @@ export function App() {
           window.location.replace('/urgent.html');
           return;
         }
+        setRestoreError(null);
         setCurrentRoute(state.route);
       })
-      .catch(() => {
-        clearPendingUploadFile();
-        sessionStorage.removeItem('sanad_case_id');
-        sessionStorage.removeItem('sanad_session_token');
-        sessionStorage.removeItem('sanad_case_start_mode');
-        sessionStorage.removeItem('sanad_case_fixture_id');
-        if (mounted) {
+      .catch(err => {
+        if (!mounted) return;
+        if (err instanceof ApiRequestError && [401, 404].includes(err.status)) {
+          clearPendingUploadFile();
+          sessionStorage.removeItem('sanad_case_id');
+          sessionStorage.removeItem('sanad_session_token');
+          sessionStorage.removeItem('sanad_case_start_mode');
+          sessionStorage.removeItem('sanad_case_fixture_id');
           setCaseId(null);
           setCurrentRoute('/');
+        } else {
+          setRestoreError('The service could not restore your session. Your local session was kept.');
         }
       })
       .finally(() => {
@@ -92,7 +103,7 @@ export function App() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [restoreAttempt]);
 
   // Fetch session data (questions, observations, psychosocial) whenever caseId is active
   useEffect(() => {
@@ -113,6 +124,23 @@ export function App() {
       mounted = false;
     };
   }, [caseId, currentRoute]);
+
+
+  // Patient review always reads current persisted facts, not the open-question list.
+  useEffect(() => {
+    if (!caseId || currentRoute !== '/review') return;
+    let mounted = true;
+    setReviewProfile(null);
+    setReviewProfileError(null);
+    api.getReviewProfile(caseId)
+      .then(result => { if (mounted) setReviewProfile(result); })
+      .catch(err => {
+        if (mounted) setReviewProfileError(
+          err instanceof Error ? err.message : 'Could not load saved profile.',
+        );
+      });
+    return () => { mounted = false; };
+  }, [caseId, currentRoute, reviewRefresh]);
 
   // Handle pageshow / bfcache wipe for confidential privacy
   useEffect(() => {
@@ -212,6 +240,8 @@ export function App() {
     }
     setCaseId(null);
     setRecordedAnswers({});
+    setReviewProfile(null);
+    setRestoreError(null);
     setQuestions([]);
     setObservations([]);
     setPsychAnswers({});
@@ -371,10 +401,21 @@ export function App() {
           </div>
         )}
 
-        {!restoring && currentRole === 'clinician' && <ClinicianPortal />}
-        {!restoring && currentRole === 'facility' && <MockFacilityPortal />}
+        {!restoring && restoreError && (
+          <section role="alert" className="max-w-xl mx-auto p-6 my-12 bg-white border rounded-xl">
+            <h2 className="font-bold">Connection interrupted</h2>
+            <p className="mt-2 text-sm">{restoreError}</p>
+            <button type="button" className="mt-4 btn-pill-primary px-4 py-2"
+              onClick={() => { setRestoring(true); setRestoreAttempt(a => a + 1); }}>
+              Retry session restore
+            </button>
+            <a href="/urgent.html" className="ml-4 underline text-sm">Emergency Care</a>
+          </section>
+        )}
+        {!restoring && !restoreError && currentRole === 'clinician' && <ClinicianPortal />}
+        {!restoring && !restoreError && currentRole === 'facility' && <MockFacilityPortal />}
 
-        {!restoring && currentRole === 'patient' && (
+        {!restoring && !restoreError && currentRole === 'patient' && (
           /* Page transition wrapper */
           <div key={pageKey} className="page-enter">
             {currentRoute === '/' && (
@@ -460,8 +501,14 @@ export function App() {
                 {currentRoute === '/review' && (
                   <ReviewProfileScreen
                     caseId={caseId}
-                    questions={questions}
-                    answers={recordedAnswers}
+                    profile={reviewProfile}
+                    profileError={reviewProfileError}
+                    onRetryProfile={() => setReviewRefresh(i => i + 1)}
+                    onCorrectAnswer={async answer => {
+                      if (!caseId || !reviewProfile) throw new Error('Profile is still loading.');
+                      await api.correctReviewAnswer(caseId, reviewProfile.case_version, answer);
+                      setReviewRefresh(i => i + 1);
+                    }}
                     observations={observations}
                     psychQuestions={psychQuestions}
                     psychAnswers={psychAnswers}

@@ -956,3 +956,19 @@ Writing the contract exposed places where the other specs were silent or wrong. 
 | G7 | The plan listed tracking as Patient and Reviewer, but the reviewer only needs the flag. | Patient-only endpoint, with the flag embedded in the reviewer's detail. | None |
 | G8 | The edges into `CLOSED` from `EDUCATION_ONLY`, `EMERGENCY_GUIDANCE_ISSUED`, `REJECTED` and others had no trigger. | Added `POST /cases/{id}/close`. | None |
 | G9 | PRD §4.7 has `ASSESSING` to `REPORT_RELEASED` for approved education-only content. Which actions skip review is undecided (TBD-07). | No endpoint uses this edge in this flow, so every draft goes through review. The state machine keeps the edge. | Revisit with TBD-07 |
+
+
+## Operational API amendment — 2026-11-18 (`PROPOSED`)
+
+- `GET /cases/{case_id}/review-profile` — `PATIENT` with matching case token and active
+  `assessment` consent (guard `READ_PROFILE`). No mutation; `Cache-Control: no-store` via
+  middleware. Returns `case_id`, `case_version`, `catalogue_version` and all catalogue items,
+  each with concept/question metadata and active facts with source, time and verification.
+  This endpoint must not be reused for the staff reviewer role.
+- Existing `POST /cases/{case_id}/answers` accepts optional `review_correction: true` only with
+  exactly one answer and `expected_case_version`. It validates type and temporal status as any
+  answer does, rejects stale requests with 409 `CASE_VERSION_CONFLICT` and explicitly supersedes
+  all previously active sources for that same concept. Emergency checks still run after the write.
+  Existing calls with no flag retain their previous superseding rules.
+- `GET /mock-facility/referrals` excludes `MOCK_WITHDRAWN` and missing snapshots. Audit records
+  remain stored; the existing detail endpoint returns a redacted `snapshot: null` after withdrawal.
