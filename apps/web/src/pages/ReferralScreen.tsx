@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { LoadingView } from '../components/LoadingView';
 import {
   api,
+  type ConsentCatalogue,
   type GateDecision,
   type MockFacility,
   type NavigationEpisode,
   type ReportData,
 } from '../api/client';
+import { gateConditionViews } from './reviewFlowModel';
+import { normalizeConsentDecisions } from './summaryModel';
 
 interface ReferralScreenProps {
   caseId: string;
@@ -51,6 +54,10 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
   const [selectedBarriers, setSelectedBarriers] = useState<BarrierCode[]>([]);
   const [preferNotToSay, setPreferNotToSay] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // AC-12.6: missing provider_share consent can be granted on this screen.
+  const [askingShareConsent, setAskingShareConsent] = useState(false);
+  const [consentCatalogue, setConsentCatalogue] = useState<ConsentCatalogue | null>(null);
+  const [savingConsent, setSavingConsent] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -126,6 +133,44 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
       setDispatching(false);
     }
   };
+
+  const handleAskShareConsent = () => {
+    setError(null);
+    setAskingShareConsent(true);
+    if (!consentCatalogue) {
+      api.getCurrentConsent().then(setConsentCatalogue).catch(() => setConsentCatalogue(null));
+    }
+  };
+
+  // Turns provider_share on and re-reads the gate. It creates no referral: the user still taps
+  // "Create Mock referral", and the server checks the gate again at that moment (AC-12.3).
+  const handleAllowSharing = async () => {
+    if (!consentCatalogue) return;
+    setSavingConsent(true);
+    setError(null);
+    try {
+      const record = await api.getCaseConsent(caseId);
+      const current: Record<string, boolean> = {};
+      for (const [scope, grant] of Object.entries(record.scopes)) {
+        current[scope] = grant.granted;
+      }
+      await api.updateCaseConsent(
+        caseId,
+        consentCatalogue.consent_version,
+        normalizeConsentDecisions({ ...current, provider_share: true }, consentCatalogue.scopes),
+      );
+      setAskingShareConsent(false);
+      if (selectedFacilityId) setGate(await api.getReferralGate(caseId, selectedFacilityId));
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Mock sharing consent was not updated.',
+      );
+    } finally {
+      setSavingConsent(false);
+    }
+  };
+
+  const shareScopeText = consentCatalogue?.scopes.find(s => s.scope === 'provider_share');
 
   const handleAcknowledge = async () => {
     if (!report?.guidance_id || !report.guidance_version) return;
@@ -308,31 +353,24 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
           </div>
 
           <div className="space-y-2.5">
-            {(
-              [
-                ['Active provider consent', gate.conditions.user_consent.passed],
-                [
-                  'Current simulated reviewer approval',
-                  gate.conditions.clinician_approval.passed,
-                ],
-                [
-                  'Backend policy and destination',
-                  gate.conditions.backend_policy.passed,
-                ],
-              ] as const
-            ).map(([label, passed]) => (
+            {gateConditionViews(gate).map(condition => (
               <div
-                key={label}
-                className="flex items-center justify-between gap-3 rounded-xl bg-[#F8FAFC] border border-[#E2ECF8] p-3.5 text-sm"
+                key={condition.key}
+                className="rounded-xl bg-[#F8FAFC] border border-[#E2ECF8] p-3.5 text-sm"
               >
-                <span className="font-semibold text-[#0F172A]">{label}</span>
-                <span
-                  className={`text-xs font-bold ${
-                    passed ? 'text-[#0050CC]' : 'text-[#D92D20]'
-                  }`}
-                >
-                  {passed ? '✓ Passed' : '✕ Not passed'}
-                </span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-semibold text-[#0F172A]">{condition.label}</span>
+                  <span
+                    className={`text-xs font-bold whitespace-nowrap ${
+                      condition.passed ? 'text-[#0050CC]' : 'text-[#D92D20]'
+                    }`}
+                  >
+                    {condition.passed ? '✓ Passed' : '✕ Not passed'}
+                  </span>
+                </div>
+                {condition.help && (
+                  <p className="text-xs text-[#475467] mt-1.5">{condition.help}</p>
+                )}
               </div>
             ))}
           </div>
@@ -350,13 +388,97 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
       )}
 
       {gate && !gate.conditions.user_consent.passed && (
-        <button
-          type="button"
-          onClick={onConsentSettings}
-          className="btn-pill-secondary px-5 py-2.5 rounded-full text-xs font-semibold text-[#0066EE] cursor-pointer"
+        <section
+          data-testid="share-consent"
+          className="medical-card bg-white p-6 sm:p-8 rounded-2xl border border-[#BCD8FE] shadow-md space-y-4"
         >
-          Review provider sharing consent →
-        </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-mono font-bold text-[#0066EE] bg-[#EBF3FF] px-2 py-0.5 rounded-full border border-[#BCD8FE]">
+                OPTIONAL · MOCK
+              </span>
+              <h2 className="text-base font-bold text-[#0F172A] mt-2">
+                Share the approved summary with the Mock facility?
+              </h2>
+              <p className="text-xs text-[#64748B] mt-1">
+                A Mock referral needs the optional consent{' '}
+                <span className="font-mono">provider_share</span>. It is off unless you turn it on.
+              </p>
+            </div>
+            {!askingShareConsent && (
+              <button
+                type="button"
+                onClick={handleAskShareConsent}
+                className="btn-pill-primary w-full sm:w-auto px-6 py-3 rounded-full text-xs font-bold text-white shadow-md cursor-pointer whitespace-nowrap"
+              >
+                Review Mock sharing
+              </button>
+            )}
+          </div>
+
+          {askingShareConsent && (
+            <div
+              role="dialog"
+              aria-labelledby="share-consent-title"
+              className="rounded-xl border border-[#FEDF89] bg-[#FFFAEB] p-5 space-y-3 text-sm text-[#0F172A]"
+            >
+              <h3 id="share-consent-title" className="font-bold">
+                Allow sharing with the Mock facility?
+              </h3>
+              {shareScopeText ? (
+                <dl className="grid gap-2 text-xs sm:grid-cols-2">
+                  <div>
+                    <dt className="font-semibold">What is shared</dt>
+                    <dd className="text-[#475467]">{shareScopeText.data_covered}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold">What it is used for</dt>
+                    <dd className="text-[#475467]">{shareScopeText.used_for}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold">Who sees it</dt>
+                    <dd className="text-[#475467]">{shareScopeText.who_sees_it}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold">If you say no</dt>
+                    <dd className="text-[#475467]">{shareScopeText.if_off}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="text-xs text-[#475467]">Loading the consent details…</p>
+              )}
+              <p className="text-xs text-[#475467]">
+                Allowing this sends nothing yet. You still choose whether to tap Create Mock referral.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={savingConsent || !shareScopeText}
+                  onClick={() => void handleAllowSharing()}
+                  className="btn-pill-primary px-5 py-2.5 rounded-full text-xs font-bold text-white cursor-pointer disabled:opacity-60"
+                >
+                  {savingConsent ? 'Saving...' : 'Allow Mock sharing'}
+                </button>
+                <button
+                  type="button"
+                  disabled={savingConsent}
+                  onClick={() => setAskingShareConsent(false)}
+                  className="btn-pill-secondary px-5 py-2.5 rounded-full text-xs font-semibold cursor-pointer"
+                >
+                  Not now
+                </button>
+                <button
+                  type="button"
+                  disabled={savingConsent}
+                  onClick={onConsentSettings}
+                  className="text-xs font-semibold text-[#0050CC] underline cursor-pointer sm:ml-auto"
+                >
+                  All consent settings
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
       )}
 
       {navigation && (

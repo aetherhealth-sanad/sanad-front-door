@@ -439,6 +439,21 @@ export interface ModelRunTask {
   tokens: { input: number; output: number };
 }
 
+/** One simulated review decision (API design 6.6, `DecisionHistoryOut`). */
+export interface ReviewDecisionHistoryItem {
+  review_id: string;
+  decision: string;
+  kind: string | null;
+  reason_code: string | null;
+  note: string | null;
+  question_ids: string[];
+  case_version: number;
+  reviewer_type: string;
+  actor: string;
+  decided_at: string;
+  expires_at: string | null;
+}
+
 export interface ModelRunsSummary {
   observed_scope: string;
   synthetic_demo: boolean;
@@ -559,7 +574,7 @@ export const api = {
     draft_label: string; screening_notice: string; facts: Array<Record<string, unknown>>;
     excluded_items: string[]; observations: Array<Record<string, unknown>>; unknown_fields: Array<{ concept_code: string; state: string }>;
     risk_signals: RiskSignal[]; triage_proposal: TriageProposal | null; evidence: ReportData['evidence']; limits: ReportData['limits'];
-    clinician_summary_draft: string | null; decision_history: Array<Record<string, unknown>>; tracking_flag: TrackingTimeline['flag'];
+    clinician_summary_draft: string | null; decision_history: ReviewDecisionHistoryItem[]; tracking_flag: TrackingTimeline['flag'];
     psychosocial_context: Array<Record<string, unknown>>; psychosocial_context_use: string;
   }>(`/reviews/${caseId}`, {}, 'staff'),
   submitReviewDecision: (caseId: string, decision: Record<string, unknown>) =>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { LoadingView } from '../components/LoadingView';
 import { api, type TrackingTimeline } from '../api/client';
+import { DelayedFlagNote } from '../components/SimulationBanner';
+import { delayedFlagText } from './reviewFlowModel';
 
 interface TrackingScreenProps {
   caseId: string;
@@ -117,14 +119,7 @@ export const TrackingScreen: React.FC<TrackingScreenProps> = ({
       )}
 
       {tracking?.flag && (
-        <div className="p-5 rounded-2xl bg-[#FFFAEB] border border-[#FEDF89] text-[#B54708]">
-          <span className="text-xs font-mono font-bold text-[#B54708] bg-white px-2 py-0.5 rounded-full border border-[#FEDF89]">
-            Simulated Workflow Flag
-          </span>
-          <p className="text-sm mt-2">
-            A simulated workflow timer flagged this stage (<code>{tracking.flag.stage}</code>). It is not a clinical response-time measure.
-          </p>
-        </div>
+        <DelayedFlagNote text={delayedFlagText(tracking.flag)} stage={tracking.flag.stage} />
       )}
 
       {tracking && (
