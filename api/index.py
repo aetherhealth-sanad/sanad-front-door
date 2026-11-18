@@ -6,9 +6,12 @@ the FastAPI application instance (`app`) for Vercel's Python runtime.
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from pathlib import Path
+
+logger = logging.getLogger("sanad.vercel")
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "apps" / "api"))
@@ -32,9 +35,12 @@ if kv_uri:
                 value = client.get_secret(kv_name).value
                 if value:
                     os.environ[env_name] = value
-            except Exception:
-                # Leave unset so explicit env vars or default disabled behavior still apply.
-                pass
+            except Exception as exc:
+                logger.warning("Key Vault lookup failed for %s: %s", kv_name, type(exc).__name__)
+
+if not os.environ.get("SANAD_DATABASE_URL"):
+    logger.warning("SANAD_DATABASE_URL is unset; falling back to /tmp/sanad.db (ephemeral)")
+    os.environ["SANAD_DATABASE_URL"] = "sqlite:////tmp/sanad.db"
 
 from sanad_api.main import create_app  # noqa: E402
 
