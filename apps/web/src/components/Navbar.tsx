@@ -26,7 +26,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 w-full">
       <div
-        className="w-full bg-white/88 backdrop-blur-xl border-b border-white/60"
+        className="relative z-50 w-full bg-white/88 backdrop-blur-xl border-b border-white/60"
         style={{ boxShadow: '0 1px 0 rgba(7,33,90,0.07), 0 2px 12px -4px rgba(7,33,90,0.08)' }}
       >
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-20 h-14 sm:h-16 flex items-center justify-between gap-3">
