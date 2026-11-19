@@ -1,21 +1,16 @@
 import { useEffect, useState } from 'react';
-import type { ModelRunsSummary, ReviewDecisionHistoryItem } from '../api/client';
+import type { ModelRunsSummary } from '../api/client';
 import { api, type NavigationFunnel } from '../api/client';
 import { MockBadge } from '../components/MockBadge';
-import { DelayedFlagNote, SimulationBanner } from '../components/SimulationBanner';
 import questionCatalogue from '../../../../catalogue/questions.draft-0.1.json';
-import { delayedFlagText, SIMULATED_REVIEW_BANNER, type DelayFlagView } from './reviewFlowModel';
 
 interface QueueItem {
   case_id: string;
   case_version: number;
   sent_at: string;
   triage_action: string | null;
-  tracking_flag: DelayFlagView | null;
+  tracking_flag: { flag: string; stage: string } | null;
 }
-
-// PRD Screen 7: audit and version indicator.
-type DecisionHistoryItem = ReviewDecisionHistoryItem;
 
 interface ReviewDetail {
   case_id: string;
@@ -32,7 +27,6 @@ interface ReviewDetail {
     action: string;
     floor: string | null;
     rule_ids: string[];
-    rule_version?: string;
     approval_status: string;
   } | null;
   evidence: Array<{
@@ -42,8 +36,7 @@ interface ReviewDetail {
   }>;
   limits: Array<{ code: string; text: string }>;
   clinician_summary_draft: string | null;
-  decision_history: DecisionHistoryItem[];
-  tracking_flag?: DelayFlagView | null;
+  decision_history: Array<Record<string, unknown>>;
   psychosocial_context: Array<Record<string, unknown>>;
   psychosocial_context_use: string;
   decision_record?: DecisionRecord | null;
@@ -128,6 +121,17 @@ export const ClinicianPortal: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const expired = () => {
+      setAuthenticated(false);
+      setError('Staff session expired. Please sign in again.');
+      setQueue([]);
+      setDetail(null);
+    };
+    window.addEventListener('sanad-staff-session-expired', expired);
+    return () => window.removeEventListener('sanad-staff-session-expired', expired);
+  }, []);
   const [notice, setNotice] = useState<string | null>(null);
 
   const loadDetail = async (caseId: string) => {
@@ -395,8 +399,6 @@ export const ClinicianPortal: React.FC = () => {
         </button>
       </div>
 
-      <SimulationBanner text={SIMULATED_REVIEW_BANNER} />
-
       {error && (
         <div
           role="alert"
@@ -567,32 +569,15 @@ export const ClinicianPortal: React.FC = () => {
               <span className="block text-xs text-[#64748B] mt-1">
                 Submitted {new Date(item.sent_at).toLocaleString()}
               </span>
-              {item.tracking_flag && (
-                <DelayedFlagNote
-                  compact
-                  text={delayedFlagText(item.tracking_flag)}
-                  stage={item.tracking_flag.stage}
-                />
-              )}
             </button>
           ))}
         </aside>
 
         <section className="lg:col-span-8 medical-card bg-white p-6 sm:p-8 space-y-6 rounded-2xl border border-[#E2ECF8] shadow-md">
-          {!detail && queue.length > 0 && (
+          {!detail && (
             <p className="text-sm text-[#64748B]">
               Select a case from the Mock queue.
             </p>
-          )}
-          {!detail && queue.length === 0 && (
-            <div className="space-y-2 text-sm text-[#64748B]">
-              <p className="font-semibold text-[#0F172A]">No case is waiting for a Mock decision.</p>
-              <p>
-                The approve, edit, clarify and reject controls appear here once a case is in the queue.
-                A case enters the queue only when the patient, on their result, taps &ldquo;Send to care
-                facility (Mock)&rdquo; and allows <span className="font-mono">clinician_review</span>.
-              </p>
-            </div>
           )}
           {detail && (
             <>
@@ -616,21 +601,8 @@ export const ClinicianPortal: React.FC = () => {
                   <span className="block text-xs text-[#D92D20] font-medium mt-0.5">
                     {detail.triage_proposal?.approval_status ?? detail.draft_label}
                   </span>
-                  {detail.triage_proposal?.rule_version && (
-                    <span className="block text-[11px] text-[#64748B] mt-0.5">
-                      Rules {detail.triage_proposal.rule_version} ·{' '}
-                      {detail.triage_proposal.rule_ids.join(', ') || 'no rule hit'}
-                    </span>
-                  )}
                 </div>
               </div>
-
-              {detail.tracking_flag && (
-                <DelayedFlagNote
-                  text={delayedFlagText(detail.tracking_flag)}
-                  stage={detail.tracking_flag.stage}
-                />
-              )}
 
               <p className="text-xs text-[#475467]">{detail.screening_notice}</p>
 
@@ -755,24 +727,6 @@ export const ClinicianPortal: React.FC = () => {
                 </div>
               )}
 
-              {detail.evidence.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-2">
-                    Evidence status
-                  </h3>
-                  <ul className="space-y-1 text-xs text-[#64748B]">
-                    {detail.evidence.map(item => (
-                      <li key={item.claim_id}>
-                        {item.claim_id} · {item.status} ·{' '}
-                        {item.citation
-                          ? `${item.citation.source_id} v${item.citation.version}`
-                          : 'no verified source'}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
               {detail.psychosocial_context.length > 0 && (
                 <div className="rounded-2xl bg-[#F2F7FF] border border-[#BCD8FE] p-5">
                   <h3 className="text-xs font-bold text-[#0050CC] uppercase tracking-wide">
@@ -883,31 +837,8 @@ export const ClinicianPortal: React.FC = () => {
                 </details>
               )}
 
-              {detail.decision_history.length > 0 && (
-                <div>
-                  <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide mb-2">
-                    Decision history · Mock
-                  </h3>
-                  <ol className="space-y-1 text-xs text-[#64748B]">
-                    {detail.decision_history.map(item => (
-                      <li key={item.review_id}>
-                        {new Date(item.decided_at).toLocaleString()} · {item.decision}
-                        {item.kind ? ` (${item.kind})` : ''} · version {item.case_version} ·{' '}
-                        {item.reviewer_type}
-                        {item.reason_code ? ` · ${item.reason_code}` : ''}
-                        {item.question_ids.length > 0 ? ` · ${item.question_ids.join(', ')}` : ''}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
               {/* Reviewer Decision Controls (APPROVE / EDIT / REQUEST_CLARIFICATION / REJECT) */}
               <div className="space-y-4 border-t border-[#E2ECF8] pt-5">
-                <SimulationBanner text={SIMULATED_REVIEW_BANNER} />
-                <p className="text-xs text-[#475467]">
-                  Decisions apply to case version {detail.case_version}. A newer version needs a new decision.
-                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <label className="block text-xs font-bold text-[#0F172A]">
                     Optional note for this synthetic review

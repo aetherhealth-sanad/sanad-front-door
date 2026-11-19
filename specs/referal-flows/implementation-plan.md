@@ -258,7 +258,7 @@ Owners follow the [README team table](../../README.md#team) as a suggestion and 
 | T2.4 | Triage rules, risk signals, floor enforcement | AC-11.1, AC-11.5, AC-11.6, INV-06 | T2.3 | Trung | Not started |
 | T2.5 | Template drafts for patient and reviewer, `/result` | AC-11.3, AC-11.4 | T2.4 | Vinh | In progress; patient report screen reads API draft; acceptance/CI verification pending |
 | T2.6 | MockBadge and send button with just-in-time consent | AC-07.1 to AC-07.6, AC-17.1, AC-17.2, AC-17.4 | T2.5 | Vinh | In progress; review request and consent checks are wired. On 2026-11-17 the result screen was changed to show the send button with the spec label whenever a draft exists and to ask for `clinician_review` just in time (change log 0.22). TC-07.1/TC-07.2 not automated (no web test runner); acceptance/CI verification pending |
-| T2.7 | Reviewer sign-in, role checks, queue, detail, decisions, version conflict, banner | AC-08.1 to AC-08.9 | T2.6 | Vinh, Trung | In progress; Mock Reviewer sign-in, queue and decision UI present. On 2026-11-18 the AC-08.3 banner, evidence status, rule version, decision history and delayed flag were added to the page (change log 0.23); TC-08.2/TC-08.3 unit and source checks in the web suite. Negative-path/CI verification pending |
+| T2.7 | Reviewer sign-in, role checks, queue, detail, decisions, version conflict, banner | AC-08.1 to AC-08.9 | T2.6 | Vinh, Trung | In progress; Mock Reviewer sign-in, queue and decision UI present; negative-path/CI verification pending |
 | T2.8 | Quick exit, full wipe, session end, back-forward cache protection, neutral titles | AC-09.1 to AC-09.8 | T1.9, T1.6 | Vinh | In progress; pre-network screen/storage wipe, BFCache redirect and neutral titles are wired; acceptance/CI verification pending |
 | T2.9 | Remaining J1, J4 and J5 fixtures, golden cases, J1 and J4 E2E | Journey tests in the test plan | T2.1 to T2.8 | Đạt, Hoàng | Not started |
 
@@ -267,10 +267,10 @@ Owners follow the [README team table](../../README.md#team) as a suggestion and 
 | Task | Work | Delivers | Depends on | Suggested owner | Status |
 |---|---|---|---|---|---|
 | T3.1 | `evaluate_gate`, send endpoint, preview endpoint, architecture tests | AC-12.1 to AC-12.5, AC-12.7 to AC-12.9 | T2.7 | Trung | Not started |
-| T3.2 | `NAVIGATION_STARTED`, `/referral` screen, three-condition display | AC-12.6 | T3.1 | Vinh | In progress; referral gate and J9/J10 UI are wired to API. On 2026-11-18 each condition got a plain-language next step and `provider_share` can be granted on `/referral` (AC-12.6, change log 0.23); TC-12.6 unit checks in the web suite. Acceptance/CI verification pending |
+| T3.2 | `NAVIGATION_STARTED`, `/referral` screen, three-condition display | AC-12.6 | T3.1 | Vinh | In progress; referral gate and J9/J10 UI are wired to API; acceptance/CI verification pending |
 | T3.3 | Referral and event models, lifecycle table | AC-13.2, AC-13.3, AC-13.6 | T3.1 | Trung | Not started |
-| T3.4 | Mock facility console and mock directory | AC-13.1, AC-13.2, AC-13.4, AC-13.5 | T3.3 | Vinh | In progress; Mock Facility screen is wired to API. On 2026-11-18 the AC-13.1 banner, AC-13.5 appointment wording, event source labels and withdrawn-snapshot message were added (change log 0.23); TC-13.1/13.3/13.5 unit and source checks in the web suite. Acceptance/CI verification pending |
-| T3.5 | Tracking screen, timeline, delayed flag | AC-14.1 to AC-14.7 | T3.3 | Vinh, Trung | In progress; tracking screen reads API timeline and state. On 2026-11-18 the flag uses the AC-14.3 wording with an icon, shared with the reviewer detail (AC-14.6, change log 0.23); TC-14.3/TC-14.6 unit checks in the web suite. Acceptance/CI verification pending |
+| T3.4 | Mock facility console and mock directory | AC-13.1, AC-13.2, AC-13.4, AC-13.5 | T3.3 | Vinh | In progress; Mock Facility screen is wired to API; acceptance/CI verification pending |
+| T3.5 | Tracking screen, timeline, delayed flag | AC-14.1 to AC-14.7 | T3.3 | Vinh, Trung | In progress; tracking screen reads API timeline and state; acceptance/CI verification pending |
 | T3.6 | Consent revocation in flight | AC-13.4, OD-10 | T3.4 | Trung | Not started |
 | T3.7 | J3 lab entry, confirmation, conflict handling, draft rules | AC-15.1 to AC-15.6 | T2.5 | Vinh, Hoàng | Not started |
 | T3.8 | J2 selective evidence (drop first if late) | AC-16.1 to AC-16.4 | T3.1 | Vinh, Đạt | Not started |
@@ -385,3 +385,12 @@ Needed soon, but not blocking the start:
 - [ ] OD-01 (send button meaning) by the start of T2.6.
 - [ ] Rule values from BA and Clinical by the start of T2.4.
 - [ ] OD-12 (who approves the change-control items) before the M3 demo.
+
+
+## Operations patch — 2026-11-18 (`PROPOSED`, not a new clinical milestone)
+
+Patient Review hydration and explicit version-checked corrections, mobile role dropdown stacking,
+staff token expiry logout, transient restore retry, facility queue redaction, and Gatekeeper
+temporal reason split have source changes and targeted tests. Product/Security approval, complete
+backend CI, Vite build, browser E2E, real Azure revision verification and privacy copy review
+remain open. Do not mark the M3 exit or clinical agreement as met based on these tests.

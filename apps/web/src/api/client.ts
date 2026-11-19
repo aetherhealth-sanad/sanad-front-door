@@ -82,6 +82,40 @@ export interface QuestionsResponse {
   approval_status: string;
 }
 
+
+export interface PatientReviewFact {
+  fact_id: string;
+  concept_code: string;
+  value: boolean | number | string | null;
+  unit: string | null;
+  state: string;
+  polarity: string | null;
+  temporal_status: string | null;
+  source_type: string;
+  verification_status: string;
+  recorded_at: string;
+}
+
+export interface PatientReviewItem {
+  question_id: string;
+  concept_code: string;
+  text: string;
+  answer_type: 'BOOLEAN' | 'SINGLE_CHOICE' | 'INTEGER' | 'NUMBER';
+  unit: string | null;
+  options: QuestionOption[];
+  temporal_options: QuestionOption[];
+  state: string;
+  discrepancy_kind: 'NONE' | 'VALUE_CONFLICT' | 'TEMPORAL_CLARIFICATION';
+  facts: PatientReviewFact[];
+}
+
+export interface PatientReviewProfile {
+  case_id: string;
+  case_version: number;
+  catalogue_version: string;
+  items: PatientReviewItem[];
+}
+
 export interface IntakeAnswer {
   question_id: string;
   choice: 'ANSWERED' | 'NOT_SURE' | 'PREFER_NOT_TO_ANSWER';
@@ -391,6 +425,16 @@ export function clearPendingUploadFile(): void {
   pendingUploadFile = null;
 }
 
+export class ApiRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+  }
+}
+
 type AuthMode = 'patient' | 'staff' | 'none';
 
 function getAuthHeader(mode: AuthMode): Record<string, string> {
@@ -423,7 +467,12 @@ async function request<T>(
     } catch {
       // Keep the status-based message when the response is not JSON.
     }
-    throw new Error(errorDetail);
+    if (authMode === 'staff' && res.status === 401) {
+      sessionStorage.removeItem('sanad_staff_token');
+      sessionStorage.removeItem('sanad_staff_role');
+      window.dispatchEvent(new Event('sanad-staff-session-expired'));
+    }
+    throw new ApiRequestError(errorDetail, res.status);
   }
   return res.json() as Promise<T>;
 }
@@ -437,21 +486,6 @@ export interface ModelRunTask {
   attempts_mean: number | null;
   latency_ms: { p50: number | null; p95: number | null };
   tokens: { input: number; output: number };
-}
-
-/** One simulated review decision (API design 6.6, `DecisionHistoryOut`). */
-export interface ReviewDecisionHistoryItem {
-  review_id: string;
-  decision: string;
-  kind: string | null;
-  reason_code: string | null;
-  note: string | null;
-  question_ids: string[];
-  case_version: number;
-  reviewer_type: string;
-  actor: string;
-  decided_at: string;
-  expires_at: string | null;
 }
 
 export interface ModelRunsSummary {
@@ -507,6 +541,11 @@ export const api = {
       `/cases/${caseId}/safety-check`, { answers, catalogue_version },
     ),
   getQuestions: (caseId: string) => request<QuestionsResponse>(`/cases/${caseId}/questions`),
+  getReviewProfile: (caseId: string) => request<PatientReviewProfile>(`/cases/${caseId}/review-profile`),
+  correctReviewAnswer: (caseId: string, expected_case_version: number, answer: IntakeAnswer) =>
+    patientPost<CaseState>(`/cases/${caseId}/answers`, {
+      answers: [answer], review_correction: true, expected_case_version,
+    }),
   submitAnswers: (caseId: string, answers: IntakeAnswer[]) =>
     patientPost<CaseState>(`/cases/${caseId}/answers`, { answers }),
   getAssistant: () => request<AssistantInfo>('/chat/assistant', {}, 'none'),
@@ -574,7 +613,7 @@ export const api = {
     draft_label: string; screening_notice: string; facts: Array<Record<string, unknown>>;
     excluded_items: string[]; observations: Array<Record<string, unknown>>; unknown_fields: Array<{ concept_code: string; state: string }>;
     risk_signals: RiskSignal[]; triage_proposal: TriageProposal | null; evidence: ReportData['evidence']; limits: ReportData['limits'];
-    clinician_summary_draft: string | null; decision_history: ReviewDecisionHistoryItem[]; tracking_flag: TrackingTimeline['flag'];
+    clinician_summary_draft: string | null; decision_history: Array<Record<string, unknown>>; tracking_flag: TrackingTimeline['flag'];
     psychosocial_context: Array<Record<string, unknown>>; psychosocial_context_use: string;
   }>(`/reviews/${caseId}`, {}, 'staff'),
   submitReviewDecision: (caseId: string, decision: Record<string, unknown>) =>

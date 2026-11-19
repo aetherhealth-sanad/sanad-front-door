@@ -34,6 +34,7 @@ from sanad_api.facts.service import (
     build_view,
     current_facts,
     decode_value,
+    fact_out,
     from_state,
     from_value,
     mark_facts_changed,
@@ -327,6 +328,73 @@ def get_questions(
     }
 
 
+class ProfileReviewFactOut(BaseModel):
+    fact_id: str
+    concept_code: str
+    value: bool | int | float | str | None
+    unit: str | None
+    state: str
+    polarity: str | None
+    temporal_status: str | None
+    source_type: str
+    verification_status: str
+    recorded_at: datetime
+
+
+class ProfileReviewItemOut(BaseModel):
+    question_id: str
+    concept_code: str
+    text: str
+    answer_type: str
+    unit: str | None
+    options: list[OptionOut]
+    temporal_options: list[OptionOut]
+    state: str
+    discrepancy_kind: str
+    facts: list[ProfileReviewFactOut]
+
+
+class ProfileReviewOut(BaseModel):
+    case_id: str
+    case_version: int
+    catalogue_version: str
+    items: list[ProfileReviewItemOut]
+
+
+@router.get("/cases/{case_id}/review-profile", response_model=ProfileReviewOut)
+def review_profile(
+    pc: PatientCase = Depends(guard(Action.READ_PROFILE)),
+    db: Session = Depends(get_db),
+    catalogues: Catalogues = Depends(get_catalogues),
+) -> dict[str, Any]:
+    """Patient-only view of persisted facts, independent of the open-question list.
+
+    This read does not confirm, resolve, infer or write any health information.
+    """
+    facts = current_facts(db, pc.case.case_id)
+    items = []
+    for question in catalogues.questions.questions:
+        view = build_view(question.concept_code, facts)
+        items.append({
+            "question_id": question.question_id,
+            "concept_code": question.concept_code,
+            "text": question.text,
+            "answer_type": ANSWER_TYPES[catalogues.concepts[question.concept_code].value_type],
+            "unit": catalogues.concepts[question.concept_code].unit,
+            "options": [option.model_dump() for option in question.options],
+            "temporal_options": [option.model_dump() for option in question.temporal_options],
+            "state": view.state.value,
+            "discrepancy_kind": view.discrepancy_kind.value,
+            "facts": [fact_out(fact) for fact in view.current],
+        })
+    return {
+        "case_id": pc.case.case_id,
+        "case_version": pc.case.case_version,
+        "catalogue_version": catalogues.questions.catalogue_version,
+        "items": items,
+    }
+
+
 ChoiceValue = Annotated[str, StringConstraints(strict=True, max_length=32)]
 
 
@@ -339,6 +407,10 @@ class AnswerIn(_In):
 
 class AnswersIn(_In):
     answers: list[AnswerIn] = Field(min_length=1, max_length=50)
+    review_correction: bool = False
+    expected_case_version: int | None = Field(default=None, ge=0)
+    review_correction: bool = False
+    expected_case_version: int | None = Field(default=None, ge=0)
 
 
 def _answer_problem(answer: AnswerIn, catalogues: Catalogues) -> str | None:
@@ -364,6 +436,13 @@ def submit_answers(
     clock: Clock = Depends(get_clock),
     catalogues: Catalogues = Depends(get_catalogues),
 ) -> dict[str, Any]:
+    if body.review_correction:
+        # Explicit correction from patient review overrides the previously imported/current
+        # fact for this question, but only against the version the patient reviewed.
+        if len(body.answers) != 1 or body.expected_case_version is None:
+            raise ApiError(422, ErrorCode.VALIDATION_FAILED, ["REVIEW_CORRECTION_VERSION_REQUIRED"])
+        if body.expected_case_version != pc.case.case_version:
+            raise ApiError(409, ErrorCode.CASE_VERSION_CONFLICT)
     question_ids = [answer.question_id for answer in body.answers]
     if len(question_ids) != len(set(question_ids)):
         raise ApiError(422, ErrorCode.VALIDATION_FAILED, ["DUPLICATE_QUESTION"])
@@ -392,7 +471,8 @@ def submit_answers(
         # Answering a conflicting or clarified question is the user's resolution. Otherwise
         # facts from other sources stay, and a disagreement reads CONFLICTING (AC-06.3).
         resolving = (
-            build_view(code, facts).state is FieldState.CONFLICTING
+            body.review_correction
+            or build_view(code, facts).state is FieldState.CONFLICTING
             or answer.question_id in clarifications
         )
         supersede = Supersede.ALL if resolving else Supersede.SAME_SOURCE

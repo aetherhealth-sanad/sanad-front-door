@@ -13,7 +13,7 @@ from enum import StrEnum
 
 from sanad_api.catalogues import QuestionDef
 from sanad_api.facts.models import Fact
-from sanad_api.facts.service import ConceptView
+from sanad_api.facts.service import ConceptView, DiscrepancyKind
 from sanad_api.vocab import EntryPath, FieldState
 
 
@@ -26,6 +26,7 @@ class GatekeeperStatus(StrEnum):
 class NeedReason(StrEnum):
     MISSING = "MISSING"
     CONFLICTING = "CONFLICTING"
+    TEMPORAL_CLARIFICATION = "TEMPORAL_CLARIFICATION"
     CONTEXT = "CONTEXT"
     CLARIFICATION_REQUESTED = "CLARIFICATION_REQUESTED"
 
@@ -67,7 +68,12 @@ def evaluate(
         if question.question_id in clarification_question_ids:
             needs.append(QuestionNeed(question, NeedReason.CLARIFICATION_REQUESTED, True, ()))
         elif view.state is FieldState.CONFLICTING:
-            needs.append(QuestionNeed(question, NeedReason.CONFLICTING, True, view.known))
+            reason = (
+                NeedReason.TEMPORAL_CLARIFICATION
+                if view.discrepancy_kind is DiscrepancyKind.TEMPORAL_CLARIFICATION
+                else NeedReason.CONFLICTING
+            )
+            needs.append(QuestionNeed(question, reason, True, view.known))
         elif view.state is FieldState.NOT_ASKED:
             if full_intake and question.question_id in context_question_ids:
                 needs.append(QuestionNeed(question, NeedReason.CONTEXT, True, ()))

@@ -154,7 +154,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Overlay to close role menu */}
       {roleMenuOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-30"
           onClick={() => setRoleMenuOpen(false)}
           aria-hidden="true"
         />

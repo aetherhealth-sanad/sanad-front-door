@@ -46,6 +46,7 @@ class Action(StrEnum):
     # Reads that still need a state or a scope.
     READ_QUESTIONS = "READ_QUESTIONS"
     READ_REPORT = "READ_REPORT"
+    READ_PROFILE = "READ_PROFILE"
     READ_TRACKING = "READ_TRACKING"
     EXPORT_SUMMARY = "EXPORT_SUMMARY"  # RF-28
 
@@ -73,6 +74,7 @@ ACTION_RULES: dict[Action, ActionRule] = {
     Action.READ_QUESTIONS: ActionRule((A.ASSESSMENT,), INTAKE_STATES),
     # RF-28: the user's own answers, in any state, while assessment consent holds.
     Action.EXPORT_SUMMARY: ActionRule((A.ASSESSMENT,), None),
+    Action.READ_PROFILE: ActionRule((A.ASSESSMENT,), None),
     # PENDING is allowed so that a repeat tap returns the same request (AC-07.4).
     Action.SEND_FOR_REVIEW: ActionRule(
         (A.ASSESSMENT, A.CLINICIAN_REVIEW), frozenset({S.ASSESSING, S.PENDING_CLINICIAN_REVIEW})

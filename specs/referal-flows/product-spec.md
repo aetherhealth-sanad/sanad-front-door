@@ -794,3 +794,19 @@ Each has a working default, so work need not stop. A named owner must confirm it
 | OD-25 | Is a new `SourceType` needed for a value read from a document? | No. `USER_UPLOADED` is used and the audit event records the method. | Backend + Product | BRD §17 |
 | OD-26 | T-60 U1 says unconfirmed values must not appear in the report output. The patient report (RF-15) lists held lab values with `used_in_assessment: false`. Which wins? | The rules ignore unconfirmed values (TC-29.9). The report is not changed until decided. | Tech Lead + Product | T-60, AC-15.3 |
 | OD-27 | Should contradictions between different fields be checked (for example "no" to steroid use and a typed mention of testosterone injections)? | No. RF-30 compares one field with itself. Which fields contradict each other is a clinical rule: it needs a reviewed, versioned pair catalogue tagged `CLINICAL_TBD` and its own change control, and §3.2 excludes a trained model for it. | Clinical + Tech Lead | PRD-FR-05, CC-022 |
+
+
+## Operational remediation note — 2026-11-18 (`PROPOSED`, pending Product/Security review)
+
+This technical patch applies the existing synthetic-only, patient-ownership and data-minimization
+requirements without changing clinical rules, thresholds, consent scopes, triage actions or case
+states. Patient Review must display **persisted** facts, rather than only currently open questions.
+An explicit correction (including `NOT_SURE`) must replace the fact the user is correcting and
+must not be represented as saved until the server commits it. The browser-only "Mark reviewed"
+checklist is not a clinical verification and has no persisted meaning.
+
+Ordinary Mock Facility queues do not list referrals whose `provider_share` has been withdrawn.
+The backend retains a minimum historical referral record for internal audit; the existing detail
+endpoint exposes no snapshot after withdrawal. Product/Security should approve this boundary
+before deployment. A changed `PAST`/`CURRENT` for the same value is a blocking **temporal
+clarification**, not proof of a value conflict. All live results remain `CLINICAL_TBD`.

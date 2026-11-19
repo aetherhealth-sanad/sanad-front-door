@@ -618,3 +618,17 @@ A milestone exits when all of these are true:
 Each milestone report states commit SHA, rule catalogue version, consent version, pass and fail counts by level, failed cases and what was not tested. Rule tests report as **draft rule conformance**. Clinical agreement reports as `NOT_EVALUATED`.
 
 **Not tested by this plan:** whether draft rules or emergency guidance are medically correct, real user comprehension, load or performance limits, real data handling, Arabic and RTL, and legal compliance.
+
+
+## Operational regression additions — 2026-11-18 (`PROPOSED`)
+
+| ID | Oracle | Check | Level | Status |
+|---|---|---|---|---|
+| TC-OP-01 | S | Patient's complete saved synthetic profile appears after reload; anonymous and facility tokens denied | A | Automated (`test_operational_patch.py`) |
+| TC-OP-02 | S | Explicit `NOT_SURE` from Review supersedes imported fact and remains `UNKNOWN`, not negative | A | Automated |
+| TC-OP-03 | S | Stale review correction returns 409 without overwriting a newer value | A | Automated |
+| TC-OP-04 | S | Withdrawn Mock referral disappears from facility list and has no snapshot | A | Automated |
+| TC-OP-05 | S | Patient Review edit/save/reload and Reviewer presentation tested by real browser | E | Pending browser test |
+| TC-OP-06 | S | Mobile Reviewer and Facility role dropdown clickable at 375/390 px | E | Pending browser test |
+| TC-OP-07 | S | Transient API failure preserves patient session, expired staff token shows login | E | Pending browser test |
+| TC-OP-08 | S | PAST/CURRENT same value is `NEEDS_INFORMATION`, still blocking; genuine value conflict remains `CONFLICTING_DATA` | A | Existing regression updated and dedicated tests planned |

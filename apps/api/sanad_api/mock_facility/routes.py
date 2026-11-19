@@ -51,7 +51,13 @@ class ReferralListOut(BaseModel):
 def list_referrals(
     auth: AuthContext = Depends(require_mock_facility), db: Session = Depends(get_db)
 ) -> dict[str, Any]:
-    rows = db.query(Referral).order_by(Referral.created_at).all()
+    rows = (
+        db.query(Referral)
+        .filter(Referral.mock_status != MockStatus.MOCK_WITHDRAWN.value)
+        .filter(Referral.snapshot_json.is_not(None))
+        .order_by(Referral.created_at)
+        .all()
+    )
     return {
         "is_mock": True,
         "referrals": [
