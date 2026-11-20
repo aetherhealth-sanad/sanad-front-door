@@ -326,7 +326,7 @@ export function App() {
     ['/safety', '/intake', '/lab', '/review', '/receipt'].includes(currentRoute);
 
   return (
-    <div className="min-h-[100dvh] bg-[#F8FAFC] flex flex-col font-sans text-[#0B1310] selection:bg-[#0062FF]/20">
+    <div className="min-h-[100dvh] w-full max-w-full overflow-x-clip bg-[#F8FAFC] flex flex-col font-sans text-[#0B1310] selection:bg-[#0062FF]/20">
       {/* Main Navbar */}
       <Navbar
         currentRole={currentRole}

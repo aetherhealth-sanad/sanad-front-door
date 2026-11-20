@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 interface StepProgressProps {
   currentRoute: string;
   onNavigate?: (route: string) => void;
@@ -21,7 +23,17 @@ export const StepProgress: React.FC<StepProgressProps> = ({
   onNavigate,
   canEnterObservations = false,
 }) => {
+  const chipsRef = useRef<HTMLDivElement>(null);
   const currentIndex = STEPS.findIndex(s => s.id === currentRoute);
+
+  // On narrow screens the chip row scrolls sideways; keep the current step visible.
+  useEffect(() => {
+    const row = chipsRef.current;
+    const current = row?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!row || !current) return;
+    row.scrollTo({ left: current.offsetLeft - (row.clientWidth - current.offsetWidth) / 2 });
+  }, [currentIndex]);
+
   if (currentIndex === -1) return null;
 
   const progressPct = Math.round((currentIndex / (STEPS.length - 1)) * 100);
@@ -43,7 +55,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
         </div>
 
         {/* ── Step chips ── */}
-        <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar py-2">
+        <div ref={chipsRef} className="relative flex items-center gap-1 w-full overflow-x-auto no-scrollbar py-2">
           {STEPS.map((step, idx) => {
             const visitedLab =
               typeof window !== 'undefined' &&
@@ -106,10 +118,6 @@ export const StepProgress: React.FC<StepProgressProps> = ({
                   <span className="sm:hidden">{step.shortLabel}</span>
                   <span className="hidden sm:inline">{step.label}</span>
                 </span>
-                {/* Always show current label on mobile */}
-                {isCurrent && (
-                  <span className="sm:hidden">{step.shortLabel}</span>
-                )}
               </div>
             );
 
