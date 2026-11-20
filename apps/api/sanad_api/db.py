@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import DateTime, Engine, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import NullPool
 from sqlalchemy.types import TypeDecorator
 
 
@@ -35,6 +37,11 @@ class UTCDateTime(TypeDecorator[datetime]):
 
 def make_engine(database_url: str) -> Engine:
     if not database_url.startswith("sqlite"):
+        if os.environ.get("VERCEL"):
+            # Serverless instances must not hold idle connection pools open, and disabling
+            # psycopg prepared statements keeps Supabase Transaction Pooler (port 6543) safe.
+            connect_args = {"prepare_threshold": None} if "+psycopg" in database_url else {}
+            return create_engine(database_url, poolclass=NullPool, connect_args=connect_args)
         return create_engine(database_url)
     engine = create_engine(database_url, connect_args={"check_same_thread": False, "timeout": 15})
 
