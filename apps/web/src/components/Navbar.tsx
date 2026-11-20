@@ -42,10 +42,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               س
             </div>
-            <div className="flex flex-col leading-none gap-0.5">
+            <div className="hidden min-[420px]:flex flex-col leading-none gap-0.5">
               <span className="font-extrabold text-[#07215A] text-sm sm:text-[15px] tracking-tight flex items-center gap-1.5">
                 SANAD
-                <span className="text-[#829AB8] font-normal text-xs font-mono">سند</span>
+                <span className="text-[#829AB8] font-normal text-xs font-mono hidden sm:inline">سند</span>
               </span>
               <span className="text-[9px] sm:text-[10px] text-[#829AB8] font-mono uppercase tracking-wider hidden sm:block">
                 Men's Health Front Door
@@ -54,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </a>
 
           {/* ── Right side ── */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
 
             {/* Active session pill - desktop */}
             {caseId && (
@@ -102,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     type="button"
                     onClick={() => setRoleMenuOpen(v => !v)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#EBF4FF] border border-[#BAD6FE] text-[11px] font-mono font-semibold text-[#07215A] cursor-pointer active:scale-95 transition-transform duration-100"
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-[#EBF4FF] border border-[#BAD6FE] text-[11px] font-mono font-semibold text-[#07215A] cursor-pointer active:scale-95 transition-transform duration-100"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-[#0062FF]" />
                     {roleLabel}
